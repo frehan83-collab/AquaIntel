@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\loader\temporal_dataloader.py
+# hypothesis_version: 6.151.10
+
+[0.0, 'collate_fn', 'dataset', 'drop_last', 'shuffle']

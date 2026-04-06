@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\profile\__init__.py
+# hypothesis_version: 6.151.10
+
+['benchmark', 'count_parameters', 'get_data_size', 'get_model_size', 'get_stats_summary', 'nvtxit', 'print_time_total', 'profileit', 'rename_profile_file', 'timeit', 'torch_profile', 'trace_handler', 'xpu_profile']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\ml\chronos_baseline.py
+# hypothesis_version: 6.151.10
+
+[0.0, 0.1, 0.3, 1.28, 1.96, 2.5, 97.5, 100, 'NOK/kg', 'actual', 'adult_female_lice', 'celsius', 'chronos-2', 'chronos-t5-small', 'chronos_load_error', 'chronos_model_loaded', 'confidence', 'context_length', 'coverage_80', 'cpu', 'data_quality', 'degraded', 'error', 'export_volume_tonnes', 'forecast', 'generated_at', 'hi80', 'hi95', 'horizon', 'is_live', 'last_value', 'lice/fish', 'lo80', 'lo95', 'locality_no', 'mape', 'median', 'model', 'models', 'naive-fallback', 'predicted_nok', 'predictions', 'price', 'rmse', 'salmon_price_nok', 'sea_temperature', 'seasonal-naive', 'series', 'supply', 'tft', 'tonnes', 'unit']

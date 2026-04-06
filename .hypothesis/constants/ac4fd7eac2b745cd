@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\base\_base_model_v2.py
+# hypothesis_version: 6.151.10
+
+['adam', 'callbacks', 'loss', 'lr_scheduler', 'monitor', 'optimizer', 'prediction', 'reduce_lr_on_plateau', 'scheduler', 'sgd', 'step_lr', 'test', 'test_loss', 'train', 'train_loss', 'val', 'val_loss']

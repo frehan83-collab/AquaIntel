@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\timexer\sub_modules.py
+# hypothesis_version: 6.151.10
+
+[0.0, 0.1, 1.0, 10000.0, 5000, 'bhls,bshd->blhd', 'blhe,bshe->bhls', 'cpu', 'fixed', 'h', 'pe', 'relu']

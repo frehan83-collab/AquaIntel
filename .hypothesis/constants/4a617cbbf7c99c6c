@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\models\gpse.py
+# hypothesis_version: 6.151.10
+
+[0.0, 1e-05, 0.1, 0.2, 0.5, 1.0, 512, '%H:%M:%S', '.', 'BernoulliSE', 'GPSE_pretrained', 'NormalSE', 'Pre-computing GPSE', 'UniformSE', 'add', 'batchnorm', 'chembl', 'cpu', 'cuda', 'float32', 'geom', 'linear', 'max', 'mean', 'mlp', 'model_state', 'molpcba', 'no_post_mp', 'one_layer_before', 'pcqm4mv2', 'relu', 'resgatedgcnconv', 'skipconcat', 'skipsum', 'test_edge_index', 'test_graph_index', 'test_mask', 'train_edge_index', 'train_graph_index', 'train_mask', 'val_edge_index', 'val_graph_index', 'val_mask', 'zinc']

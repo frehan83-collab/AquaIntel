@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\upfd.py
+# hypothesis_version: 6.151.10
+
+[',', 'A.txt', 'data.zip', 'edge_index', 'gossipcop', 'graph_labels.npy', 'node_graph_id.npy', 'politifact', 'processed', 'raw', 'test', 'test.pt', 'test_idx.npy', 'train', 'train.pt', 'train_idx.npy', 'val', 'val.pt', 'val_idx.npy', 'x', 'y']

@@ -1,0 +1,39 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.env
+.env.local
+.env.production
+*.db
+data/
+logs/
+venv/
+.venv/
+.pytest_cache/
+.mypy_cache/
+lightning_logs/
+
+# Frontend
+frontend/.next/
+frontend/node_modules/
+frontend/out/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Models & weights (large binary files)
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.safetensors
+
+# Claude Code
+.claude/

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\distributed\local_feature_store.py
+# hypothesis_version: 6.151.10
+
+['LocalFeatureStore', 'edge_attr', 'edge_feats.pt', 'edge_time', 'feats', 'global_id', 'is_hetero', 'node_feats.pt', 'time', 'x', 'y']

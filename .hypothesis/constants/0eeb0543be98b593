@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\routers\billing_routes.py
+# hypothesis_version: 6.151.10
+
+[401, '/api/billing', '/cancel-subscription', '/invoice-history', '/subscription-status', '/webhook', 'billing', 'stripe-signature']

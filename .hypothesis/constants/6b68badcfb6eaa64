@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\statsmodels\tools\typing.py
+# hypothesis_version: 6.151.10
+
+['1.22.0', 'ArrayLike', 'ArrayLike1D', 'ArrayLike2D', 'DTypeLike', 'Float64Array', 'NDArray', 'NumericArray']

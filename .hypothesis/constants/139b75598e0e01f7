@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\linkx_dataset.py
+# hypothesis_version: 6.151.10
+
+['/', 'A', 'amherst41', 'cornell5', 'data.mat', 'data.pt', 'edge_index', 'genius', 'int64', 'johnshopkins55', 'label', 'local_info', 'node_feat', 'penn94', 'processed', 'raw', 'reed98', 'test', 'train', 'valid', 'wiki', 'wiki_edges2M.pt', 'wiki_features2M.pt', 'wiki_views2M.pt']

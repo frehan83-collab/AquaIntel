@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\_graveyard\precision.py
+# hypothesis_version: 6.151.10
+
+['16-mixed', 'FSDPPrecisionPlugin', 'HalfPrecisionPlugin', 'MixedPrecisionPlugin', 'PrecisionPlugin', 'ShardedGradScaler', 'XLAPrecisionPlugin', '__init__', 'amp', 'bf16-mixed', 'bitsandbytes', 'deepspeed', 'double', 'fsdp', 'half', 'precision', 'transformer_engine', 'xla']

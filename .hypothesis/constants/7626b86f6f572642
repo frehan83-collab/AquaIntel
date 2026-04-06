@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\dynamic_faust.py
+# hypothesis_version: 6.151.10
+
+['50002', '50004', '50007', '50009', '50020', '50021', '50022', '50025', '50026', '50027', '_', 'chicken_wings', 'faces', 'hips', 'jiggle_on_toes', 'jumping_jacks', 'knees', 'light_hopping_loose', 'light_hopping_stiff', 'one_leg_jump', 'one_leg_loose', 'personal_move', 'punching', 'r', 'registrations_f.hdf5', 'registrations_m.hdf5', 'running_on_spot', 'shake_arms', 'shake_hips', 'shake_shoulders']

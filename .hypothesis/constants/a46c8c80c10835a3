@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\hash_tensor.py
+# hypothesis_version: 6.151.10
+
+[0.5, 1000000, 9223372036854775807, 'HashTensor', 'NaN', '_map', '_max_key', '_min_key', '_value', 'dims']

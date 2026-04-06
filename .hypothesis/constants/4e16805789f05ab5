@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\functional\nominal\__init__.py
+# hypothesis_version: 6.151.10
+
+['cramers_v', 'cramers_v_matrix', 'fleiss_kappa', 'theils_u', 'theils_u_matrix', 'tschuprows_t', 'tschuprows_t_matrix']

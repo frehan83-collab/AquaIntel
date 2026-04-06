@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\core\module.py
+# hypothesis_version: 6.151.10
+
+[0.0, '/dataloader_idx_', 'DeviceMesh', 'ONNXProgram', '_trainer', 'batch', 'check_inputs', 'copy_state', 'cuda', 'current_epoch', 'dataloader_iter', 'default', 'device_mesh', 'dynamo', 'example_input_array', 'exported_program', 'fabric', 'global_rank', 'global_step', 'hparams_name', 'hparams_type', 'hyper_parameters', 'keep_base', 'lf.Fabric', 'local_rank', 'logger', 'loggers', 'manual_backward', 'mean', 'norm', 'on_gpu', 'onnx', 'onnxscript', 'params', 'pl.Trainer', 'script', 'strict_loading', 'torch_tensorrt', 'torchscript', 'trace', 'trainer', 'ts', 'wb']

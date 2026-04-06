@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\metrics\_distributions_pkg\_beta\_beta_distribution_loss_pkg.py
+# hypothesis_version: 6.151.10
+
+['BetaDistributionLoss', 'beta', 'distribution', 'distribution_type', 'info:metric_name', 'logit', 'metric_type', 'requires:data_type']

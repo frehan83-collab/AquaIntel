@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\numba\cpython\builtins.py
+# hypothesis_version: 6.151.10
+
+[1.0, 10.0, 1e+22, '==', 'Unsupported type', '__repr__', '__str__', 'always', 'b', 'bytearray', 'bytes', 'float{}', 'llvm.rint.f%d', 'not in', 'strings']

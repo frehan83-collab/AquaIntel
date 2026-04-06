@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\routers\investor_routes.py
+# hypothesis_version: 6.151.10
+
+[15.0, 400, 404, '/api', '/scenarios/compound', '/scenarios/list', '/scenarios/save', 'Invalid JSON body', 'No events provided', 'Scenario not found', 'Untitled', 'anonymous', 'created_at', 'custom', 'deleted', 'event_type', 'events', 'generic', 'id', 'investor', 'name', 'notes', 'parameters', 'params', 'red', 'results', 'saved', 'scenario_name', 'scenario_type', 'scenarios', 'status', 'user_email']

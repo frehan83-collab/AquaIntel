@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\util\print_versions.py
+# hypothesis_version: 6.151.10
+
+['\nINSTALLED VERSIONS', '"', '------------------', '--format="%H"', '-n', '.git', '1', 'IPython', 'LANG', 'LC_ALL', 'LOCALE', 'OS', 'OS-release', 'P', '__main__', 'bottleneck', 'byteorder', 'cartopy', 'cftime', 'commit', 'conda', 'cupy', 'dask', 'distributed', 'flox', 'fsspec', 'git', 'h5netcdf', 'h5py', 'installed', 'iris', 'libhdf5', 'libnetcdf', 'log', 'machine', 'matplotlib', 'mypy', 'nc_time_axis', 'netCDF4', 'numbagg', 'numpy', 'numpy_groupies', 'pandas', 'pint', 'pip', 'processor', 'pydap', 'pytest', 'python', 'python-bits', 'scipy', 'seaborn', 'setuptools', 'sparse', 'sphinx', 'utf-8', 'xarray', 'zarr']

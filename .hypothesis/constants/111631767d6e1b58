@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\profile\profile.py
+# hypothesis_version: 6.151.10
+
+[100.0, 1000000.0, 1000, '# OF CALLS', '-', '.json', '/', 'CPU TIME AVG', 'CPU TOTAL', 'CPU TOTAL %', 'CUDA TIME AVG', 'CUDA TOTAL', 'NAME', 'SELF CPU', 'SELF CPU %', 'SELF CUDA', 'SELF CUDA %', 'cuda', 'prof', 'profile', 'self_cpu_time_total', 'self_cuda_time_total', 'self_xpu_time_total', 'timeline', 'timeline.json', 'xpu']

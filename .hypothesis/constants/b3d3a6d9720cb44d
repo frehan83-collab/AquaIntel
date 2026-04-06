@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\metrics\_point_pkg\_tweedie\_tweedie_loss_pkg.py
+# hypothesis_version: 6.151.10
+
+['TweedieLoss', 'info:metric_name', 'metric_type', 'point', 'point_forecast', 'requires:data_type']

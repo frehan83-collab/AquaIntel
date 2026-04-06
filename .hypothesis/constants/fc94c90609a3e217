@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\llm\models\protein_mpnn.py
+# hypothesis_version: 6.151.10
+
+[-0.58273431, 1e-06, 0.0001, 0.1, 0.2, 0.54067466, 0.56802827, 2.0, 22.0, 128, 400, 'ij, biq, bjp->bqp']

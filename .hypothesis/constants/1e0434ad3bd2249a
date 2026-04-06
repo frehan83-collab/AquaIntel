@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\taobao.py
+# hypothesis_version: 6.151.10
+
+[1511539200, 1512316799, 'UserBehavior.csv', 'behaviorType', 'buy', 'cart', 'category', 'categoryId', 'data.pt', 'fav', 'item', 'itemId', 'pv', 'timestamp', 'user', 'userId']

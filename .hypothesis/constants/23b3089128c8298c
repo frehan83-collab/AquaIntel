@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\utilities\imports.py
+# hypothesis_version: 6.151.10
+
+['MeCab', 'aeon', 'bert_score', 'einops', 'fast_bss_eval', 'faster_coco_eval', 'gammatone', 'ipadic', 'latex', 'librosa', 'lpips', 'matplotlib', 'mecab_ko', 'mecab_ko_dic', 'multiprocessing', 'nltk', 'onnxruntime', 'pesq', 'piq>=0.8.0', 'pyTDC', 'pycocotools', 'pycocotools>=2.0.9', 'pystoi', 'regex', 'requests', 'rouge_score', 'scienceplots', 'scipy', 'scipy>=1.8.0', 'sentencepiece', 'torch<2.6.0', 'torch>=2.1.0', 'torch>=2.2.0', 'torch>=2.3.0', 'torch>=2.5.0', 'torch_fidelity', 'torch_xla', 'torchaudio', 'torchmetrics>=1.7.0', 'torchvision', 'tqdm', 'transformers', 'transformers>=4.10.0', 'transformers>=4.4.0', 'vmaf_torch']

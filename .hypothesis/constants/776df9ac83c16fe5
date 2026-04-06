@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\functional\text\rouge.py
+# hypothesis_version: 6.151.10
+
+[0.0, '<n>', 'L', 'Lsum', '[^a-z0-9]+', '\\s+', '_rouge_score_update', 'avg', 'best', 'fmeasure', 'nltk', 'precision', 'punkt_tab', 'recall', 'rouge1', 'rouge2', 'rouge3', 'rouge4', 'rouge5', 'rouge6', 'rouge7', 'rouge8', 'rouge9', 'rougeL', 'rougeLsum', 'rouge_score', 'tokenizers/punkt_tab']

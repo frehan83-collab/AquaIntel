@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\callbacks\progress\rich_progress.py
+# hypothesis_version: 6.151.10
+
+[0.5, 100.0, 100, '#6206E0', '--', '-:--:--', '.3f', '0.00', 'None', 'Style', 'Task', 'TaskID', '_console', '_live_stack', 'dim', 'dim underline', 'fit', 'inf', 'italic', 'left', 'pl.LightningModule', 'pl.Trainer', 'progress']

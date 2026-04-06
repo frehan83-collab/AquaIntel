@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\scipy\io\_fortran.py
+# hypothesis_version: 6.151.10
+
+['FortranEOFError', 'FortranFile', 'Must specify dtype', 'dtype', 'f8', 'i4', 'r', 'rw', 'seek', 'u']

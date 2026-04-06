@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\web_qsp_dataset.py
+# hypothesis_version: 6.151.10
+
+[250, 256, '\tEncoding edges...', '\tEncoding nodes...', '\tSaving graph...', '\tSaving subgraphs...', 'Encoding graph...', 'Loading graph...', 'answer', 'cpu', 'cuda', 'desc', 'dst', 'edge_attr', 'edge_idx', 'graph', 'label', 'large_graph_indexer', 'max_batch_size', 'node_attr', 'node_id', 'node_idx', 'num_workers', 'path', 'pre_transform', 'question', 'raw.pt', 'rmanluo/RoG-cwq', 'rmanluo/RoG-webqsp', 'split', 'src', 'test', 'test_data.pt', 'train', 'train_data.pt', 'val', 'val_data.pt', 'validation', 'verbose', 'x', '|']

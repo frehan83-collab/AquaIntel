@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\fabric\utilities\spike.py
+# hypothesis_version: 6.151.10
+
+[0.0, 2.0, '.json', 'Fabric', 'atol', 'bad_batches', 'bad_batches_path', 'ignore', 'last_val', 'max', 'mean', 'min', 'mode', 'rtol', 'running', 'skip_batches.json', 'w', 'warmup']

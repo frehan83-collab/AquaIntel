@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\numba\core\runtime\nrtdynmod.py
+# hypothesis_version: 6.151.10
+
+['==', 'NRT_decref', 'NRT_incref', 'acquire', 'add', 'monotonic', 'noinline', 'nrt', 'nrt_atomic_cas', 'nrt_atomic_{0}', 'nrt_module', 'nrt_unresolved_abort', 'release', 'sub']

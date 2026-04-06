@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\explain\algorithm\graphmask_explainer.py
+# hypothesis_version: 6.151.10
+
+[-0.2, 1e-15, 1e-06, 0.01, 0.03, 0.1, 0.55, 1.0, 1.2, 2.0, 3.0, 100, 'EPS', 'Explain', 'mean', 'message_scale', 'node_feat_ent', 'node_feat_reduction', 'node_feat_size']

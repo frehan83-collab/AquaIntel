@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\twitch.py
+# hypothesis_version: 6.151.10
+
+['DE', 'EN', 'ES', 'FR', 'PT', 'RU', 'data.pt', 'edges', 'features', 'processed', 'r', 'raw', 'target']

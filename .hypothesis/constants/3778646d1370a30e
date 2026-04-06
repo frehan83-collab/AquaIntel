@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\tide\_tide_dsipts\_tide_v2.py
+# hypothesis_version: 6.151.10
+
+[0.0, 'decoder_cat', 'decoder_cont', 'encoder_cat', 'encoder_cont', 'logging_metrics', 'loss', 'max_encoder_length', 'metadata', 'prediction', 'target', 'target_past', 'x_cat_future', 'x_cat_past', 'x_num_future', 'x_num_past']

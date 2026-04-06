@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\barentswatch.py
+# hypothesis_version: 6.151.10
+
+[30.0, 120, 3600, 'Authorization', 'access_token', 'api', 'barentswatch.get', 'barentswatch.post', 'client_credentials', 'client_id', 'client_secret', 'endYear', 'expires_in', 'fromweek', 'fromyear', 'grant_type', 'localityno', 'organization', 'productionArea', 'query', 'reporttype', 'scope', 'startYear', 'toweek', 'toyear']

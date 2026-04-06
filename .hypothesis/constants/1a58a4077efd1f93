@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\movie_lens_100k.py
+# hypothesis_version: 6.151.10
+
+['Action', 'Adventure', 'Animation', "Children's", 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy', 'Film-Noir', 'Horror', 'IMDb URL', 'ISO-8859-1', 'Musical', 'Mystery', 'Romance', 'Sci-Fi', 'Thriller', 'War', 'Western', 'age', 'data.pt', 'gender', 'ml-100k', 'movie', 'movieId', 'occupation', 'rated_by', 'rates', 'rating', 'releaseDate', 'timestamp', 'title', 'u.item', 'u.user', 'u1.base', 'u1.test', 'unknown', 'user', 'userId', 'videoReleaseDate', 'zipCode', '|']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\routers\webhook_routes.py
+# hypothesis_version: 6.151.10
+
+[400, 404, '/api/webhooks', '/events', '/{webhook_id}', '/{webhook_id}/test', 'Algal Bloom Alert', 'Lice Threshold Alert', 'Price Movement Alert', 'Unnamed Webhook', 'Webhook not found', 'bloom_alert', 'create_webhook', 'created', 'created_at', 'delete_webhook', 'deleted', 'description', 'disease_alert', 'event', 'events', 'failed', 'failure_count', 'generic', 'http://', 'https://', 'id', 'info', 'is_active', 'label', 'last_triggered', 'lice_alert', 'message', 'name', 'price_alert', 'severity', 'slack', 'source', 'status', 'success', 'supply_alert', 'teams', 'temperature_alert', 'test', 'timestamp', 'title', 'total', 'treatment_due', 'type', 'url', 'url is required', 'user_id', 'webhook', 'webhook_type', 'webhooks']

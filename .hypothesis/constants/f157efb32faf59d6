@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\llm\models\llm.py
+# hypothesis_version: 6.151.10
+
+[8.0, 96.0, -100, 128, 512, 1024, '<s>[INST]', '[/INST]', '[/s]', 'auto', 'content', 'convo', 'cpu', 'cuda', 'device_map', 'dummy', 'left', 'low_cpu_mem_usage', 'main', 'max_memory', 'pt', 'role', 'system', 'torch_dtype', 'user']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\snap_dataset.py
+# hypothesis_version: 6.151.10
+
+[100000, '.', 'ca-AstroPh.txt.gz', 'ca-GrQc.txt.gz', 'circle', 'circle_batch', 'circles', 'data.pt', 'edges', 'ego-', 'ego-facebook', 'ego-gplus', 'ego-twitter', 'egofeat', 'facebook.tar.gz', 'feat', 'featnames', 'gplus', 'gplus.tar.gz', 'pokec', 'processed', 'r', 'raw', 'soc-', 'soc-Epinions1.txt.gz', 'soc-ca-astroph', 'soc-ca-grqc', 'soc-epinions1', 'soc-livejournal1', 'soc-pokec', 'soc-slashdot0811', 'soc-slashdot0922', 'twitter.tar.gz', 'wiki-', 'wiki-Vote.txt.gz', 'wiki-vote']

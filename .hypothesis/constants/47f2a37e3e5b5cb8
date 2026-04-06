@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\market\threshold_alerts.py
+# hypothesis_version: 6.151.10
+
+[0.3, 0.5, 1.0, 4.0, 10.0, 16.0, 100, 'PA', 'PA-', 'critical', 'disease_outbreak', 'drop', 'high', 'lice', 'lice_critical', 'lice_warning', 'low', 'medium', 'price', 'price_drop_pct', 'price_nok_kg', 'prices', 'spike', 'sst_high', 'sst_low', 'weather']

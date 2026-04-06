@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\market\esg_scorer.py
+# hypothesis_version: 6.151.10
+
+[-5.0, -3.0, -1.5, 0.0, 0.05, 0.1, 0.2, 0.3, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 10.0, 13.0, 15.0, 200, 'A', 'A+', 'B', 'B+', 'C', 'D', 'F', 'avg_score', 'breakdown', 'cleaner_fish_pct', 'company_name', 'computed_at', 'current_color', 'e_bloom', 'e_cleaner_fish', 'e_disease', 'e_lice', 'e_treatment', 'environmental', 'esg.computed', 'g_diversity', 'g_peer', 'g_reporting', 'governance', 'grade', 'grade_distribution', 'isa', 'median_score', 'n_companies', 'n_localities', 'production_area', 'production_areas', 'rank', 'red', 's_regulatory', 's_treatment_method', 's_welfare', 'social', 'ticker', 'top_company', 'top_grade', 'top_score', 'total', 'yellow', '—']

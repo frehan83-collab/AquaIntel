@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\core\datatree.py
+# hypothesis_version: 6.151.10
+
+['.', '/', 'DataArray | DataTree', 'P', 'T', '_attrs', '_cache', '_children', '_close', '_coord_names', '_data_variables', '_dims', '_encoding', '_indexes', '_name', '_node_dims', '_node_indexes', '_parent', '_variables', 'assign', 'chunk', 'coords', 'data', 'display_style', 'exact', 'isel', 'raise', 'sel', 'text', 'w', 'w-', 'xarray-']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch\_dynamo\polyfills\loader.py
+# hypothesis_version: 6.151.10
+
+['ModuleType', '_collections', 'builtins', 'functools', 'fx', 'itertools', 'operator', 'os', 'pytree', 'struct', 'sys', 'tensor', 'torch_c_nn', 'traceback']

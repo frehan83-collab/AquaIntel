@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\text\_deprecated.py
+# hypothesis_version: 6.151.10
+
+[0.2, 0.3, 1.0, 2.0, '13a', 'BLEUScore', 'CHRFScore', 'CharErrorRate', 'ExtendedEditDistance', 'MatchErrorRate', 'Perplexity', 'SQuAD', 'SacreBLEUScore', 'TranslationEditRate', 'WordErrorRate', 'WordInfoLost', 'WordInfoPreserved', 'char', 'en', 'intl', 'ja', 'none', 'text', 'zh']

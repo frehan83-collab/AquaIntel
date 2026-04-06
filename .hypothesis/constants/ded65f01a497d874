@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\conventions.py
+# hypothesis_version: 6.151.10
+
+[' :', ':', 'O', 'S', 'S1', 'T', 'U', 'all', 'axis', 'bounds', 'calendar', 'cell_measures', 'climatology', 'coordinates', 'decode_timedelta', 'dtype', 'formula_terms', 'geometry', 'grid_mapping', 'interior_ring', 'leap_month', 'leap_year', 'long_name', 'month_lengths', 'node_coordinates', 'node_count', 'once', 'part_node_count', 'positive', 'since', 'standard_name', 'units']

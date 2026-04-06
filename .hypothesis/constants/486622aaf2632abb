@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\fabric\plugins\environments\lsf.py
+# hypothesis_version: 6.151.10
+
+[1000, 10000, 'JSM_NAMESPACE_RANK', 'JSM_NAMESPACE_SIZE', 'LSB_DJOB_RANKFILE', 'LSB_JOBID', 'MASTER_ADDR', 'MASTER_PORT', 'r']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\loggers\neptune.py
+# hypothesis_version: 6.151.10
+
+['.neptune', '/', 'Handler', 'OFFLINE', 'Run', '_run_instance', 'api_token', 'artifacts', 'best_k_models', 'best_model_path', 'best_model_score', 'dirpath', 'hyperparams', 'last_model_path', 'model/checkpoints', 'model/summary', 'name', 'neptune>=1.0', 'offline-name', 'pl.LightningModule', 'project', 'run', 'status', 'sys/id', 'sys/name', 'training', 'txt']

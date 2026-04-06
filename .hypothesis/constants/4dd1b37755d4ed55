@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\plot\dataarray_plot.py
+# hypothesis_version: 6.151.10
+
+[0.1, 0.5, 255, '3d', 'BarContainer', 'DataArray', 'Polygon', '__doc__', '__module__', '__name__', '__qualname__', '_is_facetgrid', '_size', 'args', 'aspect', 'auto', 'ax', 'cbar_ax', 'cbar_kwargs', 'cmap', 'cmap_params_subset', 'col', 'col_wrap', 'colors', 'contour', 'darray', 'dataarray', 'exact', 'extend', 'extent', 'hist', 'hue', 'hueplt', 'imshow', 'imshow_rgb', 'infer_intervals', 'interpolation', 'kwargs', 'label', 'levels', 'line', 'matplotlib.pyplot', 'mid', 'minimal', 'nearest', 'norm', 'origin', 'override', 'pcolormesh', 'plot1d', 'plotfunc', 'plt', 'post', 'pre', 'projection', 'rgb', 'row', 'scatter', 'scatter.edgecolors', 'size', 'sizeplt', 'steps-', 'subplot_kws', 'surface', 'u', 'upper', 'v', 'vmax', 'vmin', 'w', 'x', 'xscale', 'y', 'yscale', 'z', 'zplt']

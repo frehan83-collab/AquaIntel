@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\loops\training_epoch_loop.py
+# hypothesis_version: 6.151.10
+
+['batch', 'batch_idx', 'batch_to_device', 'epoch', 'inf', 'lr_scheduler_step', 'none', 'on_train_batch_end', 'on_train_batch_start', 'pl.Trainer', 'received_sigterm', 'restarted_on_last', 'run_training_batch', 'step', 'training_step']

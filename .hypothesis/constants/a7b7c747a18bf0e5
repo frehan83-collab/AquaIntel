@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\audio\_deprecated.py
+# hypothesis_version: 6.151.10
+
+[512, 'SignalNoiseRatio', 'audio', 'max', 'min', 'permutation-wise', 'speaker-wise']

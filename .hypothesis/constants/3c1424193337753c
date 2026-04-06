@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\core\saving.py
+# hypothesis_version: 6.151.10
+
+[',', '.', 'UntypedStorage', '_instantiator', 'configure_model', 'csv', 'cuda', 'hparams', 'key', 'module_arguments', 'mps', 'pl.LightningModule', 'r', 'state_dict', 'utf-8', 'value', 'w', 'xla', 'yaml', 'yml']

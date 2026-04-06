@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\instruct_mol_dataset.py
+# hypothesis_version: 6.151.10
+
+['C', 'F', 'H', 'N', 'O', 'Unknow', 'all_clean.json', 'data.pt']

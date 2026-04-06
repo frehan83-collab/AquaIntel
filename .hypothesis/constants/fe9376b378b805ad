@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\market\ocean_currents.py
+# hypothesis_version: 6.151.10
+
+[0.0, 1e-12, 0.05, 0.5, 1.0, 1.3, 2.0, 2.5, 4.0, 31.0, 56.0, 72.0, 200, 3600, '%Y-%m-%dT%H:%M:%S', 'cache_age_hours', 'cache_ttl_hours', 'dataset_id', 'depth', 'depthu', 'depthv', 'depthw', 'ever_fetched', 'fallback_boost', 'field_shape', 'is_stale', 'last_fetch', 'lat', 'latitude', 'lev', 'lon', 'longitude', 'np.ndarray | None', 'object', 'temp', 'temperature', 'thetao', 'time', 'u', 'uo', 'v', 'valid_time', 'vo', 'vomecrty', 'vozocrtx', 'x', 'y', 'z']

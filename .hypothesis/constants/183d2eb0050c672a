@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\market\tft_predictor.py
+# hypothesis_version: 6.151.10
+
+[120, 200, 2012, 'attention', 'bands', 'data/models', 'decoder_variables', 'encoder_variables', 'group_id', 'hi50', 'hi80', 'hi95', 'horizon_weeks', 'lo50', 'lo80', 'lo95', 'max_encoder_length', 'model', 'numpy', 'output', 'p10', 'p25', 'p50', 'p75', 'p90', 'predicted_nok', 'quantiles', 'r', 'scenarios', 'softplus', 'sum', 'tft', 'tft_best.ckpt', 'tft_predictor.loaded', 'time_idx']

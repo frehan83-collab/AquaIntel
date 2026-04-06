@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\conv\rgat_conv.py
+# hypothesis_version: 6.151.10
+
+[0.0, 0.2, 'abcd,acde->ace', 'across-relation', 'add', 'additive', 'aggr', 'bias', 'coo', 'e', 'f-additive', 'f-scaled', 'glorot', 'scaled', 'sum', 'within-relation', '{}({}, {}, heads={})']

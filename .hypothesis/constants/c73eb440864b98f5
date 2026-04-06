@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\aqsol.py
+# hypothesis_version: 6.151.10
+
+['AROMATIC', 'Ag', 'Al', 'As', 'Au', 'B', 'Ba', 'Be', 'Bi', 'Br', 'C', 'Ca', 'Cd', 'Ce', 'Cl', 'Co', 'Cr', 'Cs', 'Cu', 'DOUBLE', 'Dy', 'F', 'Fe', 'Gd', 'Ge', 'H', 'Hf', 'Hg', 'I', 'In', 'Ir', 'K', 'La', 'Li', 'Lu', 'Mg', 'Mn', 'Mo', 'N', 'NONE', 'Na', 'Nb', 'Nd', 'Ni', 'O', 'P', 'Pb', 'Pd', 'Pr', 'Pt', 'Re', 'Rh', 'Ru', 'S', 'SINGLE', 'Sb', 'Se', 'Si', 'Sm', 'Sn', 'Sr', 'TRIPLE', 'Ta', 'Te', 'Ti', 'V', 'W', 'Y', 'Zn', 'Zr', 'asqol_graph_raw', 'atom_dict.pickle', 'bond_dict.pickle', 'rb', 'test', 'test.pickle', 'test.pt', 'train', 'train.pickle', 'train.pt', 'val', 'val.pickle', 'val.pt']

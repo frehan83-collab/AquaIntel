@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\skbase\base\_meta.py
+# hypothesis_version: 6.151.10
+
+['%s__%s', 'BaseMetaEstimator', 'BaseMetaObject', 'BaseObject', 'None', 'RNKuhns', '__', '_get_fitted_params', 'deep', 'fkiraly', 'get_fitted_params', 'get_params', 'is_fitted', 'left', 'mloning', 'or', 'passthrough', 'right', 'serial', 'steps']

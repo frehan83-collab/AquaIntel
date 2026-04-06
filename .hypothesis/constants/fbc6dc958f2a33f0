@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\core\common.py
+# hypothesis_version: 6.151.10
+
+['1.28.0', '2.0.0', 'C', 'O', 'P', 'Resample', 'T', 'T_Resample', '__dict__', '__setstate__', '_close', 'allowed', 'assign_coords', 'chunks', 'display_style', 'keep_attrs', 'resample', 'rolling_exp', 'span', 'text', 'variable', 'xarray.']

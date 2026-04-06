@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\transforms\rooted_subgraph.py
+# hypothesis_version: 6.151.10
+
+['e_id', 'e_sub_batch', 'edge_index', 'n_id', 'n_sub_batch', 'num_nodes', 'sub_edge_index']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\data\storage.py
+# hypothesis_version: 6.151.10
+
+["'data'", 'EDGE', 'NODE', 'OTHER', '_', '_cached_attr', '_fields', '_key', '_mapping', '_num_nodes', '_parent', 'adj', 'adj_t', 'batch', 'e_id', 'edge', 'edge_attr', 'edge_index', 'edge_type', 'edge_weight', 'face', 'feat', 'fset', 'n_id', 'node', 'node_type', 'num_edges', 'num_nodes', 'pos', 'sum', 'tf', 'time', 'x']

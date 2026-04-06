@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\utils\smiles.py
+# hypothesis_version: 6.151.10
+
+[119, 'AROMATIC', 'CHI_ALLENE', 'CHI_OCTAHEDRAL', 'CHI_OTHER', 'CHI_SQUAREPLANAR', 'CHI_TETRAHEDRAL', 'CHI_TETRAHEDRAL_CCW', 'CHI_TETRAHEDRAL_CW', 'CHI_UNSPECIFIED', 'DATIVE', 'DATIVEL', 'DATIVEONE', 'DATIVER', 'DOUBLE', 'FIVEANDAHALF', 'FOURANDAHALF', 'HEXTUPLE', 'HYDROGEN', 'IONIC', 'ONEANDAHALF', 'OTHER', 'QUADRUPLE', 'QUINTUPLE', 'S', 'SINGLE', 'SP', 'SP2', 'SP3', 'SP3D', 'SP3D2', 'STEREOANY', 'STEREOCIS', 'STEREOE', 'STEREONONE', 'STEREOTRANS', 'STEREOZ', 'THREEANDAHALF', 'THREECENTER', 'TRIPLE', 'TWOANDAHALF', 'UNSPECIFIED', 'ZERO', 'atomic_num', 'bond_type', 'chirality', 'degree', 'formal_charge', 'hybridization', 'is_aromatic', 'is_conjugated', 'is_in_ring', 'num_hs', 'rdApp.*', 'stereo']

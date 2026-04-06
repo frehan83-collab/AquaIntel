@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\temporal_fusion_transformer\_tft_pkg.py
+# hypothesis_version: 6.151.10
+
+[0.001, 0.2, 1.0, 'agency', 'attention_head_size', 'authors', 'capability:exogenous', 'capability:pred_int', 'category', 'causal_attention', 'clip_target', 'cpflows', 'data_loader_kwargs', 'distr', 'dropout', 'hidden_size', 'info:compute', 'info:name', 'info:pred_type', 'info:y_type', 'jdb78', 'loss', 'numeric', 'point', 'price_actual', 'python_dependencies', 'quantile', 'target', 'volume']

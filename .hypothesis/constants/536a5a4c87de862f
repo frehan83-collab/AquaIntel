@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\trainer\connectors\callback_connector.py
+# hypothesis_version: 6.151.10
+
+['configure_callbacks', 'litmodels >=0.1.7', 'pl.Trainer', 'pytorch_lightning', 'state_dict', 'step']

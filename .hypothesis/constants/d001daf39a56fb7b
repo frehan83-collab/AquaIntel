@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\trainer\connectors\checkpoint_connector.py
+# hypothesis_version: 6.151.10
+
+['Loaded model weights', 'Restored all states', '[^0-9]', '_hparams_name', 'best', 'best_model_path', 'callbacks', 'ckpt_', 'ckpt_path', 'epoch', 'fit_loop', 'global_step', 'hpc', 'hpc_ckpt_', 'last', 'litmodels', 'load_state_dict', 'loops', 'lr_schedulers', 'name', 'on_load_checkpoint', 'on_save_checkpoint', 'optimizer_states', 'pl.Trainer', 'predict_loop', 'state_dict', 'test_loop', 'validate_loop']

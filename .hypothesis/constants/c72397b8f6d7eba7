@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\models\basic_gnn.py
+# hypothesis_version: 6.151.10
+
+[0.0, 'EdgeCNN', 'GAT', 'GCN', 'GIN', 'GraphSAGE', 'Inference', 'PNA', '_is_conv_to_out', 'adj_t', 'batch', 'cat', 'concat', 'cpu', 'edge_index', 'forward', 'heads', 'jk', 'last', 'lin', 'relu', 'reset_parameters', 'v2']

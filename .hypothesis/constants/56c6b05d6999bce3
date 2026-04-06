@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\llm\large_graph_indexer.py
+# hypothesis_version: 6.151.10
+
+[250, '.', '/edge_attr', '/edges', '/mapped_edges', '/mapped_nodes', '/node_attr', '/nodes', 'LargeGraphIndexer', 'MappedFeature', 'e_pid', 'edge_attr', 'edge_idx', 'h', 'node_idx', 'pid', 'r', 'rb', 't', 'wb', 'x']

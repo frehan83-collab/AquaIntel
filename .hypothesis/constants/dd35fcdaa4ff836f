@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\market\anomaly_engine.py
+# hypothesis_version: 6.151.10
+
+[-0.2, 0.0, 0.05, 0.15, 0.2, 0.3, 1.5, 2.0, 2.5, 3.0, 4.0, 100, 200, 5000, 'CRITICAL', 'DFO Canada', 'ELEVATED', 'HIGH', 'ILA', 'LAKSEANEMI', 'LOW', 'Mattilsynet', 'active', 'anomalies', 'anomaly.computed', 'anomaly.lice_failed', 'avg_lice', 'baseline', 'category', 'component_scores', 'composite_score', 'critical', 'disease', 'generated_at', 'high', 'lice', 'low', 'medium', 'message', 'mortality', 'mortality_events', 'multivariate', 'n_anomalies', 'pyod not installed', 'risk_level', 'severity', 'source', 'sst', 'summary', 'timestamp', 'value', 'z_score']

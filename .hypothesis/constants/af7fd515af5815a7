@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\sequential.py
+# hypothesis_version: 6.151.10
+
+['%06x', ',', '->', ':', 'Sequential', 'Tensor', '__main__', 'forward', 'reset_parameters', 'sequential', 'sequential.jinja', '{}(\n{}\n)']

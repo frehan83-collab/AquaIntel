@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\backends\netCDF4_.py
+# hypothesis_version: 6.151.10
+
+[b'CDF', b'\x89HDF\r\n\x1a\n', '.cdf', '.nc', '.nc4', '/', '<', '=', '>', 'NETCDF4', 'S', 'U', 'Virtual Method', '_FillValue', '_filename', '_group', '_manager', '_mode', 'auto_complex', 'autoclose', 'big', 'blosc_shuffle', 'c', 'chunksizes', 'complevel', 'compression', 'compression_opts', 'contiguous', 'datastore', 'diskless', 'dtype', 'endian', 'enum', 'enum_name', 'f', 'fletcher32', 'format', 'i', 'is_remote', 'little', 'lock', 'memory', 'native', 'netCDF4', 'netcdf4', 'original_shape', 'preferred_chunks', 'quantize_mode', 'r', 'shape', 'shuffle', 'significant_digits', 'source', 'szip_coding', 'u', 'unlimited_dims', 'variable_name', 'w', 'zarr', 'zlib', '|']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\molecule_gpt_dataset.py
+# hypothesis_version: 6.151.10
+
+[500000, '  --  --  ', ' appears ', ' are ', ' belongs to ', ' exists ', ' has many uses ', ' is ', ' occurs ', ' stands for ', ' was ', ' were ', '.', "4,4'-Methylenebis ", "5'-Adenylic acid is ", "5'-Adenylic acid, ", "5'-Uridylic acid is ", "5'-Uridylic acid. ", '5-Thymidylic acid. ', '=====', 'A', 'Annotation', 'Annotations', 'C', 'C.I. ', 'CID', 'Data', 'F', 'H', 'LinkedRecords', 'Lithium is ', 'Mercury combines', 'Mercurycombines', 'N', 'Name', 'Nectriapyrone. D ', 'O', 'PUBCHEM_COMPOUND_CID', 'PUBCHEM_SMILES', 'Page', 'Pure ', 'String', 'StringWithMarkup', 'These molecules', 'This molecule', 'Unknow', 'Value', 'Z', 'data.pt', 'first sentence: ', 'pubchem.csv', 'w']

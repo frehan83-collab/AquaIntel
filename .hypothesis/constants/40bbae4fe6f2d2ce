@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\opf.py
+# hypothesis_version: 6.151.10
+
+[0.05, 0.9, 15000, '.', '_', '_nminusone', 'ac_line', 'bus', 'context', 'dataset_release_1', 'edges', 'features', 'generator', 'generator_link', 'grid', 'gridopt-dataset-tmp', 'load', 'load_link', 'metadata', 'nodes', 'objective', 'raw', 'receivers', 'senders', 'shunt', 'shunt_link', 'solution', 'test', 'test.pt', 'train', 'train.pt', 'transformer', 'val', 'val.pt']

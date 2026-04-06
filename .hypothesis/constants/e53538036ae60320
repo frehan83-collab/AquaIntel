@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\tuner\tuning.py
+# hypothesis_version: 6.151.10
+
+[0.0, 1e-08, 0.05, 1.0, 4.0, 100, 8192, '_LRFinder', 'batch_size', 'exponential', 'fit', 'pl.LightningModule', 'pl.Trainer', 'power', 'predict', 'test', 'validate']

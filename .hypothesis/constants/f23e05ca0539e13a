@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\functional\retrieval\_deprecated.py
+# hypothesis_version: 6.151.10
+
+['retrieval', 'retrieval_fall_out', 'retrieval_hit_rate', 'retrieval_precision', 'retrieval_recall']

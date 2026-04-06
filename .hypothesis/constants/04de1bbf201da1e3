@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\molecule_net.py
+# hypothesis_version: 6.151.10
+
+[128, 618, ',', 'BACE', 'BBBP', 'BBBP.csv', 'ClinTox', 'ESOL', 'FreeSolv', 'HIV', 'HIV.csv', 'Lipophilicity', 'Lipophilicity.csv', 'MUV', 'NaN', 'PCBA', 'SAMPL', 'SAMPL.csv', 'SIDER', 'Tox21', 'ToxCast', '\\".*\\"', 'bace', 'bace.csv', 'bbbp', 'clintox', 'clintox.csv.gz', 'data.pt', 'delaney-processed', 'esol', 'freesolv', 'gz', 'hiv', 'lipo', 'muv', 'muv.csv.gz', 'pcba', 'pcba.csv.gz', 'processed', 'raw', 'sider', 'sider.csv.gz', 'tox21', 'tox21.csv.gz', 'toxcast', 'toxcast_data', 'toxcast_data.csv.gz']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch\utils\flop_counter.py
+# hypothesis_version: 6.151.10
+
+[999999, ' - ', '% Total', '.', '0', '0%', 'B', 'FLOP', 'FlopCounterMode', 'Global', 'K', 'M', 'Module', 'T', '_P', '_T', '_get_raw', 'cuda', 'fn', 'hip', 'kernel_idx', 'left', 'meta', 'right', 'xpu']

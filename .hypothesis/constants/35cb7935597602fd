@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\pascal_pf.py
+# hypothesis_version: 6.151.10
+
+['*.mat', '.', 'Annotations', 'PF-dataset-PASCAL', 'PascalVOC', 'aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'kps', 'motorbike', 'pair', 'parsePascalVOC.mat', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']

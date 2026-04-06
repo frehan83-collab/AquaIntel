@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\models\dimenet.py
+# hypothesis_version: 6.151.10
+
+[1.0, 2.0, 5.0, 128, 256, 110000, 120000, 130831, '3', 'Cv', 'DimeNet', 'DimeNetPlusPlus', 'G', 'H', 'TF_CPP_MIN_LOG_LEVEL', 'U', 'U0', 'alpha', 'checkpoint', 'ckpt', 'cos', 'emb_block/dense/bias', 'emb_block/embeddings', 'glorot_orthogonal', 'homo', 'kernel', 'lumo', 'mu', 'pretrained_dimenet', 'r2', 'sin', 'sum', 'swish', 'wj,wl,ijl->wi', 'x theta', 'zeros', 'zpve']

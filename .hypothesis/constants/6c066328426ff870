@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\cache_headers.py
+# hypothesis_version: 6.151.10
+
+[300, 304, 3600, '/api/admin/status', '/api/alerts', '/api/analytics', '/api/anomaly', '/api/auth', '/api/benchmark', '/api/billing', '/api/bio-risk', '/api/bloom', '/api/brief', '/api/canada', '/api/chat', '/api/chile', '/api/climate', '/api/command-centre', '/api/competitiveness', '/api/disease', '/api/efficacy', '/api/esg', '/api/faroe', '/api/feed-cost', '/api/global-supply', '/api/global/', '/api/health', '/api/iceland', '/api/leaders', '/api/lice', '/api/market', '/api/notifications', '/api/ocean', '/api/price', '/api/production', '/api/scenarios/list', '/api/scenarios/save', '/api/scotland', '/api/signals', '/api/supply', '/api/treatment/log', '/ws/', 'Cache-Control', 'ETag', 'GET', 'body', 'if-none-match']

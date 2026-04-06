@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\classification\stat_scores.py
+# hypothesis_version: 6.151.10
+
+[0.5, 'StatScores', 'binary', 'cat', 'fn', 'fp', 'global', 'ignore_index', 'macro', 'micro', 'multiclass', 'multidim_average', 'multilabel', 'none', 'samplewise', 'sum', 'tn', 'tp', 'validate_args', 'weighted', 'zero_division']

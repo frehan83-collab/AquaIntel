@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\core\eval.py
+# hypothesis_version: 6.151.10
+
+['_', 'abs', 'all', 'any', 'bool', 'dict', 'enumerate', 'filter', 'float', 'int', 'len', 'list', 'map', 'max', 'min', 'pow', 'range', 'round', 'set', 'slice', 'str', 'sum', 'tuple', 'zip']

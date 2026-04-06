@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\strategies\launchers\multiprocessing.py
+# hypothesis_version: 6.151.10
+
+['.temp.ckpt', 'LOCAL_RANK', 'MASTER_PORT', '_GlobalStateSnapshot', '_WorkerOutput', 'best_model_path', 'cpu', 'fork', 'forkserver', 'pl.Trainer', 'procs', 'spawn']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\movie_lens_1m.py
+# hypothesis_version: 6.151.10
+
+['::', 'ISO-8859-1', 'age', 'data.pt', 'gender', 'genres', 'ml-1m', 'movie', 'movieId', 'movies.dat', 'occupation', 'python', 'rated_by', 'rates', 'rating', 'ratings.dat', 'str', 'timestamp', 'title', 'user', 'userId', 'users.dat', 'zipCode', '|']

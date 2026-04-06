@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\loader\utils.py
+# hypothesis_version: 6.151.10
+
+['adj_t', 'edge_index', 'num_nodes']

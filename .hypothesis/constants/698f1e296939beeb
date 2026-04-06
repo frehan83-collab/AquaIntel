@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\strategies\fsdp.py
+# hypothesis_version: 6.151.10
+
+['32-true', 'CPUOffload', 'DeviceMesh', 'FULL_SHARD', 'HYBRID_SHARD', 'MixedPrecision', 'NO_SHARD', 'SHARD_GRAD_OP', '_POLICY', '_SHARDING_STRATEGY', 'auto_wrap_policy', 'cpu', 'cuda', 'device_id', 'device_mesh', 'fsdp', 'fsdp_cpu_offload', 'full', 'mean', 'meta', 'model', 'nccl', 'num_replicas', 'optimizer_states', 'pl.Trainer', 'rank', 'sharded', 'state', 'state_dict', 'timeout', 'use_orig_params']

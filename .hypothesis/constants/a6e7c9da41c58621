@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\igmc_dataset.py
+# hypothesis_version: 6.151.10
+
+['-', 'M', 'Otest', 'Otraining', 'W_movies', 'W_tracks', 'W_users', '_', 'data.pt', 'douban', 'flixster', 'item', 'processed', 'r', 'rated_by', 'rates', 'raw', 'user', 'yahoo_music']

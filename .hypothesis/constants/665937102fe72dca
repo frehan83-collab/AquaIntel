@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\core\duck_array_ops.py
+# hypothesis_version: 6.151.10
+
+[0.0, 1e-08, 1e-05, 0.5, 1000000.0, '2.0.0.dev0', '__array_namespace__', 'argmax', 'argmin', 'astype', 'automatic_rechunk', 'blelloch', 'bool', 'bool_', 'complex floating', 'concat', 'constant', 'cumprod', 'cumsum', 'cupy', 'dask', 'dask.array', 'dask.array.ma', 'datetime64[Y]', 'dtype', 'ignore', 'integral', 'isnull', 'masked_invalid', 'max', 'mean', 'median', 'min', 'min_count', 'na_object', 'nan', 'ndim', 'ns', 'numbagg', 'numpy', 'opt_einsum', 'out', 'prod', 'real floating', 'signed integer', 'sliding_window_view', 'std', 'subok', 'sum', 'timedelta64', 'us', 'use_bottleneck', 'use_numbagg', 'use_opt_einsum', 'var', 'writeable']

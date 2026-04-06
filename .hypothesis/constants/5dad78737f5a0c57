@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\backends\common.py
+# hypothesis_version: 6.151.10
+
+[0.001, 500, ', ', '/', '/dap/', '/dap2/', '/dap4/', '/dods/', '/dodsc/', '/erddap/', '/opendap/', 'O', 'T', '__values__', 'backend_kwargs', 'engine', 'fsspec', 'lock', 'rb', 'regions', 'sources', 'storage_options', 'targets', 'zarr']

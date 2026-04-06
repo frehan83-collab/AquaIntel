@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\__init__.py
+# hypothesis_version: 6.151.10
+
+['2.7.0', 'EdgeIndex', 'HashTensor', 'Index', '__version__', 'compile', 'contrib', 'debug', 'device', 'experimental_mode', 'get_home_dir', 'graphgym', 'is_compiling', 'is_debug_enabled', 'is_in_onnx_export', 'is_mps_available', 'is_torch_instance', 'is_xpu_available', 'safe_onnx_export', 'seed_everything', 'set_debug', 'set_home_dir', 'torch_geometric']

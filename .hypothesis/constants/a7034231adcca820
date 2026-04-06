@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\aggregation.py
+# hypothesis_version: 6.151.10
+
+[0.0, 'MaxMetric.plot', 'MeanMetric.plot', 'MinMetric.plot', 'SumMetric.plot', 'cat', 'disable', 'error', 'ignore', 'inf', 'max', 'max_value', 'mean_value', 'min', 'min_value', 'sum', 'sum_value', 'value', 'warn', 'weight']

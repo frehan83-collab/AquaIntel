@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\cornell.py
+# hypothesis_version: 6.151.10
+
+['NDC-classes', 'NDC-classes-25', 'NDC-substances', 'NDC-substances-25', 'congress-bills', 'congress-bills-25', 'contact-high-school', 'email-Enron', 'email-Enron-25', 'email-Eu', 'email-Eu-25', 'inductive', 'nodes', 'processed', 'raw', 'tags-ask-ubuntu', 'tags-math-sx', 'test', 'test_data.pt', 'test_df.csv', 'threads-ask-ubuntu', 'timestamp', 'train', 'train_data.pt', 'train_df.csv', 'transductive', 'val', 'val_data.pt', 'val_df.csv']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\statsmodels\tools\_test_runner.py
+# hypothesis_version: 6.151.10
+
+['--tb=short', 'Running pytest ', '__file__', '__name__']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\timexer\_timexer.py
+# hypothesis_version: 6.151.10
+
+[0.001, 0.2, 256, 1024, 'M', 'MS', 'context_length', 'encoder_cont', 'encoder_time_idx', 'fixed', 'h', 'logging_metrics', 'long_term_forecast', 'loss', 'prediction_length', 'relu', 'short_term_forecast', 'target_scale']

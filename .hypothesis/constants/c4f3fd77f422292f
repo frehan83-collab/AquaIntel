@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\models.py
+# hypothesis_version: 6.151.10
+
+[0.0, 0.2, 0.3, 0.5, 1.0, 4.0, 10.0, 16.0, 100, 128, 256, 500, 'Atlantic salmon', 'LIMIT', 'LiceRecord', 'Locality', 'User', 'action', 'api_keys', 'audit_logs', 'catch_certificates', 'company_exposure', 'custom_alert_rules', 'detail', 'details', 'draft', 'eudr_compliance', 'event_type', 'export_volumes', 'farmer', 'free', 'futures_snapshots', 'generic', 'harvest_timing', 'in_transit', 'inshore', 'iuu_risk_assessments', 'ix_lice_lookup', 'lice_records', 'localities', 'locality', 'locality_no', 'lot_traces', 'orders', 'paper', 'pending', 'performance_fees', 'premium', 'price_predictions', 'saved_scenarios', 'signals', 'signals.id', 'sqlite', 'ssb', 'ssb_03024', 'ssb_weekly_prices', 'stage_forecasts', 'subscriptions', 'supply_forecasts', 'system', 'timeout', 'treatment_outcomes', 'uq_lice_week', 'uq_ssb_price_week', 'users', 'users.id', 'webhook_configs', 'week', 'year']

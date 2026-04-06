@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\utils\_maint\_show_versions.py
+# hypothesis_version: 6.151.10
+
+['\nSystem:', '__version__', 'cpflows', 'distributions', 'executable', 'lightning', 'machine', 'matplotlib', 'numpy', 'optuna', 'optuna-integration', 'pandas', 'pip', 'python', 'pytorch-forecasting', 'pytorch_optimizer', 'scikit-base', 'scikit-learn', 'scipy', 'show_versions', 'skbase', 'sklearn', 'statsmodels', 'torch']

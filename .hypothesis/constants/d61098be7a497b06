@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\numba\core\ssa.py
+# hypothesis_version: 6.151.10
+
+['Running %s', 'SSA violators %s', 'block', 'cfg', 'defmap', 'defs', 'defs %s', 'first assign: %s', 'incoming_def %s', 'label', 'on stmt: %s', 'phi_locations', 'phimap', 'replaced with: %s', 'scope', 'uses', 'varname']

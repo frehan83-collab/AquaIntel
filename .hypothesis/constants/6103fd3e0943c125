@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\functional\text\squad.py
+# hypothesis_version: 6.151.10
+
+[0.0, 1.0, 100.0, '1', 'Is this a test?', 'This is a test text', '\\b(a|an|the)\\b', 'answer_start', 'answers', 'context', 'exact_match', 'f1', 'id', 'paragraphs', 'prediction_text', 'qas', 'question', 'text', 'title', 'train test']

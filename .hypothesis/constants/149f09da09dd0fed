@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\conv\gen_conv.py
+# hypothesis_version: 6.151.10
+
+[0.0, 1e-07, 1.0, 'aggr_kwargs', 'batch', 'instance', 'layer', 'lin_aggr_out', 'lin_dst', 'lin_edge', 'lin_src', 'msg_norm', 'power', 'powermean', 'softmax', 'softmax_sg']

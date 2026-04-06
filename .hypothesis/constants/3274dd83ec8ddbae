@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\sampler\base.py
+# hypothesis_version: 6.151.10
+
+['EdgeSamplerInput', 'HeteroSamplerOutput', 'NodeSamplerInput', 'SamplerOutput', '_mapped_values', '_num_hops', '_values', 'bidirectional', 'binary', 'default', 'directional', 'dst', 'heterogeneous', 'homogeneous', 'induced', 'remote', 'rev_', 'src', 'triplet', 'values']

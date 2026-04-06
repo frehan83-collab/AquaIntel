@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\metrics\base_metrics\_base_object.py
+# hypothesis_version: 6.151.10
+
+['metric', 'object_type', 'y', 'y_pred']

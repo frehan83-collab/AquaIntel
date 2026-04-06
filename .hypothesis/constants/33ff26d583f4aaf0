@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\plugins\precision\deepspeed.py
+# hypothesis_version: 6.151.10
+
+[0.0, '16-mixed', '16-true', '32-true', 'backward', 'bf16-mixed', 'bf16-true', 'pl.LightningModule', 'true']

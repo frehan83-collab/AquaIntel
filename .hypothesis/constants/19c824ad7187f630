@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\io\npz.py
+# hypothesis_version: 6.151.10
+
+['adj_data', 'adj_indices', 'adj_indptr', 'adj_shape', 'attr_data', 'attr_indices', 'attr_indptr', 'attr_shape', 'labels']

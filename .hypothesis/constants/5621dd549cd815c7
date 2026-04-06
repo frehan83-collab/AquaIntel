@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\market\faroe_monitor.py
+# hypothesis_version: 6.151.10
+
+[-7.5, -7.2, -7.17, -6.95, -6.93, -6.9, -6.81, -6.8, -6.62, -6.6, -6.52, -6.2, 0.0, 61.3, 61.55, 61.85, 62.05, 62.1, 62.15, 62.17, 62.24, 62.3, 62.5, 273.15, 100, 120, 200, '.', '01', 'Bakkafrost', 'Bordoy', 'CHL', 'CRITICAL', 'ELEVATED', 'Eysturoy', 'FRO', 'Faroe Islands', 'Feature', 'FeatureCollection', 'Fuglafjørður', 'HIGH', 'Hvannasund', 'Kunoy', 'LOW', 'Point', 'Sandoy', 'Streymoy', 'Suðuroy', 'Vestmanna', 'Vágar', 'analysed_sst', 'bloom_risk', 'chl_a', 'cmems_password', 'cmems_username', 'company', 'coordinates', 'country', 'data', 'disease_events', 'disruption_level', 'disruption_pct', 'elevated', 'features', 'format', 'geometry', 'isa_vaccinated', 'json', 'key', 'lat', 'lat_max', 'lat_min', 'lax', 'lng', 'lon_max', 'lon_min', 'name', 'normal', 'properties', 'query', 'response', 'salmon', 'sst', 'type', 'unknown', 'vaccinated', 'values']

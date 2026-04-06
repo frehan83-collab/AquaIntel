@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\core\variable.py
+# hypothesis_version: 6.151.10
+
+['2024.11.0', '3.0.0dev0', 'Broadcasting', 'M', 'O', 'OMm', 'T_DuckArray', 'Variable', '__array_function__', '__array_namespace__', '_attrs', '_data', '_dims', '_encoding', 'allowed', 'argmax', 'argmin', 'arithmetic_broadcast', 'array', 'attrs', 'axis', 'b', 'center', 'cfO', 'concat_dim', 'constant', 'constant_values', 'dask', 'data', 'dimensions', 'dims', 'drop_conflicts', 'dtype', 'encoding', 'end_values', 'exact', 'f', 'ignore', 'isel', 'keep_attrs', 'left', 'level', 'linear', 'list', 'm', 'mM', 'maximum', 'mean', 'median', 'method', 'minimum', 'ndim', 'override', 'pad', 'parallelized', 'q', 'quantile', 'raise', 'reflect_type', 'roll', 'shape', 'shift', 'stack', 'stat_length', 'to_coord', 'to_variable', 'trim', 'unstack', 'use_bottleneck', 'v2024.11.0', 'variable', 'window', 'window_dim']

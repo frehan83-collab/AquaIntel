@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\fx.py
+# hypothesis_version: 6.151.10
+
+['.', 'Graph', 'GraphModule', 'Node', 'Tracer', '__call__', '__class__', '__getattr__', '__globals__', 'adj', 'call_function', 'call_method', 'call_module', 'edge', 'forward', 'getattr', 'graph', 'node', 'output', 'placeholder', 'return', 'root', 'self', 'src', 'training']

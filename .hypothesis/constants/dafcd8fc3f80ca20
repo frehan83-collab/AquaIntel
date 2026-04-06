@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\statsmodels\tsa\vector_ar\var_model.py
+# hypothesis_version: 6.151.10
+
+[1e-15, 0.05, 0.85, 2.0, 4.0, 100.0, 100, 1000, '\nmean: %s', '\nstable: %s', ' Order Selection', '%#10.4g', '*', '0.11.0', 'C', 'FEVD for %s\n', 'Gamma', 'Pi', 'VAR', 'VECM', 'aic', 'auto', 'bic', 'bse', 'c', 'columns_eq', 'conf_int', 'cov', 'cov_eq', 'cov_params', 'ct', 'ctt', 'end is before start', 'endog', 'exog%d', 'exog_future', 'f', 'fpe', 'granger', 'hqic', 'inst', 'k_ar', 'k_exog_user', 'k_trend', 'mse', 'multivariate_confint', 'n', 'none', 'offset must be >= 0', 'ols', 'params', 'pvalues', 'raise', 'sigma_u', 'sigma_u_mle', 'stderr', 't', 'tt', 'tvalues', 'upper right', 'wald', 'y']

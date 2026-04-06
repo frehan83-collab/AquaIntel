@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\transforms\add_positional_encoding.py
+# hypothesis_version: 6.151.10
+
+[1.0, 100, 2000, 'SA', 'SR', 'add_random_walk_pe', 'random_walk_pe', 'sum', 'sym']

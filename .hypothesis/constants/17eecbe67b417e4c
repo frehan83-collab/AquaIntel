@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\llvmlite\binding\executionengine.py
+# hypothesis_version: 6.151.10
+
+['aarch64', 'arm64', 'ascii', 'buf_len', 'buf_ptr', 'module_ptr']

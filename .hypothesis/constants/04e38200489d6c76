@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\temporal_fusion_transformer\_tft_pkg_v2.py
+# hypothesis_version: 6.151.10
+
+['TFT', 'authors', 'capability:exogenous', 'capability:pred_int', 'datamodule_cfg', 'info:name', 'max_encoder_length', 'phoeenniixx']

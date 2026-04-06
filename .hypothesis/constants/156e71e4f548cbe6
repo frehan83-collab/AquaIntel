@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\core\dataarray.py
+# hypothesis_version: 6.151.10
+
+[', ', '...', '<this-array>', 'DataArray', 'Mean of empty slice', 'T_XarrayOther', '__temporary_name', '__weakref__', '_cache', '_close', '_coords', '_indexes', '_name', '_variable', 'all', 'any', 'arithmetic_compat', 'arithmetic_join', 'array', 'attrs', 'auto', 'broadcast_equals', 'chunk', 'coarsen', 'constant', 'coords', 'data', 'data_array', 'dimensions', 'dims', 'drop', 'encoding', 'equals', 'exact', 'expand_dims', 'first', 'foo', 'identical', 'ignore', 'isel', 'keep_attrs', 'last', 'left', 'linear', 'list', 'lower', 'mean', 'name', 'outer', 'pandas', 'raise', 'reindex', 'rename', 'rolling', 'start_day', 'swap_dims', 'time', 'uifc', 'unscaled', 'upper', 'v2024.07.0', 'variable', 'w', 'xarray-']

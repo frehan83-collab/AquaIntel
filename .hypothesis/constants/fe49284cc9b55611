@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\models\schnet.py
+# hypothesis_version: 6.151.10
+
+[-0.5, 0.0, 0.5, 1.0, 2.0, 5.0, 10.0, 100, 128, 'DipoleMoment', 'SchNet', 'add', 'atomic_mass', 'best_model', 'cpu', 'dipole_moment', 'energy_U', 'energy_U0', 'enthalpy_H', 'free_energy', 'gap', 'heat_capacity', 'homo', 'ignore', 'initial_atomref', 'lumo', 'mean', 'offset', 'split.npz', 'sum', 'test_idx', 'train_idx', 'val_idx', 'zpve']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\cache.py
+# hypothesis_version: 6.151.10
+
+[100, 300, 'cache.hit', 'entries', 'hit_rate', 'hits', 'misses']

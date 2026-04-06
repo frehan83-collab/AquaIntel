@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\hgb_dataset.py
+# hypothesis_version: 6.151.10
+
+[',', '-', '0', 'ACM', 'DBLP', 'Freebase', 'IMDB', 'TYPE\tMEANING', 'acm', 'data.pt', 'data.zip', 'dblp', 'freebase', 'imdb', 'info.dat', 'label.dat', 'label.dat.test', 'link type', 'link.dat', 'node type', 'node.dat', 'processed', 'raw', 'to', 'y']

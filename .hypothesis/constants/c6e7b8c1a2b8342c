@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\patsy\util.py
+# hypothesis_version: 6.151.10
+
+[-1.5, 1.0, 2.0, 3.0, 20.5, 100, 101, '%s(', '%s=', "'asdf'", ')', ',', '3.0.0.dev0', 'A', 'B', 'C', 'Categorical', 'CategoricalDtype', 'IPython', 'SortAnythingKey', 'StringDtype', '_repr_pretty_', 'a', 'api', 'asdf', 'assert_no_pickling', 'b', 'bar', 'c', 'cat', 'categories', 'category', 'codes', 'complex128', 'complex196', 'complex256', 'dtype', 'float128', 'float64', 'float96', 'foo', 'from_codes', 'have_pandas', 'hi', 'ignore', 'is_categorical_dtype', 'iterable', 'name', 'no more data', 'no_pickling', 'repr_pretty_delegate', 'repr_pretty_impl', 'sadf', 'safe_isnan', 'safe_issubdtype', 'safe_scalar_isnan', 'safe_string_eq', 'the matrix subclass', 'uniqueify_list', 'wide_dtype_for', 'widen', 'widest_complex', 'widest_float', 'x']

@@ -1,0 +1,46 @@
+# Frontend build — validates the Next.js/React/TypeScript frontend compiles cleanly
+name: Frontend Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "frontend/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend/
+
+    steps:
+      # 1. Check out the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Set up Node.js 20 with npm cache
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      # 3. Clean install of dependencies (CI-optimized)
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. Build the Next.js application
+      - name: Build frontend
+        run: npm run build
+
+      - name: Security audit (npm)
+        run: npm audit --audit-level=high || true
+        continue-on-error: true
+        working-directory: frontend/

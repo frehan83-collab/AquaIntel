@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\conv\meshcnn_conv.py
+# hypothesis_version: 6.151.10
+
+['add', 'in_channels', 'in_features', 'out_channels', 'out_features']

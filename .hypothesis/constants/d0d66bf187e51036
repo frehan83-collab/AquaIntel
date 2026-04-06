@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\trainer\connectors\logger_connector\result.py
+# hypothesis_version: 6.151.10
+
+[0.0, '-inf', '/dataloader_idx_{}', '_ResultCollection', '_ResultMetric', 'avg', 'callback', 'cpu', 'cumulated_batch_size', 'inf', 'log', 'max', 'mean', 'min', 'pbar', 'sum', 'value']

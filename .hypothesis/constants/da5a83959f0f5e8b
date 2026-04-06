@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\coding\strings.py
+# hypothesis_version: 6.151.10
+
+['2.0.0.dev0', 'C', 'O', 'S', 'S1', 'U', '^(.*?)(\\d+)(?!.*\\d)', '_Encoding', '_FillValue', 'char_dim_name', 'dtype', 'element_type', 'numpy', 'original_shape', 'too many indices', 'utf-8', 'vlen']

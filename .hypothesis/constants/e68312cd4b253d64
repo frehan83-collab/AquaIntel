@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\core\indexing.py
+# hypothesis_version: 6.151.10
+
+[1.0, '2.0.0', 'MultiIndex', 'NaT', '__array_function__', '__array_namespace__', '__getitem__', '_copied', '_dtype', '_key', '_oindex_get', '_shape', '_vindex_get', 'adapter', 'array', 'chunks', 'dtype', 'getter', 'i', 'ij', 'indexer_cls', 'key', 'level', 'map_index_queries', 'method', 'ndim', 'ns', 'object', 'out of bounds index', 'setter', 'sparse', 'tolerance', 'too many indices', 'u']

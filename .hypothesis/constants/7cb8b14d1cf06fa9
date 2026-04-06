@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\strategies\deepspeed.py
+# hypothesis_version: 6.151.10
+
+[0.0, 1000, 1048576, 100000000, 200000000, 1000000000, 1000000000000, '.', '/local_nvme', 'LOCAL_RANK', 'MASTER_ADDR', 'MASTER_PORT', 'RANK', 'WORLD_SIZE', 'Windows', '_metadata', 'aio', 'auto', 'batch_sampler', 'bf16', 'block_size', 'buffer_count', 'buffer_size', 'checkpoint', 'cpu', 'cpu_checkpointing', 'deepspeed', 'deepspeed_stage_1', 'deepspeed_stage_2', 'deepspeed_stage_3', 'device', 'fp16', 'gradient_clipping', 'max_in_cpu', 'num_replicas', 'nvme', 'nvme_path', 'offload_optimizer', 'offload_param', 'optimizer', 'optimizer_states', 'overlap_events', 'pin_memory', 'pl.Trainer', 'profile', 'queue_depth', 'rank', 'single_submit', 'stage', 'state_dict', 'step', 'thread_count', 'zero_optimization']

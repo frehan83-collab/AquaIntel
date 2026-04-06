@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\functional\text\infolm.py
+# hypothesis_version: 6.151.10
+
+[0.25, 1.0, 'Information measure', 'PreTrainedModel', 'ab_divergence', 'alpha_divergence', 'attention_mask', 'bert-base-uncased', 'beta_divergence', 'bsv, bs -> bsv', 'cls_token_id', 'fisher_rao_distance', 'inf', 'infolm', 'input_ids', 'input_ids_idf', 'kl_divergence', 'l1_distance', 'l2_distance', 'l_infinity_distance', 'mask_token_id', 'max_length', 'pad_token_id', 'pt', 'renyi_divergence', 'sep_token_id']

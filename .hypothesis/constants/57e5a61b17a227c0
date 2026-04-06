@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\core\options.py
+# hypothesis_version: 6.151.10
+
+[128, 200, 300, 'RdBu_r', 'arithmetic_broadcast', 'arithmetic_compat', 'arithmetic_join', 'chunk_manager', 'cmap_divergent', 'cmap_sequential', 'dask', 'default', 'display_expand_attrs', 'display_expand_data', 'display_max_children', 'display_max_items', 'display_max_rows', 'display_style', 'display_width', 'enable_cftimeindex', 'exact', 'file_cache_maxsize', 'h5netcdf', 'html', 'inner', 'keep_attrs', 'left', 'minimal', 'netcdf4', 'netcdf_engine_order', 'outer', 'right', 'scipy', 'text', 'use_bottleneck', 'use_flox', 'use_numbagg', 'use_opt_einsum', 'viridis']

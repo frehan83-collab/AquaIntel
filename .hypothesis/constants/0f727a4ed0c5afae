@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\statsmodels\iolib\table.py
+# hypothesis_version: 6.151.10
+
+['\n</tr>', '  \\\\', ' & ', '"%s"', '#', '$', '$$', '$>$', '$|$', '%', '%%\\caption{%s}', '%s', '%s_align', '&', ',', '-', '--', '</table>', '<td>%s</td>', '<td>--</td>', '<td></td>', '<th>%s</th>', '<tr>\n  ', '=', '>', 'Unknown format: %s', '\\#', '\\$', '\\%', '\\&', '\\_', '\\begin{center}', '\\begin{tabular}{%s}', '\\bottomrule', '\\end{center}', '\\end{tabular}', '\\midrule', '\\textbf{%s}', '\\toprule', '_', 'c', 'colsep', 'colwidths', 'csv', 'data', 'data_aligns', 'data_fmt', 'data_fmts', 'empty', 'header', 'header_dec_below', 'html', 'l', 'latex', 'ltx', 'r', 'replacements', 'row_dec_below', 'row_post', 'row_pre', 'stub', 'stub_align', 'stubs_align', 'table_dec_above', 'table_dec_below', 'text', 'title_align', 'txt', 'utf-8', '|']

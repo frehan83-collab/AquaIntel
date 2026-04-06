@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\dblp.py
+# hypothesis_version: 6.151.10
+
+['adjM.npz', 'author', 'conference', 'data.pt', 'features_0.npz', 'features_1.npz', 'features_2.npy', 'labels.npy', 'node_types.npy', 'paper', 'term', 'test', 'train', 'val']

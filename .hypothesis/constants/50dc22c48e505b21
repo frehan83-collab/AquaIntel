@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\to_hetero_with_bases_transformer.py
+# hypothesis_version: 6.151.10
+
+['-', ':', 'Graph', 'GraphModule', 'Node', '_', '__', 'call_function', 'call_module', 'cpu', 'edge', 'edge_offset_dict', 'edge_type', 'node', 'node_offset_dict', 'reset_parameters']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\typing.py
+# hypothesis_version: 6.151.10
+
+['.', 'EdgeTypeStr', 'SparseTensor', 'USE_MKL=OFF', '__', 'batch_size', 'cuda', 'edge_time', 'edge_weight', 'grouped_matmul', 'index_sort', 'nt', 'partition', 'pytest', 'sampled_add', 'segment_matmul', 'softmax_csr', 'sparse_csc', 'sum', 'to']

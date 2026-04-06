@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\rcdd.py
+# hypothesis_version: 6.151.10
+
+[':', 'data.pt', 'dst_id', 'dst_type', 'edge_type', 'item', 'label', 'node_feat', 'node_id', 'node_type', 'src_id', 'src_type']

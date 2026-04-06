@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\statsmodels\compat\python.py
+# hypothesis_version: 6.151.10
+
+['PYTHON_IMPL_WASM', 'asbytes', 'asstr', 'asunicode', 'emscripten', 'latin1', 'lfilter', 'lmap', 'lrange', 'lzip', 'temporary_class', 'wasm32', 'wasm64', 'with_metaclass']

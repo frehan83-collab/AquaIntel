@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\utilities\combined_loader.py
+# hypothesis_version: 6.151.10
+
+['_iterator', 'batch_sampler', 'dataset', 'fn', 'inf', 'iterator', 'iterators', 'max_size', 'max_size_cycle', 'min_size', 'sampler', 'sequential']

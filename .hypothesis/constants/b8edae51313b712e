@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\utilities\migration\migration.py
+# hypothesis_version: 6.151.10
+
+['0.10.0', '1.6.0', '1.6.5', '1.9.0', '2.0.0', 'ModelCheckpoint', 'amp_scaling_state', 'best_model_path', 'best_model_score', 'callbacks', 'completed', 'current', 'dataloader_progress', 'epoch', 'epoch_loop.', 'epoch_progress', 'fit_loop', 'global_step', 'is_last_batch', 'loops', 'optimizer', 'optimizer_position', 'patience', 'predict_loop', 'processed', 'ready', 'started', 'state_dict', 'step', 'test_loop', 'total', 'validate_loop', 'wait_count', 'zero_grad']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\profilers\pytorch.py
+# hypothesis_version: 6.151.10
+
+['.stack', 'Framework', 'ProfilerAction', 'ProfilerActivity', 'Unsupported schedule', '[pl][module]', '[pl][profile]', 'activities', 'count', 'cpu_memory_usage', 'cpu_time', 'cpu_time_total', 'cuda_memory_usage', 'cuda_time', 'cuda_time_total', 'enabled', 'metric', 'on_fit_start', 'on_trace_ready', 'predict_step', 'pytorch-lightning', 'record_shapes', 'records', 'row_limit', 'schedule', 'self', 'self_cpu_time_total', 'sort_by', 'test_step', 'training_step', 'use_cpu', 'use_cuda', 'validation_step', 'with_stack']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\dbp15k.py
+# hypothesis_version: 6.151.10
+
+[300, '**UNK**', 'DBP15K', 'data.zip', 'en_fr', 'en_ja', 'en_zh', 'fr_en', 'id_features_1', 'id_features_2', 'ja_en', 'sub.glove.300d', 'test.examples.1000', 'train.examples.20', 'triples_1', 'triples_2', 'zh_en']

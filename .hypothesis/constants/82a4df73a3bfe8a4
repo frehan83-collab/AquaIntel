@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\retrieval\precision_recall_curve.py
+# hypothesis_version: 6.151.10
+
+[0.0, 1.0, 'False positive rate', 'True positive rate', 'error', 'indexes', 'max', 'mean', 'median', 'min', 'neg', 'pos', 'preds', 'skip', 'target']

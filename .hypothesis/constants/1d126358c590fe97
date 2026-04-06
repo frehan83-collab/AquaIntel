@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\trainer\configuration_validator.py
+# hypothesis_version: 6.151.10
+
+['configure_model', 'configure_optimizers', 'dataloader_iter', 'forward', 'pl.LightningModule', 'pl.Trainer', 'predict', 'test', 'test_epoch_end', 'training_epoch_end', 'training_step', 'val', 'validate', 'validation_epoch_end', 'validation_step']

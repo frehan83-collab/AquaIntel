@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\routers\analytics_routes.py
+# hypothesis_version: 6.151.10
+
+[0.75, 0.85, 100, 400, 404, 500, 600, 1800, '/api/anomaly/alerts', '/api/anomaly/scores', '/api/brief', '/api/leaders/top100', '/api/leaders/top30', 'alerts', 'analytics', 'audits', 'current_year', 'data', 'data_provenance', 'date', 'detail', 'detected_date', 'disease', 'error', 'lice', 'lice_emission', 'lice_quota_national', 'lice_quota_pa', 'metric', 'previous_year', 'price', 'production_area', 'self_evolve', 'sst', 'timestamp', 'two_years_ago', 'value', 'week', 'year', 'years', 'yoy']

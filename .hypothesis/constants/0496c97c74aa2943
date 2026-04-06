@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\temporal_fusion_transformer\sub_modules.py
+# hypothesis_version: 6.151.10
+
+[-1000000000.0, 0.0, 0.1, 2.0, 160, 10000, 'bias', 'context', 'cpu', 'fan_in', 'fc', 'fc1', 'fc2', 'leaky_relu', 'linear', 'mps', 'pe']

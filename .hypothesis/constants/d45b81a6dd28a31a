@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\utils\convert.py
+# hypothesis_version: 6.151.10
+
+['adj', 'adj_t', 'all', 'cpu', 'destination', 'edge_default', 'edge_index', 'lower', 'node_default', 'source', 'type', 'upper', 'uv', 'weight']

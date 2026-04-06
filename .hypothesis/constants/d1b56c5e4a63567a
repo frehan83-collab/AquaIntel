@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\routers\ml_routes.py
+# hypothesis_version: 6.151.10
+
+[0.05, 0.7, 0.72, 0.75, 0.95, 100, 128, 256, 400, 404, 503, '/api', '/gnn/predict-all', '/gnn/status', '/gnn/train', 'Chronos-2', 'MOIRAI-2', 'TimesFM 2.5', 'above_threshold', 'all_predictions', 'chronos', 'company_id', 'data_provenance', 'error', 'generated_at', 'has_cleaner_fish', 'hi80', 'hi95', 'high_risk_farms', 'horizon', 'individual_forecasts', 'lat', 'lo80', 'lo95', 'locality_no', 'lon', 'median', 'ml', 'model', 'models_tried', 'models_used', 'moirai', 'n_farms', 'n_high_risk', 'price', 'production_area', 'sea_temp_c', 'status', 'timesfm', 'trained', 'values', 'week', 'xreg', 'year']

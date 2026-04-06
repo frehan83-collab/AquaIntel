@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\statsmodels\stats\_knockoff.py
+# hypothesis_version: 6.151.10
+
+['FDR', 'FDR+', 'Stat', 'columns', 'design_method', 'equi', 'knockoff', 'right', 'sdp', 'show_progress', 'x', 'x%d']

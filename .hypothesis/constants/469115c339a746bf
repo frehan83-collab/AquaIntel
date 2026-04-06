@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\pascal.py
+# hypothesis_version: 6.151.10
+
+[0.224, 0.225, 0.229, 0.406, 0.456, 0.485, 256.0, 255, 256, 2008, '.', '/', '0', 'Annotations', 'JPEGImages', 'RGB', 'TrainVal', 'VOC2011', 'VOCdevkit', '_', 'aeroplane', 'annotations', 'bicycle', 'bilinear', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'cpu', 'cuda', 'difficult', 'diningtable', 'dog', 'horse', 'images', 'keypoint', 'motorbike', 'name', 'object', 'occluded', 'person', 'pottedplant', 'processed', 'r', 'raw', 'rb', 'sheep', 'sofa', 'splits.npz', 'test', 'test.pt', 'train', 'training.pt', 'truncated', 'tvmonitor', 'x', 'xmax', 'xmin', 'y', 'ymax', 'ymin']

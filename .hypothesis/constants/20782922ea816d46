@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\text\squad.py
+# hypothesis_version: 6.151.10
+
+[0.0, 100.0, 'SQuAD.plot', 'exact_match', 'f1_score', 'sum', 'total']

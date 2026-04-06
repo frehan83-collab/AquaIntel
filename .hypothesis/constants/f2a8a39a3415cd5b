@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\testing\assertions.py
+# hypothesis_version: 6.151.10
+
+[1e-08, 1e-07, 1e-05, 100, 'Arrays are not equal', 'M', 'O', 'S', 'U', 'allclose', 'equals', 'error', 'identical', 'isomorphic', 'm', 'not implemented', 'replace', 'utf-8', 'variable']

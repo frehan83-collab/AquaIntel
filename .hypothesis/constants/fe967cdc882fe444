@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\routers\signals_routes.py
+# hypothesis_version: 6.151.10
+
+[100, 400, '/api/audit', '/api/disclaimer', '/api/orders', '/api/sentiment/poll', '/api/signals', '/api/signals/confirm', '/api/signals/reject', 'broker', 'confirmed', 'created_at', 'direction', 'disclaimer', 'id', 'new_articles', 'price', 'quantity', 'rationale', 'rejected', 'side', 'signal_id', 'signals', 'status', 'strength', 'ticker', 'titles', 'user_consent']

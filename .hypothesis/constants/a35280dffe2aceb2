@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\fabric\strategies\xla_fsdp.py
+# hypothesis_version: 6.151.10
+
+[2.0, '32-true', 'MpDeviceLoader', '_LRScheduler', '_POLICY', '_is_sharded', '_rank-*-of-*.pth', 'auto_wrap_policy', 'avg', 'batch_sampler', 'checkpoint', 'compute_dtype', 'consolidated.ckpt', 'full', 'mean', 'model', 'params', 'reduce', 'shard_metadata', 'sharded', 'sum', 'xla_fsdp']

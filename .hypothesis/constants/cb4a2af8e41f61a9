@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\fabric\strategies\launchers\xla.py
+# hypothesis_version: 6.151.10
+
+['XLAFSDPStrategy', 'XLAStrategy', 'cpu', 'end-process', 'fork', 'nprocs']

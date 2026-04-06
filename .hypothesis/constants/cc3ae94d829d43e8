@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\core\indexes.py
+# hypothesis_version: 6.151.10
+
+[',', ', ', '.', 'O', 'PandasIndex', 'T_PDIndex', 'T_PandasIndex', 'Variable', '__coord_name_id', '__id_coord_names', '__id_index', '_dims', '_index_type', '_indexes', '_variables', 'array', 'b', 'coord_dtype', 'different', 'dim', 'dtype', 'equal', 'f', 'float16', 'float64', 'ignore', 'ij', 'index', 'inner', 'int', 'isel', 'level_coords_dtype', 'mM', 'ndim', 'nearest', 'object', 'outer', 'raise', 'remove coordinate(s)', 'roll', 'sizes']

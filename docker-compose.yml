@@ -1,0 +1,73 @@
+version: "3.9"
+
+services:
+  # Database: TimescaleDB (PostgreSQL + time-series extensions)
+  db:
+    image: timescale/timescaledb:latest-pg16
+    container_name: fishintel-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: openclaw
+      POSTGRES_USER: openclaw
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-openclaw-dev-password}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openclaw"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend: agents + API
+  fishintel:
+    build: .
+    container_name: fishintel-core
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://openclaw:${POSTGRES_PASSWORD:-openclaw-dev-password}@db:5432/openclaw
+      - PYTENSOR_FLAGS=device=cpu,floatX=float64,optimizer=fast_compile,cxx=
+      - FISHINTEL_JWT_SECRET=${FISHINTEL_JWT_SECRET:-change-me-in-production}
+      - FISKERIDIR_BIOSTAT_JSON=/app/data/biostat-total-flk.json
+
+  # Frontend: Next.js
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${PUBLIC_API_URL:-http://localhost:8000}
+    container_name: fishintel-frontend
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - fishintel
+
+  # Nginx reverse proxy (serves both on port 80/443)
+  nginx:
+    image: nginx:alpine
+    container_name: fishintel-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    depends_on:
+      - fishintel
+      - frontend
+
+volumes:
+  pgdata:

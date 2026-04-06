@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\backends\plugins.py
+# hypothesis_version: 6.151.10
+
+[':', 'netcdf_engine_order', 'self', 'store', 'xarray.backends']

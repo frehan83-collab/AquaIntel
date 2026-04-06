@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\routers\supply_routes.py
+# hypothesis_version: 6.151.10
+
+[0.5, 0.75, 100, 500, 1000, 5000, '/api', '/biomass/outlook', '/biomass/scenarios', '/supply-forecast', '/supply/summary', 'Computation failed', 'No data available', 'all_green', 'all_red', 'avg_lice', 'baseline_tonnes', 'current', 'data_provenance', 'error', 'forecast_biomass', 'generated_at', 'key_risks', 'lice_values', 'national_mab', 'net_adjustment_pct', 'pct_above', 'predicted_tonnes', 'price_outlook', 'price_pressure', 'quality_score', 'recommendations', 'region', 'regions', 'supply', 'supply_risk', 'temp', 'temps', 'treatments', 'utilization_pct']

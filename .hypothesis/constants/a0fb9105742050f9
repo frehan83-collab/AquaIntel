@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\webkb.py
+# hypothesis_version: 6.151.10
+
+[',', 'cornell', 'data.pt', 'out1_graph_edges.txt', 'processed', 'raw', 'test_mask', 'texas', 'train_mask', 'val_mask', 'wisconsin']

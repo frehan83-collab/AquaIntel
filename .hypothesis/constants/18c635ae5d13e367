@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\pool\__init__.py
+# hypothesis_version: 6.151.10
+
+[0.5, 'ASAPooling', 'ApproxL2KNNIndex', 'ApproxMIPSKNNIndex', 'ClusterPooling', 'EdgePooling', 'KNNIndex', 'L2KNNIndex', 'MIPSKNNIndex', 'MemPooling', 'PANPooling', 'SAGPooling', 'TopKPooling', 'approx_knn', 'approx_knn_graph', 'avg_pool', 'avg_pool_neighbor_x', 'avg_pool_x', 'fps', 'global_add_pool', 'global_max_pool', 'global_mean_pool', 'graclus', 'knn', 'knn_graph', 'max_pool', 'max_pool_neighbor_x', 'max_pool_x', 'nearest', 'radius', 'radius_graph', 'source_to_target', 'voxel_grid']

@@ -1,0 +1,31 @@
+# Docker build — verifies the Dockerfile builds successfully on each push to main
+# Does not push to a registry (none configured yet); build-only verification
+name: Docker Build
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Set up Docker Buildx for efficient builds
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 3. Build the Docker image (no push)
+      #    Tags with both the commit SHA (for traceability) and 'latest'
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: |
+            openclaw:${{ github.sha }}
+            openclaw:latest

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\statsmodels\compat\numpy.py
+# hypothesis_version: 6.151.10
+
+['1.13.99', '1.22.99', '1.99.99', 'NP_LT_114', 'NP_LT_123', 'NP_LT_2', 'lstsq', 'np_matrix_rank', 'np_new_unique']

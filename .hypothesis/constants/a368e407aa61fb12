@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\routers\twin_routes.py
+# hypothesis_version: 6.151.10
+
+[0.0, 0.001, 0.5, 15.0, 100, '/api/twin/simulate', '/api/twin/status', '/api/twin/sync', 'above_threshold', 'add_cleaner_fish', 'avg_lice', 'baseline', 'biomass_saved_t', 'cleaner_fish_boost', 'error', 'final', 'impact', 'interventions', 'lice_reduction_pct', 'localities_simulated', 'max_lice', 'mechanical', 'no_data', 'pct_above', 'status', 'temp_delta', 'temp_delta_c', 'total_biomass_t', 'trajectory', 'treat_above', 'treat_localities', 'treatment_type', 'twin', 'week', 'weeks_simulated']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\image\psnrb.py
+# hypothesis_version: 6.151.10
+
+[0.0, 'bef', 'data_range', 'mean', 'sum', 'sum_squared_error', 'total']

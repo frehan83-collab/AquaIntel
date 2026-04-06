@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\ml\timesfm_engine.py
+# hypothesis_version: 6.151.10
+
+[0.0, 0.1, 0.25, 0.3, 0.5, 0.75, 0.9, 1.28, 1.96, 100, 256, 1024, 'NOK/kg', 'actual', 'adult_female_lice', 'celsius', 'chronos-2', 'confidence', 'context_length', 'coverage_80', 'data_quality', 'degraded', 'error', 'export_volume_tonnes', 'forecast', 'freq', 'generated_at', 'hi80', 'hi95', 'horizon', 'is_live', 'last_value', 'lice/fish', 'live', 'lo80', 'lo95', 'locality_no', 'mape', 'median', 'model', 'models', 'naive-fallback', 'predicted_nok', 'predictions', 'price', 'q10', 'q90', 'quantiles', 'rmse', 'salmon_price_nok', 'sea_temperature', 'seasonal-naive', 'series', 'supply', 'tft', 'timesfm-2.5', 'timesfm-2.5-200m', 'timesfm_load_error', 'timesfm_model_loaded', 'tonnes', 'unit', 'xreg', 'xreg_used']

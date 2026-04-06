@@ -1,0 +1,4 @@
+# file: C:\Users\freha\OpenClaw\core\market\salmon_price.py
+# hypothesis_version: 6.151.10
+
+[-1.5, -0.5, 0.0, 0.025, 0.04, 0.2, 0.3, 0.35, 0.5, 0.7, 0.95, 1.0, 1.15, 1.28, 1.5, 2.0, 2.5, 2.8, 3.4, 3.5, 30.0, 100, 200, ',', '.', '. ', '1d', '5d', 'Accept', 'BAKKA', 'BAKKA.OL', 'GSF', 'GSF.OL', 'LEAN BEARISH', 'LEAN BULLISH', 'LSG', 'LSG.OL', 'MOWI', 'MOWI.OL', 'NEUTRAL', 'OpenClaw/1.0', 'SALM', 'SALM.OL', 'SSB_NOK', 'STRONG BEARISH', 'STRONG BULLISH', 'User-Agent', 'application/json', 'bearish', 'bullish', 'change_from_now_pct', 'chart', 'close', 'current_spot', 'current_week', 'decreasing', 'deviation_pct', 'expected_nok', 'forward_outlook', 'increasing', 'indicators', 'interval', 'is_above_seasonal', 'nasdaq', 'nasdaq.error', 'nasdaq.fetch_fail', 'nasdaq.fetched', 'neutral', 'prices.fetched', 'prices.yahoo_error', 'quote', 'range', 'result', 'seasonal_expected', 'superior', 'week']

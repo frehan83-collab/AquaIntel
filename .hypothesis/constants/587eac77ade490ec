@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\image\mifid.py
+# hypothesis_version: 6.151.10
+
+[1e-14, 1e-08, 0.1, 1.0, 192, 255, 768, 2048, 'fake_features', 'inception', 'inception-v3-compat', 'real_features', 'torch_fidelity']

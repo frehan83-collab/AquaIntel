@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\numba\core\rewrites\static_binop.py
+# hypothesis_version: 6.151.10
+
+['**', 'before-inference', 'binop']

@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\llm\models\g_retriever.py
+# hypothesis_version: 6.151.10
+
+[0.05, 'CAUSAL_LM', 'batch', 'edge_attr', 'graph_conv', 'mean', 'none', 'q_proj', 'trans_conv', 'v_proj']

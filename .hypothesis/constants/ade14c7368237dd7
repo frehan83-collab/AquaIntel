@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\utilities\imports.py
+# hypothesis_version: 6.151.10
+
+[128, '2.6.0', '2.8.0', 'omegaconf', 'rich>=10.2.2', 'torch', 'torch>=2.8.0,<2.9.0', 'torch>=2.9.0,<2.10.0', 'torchmetrics>=0.11.0', 'torchmetrics>=0.8.0', 'torchmetrics>=0.9.1', 'torchmetrics>=1.0.0', 'torchvision']

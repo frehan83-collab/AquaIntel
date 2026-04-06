@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\data\database.py
+# hypothesis_version: 6.151.10
+
+[',\n', ', ', '?', 'BLOB NOT NULL', 'FLOAT', 'INTEGER NOT NULL', 'NaN', 'TEXT NOT NULL', 'big', 'dtype', 'ignore', 'is_edge_index', 'is_index', 'size']

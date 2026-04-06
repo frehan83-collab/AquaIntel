@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\heterophilous_graph_dataset.py
+# hypothesis_version: 6.151.10
+
+['-', '_', 'amazon_ratings', 'data.pt', 'edges', 'minesweeper', 'node_features', 'node_labels', 'processed', 'questions', 'r', 'raw', 'roman_empire', 'test_masks', 'tolokers', 'train_masks', 'val_masks']

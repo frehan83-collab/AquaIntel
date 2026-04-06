@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\mlp\_decodermlp_pkg.py
+# hypothesis_version: 6.151.10
+
+['DecoderMLP', 'agency', 'authors', 'capability:exogenous', 'capability:pred_int', 'category', 'cpflows', 'data_loader_kwargs', 'distr', 'info:compute', 'info:name', 'info:pred_type', 'info:y_type', 'jdb78', 'loss', 'numeric', 'point', 'price_actual', 'python_dependencies', 'quantile', 'target', 'tests:skip_by_name']

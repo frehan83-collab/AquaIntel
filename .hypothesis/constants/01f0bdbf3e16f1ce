@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\aminer.py
+# hypothesis_version: 6.151.10
+
+['author', 'data.pt', 'id_author.txt', 'id_conf.txt', 'idx', 'label', 'name', 'net_aminer', 'paper', 'paper.txt', 'paper_author.txt', 'paper_conf.txt', 'published_in', 'publishes', 'venue', 'writes', 'written_by', 'y']

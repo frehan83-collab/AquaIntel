@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\io\tu.py
+# hypothesis_version: 6.151.10
+
+[',', 'A', 'edge_attr', 'edge_attributes', 'edge_index', 'edge_labels', 'graph_attributes', 'graph_indicator', 'graph_labels', 'node_attributes', 'node_labels', 'num_edge_attributes', 'num_edge_labels', 'num_node_attributes', 'num_node_labels', 'x', 'y']

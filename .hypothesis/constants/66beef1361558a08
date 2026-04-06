@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\prometheus_client\metrics.py
+# hypothesis_version: 6.151.10
+
+[0.0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0, '1', 'F', 'False', 'MetricWrapperBase', 'T', '_', '_bucket', '_count', '_created', '_info', '_namespace', '_original_name', '_subsystem', '_sum', '_total', '_unit', 'all', 'buckets', 'counter', 'gauge', 'histogram', 'info', 'le', 'liveall', 'livemax', 'livemin', 'livemostrecent', 'livesum', 'max', 'min', 'mostrecent', 'multiprocess_mode', 'namespace', 'observe', 'quantile', 'set', 'states', 'stateset', 'subsystem', 'sum', 'summary', 't', 'true', 'unit']

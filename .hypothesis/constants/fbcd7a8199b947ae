@@ -1,0 +1,4 @@
+# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\plugins\precision\fsdp.py
+# hypothesis_version: 6.151.10
+
+['16-mixed', '16-true', '32-true', 'ShardedGradScaler', 'TorchMixedPrecision', 'bf16-mixed', 'bf16-true', 'cuda', 'mixed', 'pl.LightningModule', 'true']
