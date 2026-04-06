@@ -1,5 +1,7 @@
 # FishIntel Deployment Guide
 
+> **Repository:** [github.com/frehan83-collab/OpenClaw](https://github.com/frehan83-collab/OpenClaw) (private)
+
 ## Prerequisites
 
 | Requirement | Version | Notes |

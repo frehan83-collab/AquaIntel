@@ -1,6 +1,40 @@
-# OpenClaw — Lice-Impact Arbitrage Bot
+# OpenClaw — AquaIntelligence Platform
 
-A production-grade multi-agent system that monitors Norwegian salmon farm lice levels and generates conditional trading signals for MOWI, SALM (SalMar), and LSG (Lerøy) equities on Oslo Børs.
+> **Repository:** [github.com/frehan83-collab/OpenClaw](https://github.com/frehan83-collab/OpenClaw) (private)
+
+The world's most advanced salmon aquaculture intelligence platform. Built for Norwegian fish farmers, traders, and analysts making million-NOK decisions daily.
+
+**66 engines** · **59 pages** · **432 tests** · **303 API routes** · **7-country coverage** · **3 ML foundation models**
+
+## Quick Start
+
+```bash
+# Backend (port 8001)
+cd OpenClaw
+pip install -r requirements.txt
+python -m uvicorn core.api:app --host 0.0.0.0 --port 8001
+
+# Frontend (port 3002)
+cd frontend
+npm install
+npx next dev -p 3002
+
+# Full platform with 12 agents
+python main.py --api-port 8001
+```
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 15.5, React 19.2, TailwindCSS, Framer Motion |
+| Backend | FastAPI 2.2, SQLAlchemy async, 24 router modules |
+| Database | SQLite (dev) / PostgreSQL + TimescaleDB (prod) |
+| ML Models | Google TimesFM 2.5, Amazon Chronos-2, Salesforce MOIRAI-2 |
+| Data Sources | BarentsWatch, SSB, FRED, MET.no, Copernicus, Mattilsynet, DFO Canada |
+| Testing | pytest (432 tests), Hypothesis property-based, Playwright E2E |
+| i18n | Norwegian Bokmål / English (525 translation keys) |
+| CI/CD | GitHub Actions (3 workflows), Docker, nginx |
 
 ## Architecture
 
