@@ -1,0 +1,306 @@
+"use client";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Scale, RefreshCw, DollarSign, Globe2, TrendingUp,
+  Activity, Award, AlertTriangle,
+} from "lucide-react";
+import DataTable, { Column } from "@/components/DataTable";
+import KPICard from "@/components/KPICard";
+import GlassCard from "@/components/GlassCard";
+import { OcButton } from "@/components/ui/Button";
+import { api } from "@/lib/api";
+import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import InteractiveChart, { DataPoint } from "@/components/InteractiveChart";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+export default function CompetitivenessPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [tariffOverrides, setTariffOverrides] = useState<Record<string, number>>({});
+  const [scenarioResult, setScenarioResult] = useState<any>(null);
+  const [scenarioLoading, setScenarioLoading] = useState(false);
+  const { t, locale } = useTranslation();
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [res] = await Promise.allSettled([api.competitivenessIndex()]);
+      if (res.status === "fulfilled") setData(res.value);
+    } catch { /* empty */ }
+    setLoading(false);
+  };
+
+  const runTariffScenario = async () => {
+    if (Object.keys(tariffOverrides).length === 0) return;
+    setScenarioLoading(true);
+    try {
+      const result = await api.competitivenessTariffScenario(tariffOverrides);
+      setScenarioResult(result);
+    } catch { /* empty */ }
+    setScenarioLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const origins = data?.origins || [];
+  const cheapest = origins[0];
+  const norway = origins.find((o: any) => o.country === "Norway");
+  const bestMargin = [...origins].sort((a: any, b: any) => b.margin_pct - a.margin_pct)[0];
+
+  return (
+    <ErrorBoundary fallbackTitle="Competitiveness Index error">
+    <div className="space-y-6">
+      {/* Header */}
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-3">
+            <Scale className="w-6 h-6 text-ocean-400" />
+            {t("competitiveness.title")}
+          </h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">
+            {t("competitiveness.fx_adjusted")}
+          </p>
+        </div>
+        <OcButton variant="secondary" size="sm" onClick={load} loading={loading}
+          leftIcon={<RefreshCw className="w-3.5 h-3.5" />}>Refresh</OcButton>
+      </motion.div>
+
+      {/* KPI Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KPICard
+          label="Most Competitive"
+          value={cheapest ? `${cheapest.flag} ${cheapest.country}` : "\u2014"}
+          delta={cheapest?.total_delivered_usd != null ? `$${formatNumber(cheapest.total_delivered_usd, locale, 2)}/kg delivered` : ""}
+          deltaType="positive"
+          icon={Award}
+          delay={0}
+        />
+        <KPICard
+          label="Norway Delivered"
+          value={norway?.total_delivered_usd != null ? `$${formatNumber(norway.total_delivered_usd, locale, 2)}/kg` : "\u2014"}
+          delta={norway ? `Rank #${norway.rank} (15% tariff)` : ""}
+          deltaType={norway && norway.rank > 3 ? "negative" : "neutral"}
+          icon={AlertTriangle}
+          delay={0.03}
+        />
+        <KPICard
+          label="US Spot Price"
+          value={data?.us_spot_usd_kg != null ? `$${formatNumber(data.us_spot_usd_kg, locale, 2)}/kg` : "\u2014"}
+          delta="FRED global salmon benchmark"
+          deltaType="neutral"
+          icon={DollarSign}
+          delay={0.06}
+        />
+        <KPICard
+          label="Best Margin"
+          value={bestMargin?.margin_pct != null ? `${formatNumber(bestMargin.margin_pct, locale, 1)}%` : "\u2014"}
+          delta={bestMargin?.margin_usd != null ? `${bestMargin.flag} ${bestMargin.country} ($${formatNumber(bestMargin.margin_usd, locale, 2)}/kg)` : ""}
+          deltaType="positive"
+          icon={TrendingUp}
+          delay={0.09}
+        />
+      </div>
+
+      {/* FX-Adjusted Delivered Cost Chart */}
+      {origins.length > 0 && (
+        <GlassCard delay={0.11}>
+          <InteractiveChart
+            title="Delivered Cost by Origin (USD/kg)"
+            data={origins.map((o: any): DataPoint => ({
+              x: o.rank ?? 0,
+              y: o.total_delivered_usd ?? 0,
+              label: `${o.flag || ""} ${o.country || ""}`.trim(),
+            }))}
+            unit="$/kg"
+            color="#34d399"
+            fillColor="#34d399"
+            height={180}
+          />
+        </GlassCard>
+      )}
+
+      {/* Ranking Table */}
+      <GlassCard delay={0.12}>
+        <DataTable
+          title="Delivered Cost Ranking (US Market)"
+          data={origins}
+          searchKeys={["country"]}
+          exportFilename="origin_competitiveness"
+          compact
+          emptyMessage={loading ? t("common.loading") : t("common.no_data")}
+          columns={[
+            {
+              key: "rank", label: t("competitiveness.rank"), sortable: true, align: "center" as const, width: "40px",
+              render: (val: any) => (
+                <span className={`text-xs font-bold ${
+                  val === 1 ? "text-emerald-400" : val === 2 ? "text-ocean-400" : val === 3 ? "text-amber-400" : "text-[var(--text-secondary)]"
+                }`}>
+                  {val}
+                </span>
+              ),
+            },
+            {
+              key: "country", label: t("competitiveness.country"), sortable: true,
+              render: (_val: any, row: any) => (
+                <span className="font-semibold text-[var(--text-primary)]">
+                  {row.flag} {row.country}
+                </span>
+              ),
+            },
+            {
+              key: "local_cost_per_kg", label: t("competitiveness.cost_nok"), sortable: true, align: "right" as const,
+              render: (val: any, row: any) => (
+                <span className="tabular-nums text-[var(--text-secondary)]">
+                  {val?.toLocaleString()} {row.currency}
+                </span>
+              ),
+            },
+            {
+              key: "fx_rate_to_usd", label: "FX Rate", sortable: true, align: "right" as const,
+              render: (val: any) => (
+                <span className="tabular-nums text-[var(--text-secondary)] font-mono text-[10px]">
+                  {val != null ? (val < 0.01 ? formatNumber(val, locale, 5) : formatNumber(val, locale, 4)) : "\u2014"}
+                </span>
+              ),
+            },
+            {
+              key: "production_cost_usd", label: "USD Cost", sortable: true, align: "right" as const,
+              render: (val: any) => <span className="tabular-nums">{val != null ? `$${formatNumber(val, locale, 2)}` : "\u2014"}</span>,
+            },
+            {
+              key: "tariff_pct", label: t("competitiveness.tariff"), sortable: true, align: "right" as const,
+              render: (val: any, row: any) => (
+                val > 0 ? (
+                  <span className="text-rose-400 tabular-nums">
+                    {formatNumber(val * 100, locale, 0)}% ({row.tariff_cost_usd != null ? `$${formatNumber(row.tariff_cost_usd, locale, 2)}` : "\u2014"})
+                  </span>
+                ) : (
+                  <span className="text-emerald-400">0% FTA</span>
+                )
+              ),
+            },
+            {
+              key: "freight_usd", label: "Freight", sortable: true, align: "right" as const,
+              render: (val: any) => <span className="tabular-nums text-[var(--text-secondary)]">{val != null ? `$${formatNumber(val, locale, 2)}` : "\u2014"}</span>,
+            },
+            {
+              key: "total_delivered_usd", label: "Delivered", sortable: true, align: "right" as const,
+              render: (val: any) => <span className="tabular-nums font-bold text-[var(--text-primary)]">{val != null ? `$${formatNumber(val, locale, 2)}` : "\u2014"}</span>,
+            },
+            {
+              key: "margin_pct", label: "Margin", sortable: true, align: "right" as const,
+              render: (val: any, row: any) => (
+                <span className={`tabular-nums ${row.margin_usd > 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                  {val > 0 ? "+" : ""}{val}%
+                </span>
+              ),
+            },
+          ] as Column[]}
+        />
+      </GlassCard>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* FX Rates Panel */}
+        {data?.fx_rates && (
+          <GlassCard delay={0.25}>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-amber-400" />
+              {t("competitiveness.fx_rates")}
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {Object.entries(data.fx_rates).map(([currency, rate]: [string, any]) => (
+                <div key={currency} className="p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-center">
+                  <p className="text-[10px] text-[var(--text-secondary)] uppercase">{currency}/USD</p>
+                  <p className="text-sm font-bold font-mono text-[var(--text-primary)] mt-0.5">
+                    {rate != null ? (rate < 0.01 ? formatNumber(rate, locale, 5) : formatNumber(rate, locale, 4)) : "\u2014"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        )}
+
+        {/* Insights */}
+        {data?.insights?.length > 0 && (
+          <GlassCard delay={0.28} accent="ocean">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-ocean-400" />
+              Intelligence
+            </h3>
+            <div className="space-y-2">
+              {data.insights.map((ins: string, i: number) => (
+                <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                  <Globe2 className="w-3.5 h-3.5 text-ocean-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-[var(--text-primary)] leading-relaxed">{ins}</p>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        )}
+      </div>
+
+      {/* Tariff Scenario Analysis */}
+      <GlassCard delay={0.3} accent="amber">
+        <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
+          <Scale className="w-4 h-4 text-amber-400" />
+          {t("competitiveness.tariff_scenario")}
+          <span className="ml-auto text-[10px] text-[var(--text-secondary)]">What-if analysis</span>
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+          {["Norway", "Chile", "Scotland", "Canada", "Faroe Islands", "Iceland"].map((origin) => (
+            <div key={origin} className="space-y-1">
+              <div className="flex justify-between text-[10px]">
+                <span className="text-[var(--text-secondary)]">{origin}</span>
+                <span className="text-ocean-400 font-semibold">{tariffOverrides[origin] ?? "—"}%</span>
+              </div>
+              <input
+                type="range"
+                min={0} max={25} step={0.5}
+                value={tariffOverrides[origin] ?? 0}
+                onChange={(e) => setTariffOverrides(prev => ({...prev, [origin]: Number(e.target.value)}))}
+                className="w-full h-1.5 appearance-none rounded-full bg-white/10 accent-ocean-400 cursor-pointer"
+              />
+            </div>
+          ))}
+        </div>
+        <OcButton variant="primary" size="sm" onClick={runTariffScenario} loading={scenarioLoading}>
+          Run Scenario
+        </OcButton>
+
+        {scenarioResult?.scenario_origins && (
+          <div className="mt-4 space-y-1.5">
+            {scenarioResult.scenario_origins.map((o: any, i: number) => (
+              <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold text-[var(--text-primary)] w-4">#{o.scenario_rank}</span>
+                  <span className="text-[11px] text-[var(--text-primary)]">{o.origin || o.country}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] text-[var(--text-secondary)]">
+                    {o.delivered_cost_usd != null ? `$${formatNumber(o.delivered_cost_usd, locale, 2)}/kg` : "\u2014"}
+                  </span>
+                  {o.rank_change !== 0 && (
+                    <span className={`text-[10px] font-semibold ${o.rank_change > 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      {o.rank_change > 0 ? "\u2191" : "\u2193"}{Math.abs(o.rank_change)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </GlassCard>
+
+      <p className="text-[9px] text-[var(--text-secondary)] text-center opacity-50">
+        FX rates: Yahoo Finance + FRED. Norway cost: live from Fiskeridirektoratet model.
+        Other origins: industry estimates. Tariffs: US Harmonized Tariff Schedule.
+        Freight: approximate air/sea rates. Not financial or trade advice.
+      </p>
+    </div>
+    </ErrorBoundary>
+  );
+}
