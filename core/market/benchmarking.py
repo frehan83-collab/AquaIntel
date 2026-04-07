@@ -108,15 +108,8 @@ class BenchmarkingEngine:
         # Fetch disease counts per company from Mattilsynet
         disease_by_company: dict[str, dict] = {}
         try:
-            import asyncio
             from core.market.mattilsynet_client import mattilsynet_client
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor() as pool:
-                    cases = pool.submit(asyncio.run, mattilsynet_client.fetch_disease_cases(200)).result()
-            else:
-                cases = asyncio.run(mattilsynet_client.fetch_disease_cases(200))
+            cases = await mattilsynet_client.fetch_disease_cases(200)
             disease_by_company = mattilsynet_client.get_company_disease_counts(cases)
         except Exception:
             pass

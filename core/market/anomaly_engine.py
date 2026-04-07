@@ -192,16 +192,9 @@ class AnomalyEngine:
         # ── 2. Disease outbreak detection ────────────────────────────
         try:
             from core.market.mattilsynet_client import mattilsynet_client
-            import asyncio
 
             try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    import concurrent.futures
-                    with concurrent.futures.ThreadPoolExecutor() as pool:
-                        cases = pool.submit(asyncio.run, mattilsynet_client.fetch_disease_cases(200)).result()
-                else:
-                    cases = asyncio.run(mattilsynet_client.fetch_disease_cases(200))
+                cases = await mattilsynet_client.fetch_disease_cases(200)
             except Exception:
                 cases = []
 
