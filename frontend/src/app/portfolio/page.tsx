@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   BriefcaseBusiness, AlertTriangle, ShieldAlert, ShieldCheck, CheckCircle2,
-  Loader2, Plus, Search, Thermometer, Fish,
+  Loader2, Plus, Search, Thermometer, Fish, Printer,
 } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
@@ -178,10 +178,19 @@ export default function PortfolioPage() {
             )}
             {provenance && <DataQualityBadge provenance={provenance} />}
           </div>
-          <OcButton variant="ghost" onClick={() => router.push("/farmer-daily")}>
-            <Plus className="w-4 h-4 mr-1" />
-            Add Farm
-          </OcButton>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => window.print()}
+              className="print:hidden flex items-center gap-1.5 px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-ocean-400 bg-white/[0.04] border border-white/[0.08] rounded-lg transition-colors"
+              title="Export as PDF"
+            >
+              <Printer className="w-3.5 h-3.5" /> PDF
+            </button>
+            <OcButton variant="ghost" onClick={() => router.push("/farmer-daily")}>
+              <Plus className="w-4 h-4 mr-1" />
+              Add Farm
+            </OcButton>
+          </div>
         </div>
 
         {/* Loading state */}

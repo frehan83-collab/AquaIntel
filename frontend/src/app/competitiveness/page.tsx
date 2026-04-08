@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Scale, RefreshCw, DollarSign, Globe2, TrendingUp,
-  Activity, Award, AlertTriangle,
+  Activity, Award, AlertTriangle, Printer,
 } from "lucide-react";
 import DataTable, { Column } from "@/components/DataTable";
 import KPICard from "@/components/KPICard";
@@ -65,8 +65,17 @@ export default function CompetitivenessPage() {
             {t("competitiveness.fx_adjusted")}
           </p>
         </div>
-        <OcButton variant="secondary" size="sm" onClick={load} loading={loading}
-          leftIcon={<RefreshCw className="w-3.5 h-3.5" />}>Refresh</OcButton>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => window.print()}
+            className="print:hidden flex items-center gap-1.5 px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-ocean-400 bg-white/[0.04] border border-white/[0.08] rounded-lg transition-colors"
+            title="Export as PDF"
+          >
+            <Printer className="w-3.5 h-3.5" /> PDF
+          </button>
+          <OcButton variant="secondary" size="sm" onClick={load} loading={loading}
+            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}>Refresh</OcButton>
+        </div>
       </motion.div>
 
       {/* KPI Row */}

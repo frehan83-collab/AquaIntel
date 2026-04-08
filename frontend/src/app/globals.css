@@ -223,20 +223,40 @@ select {
 }
 
 @media print {
-  /* Hide sidebar, topbar, and navigation */
-  nav, .sidebar, [data-sidebar], [data-topbar] { display: none !important; }
-  /* Remove glassmorphic backgrounds for clean print */
-  .glass-card, .glass, [class*="glass"] {
+  /* Hide non-content elements */
+  nav, .sidebar, [data-sidebar], [data-topbar], .print\:hidden { display: none !important; }
+
+  /* Clean backgrounds for printing */
+  body, html { background: white !important; color: #1a1a1a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  main { margin-left: 0 !important; padding: 16px !important; }
+
+  /* Cards: clean borders, readable text */
+  [class*="GlassCard"], [class*="glass"], .rounded-2xl {
     background: white !important;
-    border: 1px solid #ddd !important;
-    color: black !important;
+    border: 1px solid #e5e7eb !important;
+    color: #1a1a1a !important;
+    box-shadow: none !important;
+    break-inside: avoid;
   }
-  /* Full width */
-  main { margin-left: 0 !important; padding: 20px !important; }
-  /* Show all content */
-  body { background: white !important; color: black !important; }
-  /* Hide buttons */
-  button { display: none !important; }
-  /* Print margins */
-  @page { margin: 2cm; }
+
+  /* Preserve chart colors */
+  svg { print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important; }
+
+  /* KPI cards readable */
+  [class*="KPICard"] { border: 1px solid #d1d5db !important; background: #f9fafb !important; }
+
+  /* Hide interactive elements */
+  button:not(.print-keep), [role="button"], input, select { display: none !important; }
+
+  /* Links show URL */
+  a[href]:after { content: " (" attr(href) ")"; font-size: 0.8em; color: #6b7280; }
+  a[href^="#"]:after, a[href^="javascript"]:after { content: "" !important; }
+
+  /* Page settings */
+  @page { margin: 1.5cm; size: A4; }
+
+  /* Ensure page breaks work */
+  h1, h2, h3 { break-after: avoid; }
+  .grid { display: block !important; }
+  .grid > * { break-inside: avoid; margin-bottom: 12px; }
 }

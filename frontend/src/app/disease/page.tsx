@@ -103,6 +103,13 @@ export default function DiseasePage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => window.print()}
+            className="print:hidden flex items-center gap-1.5 px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-ocean-400 bg-white/[0.04] border border-white/[0.08] rounded-lg transition-colors"
+            title="Export as PDF"
+          >
+            <Download className="w-3.5 h-3.5" /> PDF
+          </button>
           <OcButton variant="ghost" size="sm"
             onClick={() => exportToCSV([...norwayCases, ...alertList], "disease_intelligence")}
             leftIcon={<Download className="w-3.5 h-3.5" />}>Export CSV</OcButton>

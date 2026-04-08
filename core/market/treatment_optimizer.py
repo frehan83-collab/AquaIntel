@@ -314,10 +314,13 @@ class TreatmentOptimizer:
         if not pa_farms:
             return {"error": f"No farms found in PA {pa}", "production_area": pa}
 
+        # Batch-fetch lice history for ALL farms in this PA (fixes N+1 query)
+        pa_lice_batch = await self._get_pa_lice_history_batch(pa, weeks=4)
+
         schedule_entries: list[dict] = []
         for farm in pa_farms:
             loc_no = farm["locality_no"]
-            lice_history = await self._get_lice_history(loc_no, weeks=4)
+            lice_history = pa_lice_batch.get(loc_no, [])
             if not lice_history:
                 continue
 
@@ -496,6 +499,70 @@ class TreatmentOptimizer:
         except Exception as e:
             log.error("treatment_optimizer.db_error", error=str(e))
             return []
+
+    async def _get_pa_lice_history_batch(self, pa: int, weeks: int = 4) -> dict[int, list[dict]]:
+        """Fetch recent lice records for ALL farms in a PA in a single query.
+
+        Returns a dict keyed by locality_no, each value a list of lice records
+        (oldest first), matching the format of _get_lice_history().
+        """
+        try:
+            from core.async_db import get_async_session
+
+            # Step 1: get all locality_nos in this PA
+            async with get_async_session() as s:
+                loc_result = await s.execute(
+                    select(Locality.locality_no)
+                    .where(Locality.production_area == pa)
+                    .where(Locality.latitude.isnot(None))
+                )
+                locality_nos = [row[0] for row in loc_result.all()]
+
+            if not locality_nos:
+                return {}
+
+            # Step 2: fetch lice records for ALL farms in one query
+            async with get_async_session() as s:
+                # Use a window function to rank rows per locality and pick top N
+                from sqlalchemy import and_
+
+                result = await s.execute(
+                    select(LiceRecord)
+                    .where(LiceRecord.locality_no.in_(locality_nos))
+                    .order_by(
+                        LiceRecord.locality_no,
+                        desc(LiceRecord.year),
+                        desc(LiceRecord.week),
+                    )
+                )
+                all_rows = result.scalars().all()
+
+            # Step 3: group by locality_no and limit to `weeks` per farm
+            from collections import defaultdict
+            grouped: dict[int, list] = defaultdict(list)
+            for r in all_rows:
+                if len(grouped[r.locality_no]) < weeks:
+                    grouped[r.locality_no].append(r)
+
+            # Step 4: convert to dict format (oldest first) matching _get_lice_history
+            result_dict: dict[int, list[dict]] = {}
+            for loc_no, rows in grouped.items():
+                result_dict[loc_no] = [
+                    {
+                        "year": r.year,
+                        "week": r.week,
+                        "avg_adult_female_lice": r.avg_adult_female_lice,
+                        "avg_mobile_lice": r.avg_mobile_lice,
+                        "sea_temp_c": r.sea_temp_c,
+                        "has_cleaner_fish": r.has_cleaner_fish,
+                    }
+                    for r in reversed(rows)  # oldest first
+                ]
+
+            return result_dict
+        except Exception as e:
+            log.error("treatment_optimizer.pa_lice_batch_error", error=str(e))
+            return {}
 
     async def _get_pa_farms(self, pa: int) -> list[dict]:
         """Get all farms in a production area from DB."""

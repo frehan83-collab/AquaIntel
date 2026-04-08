@@ -668,6 +668,24 @@ const translations: Record<string, Record<Locale, string>> = {
   "error.try_again": { en: "Try Again", no: "Prøv igjen" },
   "loading.skeleton": { en: "Loading data...", no: "Laster data..." },
 
+  // ── Domain terms ──
+  "domain.lice_limit": { en: "Lice limit", no: "Lusegrense" },
+  "domain.max_allowed_biomass": { en: "Max Allowed Biomass (MTB)", no: "Maksimalt tillatt biomasse (MTB)" },
+  "domain.production_cost": { en: "Production cost", no: "Produksjonskostnad" },
+  "domain.harvest": { en: "Harvest", no: "Slakting" },
+  "domain.smolt": { en: "Smolt", no: "Smolt" },
+  "domain.welfare": { en: "Welfare", no: "Fiskevelferd" },
+  "domain.escapees": { en: "Escapees", no: "Rømming" },
+  "domain.stocking_density": { en: "Stocking density", no: "Tetthet" },
+
+  // ── Common UI actions ──
+  "common.print_pdf": { en: "Export PDF", no: "Eksporter PDF" },
+  "common.refresh": { en: "Refresh", no: "Oppdater" },
+  "common.close": { en: "Close", no: "Lukk" },
+  "common.confirm": { en: "Confirm", no: "Bekreft" },
+  "common.back": { en: "Back", no: "Tilbake" },
+  "common.next": { en: "Next", no: "Neste" },
+
   // ── Freshness indicator ──
   "freshness.live": { en: "Live data", no: "Sanntidsdata" },
   "freshness.recent": { en: "Recent data", no: "Nylige data" },
@@ -720,6 +738,7 @@ export const NAV_LABEL_KEYS: Record<string, string> = {
   "AI Chat": "nav.ai_chat",
   "ML Baselines": "nav.ml_baselines",
   "RAS Tracker": "nav.ras_tracker",
+  "ASC Compliance": "nav.asc_compliance",
   "EU Traceability": "nav.eu_traceability",
   "Contract Risk": "nav.contract_risk",
   "Insurance": "nav.insurance",
