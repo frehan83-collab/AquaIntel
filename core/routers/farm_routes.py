@@ -395,3 +395,93 @@ async def offshore_lice_comparison():
     """
     from core.market.offshore_engine import offshore_engine
     return await offshore_engine.offshore_lice_comparison()
+
+
+# ── Fish Welfare Scoring (Session 32) ───────────────────────────────
+# Reference: Stien et al. (2013) "Salmon Welfare Index Model (SWIM)"
+
+@router.get("/api/welfare/score/{locality_no}")
+async def welfare_score(locality_no: int):
+    """Get welfare score (0-100) for a farm with 5-component breakdown.
+
+    Components: lice burden (35%), thermal stress (15%), mortality trend (20%),
+    oxygen/environment (15%), treatment stress (15%).
+    Also predicts 7-day mortality using heuristic model.
+    """
+    from core.market.welfare_scorer import welfare_scorer
+    result = await welfare_scorer.score_farm(locality_no)
+    return result.to_dict()
+
+
+@router.get("/api/welfare/pa/{pa}")
+async def welfare_pa_summary(pa: int):
+    """Get welfare scores for all farms in a production area.
+
+    Returns per-farm scores + PA-level aggregates (avg score, grade distribution).
+    """
+    from core.market.welfare_scorer import welfare_scorer
+
+    if pa < 1 or pa > 13:
+        raise HTTPException(status_code=400, detail="Production area must be 1-13")
+
+    # Query all localities in this PA
+    async with get_async_session() as session:
+        localities = (await session.execute(
+            select(Locality.locality_no, Locality.name)
+            .where(Locality.production_area == pa)
+            .order_by(Locality.locality_no)
+            .limit(100)
+        )).all()
+
+    if not localities:
+        return {
+            "pa": pa,
+            "farms": [],
+            "summary": {"avg_score": 0, "farm_count": 0, "grade_distribution": {}},
+        }
+
+    # Score each farm
+    farm_scores = []
+    for loc_no, loc_name in localities:
+        try:
+            score = await welfare_scorer.score_farm(loc_no)
+            farm_scores.append({
+                "locality_no": loc_no,
+                "name": loc_name or f"Locality {loc_no}",
+                "total_score": score.total_score,
+                "grade": score.grade,
+                "predicted_mortality_7d": score.predicted_mortality_7d,
+                "alert_reason": score.alert_reason,
+            })
+        except Exception:
+            farm_scores.append({
+                "locality_no": loc_no,
+                "name": loc_name or f"Locality {loc_no}",
+                "total_score": None,
+                "grade": "N/A",
+                "predicted_mortality_7d": None,
+                "alert_reason": "Scoring failed",
+            })
+
+    # Aggregate
+    scored = [f for f in farm_scores if f["total_score"] is not None]
+    avg_score = round(sum(f["total_score"] for f in scored) / len(scored), 1) if scored else 0
+
+    grade_dist: dict[str, int] = {}
+    for f in scored:
+        g = f["grade"]
+        grade_dist[g] = grade_dist.get(g, 0) + 1
+
+    # Sort by score ascending (worst first)
+    farm_scores.sort(key=lambda f: f["total_score"] if f["total_score"] is not None else 999)
+
+    return {
+        "pa": pa,
+        "farms": farm_scores,
+        "summary": {
+            "avg_score": avg_score,
+            "farm_count": len(scored),
+            "grade_distribution": grade_dist,
+        },
+        "generated_at": dt.datetime.now(dt.UTC).isoformat(),
+    }

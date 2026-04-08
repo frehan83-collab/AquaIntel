@@ -463,6 +463,10 @@ export const api = {
   offshoreRisk: (localityNo: number) => fetchAPI(`/api/farms/offshore/${localityNo}/risk`),
   offshoreLiceComparison: () => fetchAPI("/api/farms/offshore/lice-comparison"),
 
+  // Fish Welfare Scoring (Session 32)
+  welfareScore: (localityNo: number) => fetchAPI(`/api/welfare/score/${localityNo}`),
+  welfarePaSummary: (pa: number) => fetchAPI(`/api/welfare/pa/${pa}`),
+
   // Decision Engine
   farmDecision: (localityNo: number) =>
     fetchAPI<DecisionCard>(`/api/decision/${localityNo}`),
@@ -631,6 +635,16 @@ export const api = {
   ascReadinessSummary: () => fetchAPI("/api/compliance/asc/readiness-summary"),
   ascChecklist: () => fetchAPI("/api/compliance/asc/checklist"),
 
+  // Regulatory Reporting Automation
+  complianceDeadlines: (localityNo?: number) =>
+    fetchAPI(`/api/compliance/deadlines${localityNo ? `?locality_no=${localityNo}` : ""}`),
+  weeklyLiceReport: (localityNo: number, week: number, year: number) =>
+    fetchAPI(`/api/compliance/report/weekly-lice/${localityNo}?week=${week}&year=${year}`),
+  monthlyTreatmentReport: (localityNo: number, year: number, month: number) =>
+    fetchAPI(`/api/compliance/report/monthly-treatment/${localityNo}?year=${year}&month=${month}`),
+  complianceScore: (localityNo: number) =>
+    fetchAPI(`/api/compliance/score/${localityNo}`),
+
   // CSRD Export
   csrdExport: (year?: number) => fetchAPI(`/api/admin/export/csrd?year=${year || 2025}`),
 
@@ -667,4 +681,10 @@ export const api = {
 
   // Foundation Model Ensemble (combines TimesFM + Chronos + MOIRAI)
   ensemblePriceForecast: (horizon: number = 4) => fetchAPI<EnsembleForecast>(`/api/ml/ensemble/price-forecast?horizon=${horizon}`),
+
+  // Feed Supply Chain
+  feedSupplyChainSummary: () => fetchAPI("/api/feed-supply-chain/summary"),
+  feedSupplyChainEudrRisk: () => fetchAPI("/api/feed-supply-chain/eudr-risk"),
+  feedSupplyChainScenarios: () => fetchAPI("/api/feed-supply-chain/scenarios"),
+  feedSupplyChainLive: () => fetchAPI("/api/feed-supply-chain/live"),
 };

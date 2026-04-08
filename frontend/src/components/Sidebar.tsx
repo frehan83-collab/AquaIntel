@@ -12,6 +12,7 @@ import {
   Sigma, Wheat, Ship, Globe2, Shield, Scale, Radio, ShieldCheck, Satellite, FileText,
   Thermometer, Syringe, Factory, Timer, CreditCard, FileCheck, Sparkles, Sunrise, Layers,
   Menu, X, BookOpen, GitCompare, Bell, BriefcaseBusiness, Search, ScrollText, LineChart,
+  Heart,
 } from "lucide-react";
 
 const CHANGELOG_LATEST_VERSION = "2.5.0";
@@ -61,9 +62,11 @@ const NAV_SECTIONS: NavSection[] = [
     { href: "/farmer", label: "Farm Advisory", icon: Anchor },
     { href: "/treatment", label: "Treatment Optimizer", icon: Syringe },
     { href: "/efficacy", label: "Efficacy Market", icon: FlaskConical },
+    { href: "/welfare", label: "Fish Welfare", icon: Heart },
     { href: "/harvest", label: "Harvest Optimizer", icon: Timer },
     { href: "/twin", label: "Digital Twin", icon: Boxes },
     { href: "/satellite", label: "Satellite Intel", icon: Satellite },
+    { href: "/feed-supply-chain", label: "Feed Supply Chain", icon: Wheat },
     { href: "/command-centre", label: "Command Centre", icon: Radio },
   ]},
   { section: "Advanced", items: [
@@ -76,6 +79,7 @@ const NAV_SECTIONS: NavSection[] = [
   ]},
   { section: "Compliance", items: [
     { href: "/asc-compliance", label: "ASC Compliance", icon: ShieldCheck },
+    { href: "/regulatory-reports", label: "Regulatory Reports", icon: FileCheck },
     { href: "/traceability", label: "EU Traceability", icon: FileCheck },
     { href: "/contracts", label: "Contract Risk", icon: FileText },
     { href: "/insurance", label: "Insurance", icon: Shield },

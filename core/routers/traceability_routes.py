@@ -139,3 +139,70 @@ async def asc_checklist():
     """
     from core.market.asc_compliance import asc_compliance
     return asc_compliance.get_checklist()
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Regulatory Reporting Automation (Mattilsynet / Akvakulturforskriften)
+# ──────────────────────────────────────────────────────────────────────
+
+@compliance_router.get("/deadlines")
+async def compliance_deadlines(locality_no: int = None):
+    """Get upcoming compliance deadlines for the next 30 days.
+
+    Returns weekly lice report deadlines (Mattilsynet), monthly treatment
+    summary deadlines, and quarterly biomass reporting deadlines.
+    """
+    from core.market.regulatory_reporter import regulatory_reporter
+    deadlines = await regulatory_reporter.get_upcoming_deadlines(locality_no)
+    return {
+        "deadlines": [d.to_dict() for d in deadlines],
+        "count": len(deadlines),
+        "locality_filter": locality_no,
+    }
+
+
+@compliance_router.get("/report/weekly-lice/{locality_no}")
+async def weekly_lice_report(locality_no: int, week: int, year: int):
+    """Generate weekly lice report for Mattilsynet submission.
+
+    Pulls lice data from BarentsWatch records, validates against
+    regulatory thresholds (0.5 adult female, 0.2 spring PA 2-7),
+    and flags any exceedances or missing data.
+    """
+    from core.market.regulatory_reporter import regulatory_reporter
+    report = await regulatory_reporter.generate_weekly_lice_report(
+        locality_no, week, year
+    )
+    validation_errors = await regulatory_reporter.validate_report(report)
+    result = report.to_dict()
+    result["validation_errors"] = validation_errors
+    return result
+
+
+@compliance_router.get("/report/monthly-treatment/{locality_no}")
+async def monthly_treatment_report(locality_no: int, year: int, month: int):
+    """Generate monthly treatment summary for regulatory reporting.
+
+    Aggregates treatment outcomes by method with efficacy statistics,
+    cost totals, and pre/post lice comparisons.
+    """
+    from core.market.regulatory_reporter import regulatory_reporter
+    report = await regulatory_reporter.generate_monthly_treatment_summary(
+        locality_no, year, month
+    )
+    validation_errors = await regulatory_reporter.validate_report(report)
+    result = report.to_dict()
+    result["validation_errors"] = validation_errors
+    return result
+
+
+@compliance_router.get("/score/{locality_no}")
+async def compliance_score(locality_no: int):
+    """Get compliance health score for a farm.
+
+    Composite score (0-100) based on: on-time reporting rate (40%),
+    data completeness (30%), discrepancy count (15%), and treatment
+    documentation (15%). Grade: A (90+), B (75+), C (60+), D (<60).
+    """
+    from core.market.regulatory_reporter import regulatory_reporter
+    return await regulatory_reporter.generate_compliance_score(locality_no)

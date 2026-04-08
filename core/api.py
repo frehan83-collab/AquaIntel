@@ -240,6 +240,7 @@ from core.routers.admin_routes import router as admin_router
 from core.routers.webhook_routes import router as webhook_router
 from core.routers.apikey_routes import router as apikey_router
 from core.routers.integration_routes import router as integration_router
+from core.routers.supply_chain_routes import router as supply_chain_router
 app.include_router(auth_router)
 app.include_router(billing_router)
 app.include_router(disease_router)
@@ -267,6 +268,7 @@ app.include_router(webhook_router)
 app.include_router(apikey_router)
 app.include_router(futures_router)
 app.include_router(integration_router)
+app.include_router(supply_chain_router)
 
 # ── Models ────────────────────────────────────────────────────────────
 from core.schemas import HealthResponse
