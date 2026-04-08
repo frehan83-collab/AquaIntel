@@ -1,0 +1,94 @@
+{
+  "global": {
+    "colors": {
+      "bg": {
+        "primary": { "value": "#060F1C", "type": "color", "description": "Page background (dark)" },
+        "secondary": { "value": "#0A1A2F", "type": "color", "description": "Section background (dark)" }
+      },
+      "accent": { "value": "#00D4C8", "type": "color", "description": "Primary interactive cyan" },
+      "text": {
+        "primary": { "value": "#E8EDF2", "type": "color", "description": "Main content text (dark)" },
+        "secondary": { "value": "#8899AA", "type": "color", "description": "Labels, descriptions (dark)" }
+      },
+      "border": { "value": "#1E293B", "type": "color", "description": "Dividers (dark)" },
+      "danger": { "value": "#F43F5E", "type": "color", "description": "Errors, destructive" },
+      "success": { "value": "#10B981", "type": "color", "description": "Positive actions" },
+      "warning": { "value": "#F59E0B", "type": "color", "description": "Caution states" },
+      "salmon": { "value": "#E8734A", "type": "color", "description": "Brand accent (Norwegian salmon)" },
+      "data": {
+        "biomass": { "value": "#F59E0B", "type": "color", "description": "Fish weight/growth" },
+        "lice": { "value": "#F43F5E", "type": "color", "description": "Lice counts" },
+        "temperature": { "value": "#3B82F6", "type": "color", "description": "Sea temperature" },
+        "mortality": { "value": "#9F1239", "type": "color", "description": "Death rate" },
+        "feeding": { "value": "#059669", "type": "color", "description": "Feed data" },
+        "oxygen": { "value": "#06B6D4", "type": "color", "description": "O2 levels" }
+      },
+      "traffic": {
+        "green": { "value": "#22C55E", "type": "color", "description": "Trafikklys grønt (+6% MTB)" },
+        "yellow": { "value": "#EAB308", "type": "color", "description": "Trafikklys gult (0% MTB)" },
+        "red": { "value": "#EF4444", "type": "color", "description": "Trafikklys rødt (-6% MTB)" }
+      },
+      "positive": { "value": "#34D399", "type": "color", "description": "Good trends" },
+      "negative": { "value": "#FB7185", "type": "color", "description": "Bad trends" },
+      "chart": {
+        "1": { "value": "#00D4C8", "type": "color", "description": "Chart: Cyan" },
+        "2": { "value": "#E8734A", "type": "color", "description": "Chart: Salmon" },
+        "3": { "value": "#8B5CF6", "type": "color", "description": "Chart: Violet" },
+        "4": { "value": "#F59E0B", "type": "color", "description": "Chart: Amber" },
+        "5": { "value": "#EC4899", "type": "color", "description": "Chart: Pink" },
+        "6": { "value": "#10B981", "type": "color", "description": "Chart: Emerald" },
+        "7": { "value": "#6366F1", "type": "color", "description": "Chart: Indigo" },
+        "8": { "value": "#14B8A6", "type": "color", "description": "Chart: Teal" }
+      },
+      "surface": {
+        "0": { "value": "#060F1C", "type": "color", "description": "Page level" },
+        "1": { "value": "#0A1629", "type": "color", "description": "Card level" },
+        "2": { "value": "#0F1D33", "type": "color", "description": "Elevated card" },
+        "3": { "value": "#152640", "type": "color", "description": "Modal/dropdown" },
+        "4": { "value": "#1A2F4D", "type": "color", "description": "Tooltip/popover" }
+      }
+    },
+    "typography": {
+      "fontFamilies": {
+        "sans": { "value": "DM Sans", "type": "fontFamilies" },
+        "display": { "value": "DM Serif Display", "type": "fontFamilies" },
+        "mono": { "value": "JetBrains Mono", "type": "fontFamilies" }
+      },
+      "fontSize": {
+        "xs": { "value": "12", "type": "fontSizes" },
+        "sm": { "value": "14", "type": "fontSizes" },
+        "base": { "value": "16", "type": "fontSizes" },
+        "lg": { "value": "18", "type": "fontSizes" },
+        "xl": { "value": "20", "type": "fontSizes" },
+        "2xl": { "value": "24", "type": "fontSizes" },
+        "3xl": { "value": "30", "type": "fontSizes" },
+        "4xl": { "value": "36", "type": "fontSizes" }
+      },
+      "fontWeight": {
+        "regular": { "value": "400", "type": "fontWeights" },
+        "medium": { "value": "500", "type": "fontWeights" },
+        "semibold": { "value": "600", "type": "fontWeights" },
+        "bold": { "value": "700", "type": "fontWeights" }
+      }
+    },
+    "spacing": {
+      "1": { "value": "4", "type": "spacing" },
+      "2": { "value": "8", "type": "spacing" },
+      "3": { "value": "12", "type": "spacing" },
+      "4": { "value": "16", "type": "spacing" },
+      "5": { "value": "20", "type": "spacing" },
+      "6": { "value": "24", "type": "spacing" },
+      "8": { "value": "32", "type": "spacing" },
+      "10": { "value": "40", "type": "spacing" },
+      "12": { "value": "48", "type": "spacing" }
+    },
+    "borderRadius": {
+      "sm": { "value": "6", "type": "borderRadius" },
+      "md": { "value": "8", "type": "borderRadius" },
+      "lg": { "value": "12", "type": "borderRadius" },
+      "xl": { "value": "16", "type": "borderRadius" },
+      "2xl": { "value": "20", "type": "borderRadius" },
+      "full": { "value": "9999", "type": "borderRadius" }
+    }
+  }
+}
