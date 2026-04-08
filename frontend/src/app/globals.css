@@ -42,6 +42,39 @@
   --fjord-midwater: #0F1D30;
 }
 
+/* ── Data-Semantic Colors (aquaculture-specific) ── */
+:root {
+  --color-biomass: #F59E0B;      /* amber — fish weight/growth */
+  --color-lice: #F43F5E;         /* rose — lice count */
+  --color-temperature: #3B82F6;  /* blue — sea temperature */
+  --color-mortality: #9F1239;    /* dark rose — death rate */
+  --color-feeding: #059669;      /* emerald — feed data */
+  --color-oxygen: #06B6D4;       /* cyan — O2 levels */
+  --color-traffic-green: #22C55E;
+  --color-traffic-yellow: #EAB308;
+  --color-traffic-red: #EF4444;
+  --color-positive: #34D399;     /* emerald-300 */
+  --color-negative: #FB7185;     /* rose-400 */
+  --color-warning: #FBBF24;      /* amber-300 */
+
+  /* Chart palette (8 distinct, accessible) */
+  --chart-1: #00D4C8;  /* cyan */
+  --chart-2: #E8734A;  /* salmon */
+  --chart-3: #8B5CF6;  /* violet */
+  --chart-4: #F59E0B;  /* amber */
+  --chart-5: #EC4899;  /* pink */
+  --chart-6: #10B981;  /* emerald */
+  --chart-7: #6366F1;  /* indigo */
+  --chart-8: #14B8A6;  /* teal */
+
+  /* Elevation (dark mode surfaces) */
+  --surface-0: #060F1C;   /* page background */
+  --surface-1: #0A1629;   /* card background */
+  --surface-2: #0F1D33;   /* elevated card */
+  --surface-3: #152640;   /* modal/dropdown */
+  --surface-4: #1A2F4D;   /* tooltip/popover */
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(232, 115, 74, 0.25) transparent;
@@ -220,6 +253,34 @@ select {
     .glass-hover { transition: none; }
     .glass-hover:hover { transform: none; }
   }
+}
+
+@layer utilities {
+  /* Tabular numbers for all data displays */
+  .font-data {
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* Bloomberg-style number display */
+  .text-kpi {
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  /* Smooth number transitions */
+  .transition-number {
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Data-dense padding (tighter than default) */
+  .p-dense { padding: 12px; }
+  .px-dense { padding-left: 12px; padding-right: 12px; }
+  .py-dense { padding-top: 8px; padding-bottom: 8px; }
+  .gap-dense { gap: 8px; }
 }
 
 @media print {
