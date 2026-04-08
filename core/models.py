@@ -25,7 +25,7 @@ class Locality(Base):
     latitude = Column(Float)
     longitude = Column(Float)
     owner_company = Column(String(256))  # mapped company ticker
-    production_area = Column(Integer)  # PA 1-13
+    production_area = Column(Integer, index=True)  # PA 1-13 — indexed for PA-level queries
     pa_color = Column(String(16))  # green/yellow/red traffic-light
     updated_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC))
 
@@ -123,8 +123,8 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, nullable=True)
-    action = Column(String(50), nullable=False)  # login, logout, export, create_webhook, delete_webhook, log_treatment, etc.
+    user_id = Column(Integer, nullable=True, index=True)  # indexed for per-user audit queries
+    action = Column(String(50), nullable=False, index=True)  # login, logout, export, create_webhook, delete_webhook, log_treatment, etc.
     resource = Column(String(100), nullable=True)  # what was acted on (e.g. "webhook:5", "api_key:oc_live_")
     details = Column(Text, nullable=True)  # JSON with extra context
     ip_address = Column(String(45), nullable=True)

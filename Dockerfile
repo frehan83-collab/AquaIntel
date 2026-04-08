@@ -14,8 +14,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # App code
 COPY . .
 
-# Create dirs
-RUN mkdir -p data/models logs
+# Create dirs + non-root user for security
+RUN mkdir -p data/models logs && \
+    useradd -m -u 1000 -s /bin/bash appuser && \
+    chown -R appuser:appuser /app
+
+USER appuser
 
 EXPOSE 8000
 

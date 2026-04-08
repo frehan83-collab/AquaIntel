@@ -10,6 +10,7 @@ import DemoShell from "@/components/DemoShell";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DataAttribution from "@/components/DataAttribution";
 import KeyboardShortcuts from "@/components/KeyboardShortcuts";
+import GlobalErrorHandler from "@/components/GlobalErrorHandler";
 
 const dmSerif = DM_Serif_Display({
   weight: "400",
@@ -61,6 +62,7 @@ export default function RootLayout({
         </a>
         <PWARegister />
         <OfflineIndicator />
+        <GlobalErrorHandler />
         <ToastProvider>
           <KeyboardShortcuts />
           <Sidebar />

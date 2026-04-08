@@ -1,9 +1,18 @@
+import bundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
 
   // Performance: compress responses
   compress: true,
+
+  // Security: hide framework identity
+  poweredByHeader: false,
 
   // Security: restrict allowed image domains
   images: {
@@ -18,6 +27,11 @@ const nextConfig = {
 
   // Reduce bundle size by excluding server-only packages from client bundles
   serverExternalPackages: ["sharp"],
+
+  // Tree-shake large icon/chart libraries — saves 50-100KB
+  experimental: {
+    optimizePackageImports: ["lucide-react", "recharts", "framer-motion"],
+  },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

@@ -93,42 +93,42 @@ async def farmer_advisory(locality_no: int):
 async def farm_graph_summary():
     """Get farm network graph statistics."""
     from core.market.farm_graph import farm_graph
-    return farm_graph.get_graph_summary()
+    return await farm_graph.get_graph_summary()
 
 
 @router.get("/api/farm-graph/clusters")
 async def farm_graph_clusters(risk_level: str = None):
     """Get farm clusters with risk assessment."""
     from core.market.farm_graph import farm_graph
-    return farm_graph.get_clusters(risk_level)
+    return await farm_graph.get_clusters(risk_level)
 
 
 @router.get("/api/farm-graph/cascades")
 async def farm_graph_cascades():
     """Get predicted treatment cascade events."""
     from core.market.farm_graph import farm_graph
-    return farm_graph.get_cascade_predictions()
+    return await farm_graph.get_cascade_predictions()
 
 
 @router.get("/api/farm-graph/company-exposure")
 async def farm_graph_company_exposure():
     """Get per-company network exposure risk scores."""
     from core.market.farm_graph import farm_graph
-    return farm_graph.get_company_network_exposure()
+    return await farm_graph.get_company_network_exposure()
 
 
 @router.get("/api/farm-graph/farm/{locality_no}")
 async def farm_graph_neighbors(locality_no: int):
     """Get a farm's neighbors and connections."""
     from core.market.farm_graph import farm_graph
-    return farm_graph.get_farm_neighbors(locality_no)
+    return await farm_graph.get_farm_neighbors(locality_no)
 
 
 @router.get("/api/farm-graph/map-data")
 async def farm_graph_map():
     """Get full map visualization data (nodes + edges + clusters)."""
     from core.market.farm_graph import farm_graph
-    return farm_graph.get_map_data()
+    return await farm_graph.get_map_data()
 
 
 # ── Harvest Optimizer ────────────────────────────────────────────────

@@ -102,7 +102,7 @@ class ESGScorer:
         try:
             from core.market.mattilsynet_client import mattilsynet_client
             cases = await mattilsynet_client.fetch_disease_cases(200)
-            disease_by_company = mattilsynet_client.get_company_disease_counts(cases)
+            disease_by_company = await mattilsynet_client.get_company_disease_counts(cases)
         except Exception as exc:
             log.debug("esg.disease_fetch_skipped", error=str(exc)[:80])
 
@@ -263,9 +263,9 @@ class ESGScorer:
                 return self._to_dict(s, rank=i + 1)
         return None
 
-    def get_summary(self) -> dict:
+    async def get_summary(self) -> dict:
         """Get ESG summary statistics."""
-        scores = self.compute_all()
+        scores = await self.compute_all()
         if not scores:
             return {"n_companies": 0}
         totals = [s.total for s in scores]

@@ -23,18 +23,48 @@ import type {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-async function fetchAPI<T = any>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: { "Content-Type": "application/json", ...options?.headers },
-  });
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
-  const json = await res.json();
-  // Auto-unwrap provenance-wrapped responses: {data: T, data_provenance: {...}}
-  if (json && typeof json === "object" && !Array.isArray(json) && "data" in json && "data_provenance" in json) {
-    return json.data as T;
+async function fetchAPI<T = any>(
+  path: string,
+  options?: RequestInit,
+  _retries = 3,
+): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: { "Content-Type": "application/json", ...options?.headers },
+    });
+
+    if (!res.ok) {
+      // Only retry on 5xx (server errors), not 4xx (client errors)
+      if (res.status >= 500 && _retries > 1) {
+        const delay = [500, 1500, 3500][3 - _retries] ?? 500;
+        await new Promise((r) => setTimeout(r, delay));
+        return fetchAPI<T>(path, options, _retries - 1);
+      }
+      throw new Error(`API ${res.status}: ${res.statusText}`);
+    }
+
+    const json = await res.json();
+    // Auto-unwrap provenance-wrapped responses: {data: T, data_provenance: {...}}
+    if (json && typeof json === "object" && !Array.isArray(json) && "data" in json && "data_provenance" in json) {
+      return json.data as T;
+    }
+    return json as T;
+  } catch (err) {
+    // Retry on network errors and timeouts, not on client errors
+    if (_retries > 1 && (err instanceof TypeError || (err instanceof DOMException && err.name === "AbortError"))) {
+      const delay = [500, 1500, 3500][3 - _retries] ?? 500;
+      await new Promise((r) => setTimeout(r, delay));
+      return fetchAPI<T>(path, options, _retries - 1);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
   }
-  return json as T;
 }
 
 export const api = {

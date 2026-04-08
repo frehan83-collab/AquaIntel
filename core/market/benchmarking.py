@@ -110,7 +110,7 @@ class BenchmarkingEngine:
         try:
             from core.market.mattilsynet_client import mattilsynet_client
             cases = await mattilsynet_client.fetch_disease_cases(200)
-            disease_by_company = mattilsynet_client.get_company_disease_counts(cases)
+            disease_by_company = await mattilsynet_client.get_company_disease_counts(cases)
         except Exception:
             pass
 

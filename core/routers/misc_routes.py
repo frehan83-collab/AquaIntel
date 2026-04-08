@@ -312,7 +312,7 @@ async def esg_scores():
 @router.get("/api/esg/summary")
 async def esg_summary():
     from core.market.esg_scorer import esg_scorer
-    return esg_scorer.get_summary()
+    return await esg_scorer.get_summary()
 
 @router.get("/api/esg/company/{company_name}")
 async def esg_company(company_name: str):

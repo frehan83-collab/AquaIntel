@@ -33,12 +33,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 4. Run the test suite
-      #    --tb=short keeps failure output readable in CI logs
-      #    || true ensures xfail tests don't fail the entire workflow
+      # 4. Run the full test suite with coverage
       - name: Run pytest
         run: |
-          pytest tests/test_api_routes.py tests/test_market_engines.py tests/test_data_integrity.py -v --tb=short || true
+          pytest tests/ -v --tb=short --cov=core --cov-report=term-missing --cov-fail-under=40
 
       - name: Security audit (pip-audit)
         run: |

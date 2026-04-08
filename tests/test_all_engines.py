@@ -272,9 +272,10 @@ class TestFarmGraph:
         from core.market.farm_graph import farm_graph
         assert farm_graph is not None
 
-    def test_graph_summary(self):
+    @pytest.mark.asyncio
+    async def test_graph_summary(self):
         from core.market.farm_graph import farm_graph
-        result = farm_graph.get_graph_summary()
+        result = await farm_graph.get_graph_summary()
         assert isinstance(result, dict)
 
 

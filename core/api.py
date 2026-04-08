@@ -105,6 +105,21 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 
+# ── Correlation ID Middleware ─────────────────────────────────────────
+import uuid
+import structlog
+
+class CorrelationIDMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+        structlog.contextvars.bind_contextvars(request_id=request_id)
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        structlog.contextvars.unbind_contextvars("request_id")
+        return response
+
+app.add_middleware(CorrelationIDMiddleware)
+
 # ── HTTP Cache Headers (ETag + Cache-Control) ───────────────────────
 from core.cache_headers import CacheHeadersMiddleware
 
@@ -501,7 +516,7 @@ async def chat_briefing(request: Request):
     context_parts = []
     try:
         from core.market.farm_graph import farm_graph
-        summary = farm_graph.get_summary()
+        summary = await farm_graph.get_summary()
         context_parts.append(f"Farm network: {summary.get('n_farms', 0)} farms, {summary.get('n_above_threshold', 0)} above lice threshold")
     except Exception:
         pass
@@ -589,7 +604,7 @@ async def intelligence_summary():
             "treatment_signals_72h": len(ais_tracker.get_treatment_signals(72)),
         },
         "sentiment": sentiment_engine.get_sentiment_summary(),
-        "farm_network": farm_graph.get_graph_summary(),
+        "farm_network": await farm_graph.get_graph_summary(),
         "regime": {
             "alerts": regime_detector.get_alerts()[:3],
             "high_risk_pas": [
@@ -643,7 +658,7 @@ async def intelligence_health():
             },
             "farm_graph": {
                 "status": "ok",
-                **farm_graph.get_graph_summary(),
+                **(await farm_graph.get_graph_summary()),
             },
             "regime": {
                 "status": "ok",
@@ -735,7 +750,7 @@ async def ws_command_centre(websocket: WebSocket):
                     },
                     "sentiment": sentiment_engine.get_sentiment_summary(),
                     "articles": sentiment_engine.get_recent_articles(hours=6)[:5],
-                    "farm_network": farm_graph.get_graph_summary(),
+                    "farm_network": await farm_graph.get_graph_summary(),
                     "regime_alerts": regime_detector.get_alerts()[:5],
                     "chile": chile_monitor.get_latest_snapshot(),
                     "chile_signals": chile_monitor.get_signals(days=7)[:3],
@@ -933,8 +948,8 @@ async def _rule_based_chat_response(message: str) -> dict:
     if is_risk:
         data_used.append("farm_graph")
         from core.market.farm_graph import farm_graph
-        summary = farm_graph.get_graph_summary()
-        cascades = farm_graph.get_predicted_cascades()
+        summary = await farm_graph.get_graph_summary()
+        cascades = await farm_graph.get_predicted_cascades()
         answer_parts.append(
             f"**Farm Network Risk**\n\n"
             f"- Network nodes: **{summary.get('node_count', 0)} farms**\n"

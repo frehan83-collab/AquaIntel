@@ -36,12 +36,13 @@ function Skeleton({ className }: { className?: string }) {
 // ─── Fish Pool SVG Chart ───────────────────────────────────────────────────────
 
 function FishPoolChart({ data }: { data: FishPoolPoint[] }) {
-  if (!data.length) return <Skeleton className="h-40 w-full" />;
+  if (!data || data.length < 2) return <Skeleton className="h-40 w-full" />;
 
   const W = 800; const H = 160;
   const PAD = { top: 16, right: 64, bottom: 32, left: 52 };
   const prices = data.map((d) => d.price);
-  const minP = Math.min(...prices); const maxP = Math.max(...prices);
+  const minP = prices.length > 0 ? Math.min(...prices) : 0;
+  const maxP = prices.length > 0 ? Math.max(...prices) : 1;
   const range = maxP - minP || 1;
 
   const x = (i: number) => PAD.left + (i / (data.length - 1)) * (W - PAD.left - PAD.right);

@@ -3,8 +3,10 @@ OpenClaw global settings loaded from environment / .env file.
 """
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import model_validator
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
@@ -104,6 +106,28 @@ class Settings(BaseSettings):
     llm_max_tokens: int = 4096
     llm_temperature: float = 0.3
     llm_monthly_budget_usd: float = 100.0
+
+
+    # Environment (set FISHINTEL_ENV=production for production checks)
+    fishintel_env: str = "development"
+
+    @model_validator(mode="after")
+    def _production_checks(self) -> "Settings":
+        """Fail fast on insecure production configuration."""
+        if self.fishintel_env != "production":
+            return self
+        errors = []
+        if self.database_url.startswith("sqlite://"):
+            errors.append("SQLite is not supported in production — set DATABASE_URL to PostgreSQL")
+        if self.secret_key == "change-me":
+            errors.append("Default secret_key is insecure — set a strong secret_key")
+        if errors:
+            raise ValueError("Production configuration errors:\n  - " + "\n  - ".join(errors))
+        if not self.barentswatch_client_id:
+            logging.getLogger("openclaw.settings").warning(
+                "BARENTSWATCH_CLIENT_ID not set — live lice data will be unavailable"
+            )
+        return self
 
 
 settings = Settings()

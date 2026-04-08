@@ -21,7 +21,7 @@ async def get_lice_data(pa: int | None = None, company: str | None = None) -> di
     """Fetch current lice levels, trends, threshold status."""
     try:
         from core.market.farm_graph import farm_graph
-        summary = farm_graph.get_summary()
+        summary = await farm_graph.get_summary()
         result = {
             "avg_lice": summary.get("avg_lice", 0),
             "n_farms": summary.get("n_farms", 0),

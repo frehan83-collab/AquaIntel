@@ -726,7 +726,7 @@ async def _csrd_export_impl(
     # ESG scores
     try:
         from core.market.esg_scorer import esg_scorer
-        esg_summary = esg_scorer.get_summary()
+        esg_summary = await esg_scorer.get_summary()
         governance["metrics"]["esg_compliance"] = {
             "companies_scored": esg_summary.get("n_companies", 0),
             "avg_esg_score": esg_summary.get("avg_score", 0),

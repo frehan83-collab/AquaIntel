@@ -100,7 +100,7 @@ const translations: Record<string, Record<Locale, string>> = {
   "btn.delete": { en: "Delete", no: "Slett" },
   "btn.close": { en: "Close", no: "Lukk" },
   "btn.export": { en: "Export", no: "Eksporter" },
-  "btn.search": { en: "Search", no: "Sok" },
+  "btn.search": { en: "Search", no: "Søk" },
   "btn.filter": { en: "Filter", no: "Filtrer" },
   "btn.apply": { en: "Apply", no: "Bruk" },
   "btn.reset": { en: "Reset", no: "Tilbakestill" },
@@ -233,7 +233,7 @@ const translations: Record<string, Record<Locale, string>> = {
   "page.api_docs.code_examples": { en: "Code Examples", no: "Kodeeksempler" },
   "page.api_docs.data_provenance": { en: "Data Provenance", no: "Dataopprinnelse" },
   "page.api_docs.rate_limits": { en: "Rate Limits", no: "Frekvensbegrensninger" },
-  "page.api_docs.api_keys": { en: "API Keys", no: "API-nokler" },
+  "page.api_docs.api_keys": { en: "API Keys", no: "API-nøkler" },
   "page.api_docs.generate_key": { en: "Generate New Key", no: "Generer ny nøkkel" },
   "page.api_docs.revoke_key": { en: "Revoke Key", no: "Tilbakekall nøkkel" },
   "page.api_docs.copy_key": { en: "Copy Key", no: "Kopier nøkkel" },
@@ -532,9 +532,9 @@ const translations: Record<string, Record<Locale, string>> = {
   "traffic_light.title": { en: "Traffic Light System", no: "Trafikklyssystemet" },
   "traffic_light.current_status": { en: "Current PA Status", no: "Gjeldende PO-status" },
   "traffic_light.simulator": { en: "Traffic Light Simulator", no: "Trafikklyssimulator" },
-  "traffic_light.green": { en: "Green (+6% MAB)", no: "Grønt (+6 % MTB)" },
-  "traffic_light.yellow": { en: "Yellow (0% MAB)", no: "Gult (0 % MTB)" },
-  "traffic_light.red": { en: "Red (-6% MAB)", no: "Rødt (-6 % MTB)" },
+  "traffic_light.green": { en: "Green (+6% MTB)", no: "Grønt (+6 % MTB)" },
+  "traffic_light.yellow": { en: "Yellow (0% MTB)", no: "Gult (0 % MTB)" },
+  "traffic_light.red": { en: "Red (-6% MTB)", no: "Rødt (-6 % MTB)" },
   "traffic_light.companies_affected": { en: "Companies Affected", no: "Berørte selskaper" },
 
   // ── Page: ASC Compliance ──
@@ -663,6 +663,10 @@ const translations: Record<string, Record<Locale, string>> = {
   "error.unauthorized": { en: "Unauthorized — please log in", no: "Ikke autorisert — vennligst logg inn" },
   "error.boundary_title": { en: "Something went wrong", no: "Noe gikk galt" },
   "error.boundary_message": { en: "This section encountered an error. Try refreshing the page.", no: "Denne seksjonen møtte en feil. Prøv å oppdatere siden." },
+  "error.segment_title": { en: "This section encountered an error", no: "Denne seksjonen fikk en feil" },
+  "error.segment_message": { en: "Your other data is unaffected. Try again or refresh the page.", no: "Dine andre data er upåvirket. Prøv igjen eller oppdater siden." },
+  "error.try_again": { en: "Try Again", no: "Prøv igjen" },
+  "loading.skeleton": { en: "Loading data...", no: "Laster data..." },
 
   // ── Freshness indicator ──
   "freshness.live": { en: "Live data", no: "Sanntidsdata" },

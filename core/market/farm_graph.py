@@ -475,10 +475,10 @@ class FarmNetworkGraph:
 
     # ── Public API ───────────────────────────────────────────────
 
-    def get_graph_summary(self) -> dict:
+    async def get_graph_summary(self) -> dict:
         """Get network graph summary statistics."""
         if not self._built:
-            self.build_graph()
+            await self.build_graph()
 
         n_above = sum(1 for n in self._nodes.values() if n.above_threshold)
         lice_values = [n.current_lice for n in self._nodes.values() if n.current_lice > 0]
@@ -498,10 +498,10 @@ class FarmNetworkGraph:
             "active_cascade_predictions": len(self._cascades),
         }
 
-    def get_clusters(self, risk_level: Optional[str] = None) -> list[dict]:
+    async def get_clusters(self, risk_level: Optional[str] = None) -> list[dict]:
         """Get farm clusters with risk assessment."""
         if not self._built:
-            self.build_graph()
+            await self.build_graph()
 
         clusters = self._clusters
         if risk_level:
@@ -526,10 +526,10 @@ class FarmNetworkGraph:
             for c in clusters[:30]
         ]
 
-    def get_cascade_predictions(self) -> list[dict]:
+    async def get_cascade_predictions(self) -> list[dict]:
         """Get predicted treatment cascades."""
         if not self._built:
-            self.build_graph()
+            await self.build_graph()
 
         return [
             {
@@ -549,7 +549,7 @@ class FarmNetworkGraph:
             for c in self._cascades[:20]
         ]
 
-    def get_company_network_exposure(self) -> list[dict]:
+    async def get_company_network_exposure(self) -> list[dict]:
         """
         Score each company's network exposure risk.
 
@@ -557,7 +557,7 @@ class FarmNetworkGraph:
         cascade treatment costs. This is a unique alpha signal.
         """
         if not self._built:
-            self.build_graph()
+            await self.build_graph()
 
         company_exposure: dict[str, dict] = {}
 
@@ -637,10 +637,10 @@ class FarmNetworkGraph:
         results.sort(key=lambda r: r["network_risk_score"], reverse=True)
         return results
 
-    def get_farm_neighbors(self, locality_no: int) -> dict:
+    async def get_farm_neighbors(self, locality_no: int) -> dict:
         """Get a farm's neighbors and connections."""
         if not self._built:
-            self.build_graph()
+            await self.build_graph()
 
         node = self._nodes.get(locality_no)
         if not node:
@@ -684,13 +684,13 @@ class FarmNetworkGraph:
             "neighbors": neighbors[:20],
         }
 
-    def get_map_data(self) -> dict:
+    async def get_map_data(self) -> dict:
         """
         Get all data needed for the frontend map visualization.
         Includes farm positions, connections, and cluster coloring.
         """
         if not self._built:
-            self.build_graph()
+            await self.build_graph()
 
         # Farm nodes
         nodes = [
