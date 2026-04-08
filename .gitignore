@@ -13,6 +13,7 @@ venv/
 .venv/
 .pytest_cache/
 .mypy_cache/
+.hypothesis/
 lightning_logs/
 
 # Frontend
