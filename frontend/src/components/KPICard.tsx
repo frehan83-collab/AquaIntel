@@ -2,6 +2,7 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
+import { useCountUp } from "@/lib/useCountUp";
 
 interface Props {
   label: string;
@@ -70,6 +71,13 @@ export default function KPICard({
     ? "#E8734A"
     : "#00D4C8";
 
+  // Count-up animation for numeric values
+  const numericValue = typeof value === "number" ? value : parseFloat(String(value));
+  const isNumeric = !isNaN(numericValue) && isFinite(numericValue);
+  const decimals = isNumeric ? (String(value).includes(".") ? String(value).split(".")[1]?.length || 0 : 0) : 0;
+  const animatedValue = useCountUp(isNumeric ? numericValue : 0, 800, decimals);
+  const displayValue = isNumeric ? animatedValue : value;
+
   return (
     <motion.div
       role="status"
@@ -121,10 +129,10 @@ export default function KPICard({
       <div className="flex items-end justify-between gap-3 relative z-10">
         <div className="flex items-baseline gap-2">
           <span className={cn(
-            "font-bold tracking-tight text-[var(--text-primary)] leading-none font-data",
+            "font-bold tracking-tight text-[var(--text-primary)] leading-none text-kpi transition-number",
             hero ? "text-[36px]" : "text-[22px]",
           )}>
-            {value}
+            {displayValue}
           </span>
           {unit && (
             <span className={cn(
