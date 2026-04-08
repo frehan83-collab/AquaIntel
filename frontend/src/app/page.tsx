@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
@@ -107,7 +107,9 @@ export default function DashboardPage() {
     return idx >= 0 ? idx : 99;
   };
 
-  useEffect(() => {
+  // ── Data loading (extracted for auto-refresh) ──────────────────────
+  const isFirstLoad = useRef(true);
+  const loadData = useCallback(() => {
     api.liceSummary().then(setSummary).catch(handleError("lice_summary", { critical: true }));
     api.signals().then(setSignals).catch(handleError("signals"));
     api.leadersTop30().then(setLeaders).catch(handleError("leaders_top30"));
@@ -124,7 +126,7 @@ export default function DashboardPage() {
     api.regimeAlerts().then(setRegimeAlerts).catch(handleError("regime_alerts"));
     api.pairsSignals(7).then(setPairsSignals).catch(handleError("pairs_signals"));
     api.aisHarvestSignals(72).then((d: DashboardAIS) => setAisData(d)).catch(handleError("ais_data"));
-    // Macro context (Change 1: Dashboard wire-up)
+    // Macro context
     api.macroSnapshot().then(setMacro).catch(handleError("macro_snapshot"));
     api.globalSupply().then(setSupply).catch(handleError("global_supply"));
     api.diseaseByCompany().then((d: DiseaseByCompany) => {
@@ -133,7 +135,8 @@ export default function DashboardPage() {
     }).catch(handleError("disease_count"));
     api.anomalyScores().then((d: AnomalyScores) => {
       setAnomaly(d);
-      if (d?.composite_score >= 60) {
+      // Only show toast on first load to avoid spamming during auto-refresh
+      if (isFirstLoad.current && d?.composite_score >= 60) {
         addToast({
           type: "alert",
           title: "Elevated Risk Detected",
@@ -146,7 +149,6 @@ export default function DashboardPage() {
     api.activeAlerts().then((d: AlertsResponse | AlertItem[]) => {
       const alerts: AlertItem[] = Array.isArray(d) ? d : d?.alerts || [];
       if (alerts.length > 0) {
-        // Sort by severity: critical > high > medium > low
         const sevOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
         const sorted = [...alerts].sort((a: AlertItem, b: AlertItem) =>
           (sevOrder[a.severity] ?? 5) - (sevOrder[b.severity] ?? 5)
@@ -162,7 +164,15 @@ export default function DashboardPage() {
       setCounties(arr.sort((a, b) => (b.harvest_tonnes || 0) - (a.harvest_tonnes || 0)).slice(0, 5));
     }).catch(handleError("counties"));
     setFetchedAt(new Date());
+    isFirstLoad.current = false;
   }, []);
+
+  // Initial load + 60s auto-refresh (live dashboard for demos)
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(loadData, 60_000);
+    return () => clearInterval(interval);
+  }, [loadData]);
 
   // Build Top 10 area chart from real leader sparklines
   const safeLeaders: DashboardLeader[] = Array.isArray(leaders) ? leaders : [];
