@@ -6,7 +6,7 @@ import {
   Activity, TrendingDown, TrendingUp, AlertTriangle, Fish,
   BarChart3, DollarSign, ArrowRight, Ship, GitBranch, Network,
   BarChart2, Zap, Globe2, Shield, Wheat, CheckCircle2, ChevronDown, ChevronUp,
-  Settings2,
+  Settings2, Printer,
 } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
@@ -165,6 +165,15 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {/* Print / PDF */}
+          <button
+            onClick={() => window.print()}
+            className="print:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.03] backdrop-blur border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.1] transition-colors"
+            title="Export as PDF"
+          >
+            <Printer className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
+            <span className="text-xs text-[var(--text-secondary)] hidden sm:inline">PDF</span>
+          </button>
           {/* Customize Button */}
           <button
             onClick={() => setCustomizeOpen(true)}

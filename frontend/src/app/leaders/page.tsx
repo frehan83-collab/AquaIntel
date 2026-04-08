@@ -223,14 +223,23 @@ function LeadersPageInner() {
             Performance benchmarking powered by biological simulations
           </p>
         </div>
-        <OcButton
-          variant="primary"
-          size="md"
-          onClick={() => setShowOptIn(true)}
-          leftIcon={<Star className="w-4 h-4" />}
-        >
-          Get Your Benchmark Report
-        </OcButton>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => window.print()}
+            className="print:hidden flex items-center gap-1.5 px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-ocean-400 bg-white/[0.04] border border-white/[0.08] rounded-lg transition-colors"
+            title="Export as PDF"
+          >
+            <Download className="w-3.5 h-3.5" /> PDF
+          </button>
+          <OcButton
+            variant="primary"
+            size="md"
+            onClick={() => setShowOptIn(true)}
+            leftIcon={<Star className="w-4 h-4" />}
+          >
+            Get Your Benchmark Report
+          </OcButton>
+        </div>
       </div>
 
       {/* KPI Row */}

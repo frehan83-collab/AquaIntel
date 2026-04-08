@@ -783,6 +783,26 @@ async def ws_alerts(websocket: WebSocket):
                 "alerts": [a.to_dict() for a in alerts[:20]],
                 "timestamp": dt.datetime.now(dt.UTC).isoformat(),
             })
+            # Dispatch critical/high alerts to configured webhooks
+            critical_alerts = [a for a in alerts if a.severity in ("critical", "high")]
+            if critical_alerts:
+                try:
+                    from core.market.webhook_dispatcher import webhook_dispatcher
+                    for alert in critical_alerts[:5]:  # Cap to avoid flooding
+                        await webhook_dispatcher.dispatch_alert(
+                            f"alert.{alert.category}",
+                            {
+                                "title": alert.title,
+                                "message": alert.message,
+                                "severity": alert.severity,
+                                "category": alert.category,
+                                "metric_value": alert.metric_value,
+                                "threshold": alert.threshold,
+                                "timestamp": alert.created_at,
+                            },
+                        )
+                except Exception:
+                    pass  # Webhook failures must not break the alert stream
             await asyncio.sleep(30)  # Push every 30 seconds
     except WebSocketDisconnect:
         pass
