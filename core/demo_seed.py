@@ -10,13 +10,27 @@ Triggered by: FISHINTEL_DEMO_MODE=true environment variable at startup.
 
 Idempotent: safe to run multiple times — checks for existing data before inserting.
 
+Demo Narrative (4 stories for expo walkthrough):
+  1. ESCALATING CRISIS — Hitra Sor (SalMar, PA 4) has lice climbing sharply
+     in weeks 42-52, breaching the 0.5 regulatory limit. The decision engine
+     fires a "TREAT NOW" card. Creates urgency.
+  2. COMPANY BENCHMARKING — SalMar runs 25% lower lice than average (best
+     operator), Grieg runs 30% higher (struggling). Leaders page shows this
+     clearly. Shows benchmarking value.
+  3. PRICE SPIKE — Christmas weeks 48-52 see a sharp price rally (+8 NOK/week)
+     driven by demand surge and Chilean supply disruption. Traders page catches
+     the move. Shows market intelligence.
+  4. TREATMENT EFFECTIVENESS — Mechanical and thermal treatments show 88-96%
+     efficacy, while medicinal drops to 40-70% (resistance). Efficacy
+     Marketplace makes this obvious. Shows operational value.
+
 Data includes:
-  - 20 localities across PA 1-7 (Hitra, Froya, Austevoll, Senja, etc.)
-  - 52 weeks of lice data with realistic seasonal pattern
-  - Sea temperatures (4-16C seasonal curve)
-  - 5 companies (Mowi, SalMar, Leroy, Grieg, Cermaq)
-  - Treatment history (mechanical + freshwater + medicinal mix)
-  - Price history (NOK 60-120 range with seasonal pattern)
+  - 22 localities across PA 1-7 (Hitra, Froya, Austevoll, Senja, etc.) + 2 offshore
+  - 52 weeks of lice data with company-differentiated seasonal patterns
+  - Sea temperatures (4-16C seasonal curve, latitude-adjusted)
+  - 5 companies (Mowi, SalMar, Leroy, Grieg, Cermaq) with performance differences
+  - 80 treatment outcomes with clear method efficacy ranking
+  - Price history (NOK 58-130 range with Christmas spike)
 """
 from __future__ import annotations
 
@@ -78,11 +92,19 @@ DEMO_LOCALITIES = [
 ]
 
 
-def _seasonal_lice(week: int, pa: int, rng: random.Random) -> tuple[float, float, float]:
+def _seasonal_lice(
+    week: int, pa: int, rng: random.Random,
+    company: str = "", locality_no: int = 0,
+) -> tuple[float, float, float]:
     """
-    Generate realistic seasonal lice counts.
-    Low in winter (weeks 1-12, 45-52), peak in late summer (weeks 28-38).
-    Northern PAs (higher numbers) have somewhat lower lice.
+    Generate realistic seasonal lice counts with narrative differentiation.
+
+    Key demo stories:
+      - SalMar (SALM) runs ~25% lower lice (best-in-class operator)
+      - Grieg (GSF) runs ~30% higher lice (struggling with treatments)
+      - Hitra Sor (10009, SALM) has an escalating crisis in weeks 42-52
+        that breaches the 0.5 regulatory limit — creates demo urgency
+      - Northern PAs (higher numbers) have somewhat lower lice
     """
     # Base seasonal curve: sinusoidal with peak around week 32
     season_factor = 0.5 + 0.5 * math.sin(2 * math.pi * (week - 12) / 52)
@@ -90,6 +112,26 @@ def _seasonal_lice(week: int, pa: int, rng: random.Random) -> tuple[float, float
     latitude_factor = 1.0 - 0.03 * max(0, pa - 3)
 
     base = season_factor * latitude_factor
+
+    # ── Company differentiation ─────────────────────────────────────
+    # SalMar: best-in-class lice management (cleaner fish + mechanical)
+    if company == "SALM":
+        base *= 0.75
+    # Grieg: struggling with treatment resistance in southern PAs
+    elif company == "GSF":
+        base *= 1.30
+    # Others: slight variation
+    elif company == "MOWI":
+        base *= 0.95
+    elif company == "CMQ":
+        base *= 1.10
+
+    # ── Hitra Sor escalating crisis (THE demo story) ────────────────
+    # Weeks 42-52: lice counts climb sharply, breaching 0.5 threshold
+    # This creates the urgent "TREAT NOW" decision card in the demo
+    if locality_no == 10009 and week >= 42:
+        escalation = 0.15 * (week - 41)  # +0.15 per week above week 41
+        base = min(base + escalation, 2.5)
 
     # Adult female lice (regulatory metric, threshold 0.5)
     adult_female = round(base * rng.uniform(0.05, 0.65), 2)
@@ -119,12 +161,22 @@ def _seasonal_price(week: int, rng: random.Random) -> float:
     """
     Realistic salmon spot price NOK/kg: 60-120 range.
     Prices higher in spring/summer (strong demand), lower in autumn after harvest peak.
+
+    Demo story: sharp price spike in weeks 48-52 (Christmas demand surge +
+    reduced Chilean supply from ISA) — shows the platform catching market moves.
     """
     # Seasonal pattern: peak around weeks 14-24 (spring), dip around weeks 36-44 (autumn)
     seasonal = 90.0 + 20.0 * math.sin(2 * math.pi * (week - 4) / 52)
     noise = rng.uniform(-5.0, 5.0)
+
+    # ── Christmas/New Year price spike (THE trading story) ──────────
+    # Weeks 48-52: demand surge + Chilean ISA disruption drives prices up
+    if week >= 48:
+        spike = 8.0 * (week - 47)  # +8, +16, +24, +32, +40 NOK
+        seasonal += spike
+
     price = seasonal + noise
-    return round(max(58.0, min(125.0, price)), 2)
+    return round(max(58.0, min(130.0, price)), 2)
 
 
 def seed_demo_data() -> dict:
@@ -197,11 +249,15 @@ def seed_demo_data() -> dict:
             ))
             summary["company_exposures"] += 1
 
-        # ── 3. Lice records — 52 weeks × 20 localities ──────────────
+        # ── 3. Lice records — 52 weeks × 22 localities ─────────────
         year = 2025
         for loc in DEMO_LOCALITIES:
             for week in range(1, 53):
-                adult_f, mobile, stationary = _seasonal_lice(week, loc["pa"], rng)
+                adult_f, mobile, stationary = _seasonal_lice(
+                    week, loc["pa"], rng,
+                    company=loc["company"],
+                    locality_no=loc["locality_no"],
+                )
                 temp = _seasonal_temp(week, loc["pa"], rng)
                 session.add(LiceRecord(
                     locality_no=loc["locality_no"],
@@ -231,29 +287,45 @@ def seed_demo_data() -> dict:
             summary["price_records"] += 1
 
         # ── 5. Treatment outcomes ────────────────────────────────────
+        # Sharper differentiation for demo storytelling:
+        #   - Mechanical & thermal: clearly the best (85-95% efficacy)
+        #   - Freshwater: decent but variable (55-80%)
+        #   - Medicinal: declining due to resistance (40-70%)
+        #   - Biological: lowest but cheapest (25-55%)
+        # This creates an obvious "mechanical wins" story in the UI.
         METHODS = ["mechanical", "freshwater", "medicinal", "thermal", "biological"]
         METHOD_EFFICACY = {
-            "mechanical":  (75, 95),
-            "freshwater":  (50, 80),
-            "medicinal":   (55, 85),
-            "thermal":     (80, 95),
-            "biological":  (30, 60),
+            "mechanical":  (85, 96),   # tightened high range — consistently excellent
+            "freshwater":  (55, 80),
+            "medicinal":   (40, 70),   # lowered — resistance story
+            "thermal":     (88, 96),   # very high — premium method
+            "biological":  (25, 55),   # cleaner fish — low but cheap
         }
         METHOD_COST = {
-            "mechanical":  (15, 30),
+            "mechanical":  (18, 32),
             "freshwater":  (8, 18),
-            "medicinal":   (20, 40),
-            "thermal":     (18, 30),
-            "biological":  (5, 12),
+            "medicinal":   (22, 42),   # expensive AND less effective = worst ROI
+            "thermal":     (20, 35),
+            "biological":  (4, 10),    # cheapest
         }
+        METHOD_MORTALITY = {
+            "mechanical":  (5, 35),    # some handling stress
+            "freshwater":  (2, 15),    # gentle
+            "medicinal":   (1, 10),    # low mortality
+            "thermal":     (8, 45),    # highest mortality risk
+            "biological":  (0, 5),     # essentially zero
+        }
+        # Weight distribution: more mechanical/thermal to show they dominate
+        METHOD_WEIGHTS = [0.30, 0.15, 0.15, 0.25, 0.15]
 
-        for _ in range(60):
-            method = rng.choice(METHODS)
+        for _ in range(80):
+            method = rng.choices(METHODS, weights=METHOD_WEIGHTS, k=1)[0]
             loc = rng.choice(DEMO_LOCALITIES)
             month = rng.randint(1, 12)
             day = rng.randint(1, 28)
             eff_lo, eff_hi = METHOD_EFFICACY[method]
             cost_lo, cost_hi = METHOD_COST[method]
+            mort_lo, mort_hi = METHOD_MORTALITY[method]
 
             pre_lice = round(rng.uniform(0.3, 2.0), 2)
             reduction = rng.uniform(eff_lo, eff_hi) / 100.0
@@ -265,7 +337,7 @@ def seed_demo_data() -> dict:
                 method=method,
                 pre_lice_count=pre_lice,
                 post_lice_count=post_lice,
-                mortality_observed=rng.randint(0, 50),
+                mortality_observed=rng.randint(mort_lo, mort_hi),
                 cost_nok=round(rng.uniform(cost_lo, cost_hi) * 1000, 0),
                 notes=f"Demo seed — {method} treatment at {loc['name']}",
                 reported_at=dt.datetime.now(dt.UTC),

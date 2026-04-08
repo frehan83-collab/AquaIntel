@@ -19,7 +19,48 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import FreshnessIndicator from "@/components/FreshnessIndicator";
 import { useDashboardLayout } from "@/lib/useDashboardLayout";
 import DashboardCustomizePanel from "@/components/DashboardCustomizePanel";
-import type { LiceSummary, LeaderEntry, AnomalyScores, RegimeAlert, AlertItem } from "@/types/api";
+import type { LiceSummary, LeaderEntry, AnomalyScores, RegimeAlert, AlertItem, AlertsResponse, SSBPriceHistory, MacroSnapshot, GlobalSupply, DiseaseByCompany, AISHarvestIntel, PairsSignal, Signal } from "@/types/api";
+
+/** Extended LeaderEntry with sparkline data returned by /api/leaders/top100 */
+interface DashboardLeader extends LeaderEntry {
+  name: string;
+  avg_lice: number;
+  lice_sparkline: number[];
+  lice_prediction?: number[];
+  n_lice_records?: number;
+}
+
+/** Macro snapshot as returned by the dashboard endpoint (extends typed MacroSnapshot) */
+interface DashboardMacro extends MacroSnapshot {
+  indices?: Record<string, { value: number; label?: string }>;
+  benchmarks?: Record<string, number>;
+  yoy_changes?: Record<string, number>;
+}
+
+/** Supply data as used by the dashboard (extends typed GlobalSupply) */
+interface DashboardSupply extends GlobalSupply {
+  balance?: string;
+  supply_deficit_pct?: number;
+}
+
+/** AIS data as used by the dashboard (extends typed AISHarvestIntel) */
+interface DashboardAIS extends AISHarvestIntel {
+  signals?: Array<{ vessel: string; activity: string; location: string; timestamp: string }>;
+}
+
+/** Production summary from Fiskeridirektoratet */
+interface ProductionSummary {
+  year?: number;
+  latest_year?: number;
+  total_harvest_tonnes?: number;
+  total_tonnes?: number;
+  salmon_tonnes?: number;
+  total_feed_tonnes?: number;
+  total_smolt_released?: number;
+  avg_mortality_pct?: number;
+  yoy_change_pct?: number;
+  [key: string]: unknown;
+}
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -29,11 +70,12 @@ export default function DashboardPage() {
   const handleError = useApiError();
   const [summary, setSummary] = useState<LiceSummary | null>(null);
   const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
-  const [signals, setSignals] = useState<any[]>([]);
-  const [leaders, setLeadersRaw] = useState<any[]>([]);
-  const setLeaders = (v: any) => {
+  const [signals, setSignals] = useState<Signal[]>([]);
+  const [leaders, setLeadersRaw] = useState<DashboardLeader[]>([]);
+  const setLeaders = (v: unknown) => {
     try {
-      const arr = Array.isArray(v) ? v : Array.isArray(v?.data) ? v.data : Array.isArray(v?.companies) ? v.companies : [];
+      const raw = v as DashboardLeader[] | { data?: DashboardLeader[]; companies?: DashboardLeader[] };
+      const arr = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : Array.isArray(raw?.companies) ? raw.companies : [];
       setLeadersRaw(arr);
     } catch { setLeadersRaw([]); }
   };
@@ -41,16 +83,16 @@ export default function DashboardPage() {
   const [supplyData, setSupplyData] = useState<Array<{ week: string; volume: number }>>([]);
   // Intelligence modules
   const [regimeAlerts, setRegimeAlerts] = useState<RegimeAlert[]>([]);
-  const [pairsSignals, setPairsSignals] = useState<any[]>([]);
-  const [aisData, setAisData] = useState<any>(null);
+  const [pairsSignals, setPairsSignals] = useState<PairsSignal[]>([]);
+  const [aisData, setAisData] = useState<DashboardAIS | null>(null);
   // Macro context
-  const [macro, setMacro] = useState<any>(null);
-  const [supply, setSupply] = useState<any>(null);
+  const [macro, setMacro] = useState<DashboardMacro | null>(null);
+  const [supply, setSupply] = useState<DashboardSupply | null>(null);
   const [diseaseCount, setDiseaseCount] = useState<number>(0);
   // Anomaly Detection
   const [anomaly, setAnomaly] = useState<AnomalyScores | null>(null);
   // Production statistics
-  const [production, setProduction] = useState<any>(null);
+  const [production, setProduction] = useState<ProductionSummary | null>(null);
   const [counties, setCounties] = useState<Array<{ county: string; harvest_tonnes: number }>>([]);
   // Hero Alert Zone
   const [heroAlert, setHeroAlert] = useState<AlertItem | null>(null);
@@ -69,27 +111,27 @@ export default function DashboardPage() {
     api.liceSummary().then(setSummary).catch(handleError("lice_summary", { critical: true }));
     api.signals().then(setSignals).catch(handleError("signals"));
     api.leadersTop30().then(setLeaders).catch(handleError("leaders_top30"));
-    api.ssbPriceHistory(8).then((d: any) => {
+    api.ssbPriceHistory(8).then((d: SSBPriceHistory) => {
       setSsbSpot(d.spot_nok || 0);
       if (d.history?.length) {
-        setSupplyData(d.history.slice(-6).map((h: any) => ({
-          week: h.label?.replace(/^\d{4}/, "") || h.week,
-          volume: Math.round(h.volume_tonnes / 1000),
+        setSupplyData(d.history.slice(-6).map((h) => ({
+          week: h.label?.replace(/^\d{4}/, "") || String(h.week),
+          volume: Math.round((h.volume_tonnes || 0) / 1000),
         })));
       }
     }).catch(handleError("ssb_price", { critical: true }));
     // Intelligence modules
     api.regimeAlerts().then(setRegimeAlerts).catch(handleError("regime_alerts"));
     api.pairsSignals(7).then(setPairsSignals).catch(handleError("pairs_signals"));
-    api.aisHarvestSignals(72).then((d: any) => setAisData(d)).catch(handleError("ais_data"));
+    api.aisHarvestSignals(72).then((d: DashboardAIS) => setAisData(d)).catch(handleError("ais_data"));
     // Macro context (Change 1: Dashboard wire-up)
     api.macroSnapshot().then(setMacro).catch(handleError("macro_snapshot"));
     api.globalSupply().then(setSupply).catch(handleError("global_supply"));
-    api.diseaseByCompany().then((d: any) => {
-      const total = Object.values(d || {}).reduce((sum: number, c: any) => sum + (c?.total || 0), 0);
-      setDiseaseCount(total as number);
+    api.diseaseByCompany().then((d: DiseaseByCompany) => {
+      const total = Object.values(d || {}).reduce((sum: number, c) => sum + (c?.total || 0), 0);
+      setDiseaseCount(total);
     }).catch(handleError("disease_count"));
-    api.anomalyScores().then((d: any) => {
+    api.anomalyScores().then((d: AnomalyScores) => {
       setAnomaly(d);
       if (d?.composite_score >= 60) {
         addToast({
@@ -101,12 +143,12 @@ export default function DashboardPage() {
       }
     }).catch(handleError("anomaly_scores", { critical: true }));
     // Hero Alert Zone — fetch highest-severity alert
-    api.activeAlerts().then((d: any) => {
-      const alerts = Array.isArray(d) ? d : d?.alerts || [];
+    api.activeAlerts().then((d: AlertsResponse | AlertItem[]) => {
+      const alerts: AlertItem[] = Array.isArray(d) ? d : d?.alerts || [];
       if (alerts.length > 0) {
         // Sort by severity: critical > high > medium > low
         const sevOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
-        const sorted = [...alerts].sort((a: any, b: any) =>
+        const sorted = [...alerts].sort((a: AlertItem, b: AlertItem) =>
           (sevOrder[a.severity] ?? 5) - (sevOrder[b.severity] ?? 5)
         );
         setHeroAlert(sorted[0]);
@@ -115,27 +157,27 @@ export default function DashboardPage() {
     }).catch((err: unknown) => { setAlertsLoaded(true); handleError("hero_alerts")(err); });
 
     api.productionSummary().then(setProduction).catch(handleError("production_stats"));
-    api.productionByCounty().then((d: any) => {
+    api.productionByCounty().then((d: Array<{ county: string; harvest_tonnes: number }> | { data?: Array<{ county: string; harvest_tonnes: number }>; counties?: Array<{ county: string; harvest_tonnes: number }> }) => {
       const arr = Array.isArray(d) ? d : d?.data || d?.counties || [];
-      setCounties(arr.sort((a: any, b: any) => (b.harvest_tonnes || 0) - (a.harvest_tonnes || 0)).slice(0, 5));
+      setCounties(arr.sort((a, b) => (b.harvest_tonnes || 0) - (a.harvest_tonnes || 0)).slice(0, 5));
     }).catch(handleError("counties"));
     setFetchedAt(new Date());
   }, []);
 
   // Build Top 10 area chart from real leader sparklines
-  const safeLeaders = Array.isArray(leaders) ? leaders : [];
-  let top10: any[] = [];
+  const safeLeaders: DashboardLeader[] = Array.isArray(leaders) ? leaders : [];
+  let top10: DashboardLeader[] = [];
   if (safeLeaders.length > 0) {
-    top10 = safeLeaders.filter((c: any) => c?.lice_sparkline?.length >= 6 && c?.avg_lice > 0).slice(0, 10);
+    top10 = safeLeaders.filter((c) => c?.lice_sparkline?.length >= 6 && c?.avg_lice > 0).slice(0, 10);
   }
 
   const COLORS = ["#00D4C8", "#F59E0B", "#8B5CF6", "#EC4899", "#10B981", "#6366F1", "#F43F5E", "#14B8A6", "#A855F7", "#EF4444"];
 
   const liceChartData = top10.length >= 2
     ? top10[0].lice_sparkline.map((_: number, i: number) => {
-        const row: any = { week: `W${i + 1}` };
-        top10.forEach((c: any) => {
-          const label = c.name.replace(/ AS$| ASA$/i, "").replace(/OPPDRETT|FARMING|SEAFOOD|SJØFARM|FISKEOPPDRETT/gi, "").trim().slice(0, 14);
+        const row: Record<string, string | number> = { week: `W${i + 1}` };
+        top10.forEach((c) => {
+          const label = (c.name || c.company_name).replace(/ AS$| ASA$/i, "").replace(/OPPDRETT|FARMING|SEAFOOD|SJØFARM|FISKEOPPDRETT/gi, "").trim().slice(0, 14);
           row[label] = c.lice_sparkline[i] || 0;
         });
         return row;
@@ -340,8 +382,8 @@ export default function DashboardPage() {
         <KPICard
           label={t("dashboard.feed_pressure")}
           value={macro?.indices?.feed_pressure?.value != null ? `${formatNumber(macro.indices.feed_pressure.value, locale, 1)}/100` : "\u2014"}
-          delta={macro?.indices?.feed_pressure?.value > 65 ? "Elevated — margin risk" : macro?.indices?.feed_pressure?.value > 45 ? "Moderate" : "Low pressure"}
-          deltaType={macro?.indices?.feed_pressure?.value > 65 ? "negative" : macro?.indices?.feed_pressure?.value > 45 ? "neutral" : "positive"}
+          delta={(macro?.indices?.feed_pressure?.value ?? 0) > 65 ? "Elevated — margin risk" : (macro?.indices?.feed_pressure?.value ?? 0) > 45 ? "Moderate" : "Low pressure"}
+          deltaType={(macro?.indices?.feed_pressure?.value ?? 0) > 65 ? "negative" : (macro?.indices?.feed_pressure?.value ?? 0) > 45 ? "neutral" : "positive"}
           icon={Wheat}
           delay={0.1}
         />
@@ -349,7 +391,7 @@ export default function DashboardPage() {
           label={t("dashboard.nok_usd")}
           value={macro?.benchmarks?.nok_usd != null ? formatNumber(macro.benchmarks.nok_usd, locale, 2) : "\u2014"}
           delta={macro?.yoy_changes?.nok_usd ? `${macro.yoy_changes.nok_usd > 0 ? "+" : ""}${macro.yoy_changes.nok_usd}% YoY` : undefined}
-          deltaType={macro?.yoy_changes?.nok_usd > 0 ? "negative" : "positive"}
+          deltaType={(macro?.yoy_changes?.nok_usd ?? 0) > 0 ? "negative" : "positive"}
           icon={DollarSign}
           delay={0.13}
         />
@@ -357,7 +399,7 @@ export default function DashboardPage() {
           label={t("dashboard.supply_balance")}
           value={supply?.balance ? supply.balance.charAt(0).toUpperCase() + supply.balance.slice(1).replace(/_/g, " ") : "—"}
           delta={supply?.supply_deficit_pct != null ? `Deficit: ${supply.supply_deficit_pct}%` : undefined}
-          deltaType={supply?.supply_deficit_pct > 2 ? "negative" : "positive"}
+          deltaType={(supply?.supply_deficit_pct ?? 0) > 2 ? "negative" : "positive"}
           icon={Globe2}
           delay={0.16}
         />
@@ -571,11 +613,11 @@ export default function DashboardPage() {
                   <td className="py-3 px-3 font-semibold text-[var(--text-primary)]">{sig.ticker}</td>
                   <td className="py-3 px-3">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold ${
-                      sig.direction === "SHORT"
+                      sig.direction?.toLowerCase() === "short"
                         ? "bg-rose-500/10 text-rose-400 border border-rose-500/15"
                         : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/15"
                     }`}>
-                      {sig.direction === "SHORT" ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
+                      {sig.direction?.toLowerCase() === "short" ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
                       {sig.direction}
                     </span>
                   </td>
