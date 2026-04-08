@@ -35,19 +35,45 @@ async def lifespan(app: FastAPI):
     """FastAPI lifespan event handler — replaces deprecated @app.on_event('startup').
     Reference: https://fastapi.tiangolo.com/advanced/events/
     """
+    import structlog
+    log = structlog.get_logger("startup")
+
+    # Initialize database tables
     init_db()
+
+    # Run Alembic migrations (safe — stamps if already at head)
+    try:
+        from alembic.config import Config as AlembicConfig
+        from alembic import command as alembic_command
+        alembic_cfg = AlembicConfig("alembic.ini")
+        alembic_cfg.set_main_option("script_location", "alembic")
+        alembic_command.upgrade(alembic_cfg, "head")
+        log.info("startup.migrations", status="complete")
+    except Exception as exc:
+        log.warning("startup.migrations_skipped", error=str(exc)[:120])
+
+    # Log startup config summary
+    from config.settings import settings
+    log.info("startup.config",
+        env=settings.fishintel_env,
+        db=settings.database_url.split("@")[-1] if "@" in settings.database_url else "sqlite",
+        barentswatch="configured" if settings.barentswatch_client_id else "not_set",
+        stripe="configured" if settings.stripe_secret_key else "not_set",
+        llm_provider=settings.llm_provider,
+    )
 
     # Demo mode: seed realistic data for offline expo demos
     if os.environ.get("FISHINTEL_DEMO_MODE", "").lower() in ("true", "1", "yes"):
         try:
             from core.demo_seed import seed_demo_data
             seed_demo_data()
+            log.info("startup.demo_seed", status="complete")
         except Exception as exc:
-            import structlog
-            structlog.get_logger(__name__).warning("demo_seed.startup_failed", error=str(exc))
+            log.warning("startup.demo_seed_failed", error=str(exc)[:120])
 
+    log.info("startup.ready", version="2.2.0", routes=len(app.routes))
     yield
-    # Shutdown logic (if any) goes here
+    log.info("shutdown.complete")
 
 
 app = FastAPI(
