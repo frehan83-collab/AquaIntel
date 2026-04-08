@@ -8,31 +8,37 @@ import {
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
+import TrafikklysIndicator from "@/components/TrafikklysIndicator";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import { useApiError } from "@/lib/useApiError";
 import DataTable, { Column } from "@/components/DataTable";
+import { trafficLight, colors } from "@/lib/design-tokens";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-const COLOR_STYLES: Record<string, { dot: string; bg: string; text: string; border: string }> = {
+/** Traffic light color styles — hex values reference design tokens (trafficLight) */
+const COLOR_STYLES: Record<string, { dot: string; bg: string; text: string; border: string; hex: string }> = {
   green: {
     dot: "bg-emerald-400",
     bg: "bg-emerald-500/20",
     text: "text-emerald-400",
     border: "border-emerald-500/30",
+    hex: trafficLight.green,
   },
   yellow: {
     dot: "bg-amber-400",
     bg: "bg-amber-500/20",
     text: "text-amber-400",
     border: "border-amber-500/30",
+    hex: trafficLight.yellow,
   },
   red: {
     dot: "bg-rose-400",
     bg: "bg-rose-500/20",
     text: "text-rose-400",
     border: "border-rose-500/30",
+    hex: trafficLight.red,
   },
 };
 
@@ -157,11 +163,13 @@ export default function TrafficLightPage() {
             },
             {
               key: "current_color", label: "Status", sortable: true, align: "center" as const,
-              render: (val: any) => (
-                <div className="flex items-center justify-center gap-2">
-                  {colorDot(val)}
-                  {colorBadge(val)}
-                </div>
+              render: (val: any, row: any) => (
+                <TrafikklysIndicator
+                  color={val || "unknown"}
+                  pa={row?.production_area}
+                  size="sm"
+                  showImpact
+                />
               ),
             },
             {

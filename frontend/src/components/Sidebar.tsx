@@ -93,6 +93,7 @@ const NAV_SECTIONS: NavSection[] = [
     { href: "/privacy", label: "Privacy", icon: Shield },
     { href: "/settings", label: "Settings", icon: Settings },
     { href: "/settings/webhooks", label: "Webhooks", icon: Radio },
+    { href: "/design-system", label: "Design System", icon: Sparkles },
   ]},
 ];
 
@@ -291,7 +292,7 @@ export default function Sidebar() {
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
           "fixed left-0 top-0 h-screen z-50",
-          "bg-white dark:bg-gradient-to-b dark:from-fjord-midwater/95 dark:to-fjord-abyss/98 backdrop-blur-xl",
+          "bg-[var(--sidebar-bg)] dark:bg-gradient-to-b dark:from-fjord-midwater/95 dark:to-fjord-abyss/98 backdrop-blur-xl",
           "border-r border-slate-200 dark:border-white/[0.06]",
           "flex flex-col",
           "shadow-[4px_0_24px_rgba(0,0,0,0.06)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.3)]",

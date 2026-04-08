@@ -1,0 +1,48 @@
+{
+  "bg": {
+    "primary": "#060F1C",
+    "secondary": "#0A1A2F"
+  },
+  "accent": "#00D4C8",
+  "text": {
+    "primary": "#E8EDF2",
+    "secondary": "#8899AA"
+  },
+  "border": "#1E293B",
+  "danger": "#F43F5E",
+  "success": "#10B981",
+  "warning": "#F59E0B",
+  "salmon": "#E8734A",
+  "data": {
+    "biomass": "#F59E0B",
+    "lice": "#F43F5E",
+    "temperature": "#3B82F6",
+    "mortality": "#9F1239",
+    "feeding": "#059669",
+    "oxygen": "#06B6D4"
+  },
+  "traffic": {
+    "green": "#22C55E",
+    "yellow": "#EAB308",
+    "red": "#EF4444"
+  },
+  "positive": "#34D399",
+  "negative": "#FB7185",
+  "chart": {
+    "1": "#00D4C8",
+    "2": "#E8734A",
+    "3": "#8B5CF6",
+    "4": "#F59E0B",
+    "5": "#EC4899",
+    "6": "#10B981",
+    "7": "#6366F1",
+    "8": "#14B8A6"
+  },
+  "surface": {
+    "0": "#060F1C",
+    "1": "#0A1629",
+    "2": "#0F1D33",
+    "3": "#152640",
+    "4": "#1A2F4D"
+  }
+}

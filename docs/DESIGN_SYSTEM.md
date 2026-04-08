@@ -232,17 +232,23 @@ Save as `tokens.json` and import in Tokens Studio:
 
 ## 8. Implementation Status
 
-| Component | Code | Figma | Synced |
-|-----------|------|-------|--------|
-| Color tokens | ✅ globals.css + tailwind.config | ⬜ Pending | ⬜ |
-| Typography | ✅ Font imports + scale | ⬜ Pending | ⬜ |
-| KPICard | ✅ With count-up animation | ⬜ Pending | ⬜ |
-| GlassCard | ✅ 3 tiers, 7 accents | ⬜ Pending | ⬜ |
-| StatusBadge | ✅ 6 variants | ⬜ Pending | ⬜ |
-| TrafikklysIndicator | ✅ 3 sizes | ⬜ Pending | ⬜ |
-| DataTable | ✅ Sort/search/export | ⬜ Pending | ⬜ |
-| Sidebar | ✅ Mobile + desktop | ⬜ Pending | ⬜ |
-| SkeletonCard | ✅ Loading state | ⬜ Pending | ⬜ |
-| SegmentError | ✅ Error boundary | ⬜ Pending | ⬜ |
-| FigmaClient | ✅ API integration | N/A | N/A |
-| Token Pipeline | ✅ 101 tokens generated | ⬜ Pending import | ⬜ |
+| Component | Code | Figma | Token-Wired |
+|-----------|------|-------|-------------|
+| Color tokens | ✅ globals.css + tailwind.config + design-tokens.ts | ✅ Plugin script ready | ✅ |
+| Typography | ✅ Font imports + scale | ✅ Plugin script ready | ✅ |
+| KPICard | ✅ Count-up, sparkline, hero | ✅ Plugin script ready | ✅ design-tokens imported |
+| GlassCard | ✅ 3 tiers, 7 accents | ✅ Plugin script ready | ✅ design-tokens imported |
+| OcButton | ✅ 8 variants, 8 sizes, ripple, loading | ✅ Plugin script ready | ✅ |
+| StatusBadge | ✅ 6 variants, pulse, 2 sizes | ✅ Plugin script ready | ✅ |
+| TrafikklysIndicator | ✅ 3 sizes, glow, ARIA | ✅ Plugin script ready | ✅ trafficLight tokens |
+| DataTable | ✅ Sort/search/pagination/CSV/Excel | ✅ Plugin script ready | ✅ |
+| Sidebar | ✅ Mobile + desktop + search | ✅ Plugin script ready | ✅ |
+| InteractiveChart | ✅ Crosshair, confidence bands | ✅ Plugin script ready | ✅ |
+| FigmaClient | ✅ API wrapper (rate limit, cache, retry) | N/A | N/A |
+| Token Pipeline | ✅ 86 tokens, 5 output formats | ✅ Tokens Studio JSON | ✅ |
+| Design System Page | ✅ /design-system showcase | N/A | ✅ All tokens demoed |
+
+### How to Populate Figma
+1. **Tokens Studio** (recommended): Import `docs/figma-tokens-studio.json` via the free plugin
+2. **Plugin Console**: Paste `docs/generated/figma-plugin-script.js` (679 lines) into Figma dev console
+3. **REST API**: Use `core/integrations/figma_client.py` for programmatic access

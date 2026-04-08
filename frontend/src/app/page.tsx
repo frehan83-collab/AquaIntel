@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
+import StatusBadge from "@/components/StatusBadge";
 import { OceanAreaChart, OceanBarChart, ChartContainer } from "@/components/charts";
 import { api } from "@/lib/api";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
@@ -19,6 +20,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import FreshnessIndicator from "@/components/FreshnessIndicator";
 import { useDashboardLayout } from "@/lib/useDashboardLayout";
 import DashboardCustomizePanel from "@/components/DashboardCustomizePanel";
+import { chartPalette, colors } from "@/lib/design-tokens";
 import type { LiceSummary, LeaderEntry, AnomalyScores, RegimeAlert, AlertItem, AlertsResponse, SSBPriceHistory, MacroSnapshot, GlobalSupply, DiseaseByCompany, AISHarvestIntel, PairsSignal, Signal } from "@/types/api";
 
 /** Extended LeaderEntry with sparkline data returned by /api/leaders/top100 */
@@ -181,7 +183,7 @@ export default function DashboardPage() {
     top10 = safeLeaders.filter((c) => c?.lice_sparkline?.length >= 6 && c?.avg_lice > 0).slice(0, 10);
   }
 
-  const COLORS = ["#00D4C8", "#F59E0B", "#8B5CF6", "#EC4899", "#10B981", "#6366F1", "#F43F5E", "#14B8A6", "#A855F7", "#EF4444"];
+  const COLORS = [...chartPalette, "#A855F7", "#EF4444"];
 
   const liceChartData = top10.length >= 2
     ? top10[0].lice_sparkline.map((_: number, i: number) => {
@@ -298,6 +300,14 @@ export default function DashboardPage() {
                   }`} />
                 </div>
                 <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <StatusBadge
+                      status={heroAlert.severity === "critical" ? "critical" : "high"}
+                      label={heroAlert.severity === "critical" ? "CRITICAL" : "HIGH"}
+                      pulse
+                      size="sm"
+                    />
+                  </div>
                   <h2 className={`text-base font-bold ${
                     heroAlert.severity === "critical" ? "text-rose-300" : "text-amber-300"
                   }`}>

@@ -7,10 +7,12 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
+import { chartPalette, colors } from "@/lib/design-tokens";
 
 const CLUSTER_COLORS = [
-  "#00D4C8", "#F59E0B", "#F43F5E", "#8B5CF6", "#10B981",
-  "#3B82F6", "#EC4899", "#14B8A6", "#F97316", "#6366F1",
+  ...chartPalette,
+  colors.data.biomass,  // amber
+  colors.chart["7"],    // indigo
 ];
 
 const getCoord = (n: any): [number, number] => [
@@ -82,7 +84,7 @@ export default function FarmNetworkMap() {
           properties: {
             weight: e.dispersal_weight || e.weight || 0.5,
             opacity: Math.max(0.1, Math.min(0.8, (e.dispersal_weight || e.weight || 0.5))),
-            color: bothHigh ? "#F43F5E" : oneHigh ? "#F59E0B" : "#10B981",
+            color: bothHigh ? colors.danger : oneHigh ? colors.warning : colors.success,
           },
         };
       }),
@@ -170,7 +172,7 @@ export default function FarmNetworkMap() {
             closeOnClick={false}
             className="farm-popup"
           >
-            <div className="p-2 text-xs space-y-1" style={{ color: "#F0F4F8", background: "#0A1A2F", borderRadius: 8, minWidth: 180 }}>
+            <div className="p-2 text-xs space-y-1" style={{ color: colors.text.primary, background: colors.surface["1"], borderRadius: 8, minWidth: 180 }}>
               <div className="font-bold text-sm">{popup.name}</div>
               <div className="text-gray-400">{popup.company} &middot; PA-{popup.pa}</div>
               <div>Lice: <span className={popup.lice >= 0.5 ? "text-red-400" : popup.lice >= 0.2 ? "text-yellow-400" : "text-green-400"}>{Number(popup.lice).toFixed(3)}</span></div>

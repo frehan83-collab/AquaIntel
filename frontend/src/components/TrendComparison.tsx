@@ -1,5 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
+import { colors } from "@/lib/design-tokens";
 
 interface DataPoint {
   week: number;
@@ -90,7 +91,7 @@ export default function TrendComparison({
           )}
           {/* Current year */}
           {pathCurrent && (
-            <path d={pathCurrent} fill="none" stroke="#00D4C8" strokeWidth="2" />
+            <path d={pathCurrent} fill="none" stroke={colors.accent} strokeWidth="2" />
           )}
           {/* Hover indicator */}
           {hovered !== null && currentYear[hovered] && (
@@ -98,8 +99,8 @@ export default function TrendComparison({
               cx={((hovered / Math.max(currentYear.length - 1, 1)) * W).toFixed(1)}
               cy={(H - ((currentYear[hovered].value - minVal) / (maxVal - minVal || 1)) * H).toFixed(1)}
               r="3"
-              fill="#00D4C8"
-              stroke="#fff"
+              fill={colors.accent}
+              stroke="white"
               strokeWidth="1"
             />
           )}
@@ -147,7 +148,7 @@ export default function TrendComparison({
           )}
           <div className="text-[9px] text-white/30 mt-0.5 flex gap-3">
             <span className="flex items-center gap-1">
-              <span className="w-2 h-0.5 bg-[#00D4C8] inline-block rounded" /> {years[0] || "Current"}
+              <span className="w-2 h-0.5 bg-[var(--accent)] inline-block rounded" /> {years[0] || "Current"}
             </span>
             <span className="flex items-center gap-1">
               <span className="w-2 h-0.5 bg-white/30 inline-block rounded" /> {years[1] || "Prev"}

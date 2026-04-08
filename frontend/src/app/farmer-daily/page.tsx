@@ -14,6 +14,7 @@ import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useTranslation, formatNumber, formatCurrency, formatDate } from "@/lib/i18n";
+import { dataColors, colors } from "@/lib/design-tokens";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -621,8 +622,16 @@ export default function FarmerDailyPage() {
                         </div>
                         <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-violet-500/60"
-                            style={{ width: `${f.importance * 100}%` }}
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${f.importance * 100}%`,
+                              backgroundColor: f.name === "lice_level" || f.name === "lice_trend" ? dataColors.lice
+                                : f.name === "sea_temperature" ? dataColors.temperature
+                                : f.name === "regulatory_distance" ? colors.warning
+                                : f.name === "season" ? dataColors.feeding
+                                : colors.accent,
+                              opacity: 0.7,
+                            }}
                           />
                         </div>
                         <p className="text-[9px] text-[var(--text-secondary)] mt-0.5">{f.en}</p>

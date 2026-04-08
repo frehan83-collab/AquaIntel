@@ -6,7 +6,7 @@
 :root {
   --bg-primary: #F8FAFB;
   --bg-secondary: #EFF3F6;
-  --bg-card: rgba(0, 0, 0, 0.03);
+  --bg-card: rgba(255, 255, 255, 0.8);
   --accent: #00A89F;
   --accent-dim: rgba(0, 168, 159, 0.12);
   --text-primary: #1A2332;
@@ -20,6 +20,7 @@
   --kelp: #2D7A6F;
   --fjord-surface: #FFFFFF;
   --fjord-midwater: #F1F5F9;
+  --sidebar-bg: #FFFFFF;
 }
 
 /* Dark mode */
@@ -40,6 +41,7 @@
   --kelp: #2D7A6F;
   --fjord-surface: #1A2942;
   --fjord-midwater: #0F1D30;
+  --sidebar-bg: transparent;
 }
 
 /* ── Data-Semantic Colors (aquaculture-specific) ── */

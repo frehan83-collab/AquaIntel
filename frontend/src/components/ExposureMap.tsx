@@ -111,7 +111,7 @@ export default function ExposureMap({ onSiteClick }: ExposureMapProps) {
           <span className="text-[10px] text-[var(--text-secondary)]">Clean (&lt;0.15)</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#00C8A8]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[var(--accent)]" />
           <span className="text-[10px] text-[var(--text-secondary)]">Moderate (0.15–0.3)</span>
         </div>
         <div className="flex items-center gap-1.5">

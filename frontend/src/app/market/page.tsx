@@ -14,6 +14,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import InteractiveChart from "@/components/InteractiveChart";
 import FreshnessIndicator from "@/components/FreshnessIndicator";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
+import { chartPalette, colors } from "@/lib/design-tokens";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -90,12 +91,12 @@ function FishPoolChart({ data }: { data: FishPoolPoint[] }) {
       <path d={areaPath} fill="url(#fpArea)" />
       <polyline points={linePts} fill="none" stroke="url(#fpLine)" strokeWidth={2}
         strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={x(hiIdx)} cy={y(maxP)} r={4} fill="#34d399" />
-      <text x={x(hiIdx)} y={y(maxP) - 8} textAnchor="middle" fontSize={9} fill="#34d399">
+      <circle cx={x(hiIdx)} cy={y(maxP)} r={4} fill={colors.positive} />
+      <text x={x(hiIdx)} y={y(maxP) - 8} textAnchor="middle" fontSize={9} fill={colors.positive}>
         H {maxP.toFixed(1)}
       </text>
-      <circle cx={x(loIdx)} cy={y(minP)} r={4} fill="#fb7185" />
-      <text x={x(loIdx)} y={y(minP) + 16} textAnchor="middle" fontSize={9} fill="#fb7185">
+      <circle cx={x(loIdx)} cy={y(minP)} r={4} fill={colors.negative} />
+      <text x={x(loIdx)} y={y(minP) + 16} textAnchor="middle" fontSize={9} fill={colors.negative}>
         L {minP.toFixed(1)}
       </text>
       <circle cx={x(data.length - 1)} cy={y(latest.price)} r={4} fill="#38bdf8" />
@@ -239,7 +240,7 @@ function MiniBar5({ change }: { change: number }) {
         const h = Math.max(2, (b / max) * 14);
         return (
           <rect key={i} x={i * 6} y={16 - h} width={4} height={h} rx={1}
-            fill={change >= 0 ? "#10b981" : "#fb7185"} opacity={0.65 + i * 0.07} />
+            fill={change >= 0 ? colors.success : colors.negative} opacity={0.65 + i * 0.07} />
         );
       })}
     </svg>
@@ -501,7 +502,7 @@ export default function MarketTerminalPage() {
               label: d.week?.replace("W", "W") ?? `W${i}`,
             }))}
             unit="NOK/kg"
-            color="#06b6d4"
+            color={chartPalette[0]}
             height={200}
           />
         )}

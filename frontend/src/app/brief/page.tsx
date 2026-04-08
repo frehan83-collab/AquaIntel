@@ -12,6 +12,7 @@ import KPICard from "@/components/KPICard";
 import DataQualityBadge from "@/components/DataQualityBadge";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
+import { colors } from "@/lib/design-tokens";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -313,13 +314,16 @@ export default function BriefPage() {
                 className={`p-4 rounded-xl border ${style.bg} ${style.border} transition-all duration-200 hover:border-white/[0.12]`}
               >
                 <div className="flex items-start gap-3">
-                  {/* Priority indicator bar */}
-                  <div className={`w-1 self-stretch rounded-full flex-shrink-0 ${
-                    sec._priority >= 80 ? "bg-rose-500" :
-                    sec._priority >= 60 ? "bg-orange-500" :
-                    sec._priority >= 40 ? "bg-amber-500" :
-                    "bg-white/[0.08]"
-                  }`} />
+                  {/* Priority indicator bar — uses design token colors */}
+                  <div
+                    className="w-1 self-stretch rounded-full flex-shrink-0"
+                    style={{
+                      backgroundColor: sec._priority >= 80 ? colors.danger
+                        : sec._priority >= 60 ? colors.salmon
+                        : sec._priority >= 40 ? colors.warning
+                        : "rgba(255,255,255,0.08)",
+                    }}
+                  />
                   <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
                     <div className={`w-2 h-2 rounded-full ${style.dot}`} />
                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
@@ -338,7 +342,7 @@ export default function BriefPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                      <span className="section-header text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                         {sec.title}
                       </span>
                       {sec.value && (

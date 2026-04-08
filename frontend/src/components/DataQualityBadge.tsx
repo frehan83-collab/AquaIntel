@@ -45,7 +45,7 @@ export default function DataQualityBadge({ quality, source, reason, provenance }
         {c.label}{conf && ` · ${conf}`}
       </span>
       {(src || note) && (
-        <div className="absolute bottom-full left-0 mb-1 hidden group-hover:block z-50 w-56 p-2 rounded-md bg-[#1a1a2e] border border-white/[0.1] text-[10px] text-[var(--text-secondary)] shadow-lg">
+        <div className="absolute bottom-full left-0 mb-1 hidden group-hover:block z-50 w-56 p-2 rounded-md bg-[var(--surface-3)] border border-white/[0.1] text-[10px] text-[var(--text-secondary)] shadow-lg">
           {src && <div className="mb-0.5">Source: {src}</div>}
           {conf && <div className="mb-0.5">Confidence: {conf}</div>}
           {provenance?.freshness && (

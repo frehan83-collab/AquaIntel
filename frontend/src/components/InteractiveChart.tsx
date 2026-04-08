@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useCallback, useMemo } from "react";
+import { colors } from "@/lib/design-tokens";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
@@ -50,7 +51,7 @@ export default function InteractiveChart({
   height: H = 200,
   title,
   unit = "",
-  color = "#00D4C8",
+  color = colors.accent,
   fillColor,
   showArea = true,
   yMin: forcedYMin,
@@ -263,23 +264,23 @@ export default function InteractiveChart({
         />
 
         {/* ── High / Low markers ── */}
-        <circle cx={xScale(hiIdx)} cy={yScale(data[hiIdx].y)} r={3} fill="#34d399" />
+        <circle cx={xScale(hiIdx)} cy={yScale(data[hiIdx].y)} r={3} fill={colors.positive} />
         <text
           x={xScale(hiIdx)}
           y={yScale(data[hiIdx].y) - 8}
           textAnchor="middle"
           fontSize={9}
-          fill="#34d399"
+          fill={colors.positive}
         >
           H {formatValue(data[hiIdx].y)}
         </text>
-        <circle cx={xScale(loIdx)} cy={yScale(data[loIdx].y)} r={3} fill="#fb7185" />
+        <circle cx={xScale(loIdx)} cy={yScale(data[loIdx].y)} r={3} fill={colors.negative} />
         <text
           x={xScale(loIdx)}
           y={yScale(data[loIdx].y) + 14}
           textAnchor="middle"
           fontSize={9}
-          fill="#fb7185"
+          fill={colors.negative}
         >
           L {formatValue(data[loIdx].y)}
         </text>

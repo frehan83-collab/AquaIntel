@@ -24,9 +24,9 @@
         "oxygen": { "value": "#06B6D4", "type": "color", "description": "O2 levels" }
       },
       "traffic": {
-        "green": { "value": "#22C55E", "type": "color", "description": "Trafikklys grønt (+6% MTB)" },
-        "yellow": { "value": "#EAB308", "type": "color", "description": "Trafikklys gult (0% MTB)" },
-        "red": { "value": "#EF4444", "type": "color", "description": "Trafikklys rødt (-6% MTB)" }
+        "green": { "value": "#22C55E", "type": "color", "description": "Traffic light green (+6% MTB)" },
+        "yellow": { "value": "#EAB308", "type": "color", "description": "Traffic light yellow (0% MTB)" },
+        "red": { "value": "#EF4444", "type": "color", "description": "Traffic light red (-6% MTB)" }
       },
       "positive": { "value": "#34D399", "type": "color", "description": "Good trends" },
       "negative": { "value": "#FB7185", "type": "color", "description": "Bad trends" },
@@ -69,6 +69,16 @@
         "medium": { "value": "500", "type": "fontWeights" },
         "semibold": { "value": "600", "type": "fontWeights" },
         "bold": { "value": "700", "type": "fontWeights" }
+      },
+      "lineHeight": {
+        "xs": { "value": "16", "type": "lineHeights" },
+        "sm": { "value": "20", "type": "lineHeights" },
+        "base": { "value": "24", "type": "lineHeights" },
+        "lg": { "value": "28", "type": "lineHeights" },
+        "xl": { "value": "28", "type": "lineHeights" },
+        "2xl": { "value": "32", "type": "lineHeights" },
+        "3xl": { "value": "36", "type": "lineHeights" },
+        "4xl": { "value": "40", "type": "lineHeights" }
       }
     },
     "spacing": {
@@ -80,7 +90,9 @@
       "6": { "value": "24", "type": "spacing" },
       "8": { "value": "32", "type": "spacing" },
       "10": { "value": "40", "type": "spacing" },
-      "12": { "value": "48", "type": "spacing" }
+      "12": { "value": "48", "type": "spacing" },
+      "16": { "value": "64", "type": "spacing" },
+      "20": { "value": "80", "type": "spacing" }
     },
     "borderRadius": {
       "sm": { "value": "6", "type": "borderRadius" },
@@ -89,6 +101,26 @@
       "xl": { "value": "16", "type": "borderRadius" },
       "2xl": { "value": "20", "type": "borderRadius" },
       "full": { "value": "9999", "type": "borderRadius" }
+    },
+    "effects": {
+      "shadow": {
+        "glass": { "value": "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)", "type": "boxShadow", "description": "Primary glass card shadow" },
+        "panel": { "value": "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03), inset 0 -1px 2px rgba(0,0,0,0.2)", "type": "boxShadow", "description": "Elevated panel shadow" },
+        "glow": { "value": "0 0 30px rgba(0,212,200,0.2)", "type": "boxShadow", "description": "Cyan accent glow" },
+        "glow-sm": { "value": "0 0 16px rgba(0,212,200,0.15)", "type": "boxShadow", "description": "Small cyan glow" },
+        "glow-lg": { "value": "0 0 48px rgba(0,212,200,0.25)", "type": "boxShadow", "description": "Large cyan glow" },
+        "glow-salmon": { "value": "0 0 30px rgba(232,115,74,0.2)", "type": "boxShadow", "description": "Salmon accent glow" }
+      },
+      "backdrop": {
+        "glass": { "value": "blur(16px) saturate(180%)", "type": "other", "description": "Glassmorphism backdrop" }
+      }
+    },
+    "opacity": {
+      "glass-light": { "value": "0.06", "type": "opacity", "description": "Glass background light" },
+      "glass-medium": { "value": "0.10", "type": "opacity", "description": "Glass background medium" },
+      "glass-border": { "value": "0.08", "type": "opacity", "description": "Glass border" },
+      "contour": { "value": "0.015", "type": "opacity", "description": "Bathymetric contour lines" },
+      "hover-border": { "value": "0.15", "type": "opacity", "description": "Salmon hover border" }
     }
   }
 }

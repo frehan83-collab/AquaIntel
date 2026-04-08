@@ -14,7 +14,7 @@ export default function SkeletonCard({ lines = 3, hasHeader = true, className }:
     <div
       className={cn(
         "relative overflow-hidden rounded-2xl",
-        "bg-white/80 dark:bg-gradient-to-br dark:from-fjord-surface/60 dark:to-fjord-midwater/40",
+        "bg-[var(--bg-card)] dark:bg-gradient-to-br dark:from-fjord-surface/60 dark:to-fjord-midwater/40",
         "border border-slate-200 dark:border-white/[0.08]",
         "shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]",
         "p-6 animate-pulse",

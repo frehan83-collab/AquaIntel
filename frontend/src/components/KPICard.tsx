@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
 import { useCountUp } from "@/lib/useCountUp";
+import { colors, chartPalette } from "@/lib/design-tokens";
 
 interface Props {
   label: string;
@@ -88,7 +89,7 @@ export default function KPICard({
       className={cn(
         "relative overflow-hidden",
         hero ? "rounded-2xl" : "rounded-xl",
-        "bg-white/80 dark:bg-gradient-to-br dark:from-fjord-surface/60 dark:to-fjord-midwater/40",
+        "bg-[var(--bg-card)] dark:bg-gradient-to-br dark:from-fjord-surface/60 dark:to-fjord-midwater/40",
         "border border-slate-200 dark:border-white/[0.08]",
         hero
           ? "shadow-sm dark:shadow-[0_12px_48px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.04),inset_0_-1px_2px_rgba(0,0,0,0.2)]"
