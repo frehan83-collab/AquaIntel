@@ -250,11 +250,81 @@ select {
   }
   .data-row:last-child { border-bottom: none; }
 
+  /* Skeleton shimmer animation */
+  .skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .skeleton-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.04) 40%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.04) 60%,
+      transparent 100%
+    );
+    animation: shimmer 2s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* Light mode shimmer uses darker tones */
+  :root .skeleton-shimmer::after {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(0, 0, 0, 0.03) 40%,
+      rgba(0, 0, 0, 0.06) 50%,
+      rgba(0, 0, 0, 0.03) 60%,
+      transparent 100%
+    );
+  }
+
   /* Reduced motion support */
   @media (prefers-reduced-motion: reduce) {
     .glass-hover { transition: none; }
     .glass-hover:hover { transform: none; }
+    .skeleton-shimmer::after { animation: none; }
   }
+}
+
+/* ── Micro-interaction animations ─────────────────────────── */
+
+/* Value update flash — brief cyan glow when data changes */
+@keyframes value-flash {
+  0% { box-shadow: 0 0 0 2px rgba(0, 212, 200, 0.4), inset 0 0 12px rgba(0, 212, 200, 0.1); }
+  100% { box-shadow: none; }
+}
+.flash-update { animation: value-flash 0.6s ease-out; }
+
+/* Subtle scale on hover for interactive cards */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: scale(1.015);
+  box-shadow: 0 0 20px rgba(0, 212, 200, 0.08);
+}
+
+/* Critical alert pulse — pulsing red glow */
+@keyframes alert-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(244, 63, 94, 0); }
+}
+.alert-critical-pulse {
+  animation: alert-pulse 2s ease-in-out infinite;
+}
+
+/* Stale data warning border */
+.border-stale {
+  border-color: var(--warning) !important;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.15);
 }
 
 @layer utilities {

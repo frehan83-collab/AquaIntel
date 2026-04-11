@@ -9,7 +9,9 @@
     "lint": "next lint",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "analyze": "ANALYZE=true next build"
+    "analyze": "ANALYZE=true next build",
+    "tokens:sync": "cd .. && python scripts/sync_figma_tokens.py",
+    "tokens:verify": "cd .. && python scripts/design_token_pipeline.py --verify"
   },
   "dependencies": {
     "@deck.gl/core": "^9.2.11",

@@ -3,17 +3,22 @@ import SkeletonCard from "@/components/SkeletonCard";
 export default function SkeletonDashboard() {
   return (
     <div className="space-y-6">
-      {/* KPI row */}
+      {/* Hero area: 1 wide KPI + 3 smaller KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[0, 1, 2, 3].map((i) => (
-          <SkeletonCard key={i} lines={1} hasHeader={true} className="p-4" />
-        ))}
+        <SkeletonCard variant="kpi" className="col-span-2 md:col-span-1 p-5" />
+        <SkeletonCard variant="kpi" className="p-5" />
+        <SkeletonCard variant="kpi" className="p-5" />
+        <SkeletonCard variant="kpi" className="p-5" />
       </div>
-      {/* Data panels */}
+
+      {/* Chart row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <SkeletonCard lines={5} />
-        <SkeletonCard lines={5} />
+        <SkeletonCard variant="chart" className="h-56" />
+        <SkeletonCard variant="chart" className="h-56" />
       </div>
+
+      {/* Signals / table section */}
+      <SkeletonCard variant="table" />
     </div>
   );
 }

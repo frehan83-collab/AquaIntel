@@ -36,7 +36,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # 4. Build the Next.js application
+      # 4. Verify design tokens are in sync
+      - name: Verify design token sync
+        run: python ../scripts/design_token_pipeline.py --verify
+        continue-on-error: true
+
+      # 5. Build the Next.js application
       - name: Build frontend
         run: npm run build
 

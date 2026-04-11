@@ -13,10 +13,11 @@ import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
 import StatusBadge from "@/components/StatusBadge";
 import TickerStrip from "@/components/TickerStrip";
+import SkeletonCard from "@/components/SkeletonCard";
 
-const OceanAreaChart = dynamic(() => import("@/components/charts/OceanAreaChart"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
-const OceanBarChart = dynamic(() => import("@/components/charts/OceanBarChart"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
-const ChartContainer = dynamic(() => import("@/components/charts/ChartContainer"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
+const OceanAreaChart = dynamic(() => import("@/components/charts/OceanAreaChart"), { ssr: false, loading: () => <SkeletonCard variant="chart" className="h-48" /> });
+const OceanBarChart = dynamic(() => import("@/components/charts/OceanBarChart"), { ssr: false, loading: () => <SkeletonCard variant="chart" className="h-48" /> });
+const ChartContainer = dynamic(() => import("@/components/charts/ChartContainer"), { ssr: false, loading: () => <SkeletonCard variant="chart" className="h-48" /> });
 import { api } from "@/lib/api";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
 import { useToast } from "@/components/Toast";
@@ -375,18 +376,26 @@ export default function DashboardPage() {
       </div>
 
       {metricsExpanded && <>
-      {/* Hero KPI + Supporting Metrics — asymmetric layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1fr] gap-4">
-        <KPICard
-          label={t("dashboard.spot_price")}
-          value={ssbSpot > 0 ? formatNumber(ssbSpot, locale, 1) : "\u2014"}
-          unit="NOK/kg"
-          delta="Live SSB data"
-          deltaType="positive"
-          icon={DollarSign}
-          delay={0}
-          hero
-        />
+      {/* Hero KPI — asymmetric: spot price hero + 3 supporting metrics */}
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-4">
+        {/* HERO: Spot Price — 3x prominence */}
+        <GlassCard accent="ocean" className="relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1">{t("dashboard.spot_price")}</p>
+              <p className="text-5xl font-bold text-kpi text-[var(--text-primary)] leading-none">
+                {ssbSpot > 0 ? formatNumber(ssbSpot, locale, 1) : "\u2014"}
+              </p>
+              <p className="text-sm text-[var(--text-secondary)] mt-1">NOK/kg</p>
+              <p className="text-[10px] text-[var(--positive)] mt-2 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Live SSB Table 03024
+              </p>
+            </div>
+            <DollarSign className="w-14 h-14 text-ocean-500/20 absolute right-4 top-4" />
+          </div>
+        </GlassCard>
+
         <KPICard
           label={t("dashboard.lice_avg")}
           value={summary?.avg_adult_female_lice != null ? formatNumber(summary.avg_adult_female_lice, locale, 3) : "\u2014"}
