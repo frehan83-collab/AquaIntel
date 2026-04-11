@@ -5,9 +5,10 @@ import {
   Globe2, RefreshCw, TrendingUp, TrendingDown, AlertTriangle,
   BarChart3, Zap, Fish, Download,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
-import SupplyChainSankey from "@/components/SupplyChainSankey";
+const SupplyChainSankey = dynamic(() => import("@/components/SupplyChainSankey"), { ssr: false, loading: () => <div className="h-80 bg-white/[0.04] rounded-lg animate-pulse" /> });
 import type { SankeyData } from "@/components/SupplyChainSankey";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";

@@ -31,9 +31,9 @@ export default function DataQualityBadge({ quality, source, reason, provenance }
   const conf = provenance ? `${Math.round(provenance.confidence * 100)}%` : null;
 
   const config = {
-    live: { color: "bg-emerald-500", label: "Live", ring: "ring-emerald-500/30" },
-    degraded: { color: "bg-amber-500", label: "Degraded", ring: "ring-amber-500/30" },
-    simulated: { color: "bg-rose-500", label: "Simulated", ring: "ring-rose-500/30" },
+    live: { color: "bg-[var(--success)]", label: "Live", ring: "ring-[var(--success)]/30" },
+    degraded: { color: "bg-[var(--warning)]", label: "Degraded", ring: "ring-[var(--warning)]/30" },
+    simulated: { color: "bg-[var(--danger)]", label: "Simulated", ring: "ring-[var(--danger)]/30" },
     synthetic: { color: "bg-violet-500", label: "Synthetic", ring: "ring-violet-500/30" },
   };
   const c = config[q];

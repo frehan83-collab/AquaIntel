@@ -2,6 +2,7 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { colors } from "@/lib/design-tokens";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -42,10 +43,10 @@ export default function Top50Chart({ companies, onCompanyClick }: Top50ChartProp
   const maxLice = useMemo(() => Math.max(...sorted.map(c => c.avg_lice), 0.01), [sorted]);
 
   const getBarColor = (lice: number) => {
-    if (lice >= 0.5) return { from: "#F43F5E", to: "#FB7185" };   // red — above limit
-    if (lice >= 0.3) return { from: "#F59E0B", to: "#FBBF24" };   // amber — elevated
-    if (lice >= 0.15) return { from: "#00C8A0", to: "#00D4C8" };  // teal — moderate
-    return { from: "#10B981", to: "#34D399" };                     // emerald — clean
+    if (lice >= 0.5) return { from: colors.danger, to: colors.negative };        // red — above limit
+    if (lice >= 0.3) return { from: colors.warning, to: "#FBBF24" };            // amber — elevated
+    if (lice >= 0.15) return { from: "#00C8A0", to: colors.accent };             // teal — moderate
+    return { from: colors.success, to: colors.positive };                        // emerald — clean
   };
 
   if (sorted.length === 0) {
@@ -79,10 +80,10 @@ export default function Top50Chart({ companies, onCompanyClick }: Top50ChartProp
           </button>
         ))}
         <div className="ml-auto flex items-center gap-2 text-[10px] text-[var(--text-secondary)]">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-500" />&lt;0.15</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#00D4C8]" />0.15-0.3</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-amber-500" />0.3-0.5</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-rose-500" />&gt;0.5</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[var(--success)]" />&lt;0.15</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[var(--accent)]" />0.15-0.3</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[var(--warning)]" />0.3-0.5</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[var(--danger)]" />&gt;0.5</span>
         </div>
       </div>
 

@@ -8,10 +8,14 @@ import {
   BarChart2, Zap, Globe2, Shield, Wheat, CheckCircle2, ChevronDown, ChevronUp,
   Settings2, Printer,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
 import StatusBadge from "@/components/StatusBadge";
-import { OceanAreaChart, OceanBarChart, ChartContainer } from "@/components/charts";
+
+const OceanAreaChart = dynamic(() => import("@/components/charts/OceanAreaChart"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
+const OceanBarChart = dynamic(() => import("@/components/charts/OceanBarChart"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
+const ChartContainer = dynamic(() => import("@/components/charts/ChartContainer"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
 import { api } from "@/lib/api";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
 import { useToast } from "@/components/Toast";

@@ -131,116 +131,154 @@ async def price_outlook(horizon: int = 4, scenarios: int = 1000):
     ML ensemble price prediction with conformal uncertainty bands.
     Replaces the basic price-forecast for advanced consumers.
     """
-    from core.market.price_ml import price_ensemble
+    import structlog
+    from core.market.data_provenance import DataProvenance
+
+    log = structlog.get_logger("price_outlook")
 
     # Clamp inputs
     horizon = max(2, min(horizon, 20))
     scenarios = max(100, min(scenarios, 10000))
 
-    # Get current market state
-    async with get_async_session() as s:
-        latest = (await s.execute(
-            select(LiceRecord.year, LiceRecord.week)
-            .order_by(LiceRecord.year.desc(), LiceRecord.week.desc())
-            .limit(1)
-        )).first()
+    # --- Phase 1: Lice market state from DB ---
+    avg_lice = 0.15
+    avg_mobile = 0.0
+    avg_sessile = 0.0
+    pct_above = 0.0
+    cleaner_pct = 0.0
 
-        avg_lice = 0.15
-        avg_mobile = 0.0
-        avg_sessile = 0.0
-        pct_above = 0.0
-        cleaner_pct = 0.0
+    try:
+        async with get_async_session() as s:
+            latest = (await s.execute(
+                select(LiceRecord.year, LiceRecord.week)
+                .order_by(LiceRecord.year.desc(), LiceRecord.week.desc())
+                .limit(1)
+            )).first()
 
-        if latest:
-            stats = (await s.execute(
-                select(
-                    func.avg(LiceRecord.avg_adult_female_lice),
-                    func.avg(LiceRecord.avg_mobile_lice),
-                    func.avg(LiceRecord.avg_stationary_lice),
-                    func.count(LiceRecord.id),
-                ).where(
-                    LiceRecord.year == latest[0],
-                    LiceRecord.week == latest[1],
-                    LiceRecord.avg_adult_female_lice.isnot(None),
-                )
-            )).one()
-            avg_lice = float(stats[0] or 0.15)
-            avg_mobile = float(stats[1] or 0)
-            avg_sessile = float(stats[2] or 0)
+            if latest:
+                stats = (await s.execute(
+                    select(
+                        func.avg(LiceRecord.avg_adult_female_lice),
+                        func.avg(LiceRecord.avg_mobile_lice),
+                        func.avg(LiceRecord.avg_stationary_lice),
+                        func.count(LiceRecord.id),
+                    ).where(
+                        LiceRecord.year == latest[0],
+                        LiceRecord.week == latest[1],
+                        LiceRecord.avg_adult_female_lice.isnot(None),
+                    )
+                )).one_or_none()
 
-            above = (await s.execute(
-                select(func.count(LiceRecord.id)).where(
-                    LiceRecord.year == latest[0],
-                    LiceRecord.week == latest[1],
-                    LiceRecord.avg_adult_female_lice > 0.5,
-                )
-            )).scalar() or 0
-            total = stats[3] or 1
-            pct_above = above / total
+                if stats and stats[0] is not None:
+                    avg_lice = float(stats[0] or 0.15)
+                    avg_mobile = float(stats[1] or 0)
+                    avg_sessile = float(stats[2] or 0)
+                    total = stats[3] or 1
 
-            cleaner_count = (await s.execute(
-                select(func.count(LiceRecord.id)).where(
-                    LiceRecord.year == latest[0],
-                    LiceRecord.week == latest[1],
-                    LiceRecord.has_cleaner_fish == True,
-                )
-            )).scalar() or 0
-            cleaner_pct = cleaner_count / total
+                    above = (await s.execute(
+                        select(func.count(LiceRecord.id)).where(
+                            LiceRecord.year == latest[0],
+                            LiceRecord.week == latest[1],
+                            LiceRecord.avg_adult_female_lice > 0.5,
+                        )
+                    )).scalar() or 0
+                    pct_above = above / total
 
-    # Get REAL spot price + export trend from SSB (Statistics Norway)
-    from core.market.ssb_price_client import ssb_price_client
-    from core.market.data_provenance import DataProvenance
+                    cleaner_count = (await s.execute(
+                        select(func.count(LiceRecord.id)).where(
+                            LiceRecord.year == latest[0],
+                            LiceRecord.week == latest[1],
+                            LiceRecord.has_cleaner_fish == True,
+                        )
+                    )).scalar() or 0
+                    cleaner_pct = cleaner_count / total
+    except Exception as exc:
+        log.warning("price_outlook_db_lice_failed", error=str(exc))
+        # Continue with defaults
+
+    # --- Phase 2: SSB spot price + export trend ---
     _ssb_live = True
-    spot = await ssb_price_client.get_current_spot()
-    if spot <= 0:
-        spot = 75.0  # fallback only if SSB is unreachable
+    spot = 75.0
+    export_trend = 0.0
+    futures_prem = 0.0
+
+    try:
+        from core.market.ssb_price_client import ssb_price_client
+        spot = await ssb_price_client.get_current_spot()
+        if spot <= 0:
+            spot = 75.0
+            _ssb_live = False
+        recent_prices = await ssb_price_client.fetch_prices(n_weeks=26)
+        export_trend = ssb_price_client.compute_export_volume_trend(recent_prices.prices)
+    except Exception as exc:
+        log.warning("price_outlook_ssb_failed", error=str(exc))
+        spot = 75.0
         _ssb_live = False
 
-    # Compute real export volume trend from SSB data
-    recent_prices = await ssb_price_client.fetch_prices(n_weeks=26)
-    export_trend = ssb_price_client.compute_export_volume_trend(recent_prices.prices)
-    futures_prem = 0.0  # no synthetic futures data — only real SSB prices
+    # --- Phase 3: ML prediction ---
+    try:
+        from core.market.price_ml import price_ensemble
+        fc = price_ensemble.predict(
+            current_spot=spot,
+            horizon_weeks=horizon,
+            national_avg_lice=avg_lice,
+            pct_above_threshold=pct_above,
+            avg_mobile_lice=avg_mobile,
+            avg_sessile_lice=avg_sessile,
+            cleaner_fish_pct=cleaner_pct,
+            export_volume_trend=export_trend,
+            futures_premium_pct=futures_prem,
+            n_scenarios=scenarios,
+        )
+    except Exception as exc:
+        log.warning("price_outlook_ml_failed", error=str(exc))
+        # Return degraded spot-only response
+        return {
+            "horizon_weeks": horizon,
+            "current_spot_nok": spot,
+            "predicted_nok": spot,
+            "direction": "flat",
+            "confidence": 0.1,
+            "bands": {"p95": [spot * 0.85, spot * 1.15], "p80": [spot * 0.90, spot * 1.10], "p50": [spot * 0.95, spot * 1.05]},
+            "scenarios": {"p10": spot * 0.85, "p25": spot * 0.93, "p50": spot, "p75": spot * 1.07, "p90": spot * 1.15},
+            "signals": {"lice": 0, "supply": 0, "seasonal": 0, "export": 0, "futures": 0, "combined": 0},
+            "model": {"version": "degraded_fallback", "n_scenarios": 0, "mape_backtest": None, "accuracy_statement": "ML unavailable — showing spot price only"},
+            "rationale": f"ML prediction failed ({exc.__class__.__name__}). Showing current SSB spot price as baseline.",
+            "disclaimer": "This is a degraded response. ML models are unavailable.",
+            "fallback": True,
+            "data_provenance": DataProvenance.degraded("SSB Table 03024", f"ML unavailable: {exc.__class__.__name__}", confidence=0.1).to_dict(),
+        }
 
-    # Run ML prediction
-    fc = price_ensemble.predict(
-        current_spot=spot,
-        horizon_weeks=horizon,
-        national_avg_lice=avg_lice,
-        pct_above_threshold=pct_above,
-        avg_mobile_lice=avg_mobile,
-        avg_sessile_lice=avg_sessile,
-        cleaner_fish_pct=cleaner_pct,
-        export_volume_trend=export_trend,
-        futures_premium_pct=futures_prem,
-        n_scenarios=scenarios,
-    )
-
-    # Store prediction
-    async with get_async_session() as s:
-        s.add(PricePrediction(
-            horizon_weeks=fc.horizon_weeks,
-            current_spot_nok=fc.current_spot_nok,
-            predicted_nok=fc.predicted_nok,
-            direction=fc.direction,
-            confidence=fc.confidence,
-            price_lo95=fc.price_lo95,
-            price_hi95=fc.price_hi95,
-            price_lo80=fc.price_lo80,
-            price_hi80=fc.price_hi80,
-            price_lo50=fc.price_lo50,
-            price_hi50=fc.price_hi50,
-            lice_signal=fc.lice_signal,
-            supply_signal=fc.supply_signal,
-            seasonal_signal=fc.seasonal_signal,
-            export_signal=fc.export_signal,
-            futures_signal=fc.futures_signal,
-            combined_signal=fc.combined_signal,
-            model_version=fc.model_version,
-            n_scenarios=fc.n_scenarios,
-            mape_backtest=fc.mape_backtest,
-            rationale=fc.rationale,
-        ))
-        await s.commit()
+    # --- Phase 4: Store prediction (non-critical) ---
+    try:
+        async with get_async_session() as s:
+            s.add(PricePrediction(
+                horizon_weeks=fc.horizon_weeks,
+                current_spot_nok=fc.current_spot_nok,
+                predicted_nok=fc.predicted_nok,
+                direction=fc.direction,
+                confidence=fc.confidence,
+                price_lo95=fc.price_lo95,
+                price_hi95=fc.price_hi95,
+                price_lo80=fc.price_lo80,
+                price_hi80=fc.price_hi80,
+                price_lo50=fc.price_lo50,
+                price_hi50=fc.price_hi50,
+                lice_signal=fc.lice_signal,
+                supply_signal=fc.supply_signal,
+                seasonal_signal=fc.seasonal_signal,
+                export_signal=fc.export_signal,
+                futures_signal=fc.futures_signal,
+                combined_signal=fc.combined_signal,
+                model_version=fc.model_version,
+                n_scenarios=fc.n_scenarios,
+                mape_backtest=fc.mape_backtest,
+                rationale=fc.rationale,
+            ))
+            await s.commit()
+    except Exception as exc:
+        log.warning("price_outlook_db_store_failed", error=str(exc))
+        # Non-critical — prediction still returned to user
 
     return {
         "horizon_weeks": fc.horizon_weeks,

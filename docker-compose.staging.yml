@@ -1,0 +1,23 @@
+# Docker Compose override for staging environment
+# Usage: docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+version: "3.9"
+
+services:
+  fishintel:
+    ports:
+      - "8080:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://openclaw:${POSTGRES_PASSWORD:-openclaw-dev-password}@db:5432/openclaw
+      - PYTENSOR_FLAGS=device=cpu,floatX=float64,optimizer=fast_compile,cxx=
+      - FISHINTEL_JWT_SECRET=${FISHINTEL_JWT_SECRET:-staging-secret}
+      - FISHINTEL_ENV=staging
+      - FISHINTEL_LOG_LEVEL=DEBUG
+      - FISKERIDIR_BIOSTAT_JSON=/app/data/biostat-total-flk.json
+    deploy:
+      resources: {}
+
+  frontend:
+    ports:
+      - "3001:3000"
+    deploy:
+      resources: {}

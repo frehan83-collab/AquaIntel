@@ -292,7 +292,7 @@ const OcButton = forwardRef<HTMLButtonElement, ButtonProps>(
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.5 }}
               transition={spring}
-              className="flex items-center gap-2 text-emerald-400"
+              className="flex items-center gap-2 text-[var(--success)]"
             >
               <Check className="w-4 h-4" />
               <span>Done</span>
@@ -304,7 +304,7 @@ const OcButton = forwardRef<HTMLButtonElement, ButtonProps>(
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.5 }}
               transition={spring}
-              className="flex items-center gap-2 text-rose-400"
+              className="flex items-center gap-2 text-[var(--danger)]"
             >
               <X className="w-4 h-4" />
               <span>Failed</span>

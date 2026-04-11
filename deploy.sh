@@ -38,6 +38,13 @@ if [ "$SERVER" != "localhost" ] && [ "$SERVER" != "your-server-ip" ]; then
     echo "Deployed to $SERVER!"
     echo "Frontend: http://$SERVER"
     echo "API: http://$SERVER/api/health"
+
+    # Post-deploy health check (remote)
+    echo ""
+    echo "Waiting for services to start..."
+    sleep 10
+    HEALTH=$(ssh $SERVER "curl -sf http://localhost:8000/api/health") || (echo "Health check failed!" && exit 1)
+    echo "Health check passed: $HEALTH"
 else
     # Local deployment
     echo "Starting locally..."
@@ -52,4 +59,11 @@ else
     echo ""
     echo "Logs: docker compose logs -f"
     echo "Stop: docker compose down"
+
+    # Post-deploy health check (local)
+    echo ""
+    echo "Waiting for services to start..."
+    sleep 10
+    HEALTH=$(curl -sf http://localhost:8000/api/health) || (echo "Health check failed!" && exit 1)
+    echo "Health check passed: $HEALTH"
 fi

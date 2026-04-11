@@ -4,6 +4,7 @@ import {
   Tooltip, ResponsiveContainer, ReferenceLine, Legend,
 } from "recharts";
 import OceanTooltip from "./OceanTooltip";
+import { chartPalette, colors } from "@/lib/design-tokens";
 
 /* ─────────────────────────────────────────────────────────────────
  * Premium Multi-Series Area Chart
@@ -41,16 +42,8 @@ interface OceanAreaChartProps {
   animated?: boolean;
 }
 
-const OCEAN_PALETTE = [
-  "#00D4C8", // Ocean teal
-  "#8B5CF6", // Violet
-  "#F59E0B", // Amber
-  "#EC4899", // Pink
-  "#10B981", // Emerald
-  "#F43F5E", // Rose
-  "#6366F1", // Indigo
-  "#14B8A6", // Teal
-];
+/** @deprecated Use chartPalette from design-tokens instead */
+const OCEAN_PALETTE = chartPalette;
 
 export default function OceanAreaChart({
   data,
@@ -121,7 +114,7 @@ export default function OceanAreaChart({
         {threshold !== undefined && (
           <ReferenceLine
             y={threshold}
-            stroke="#F43F5E"
+            stroke={colors.danger}
             strokeDasharray="6 4"
             strokeWidth={1.5}
             label={{

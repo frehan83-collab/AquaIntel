@@ -1,5 +1,6 @@
 "use client";
 import { useState, useMemo, useRef, useCallback } from "react";
+import { chartPalette } from "@/lib/design-tokens";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * SupplyChainSankey — Pure SVG Sankey diagram for salmon production flow
@@ -47,11 +48,11 @@ interface SupplyChainSankeyProps {
 /* ─── Stage colour palette ───────────────────────────────────────────────── */
 
 const STAGE_COLORS: Record<number, string> = {
-  0: "rgb(16,185,129)",   // emerald — smolt / production origins
+  0: chartPalette[5],     // emerald — smolt / production origins
   1: "rgb(56,189,248)",   // sky     — sea growth
-  2: "rgb(245,158,11)",   // amber   — harvest
-  3: "rgb(168,85,247)",   // purple  — processing
-  4: "rgb(244,63,94)",    // rose    — export markets
+  2: chartPalette[3],     // amber   — harvest
+  3: chartPalette[2],     // violet  — processing
+  4: chartPalette[4],     // pink    — export markets
 };
 
 function nodeColor(node: SankeyNode): string {

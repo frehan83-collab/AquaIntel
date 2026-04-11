@@ -40,6 +40,17 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      # 5. Install Playwright browsers for E2E tests
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend/
+
+      # 6. Run Playwright E2E tests
+      - name: Run Playwright E2E tests
+        run: npx playwright test --reporter=github
+        working-directory: frontend/
+        continue-on-error: true
+
       - name: Security audit (npm)
         run: npm audit --audit-level=high || true
         continue-on-error: true

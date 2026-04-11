@@ -283,6 +283,21 @@ select {
   .px-dense { padding-left: 12px; padding-right: 12px; }
   .py-dense { padding-top: 8px; padding-bottom: 8px; }
   .gap-dense { gap: 8px; }
+
+  /* WCAG touch target minimum (44x44px) */
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Scrollable table wrapper for mobile */
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 @media print {

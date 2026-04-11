@@ -7,10 +7,12 @@ import {
   TrendingUp, Fish, BarChart3, Activity, Target,
   RefreshCw, Zap, ArrowUpDown,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import GlassCard from "@/components/GlassCard";
 import KPICard from "@/components/KPICard";
-import ConfidenceBand from "@/components/ConfidenceBand";
-import InteractiveChart, { DataPoint } from "@/components/InteractiveChart";
+const ConfidenceBand = dynamic(() => import("@/components/ConfidenceBand"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
+const InteractiveChart = dynamic(() => import("@/components/InteractiveChart"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
+import type { DataPoint } from "@/components/InteractiveChart";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";

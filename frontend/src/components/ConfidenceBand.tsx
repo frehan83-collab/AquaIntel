@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { chartPalette } from "@/lib/design-tokens";
 
 interface DataPoint {
   x: number;
@@ -102,17 +103,17 @@ export default function ConfidenceBand({
       >
         {/* 95% band — lightest fill */}
         {band95Path && (
-          <path d={band95Path} fill="rgba(0,212,200,0.08)" />
+          <path d={band95Path} fill={`${chartPalette[0]}14`} />
         )}
         {/* 80% band — medium fill */}
         {band80Path && (
-          <path d={band80Path} fill="rgba(0,212,200,0.18)" />
+          <path d={band80Path} fill={`${chartPalette[0]}2E`} />
         )}
         {/* Central line */}
         <path
           d={centerPath}
           fill="none"
-          stroke="#00D4C8"
+          stroke={chartPalette[0]}
           strokeWidth="2"
           strokeLinejoin="round"
         />
@@ -133,7 +134,7 @@ export default function ConfidenceBand({
               cx={sx(d.x)}
               cy={sy(d.y)}
               r={hoverIdx === i ? 4 : 2.5}
-              fill="#00D4C8"
+              fill={chartPalette[0]}
               className="transition-all duration-150"
             />
           </g>
@@ -195,7 +196,7 @@ export default function ConfidenceBand({
             transform: "translateX(-50%)",
           }}
         >
-          <div className="font-semibold text-[#00D4C8]">
+          <div className="font-semibold text-[var(--accent)]">
             {hovered.y.toFixed(3)}
             {unit}
           </div>
@@ -217,21 +218,21 @@ export default function ConfidenceBand({
         <span className="flex items-center gap-1">
           <span
             className="inline-block w-3 h-2 rounded-sm"
-            style={{ background: "rgba(0,212,200,0.08)" }}
+            style={{ background: `${chartPalette[0]}14` }}
           />
           95% confidence
         </span>
         <span className="flex items-center gap-1">
           <span
             className="inline-block w-3 h-2 rounded-sm"
-            style={{ background: "rgba(0,212,200,0.18)" }}
+            style={{ background: `${chartPalette[0]}2E` }}
           />
           80% confidence
         </span>
         <span className="flex items-center gap-1">
           <span
             className="inline-block w-3 h-1 rounded-sm"
-            style={{ background: "#00D4C8" }}
+            style={{ background: chartPalette[0] }}
           />
           Central estimate
         </span>

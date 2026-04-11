@@ -36,7 +36,7 @@ jobs:
       # 4. Run the full test suite with coverage
       - name: Run pytest
         run: |
-          pytest tests/ -v --tb=short --cov=core --cov-report=term-missing --cov-fail-under=40
+          pytest tests/ -v --tb=short --cov=core --cov-report=term-missing --cov-fail-under=50
 
       - name: Security audit (pip-audit)
         run: |

@@ -6,15 +6,17 @@ import {
   RefreshCw, AlertTriangle, Minus, Fish, Globe2, Download,
 } from "lucide-react";
 import { exportToCSV } from "@/lib/export";
+import dynamic from "next/dynamic";
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
-import TrendComparison from "@/components/TrendComparison";
+const TrendComparison = dynamic(() => import("@/components/TrendComparison"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import InteractiveChart, { DataPoint } from "@/components/InteractiveChart";
+const InteractiveChart = dynamic(() => import("@/components/InteractiveChart"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
+import type { DataPoint } from "@/components/InteractiveChart";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

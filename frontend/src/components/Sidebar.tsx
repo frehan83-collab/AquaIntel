@@ -443,7 +443,7 @@ export default function Sidebar() {
                     </AnimatePresence>
                     {/* "What's New" dot for Changelog */}
                     {item.href === "/changelog" && hasNewChangelog && (
-                      <span className="ml-auto flex-shrink-0 w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)] animate-pulse" title="New updates available" />
+                      <span className="ml-auto flex-shrink-0 w-2 h-2 rounded-full bg-[var(--success)] shadow-[0_0_6px_rgba(16,185,129,0.6)] animate-pulse" title="New updates available" />
                     )}
                     {isActive && (
                       <motion.div

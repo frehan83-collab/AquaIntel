@@ -1,5 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
+import { colors } from "@/lib/design-tokens";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * RegionalHeatmap — SVG-based heatmap of Norway's 13 Production Areas
@@ -52,13 +53,13 @@ function lerpColor(a: [number, number, number], b: [number, number, number], t: 
   return `rgb(${r},${g},${bl})`;
 }
 
-/** 4-stop colour ramp: green → yellow → orange → red */
+/** 4-stop colour ramp: green → yellow → orange → red (using traffic-light tokens) */
 function intensityColor(ratio: number): string {
   const clamped = Math.max(0, Math.min(1, ratio));
-  const GREEN:  [number, number, number] = [16, 185, 129];  // emerald-500
-  const YELLOW: [number, number, number] = [234, 179, 8];   // yellow-500
+  const GREEN:  [number, number, number] = [34, 197, 94];   // traffic green
+  const YELLOW: [number, number, number] = [234, 179, 8];   // traffic yellow
   const ORANGE: [number, number, number] = [249, 115, 22];  // orange-500
-  const RED:    [number, number, number] = [239, 68, 68];    // red-500
+  const RED:    [number, number, number] = [239, 68, 68];    // traffic red
 
   if (clamped < 0.33) return lerpColor(GREEN, YELLOW, clamped / 0.33);
   if (clamped < 0.66) return lerpColor(YELLOW, ORANGE, (clamped - 0.33) / 0.33);
@@ -209,10 +210,10 @@ export default function RegionalHeatmap({ data, title, metric, maxValue }: Regio
               <g>
                 <defs>
                   <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="rgb(16,185,129)" />
-                    <stop offset="33%" stopColor="rgb(234,179,8)" />
+                    <stop offset="0%" stopColor={colors.traffic.green} />
+                    <stop offset="33%" stopColor={colors.traffic.yellow} />
                     <stop offset="66%" stopColor="rgb(249,115,22)" />
-                    <stop offset="100%" stopColor="rgb(239,68,68)" />
+                    <stop offset="100%" stopColor={colors.traffic.red} />
                   </linearGradient>
                 </defs>
                 <rect

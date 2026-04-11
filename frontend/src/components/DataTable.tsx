@@ -158,7 +158,7 @@ export default function DataTable<T extends Record<string, any>>({
                 <button
                   onClick={() => exportToExcel(filtered, exportFilename)}
                   aria-label="Export as Excel"
-                  className="flex items-center gap-1 px-2 py-1.5 text-[10px] text-emerald-600 dark:text-emerald-400/70 hover:text-emerald-700 dark:hover:text-emerald-400 bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06] rounded-lg transition-colors"
+                  className="flex items-center gap-1 px-2 py-1.5 text-[10px] text-[var(--success)] opacity-70 hover:opacity-100 bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06] rounded-lg transition-colors"
                 >
                   <Download className="w-3 h-3" /> Excel
                 </button>
@@ -170,7 +170,7 @@ export default function DataTable<T extends Record<string, any>>({
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full min-w-[600px]">
           <thead>
             <tr className="border-b border-slate-200 dark:border-white/[0.06]">
               {columns.map((col) => (

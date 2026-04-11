@@ -30,7 +30,7 @@ const nextConfig = {
 
   // Tree-shake large icon/chart libraries — saves 50-100KB
   experimental: {
-    optimizePackageImports: ["lucide-react", "recharts", "framer-motion"],
+    optimizePackageImports: ["lucide-react", "recharts", "framer-motion", "@deck.gl/core", "@deck.gl/layers", "maplibre-gl"],
   },
 };
 

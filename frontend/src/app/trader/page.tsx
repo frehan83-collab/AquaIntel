@@ -5,9 +5,10 @@ import {
   TrendingUp, TrendingDown, BarChart3, AlertTriangle,
   RefreshCw, Zap, Activity, Newspaper, LineChart, Save, Trash2, FolderOpen,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
-import ConfidenceBand from "@/components/ConfidenceBand";
+const ConfidenceBand = dynamic(() => import("@/components/ConfidenceBand"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";

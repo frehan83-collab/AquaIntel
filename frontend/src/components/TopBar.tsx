@@ -11,19 +11,19 @@ import { useApiError } from "@/lib/useApiError";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const SEVERITY_COLORS: Record<string, string> = {
-  critical: "bg-rose-500",
-  high: "bg-amber-500",
+  critical: "bg-[var(--danger)]",
+  high: "bg-[var(--warning)]",
   medium: "bg-yellow-500",
-  low: "bg-ocean-500",
+  low: "bg-[var(--accent)]",
   info: "bg-slate-500",
 };
 
 const SEVERITY_TEXT: Record<string, string> = {
-  critical: "text-rose-400",
-  high: "text-amber-400",
+  critical: "text-[var(--danger)]",
+  high: "text-[var(--warning)]",
   medium: "text-yellow-400",
-  low: "text-ocean-400",
-  info: "text-slate-400",
+  low: "text-[var(--accent)]",
+  info: "text-[var(--text-secondary)]",
 };
 
 const CATEGORY_ICONS: Record<string, any> = {
@@ -151,16 +151,16 @@ export default function TopBar() {
   const maxSeverity = alertSummary?.max_severity || "info";
 
   // Dot color for bell badge
-  const dotColor = maxSeverity === "critical" ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
-    : maxSeverity === "high" ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"
-    : "bg-ocean-500 shadow-[0_0_8px_rgba(0,212,200,0.4)]";
+  const dotColor = maxSeverity === "critical" ? "bg-[var(--danger)] shadow-[0_0_8px_rgba(244,63,94,0.6)]"
+    : maxSeverity === "high" ? "bg-[var(--warning)] shadow-[0_0_8px_rgba(245,158,11,0.5)]"
+    : "bg-[var(--accent)] shadow-[0_0_8px_rgba(0,212,200,0.4)]";
 
   return (
     <header className="h-12 bg-white/80 dark:bg-fjord-midwater/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/[0.05] flex items-center justify-between px-6 sticky top-0 z-30">
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-[10px] font-semibold text-emerald-400/80 uppercase tracking-wider">{t("status.live")}</span>
+          <div className="w-1.5 h-1.5 rounded-full bg-[var(--success)] animate-pulse" />
+          <span className="text-[10px] font-semibold text-[var(--success)]/80 uppercase tracking-wider">{t("status.live")}</span>
         </div>
         {spotPrice !== null && (
           <div
@@ -223,7 +223,7 @@ export default function TopBar() {
             <div className="relative">
               <Bell className="w-4 h-4" />
               {unreadCount > 0 ? (
-                <span className="absolute -top-2 -right-2.5 min-w-[16px] h-4 rounded-full bg-rose-500 flex items-center justify-center shadow-[0_0_8px_rgba(244,63,94,0.4)] px-0.5">
+                <span className="absolute -top-2 -right-2.5 min-w-[16px] h-4 rounded-full bg-[var(--danger)] flex items-center justify-center shadow-[0_0_8px_rgba(244,63,94,0.4)] px-0.5">
                   <span className="text-[8px] font-bold text-white leading-none">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
@@ -378,7 +378,7 @@ export default function TopBar() {
           >
             <div className="relative">
               <Activity className="w-4 h-4" />
-              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.4)]">
+              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[var(--warning)] flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.4)]">
                 <span className="text-[8px] font-bold text-white">
                   {pendingSignals > 9 ? "9+" : pendingSignals}
                 </span>

@@ -42,11 +42,11 @@ const STYLES: Record<ToastType, string> = {
 };
 
 const ICON_COLORS: Record<ToastType, string> = {
-  info: "text-ocean-400",
-  success: "text-emerald-400",
-  warning: "text-amber-400",
-  error: "text-rose-400",
-  alert: "text-rose-400",
+  info: "text-[var(--accent)]",
+  success: "text-[var(--success)]",
+  warning: "text-[var(--warning)]",
+  error: "text-[var(--danger)]",
+  alert: "text-[var(--danger)]",
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {

@@ -7,6 +7,11 @@ import KPICard from "@/components/KPICard";
 import StatusBadge from "@/components/StatusBadge";
 import TrafikklysIndicator from "@/components/TrafikklysIndicator";
 import { OcButton } from "@/components/ui/Button";
+import ProgressRing from "@/components/ProgressRing";
+import TickerStrip from "@/components/TickerStrip";
+import { BentoGrid } from "@/components/BentoGrid";
+import AnimatedGauge from "@/components/AnimatedGauge";
+import MiniHeatmap from "@/components/MiniHeatmap";
 import {
   colors,
   chartPalette,
@@ -67,7 +72,7 @@ export default function DesignSystemPage() {
         <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-3 uppercase tracking-wider">
           Core UI
         </h3>
-        <div className="grid grid-cols-5 md:grid-cols-10 gap-3 mb-8">
+        <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-10 gap-3 mb-8">
           {[
             { name: "accent", hex: colors.accent },
             { name: "salmon", hex: colors.salmon },
@@ -95,7 +100,7 @@ export default function DesignSystemPage() {
         <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-3 uppercase tracking-wider">
           Aquaculture Data
         </h3>
-        <div className="grid grid-cols-6 gap-3 mb-8">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-8">
           {Object.entries(dataColors).map(([name, hex]) => (
             <div key={name} className="flex flex-col items-center gap-1">
               <div
@@ -390,6 +395,93 @@ export default function DesignSystemPage() {
             ))}
           </div>
         </GlassCard>
+      </section>
+
+      {/* ── New Components (Session 33) ─────────────────────────── */}
+      <section>
+        <h2 className="section-header">Progress Rings</h2>
+        <GlassCard>
+          <div className="flex flex-wrap items-center gap-8">
+            <ProgressRing value={92} label="Welfare" sublabel="Grade A" />
+            <ProgressRing value={67} label="ASC" sublabel="Partial" />
+            <ProgressRing value={34} label="Risk" sublabel="High" />
+            <ProgressRing value={100} label="Perfect" size={60} strokeWidth={4} />
+            <ProgressRing value={0} label="Empty" size={60} strokeWidth={4} />
+          </div>
+        </GlassCard>
+      </section>
+
+      <section>
+        <h2 className="section-header">Ticker Strip</h2>
+        <TickerStrip
+          items={[
+            { label: "SSB Spot", value: "NOK 90.55", change: 2.3, trend: "up" },
+            { label: "Avg Lice", value: "0.092", change: -5.1, trend: "down" },
+            { label: "Feed Index", value: "112.4", change: 0.8, trend: "up" },
+            { label: "NOK/USD", value: "10.42", change: -0.3, trend: "down" },
+            { label: "Biomass", value: "886kt", change: 1.2, trend: "up" },
+            { label: "ESG Avg", value: "72.1", trend: "flat" },
+          ]}
+        />
+      </section>
+
+      <section>
+        <h2 className="section-header">Animated Gauges</h2>
+        <GlassCard>
+          <div className="flex flex-wrap items-center gap-8">
+            <AnimatedGauge value={85} label="Welfare Index" unit="%" />
+            <AnimatedGauge value={42} label="Anomaly Score" unit="pts" />
+            <AnimatedGauge value={15} label="Critical Risk" unit="%" />
+          </div>
+        </GlassCard>
+      </section>
+
+      <section>
+        <h2 className="section-header">Mini Heatmap</h2>
+        <GlassCard>
+          <div className="flex flex-wrap gap-8">
+            <div>
+              <p className="text-xs text-[var(--text-secondary)] mb-2">Lice by PA (4 weeks)</p>
+              <MiniHeatmap
+                data={[
+                  [0.08, 0.12, 0.15, 0.09],
+                  [0.22, 0.35, 0.41, 0.28],
+                  [0.05, 0.07, 0.06, 0.04],
+                  [0.18, 0.25, 0.30, 0.22],
+                  [0.45, 0.52, 0.61, 0.55],
+                ]}
+                rowLabels={["PA 1", "PA 2", "PA 3", "PA 4", "PA 5"]}
+                colLabels={["W10", "W11", "W12", "W13"]}
+                colorScale="lice"
+                showValues
+              />
+            </div>
+            <div>
+              <p className="text-xs text-[var(--text-secondary)] mb-2">Temperature (default)</p>
+              <MiniHeatmap
+                data={[
+                  [6.2, 7.1, 8.0, 9.2],
+                  [5.8, 6.5, 7.4, 8.6],
+                  [4.1, 4.8, 5.9, 7.0],
+                ]}
+                rowLabels={["North", "Mid", "South"]}
+                colLabels={["Jan", "Feb", "Mar", "Apr"]}
+                colorScale="temperature"
+              />
+            </div>
+          </div>
+        </GlassCard>
+      </section>
+
+      <section>
+        <h2 className="section-header">Bento Grid</h2>
+        <BentoGrid columns={4} gap={16} items={[
+          { id: "1", colSpan: 2, rowSpan: 1, children: <GlassCard accent="ocean"><p className="text-sm font-semibold">Wide Card (2 cols)</p><p className="text-xs text-[var(--text-secondary)]">Spans 2 columns in the bento layout</p></GlassCard> },
+          { id: "2", colSpan: 1, rowSpan: 1, children: <GlassCard accent="salmon"><p className="text-sm font-semibold">Standard</p></GlassCard> },
+          { id: "3", colSpan: 1, rowSpan: 1, children: <GlassCard accent="emerald"><p className="text-sm font-semibold">Standard</p></GlassCard> },
+          { id: "4", colSpan: 1, rowSpan: 1, children: <GlassCard accent="violet"><p className="text-sm font-semibold">Compact</p></GlassCard> },
+          { id: "5", colSpan: 3, rowSpan: 1, children: <GlassCard accent="amber"><p className="text-sm font-semibold">Extra Wide Card (3 cols)</p><p className="text-xs text-[var(--text-secondary)]">Spans 3 columns — great for charts or tables</p></GlassCard> },
+        ]} />
       </section>
 
       {/* ── Token Stats ─────────────────────────────────────────── */}

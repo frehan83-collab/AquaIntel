@@ -51,17 +51,17 @@ export default function OfflineIndicator() {
     offline: {
       icon: <WifiOff className="w-3.5 h-3.5" />,
       text: "Offline — showing cached data",
-      color: "bg-amber-500/90",
+      color: "bg-[var(--warning)]/90",
     },
     "api-down": {
       icon: <WifiOff className="w-3.5 h-3.5" />,
       text: "API unreachable — some data may be stale",
-      color: "bg-rose-500/90",
+      color: "bg-[var(--danger)]/90",
     },
     reconnecting: {
       icon: <RefreshCw className="w-3.5 h-3.5 animate-spin" />,
       text: "Reconnecting...",
-      color: "bg-ocean-500/90",
+      color: "bg-[var(--accent)]/90",
     },
   };
 
