@@ -80,6 +80,47 @@ export default function CompetitivenessPage() {
         </div>
       </motion.div>
 
+      {/* US Tariff Impact Banner */}
+      <GlassCard delay={0.05} accent="rose">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-rose-500/10 flex items-center justify-center">
+            <AlertTriangle className="w-5 h-5 text-rose-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-1">
+              {t("competitiveness.tariff_impact_title")}
+            </h3>
+            <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed mb-3">
+              {t("competitiveness.tariff_impact_subtitle")}
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">{locale === "no" ? "Norge" : "Norway"}</p>
+                <p className="text-sm font-bold text-rose-400 mt-0.5">15%</p>
+                <p className="text-[9px] text-[var(--text-secondary)]">{locale === "no" ? "Siden apr. 2025" : "Since Apr 2025"}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">{locale === "no" ? "Chile / Canada" : "Chile / Canada"}</p>
+                <p className="text-sm font-bold text-emerald-400 mt-0.5">0%</p>
+                <p className="text-[9px] text-[var(--text-secondary)]">FTA / USMCA</p>
+              </div>
+              <div className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">{locale === "no" ? "Skottland" : "Scotland"}</p>
+                <p className="text-sm font-bold text-amber-400 mt-0.5">2.5%</p>
+                <p className="text-[9px] text-[var(--text-secondary)]">{locale === "no" ? "UK-avtale" : "UK deal"}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">{locale === "no" ? "Handelsvirkning" : "Trade Impact"}</p>
+                <div className="flex items-baseline gap-1.5 mt-0.5">
+                  <span className="text-[10px] text-rose-400 font-semibold">{locale === "no" ? "Nor\u2192US" : "NOR\u2192US"} -29%</span>
+                  <span className="text-[10px] text-emerald-400 font-semibold">{locale === "no" ? "Nor\u2192Kina" : "NOR\u2192CN"} +86%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </GlassCard>
+
       {/* KPI Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KPICard

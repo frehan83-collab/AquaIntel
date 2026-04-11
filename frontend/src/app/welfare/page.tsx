@@ -8,6 +8,7 @@ import {
 import GlassCard from "@/components/GlassCard";
 import KPICard from "@/components/KPICard";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import ProgressRing from "@/components/ProgressRing";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { useTranslation, formatNumber } from "@/lib/i18n";
@@ -203,41 +204,13 @@ export default function WelfarePage() {
 
               {/* Circular Welfare Score */}
               <GlassCard className="flex flex-col items-center justify-center py-8">
-                <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider mb-4">
-                  {t("welfare.score")}
-                </p>
-                <div className="relative w-36 h-36">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                    {/* Background circle */}
-                    <circle
-                      cx="60" cy="60" r="54"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="8"
-                      className="text-slate-200 dark:text-slate-700/50"
-                    />
-                    {/* Score arc */}
-                    <circle
-                      cx="60" cy="60" r="54"
-                      fill="none"
-                      stroke={scoreColor(score)}
-                      strokeWidth="8"
-                      strokeLinecap="round"
-                      strokeDasharray={circumference}
-                      strokeDashoffset={dashOffset}
-                      style={{ transition: "stroke-dashoffset 0.8s ease-out" }}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span
-                      className="text-4xl font-bold"
-                      style={{ color: scoreColor(score) }}
-                    >
-                      {formatNumber(score, locale, 0)}
-                    </span>
-                    <span className="text-xs text-[var(--text-secondary)]">/100</span>
-                  </div>
-                </div>
+                <ProgressRing
+                  value={score}
+                  size={144}
+                  strokeWidth={8}
+                  label={t("welfare.score")}
+                  sublabel={grade}
+                />
               </GlassCard>
 
               {/* Grade Badge */}

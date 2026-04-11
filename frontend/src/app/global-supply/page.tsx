@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Globe2, RefreshCw, TrendingUp, TrendingDown, AlertTriangle,
-  BarChart3, Zap, Fish, Download,
+  BarChart3, Zap, Fish, Download, ArrowRightLeft,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import KPICard from "@/components/KPICard";
@@ -434,6 +434,51 @@ export default function GlobalSupplyPage() {
               </div>
             </GlassCard>
           )}
+          {/* 2026 Trade Flow Shifts */}
+          <GlassCard delay={0.25} accent="amber">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <ArrowRightLeft className="w-4 h-4 text-amber-400" />
+              {t("global_supply.trade_flow_title")}
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 ml-auto">
+                {locale === "no" ? "US-toll 15 % p\u00e5 norsk laks" : "US 15% tariff on Norwegian salmon"}
+              </span>
+            </h3>
+            <p className="text-[11px] text-[var(--text-secondary)] mb-4 leading-relaxed">
+              {locale === "no"
+                ? "US-tollsatser p\u00e5 15 % (fra april 2025) har omdirigert norske eksportstr\u00f8mmer. Chile og Canada \u00f8ker markedsandelen i USA, mens Kina absorberer norsk volum."
+                : "US tariffs at 15% (effective April 2025) have redirected Norwegian export flows. Chile and Canada gaining US market share while China absorbs Norwegian volume."}
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="text-center p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">
+                  {locale === "no" ? "US import fra Norge" : "US imports from Norway"}
+                </p>
+                <p className="text-xl font-bold text-rose-400 mt-1">-29%</p>
+                <p className="text-[9px] text-[var(--text-secondary)] mt-0.5">YoY 2025\u21922026</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">
+                  {locale === "no" ? "Kina import fra Norge" : "China imports from Norway"}
+                </p>
+                <p className="text-xl font-bold text-emerald-400 mt-1">+86%</p>
+                <p className="text-[9px] text-[var(--text-secondary)] mt-0.5">YoY 2025\u21922026</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">
+                  {locale === "no" ? "Chile\u2192US-andel" : "Chile\u2192US share"}
+                </p>
+                <p className="text-xl font-bold text-emerald-400 mt-1">{locale === "no" ? "Voksende" : "Growing"}</p>
+                <p className="text-[9px] text-[var(--text-secondary)] mt-0.5">FTA 0% {locale === "no" ? "toll" : "tariff"}</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">
+                  {locale === "no" ? "Canada\u2192US-andel" : "Canada\u2192US share"}
+                </p>
+                <p className="text-xl font-bold text-ocean-400 mt-1">{locale === "no" ? "Stabil" : "Stable"}</p>
+                <p className="text-[9px] text-[var(--text-secondary)] mt-0.5">USMCA 0% {locale === "no" ? "toll" : "tariff"}</p>
+              </div>
+            </div>
+          </GlassCard>
         </>
       )}
 

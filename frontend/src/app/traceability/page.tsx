@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   FileCheck, Ship, Package, AlertTriangle, Leaf,
-  Plus, Search, ChevronRight, Shield, Globe2,
+  Plus, Search, ChevronRight, Shield, Globe2, Clock,
 } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
@@ -121,6 +121,76 @@ export default function TraceabilityPage() {
         <KPICard label={t("traceability.iuu_risk")} value={dashboard?.iuu_high_risk_alerts ?? 0} icon={AlertTriangle} delay={0.1} />
         <KPICard label="EUDR Compliance" value={`${dashboard?.eudr_compliance_pct ?? 100}%`} icon={Leaf} delay={0.15} />
       </div>
+
+      {/* EUDR Compliance Countdown */}
+      {(() => {
+        const eudrDeadline = new Date("2026-12-30");
+        const smeDeadline = new Date("2027-06-30");
+        const now = new Date();
+        const daysToEudr = Math.ceil((eudrDeadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        const daysToSme = Math.ceil((smeDeadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        const urgency = daysToEudr < 90 ? "rose" : daysToEudr < 180 ? "amber" : "ocean";
+        return (
+          <GlassCard delay={0.18} accent={urgency as "rose" | "amber" | "ocean"}>
+            <div className="flex items-start gap-4">
+              <div className={`flex-shrink-0 w-14 h-14 rounded-xl flex flex-col items-center justify-center ${
+                urgency === "rose" ? "bg-rose-500/10" : urgency === "amber" ? "bg-amber-500/10" : "bg-ocean-500/10"
+              }`}>
+                <Clock className={`w-5 h-5 ${
+                  urgency === "rose" ? "text-rose-400" : urgency === "amber" ? "text-amber-400" : "text-ocean-400"
+                }`} />
+                <span className={`text-[9px] font-bold mt-0.5 ${
+                  urgency === "rose" ? "text-rose-400" : urgency === "amber" ? "text-amber-400" : "text-ocean-400"
+                }`}>EUDR</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-1">
+                  {t("traceability.eudr_countdown_title")}
+                </h3>
+                <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed mb-3">
+                  {locale === "no"
+                    ? "EU-forordning om avskogingsfrie forsyningskjeder. Gjelder soyaimport i fiskef\u00f4r."
+                    : "EU regulation on deforestation-free supply chains. Applies to soy imports in fish feed."}
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="text-center p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                    <p className={`text-2xl font-bold tabular-nums ${
+                      urgency === "rose" ? "text-rose-400" : urgency === "amber" ? "text-amber-400" : "text-ocean-400"
+                    }`}>{daysToEudr > 0 ? daysToEudr : 0}</p>
+                    <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider mt-0.5">
+                      {locale === "no" ? "Dager igjen" : "Days left"}
+                    </p>
+                    <p className="text-[9px] text-[var(--text-secondary)] mt-0.5">
+                      {locale === "no" ? "Store selskaper" : "Large companies"}
+                    </p>
+                  </div>
+                  <div className="text-center p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                    <p className="text-2xl font-bold tabular-nums text-[var(--text-primary)]">{daysToSme > 0 ? daysToSme : 0}</p>
+                    <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider mt-0.5">
+                      {locale === "no" ? "Dager igjen" : "Days left"}
+                    </p>
+                    <p className="text-[9px] text-[var(--text-secondary)] mt-0.5">
+                      {locale === "no" ? "Sm\u00e5 og mellomstore" : "SMEs"}
+                    </p>
+                  </div>
+                  <div className="text-center p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                    <p className="text-sm font-bold text-[var(--text-primary)] mt-1">30 Dec 2026</p>
+                    <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider mt-0.5">
+                      {locale === "no" ? "Frist (store)" : "Deadline (large)"}
+                    </p>
+                  </div>
+                  <div className="text-center p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                    <p className="text-sm font-bold text-[var(--text-primary)] mt-1">30 Jun 2027</p>
+                    <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider mt-0.5">
+                      {locale === "no" ? "Frist (SMB)" : "Deadline (SME)"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </GlassCard>
+        );
+      })()}
 
       {/* Tab Switcher */}
       <div className="flex gap-1 p-1 rounded-lg bg-white/[0.03]">

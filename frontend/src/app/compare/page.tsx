@@ -125,6 +125,7 @@ function CompanySelector({
         <button
           onClick={() => setOpen(!open)}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-white/[0.12] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/[0.2] transition-colors text-left"
+          aria-label={`Select company ${index + 1}`}
         >
           <div
             className="w-3 h-3 rounded-full opacity-50"
@@ -174,6 +175,7 @@ function CompanySelector({
                       setSearch("");
                     }}
                     className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-white/[0.05] transition-colors"
+                    aria-label={`Select ${co.name}`}
                   >
                     <span className="text-[10px] font-mono text-[var(--text-secondary)] w-6 text-right">
                       #{co.rank}
@@ -199,6 +201,7 @@ function CompanySelector({
                 setSearch("");
               }}
               className="w-full px-3 py-2 text-[10px] text-[var(--text-secondary)] hover:bg-white/[0.04] border-t border-white/[0.06]"
+              aria-label="Cancel company selection"
             >
               Cancel
             </button>

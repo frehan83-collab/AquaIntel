@@ -230,6 +230,7 @@ function CopyButton({ text }: { text: string }) {
       onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
       className="p-1.5 rounded-lg hover:bg-white/[0.08] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
       title="Copy to clipboard"
+      aria-label="Copy to clipboard"
     >
       {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
     </button>
@@ -245,6 +246,7 @@ function CollapsibleSection({ category }: { category: EndpointCategory }) {
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center gap-3 px-5 py-4 hover:bg-white/[0.02] transition-colors text-left"
+        aria-label={`${open ? "Collapse" : "Expand"} ${category.tag} endpoints`}
       >
         <Icon className={`w-5 h-5 ${category.color} flex-shrink-0`} />
         <div className="flex-1 min-w-0">
@@ -404,6 +406,7 @@ function APIKeysSection() {
                     onClick={() => setRevealedKey(!revealedKey)}
                     className="p-1 rounded hover:bg-white/[0.08] text-[var(--text-secondary)]"
                     title={revealedKey ? "Hide key" : "Reveal key"}
+                    aria-label={revealedKey ? "Hide API key" : "Reveal API key"}
                   >
                     {revealedKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
@@ -411,6 +414,7 @@ function APIKeysSection() {
                     onClick={copyNewKey}
                     className="p-1 rounded hover:bg-white/[0.08] text-[var(--text-secondary)]"
                     title="Copy key"
+                    aria-label="Copy API key"
                   >
                     {copiedKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
@@ -418,6 +422,7 @@ function APIKeysSection() {
                 <button
                   onClick={() => setNewlyCreatedKey(null)}
                   className="mt-2 text-[11px] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  aria-label="Dismiss API key notification"
                 >
                   I&apos;ve saved my key
                 </button>
@@ -485,6 +490,7 @@ function APIKeysSection() {
                     onClick={() => handleRotate(k.id)}
                     className="p-1.5 rounded-lg hover:bg-white/[0.08] text-[var(--text-secondary)] hover:text-ocean-400 transition-colors"
                     title="Rotate key"
+                    aria-label={`Rotate API key "${k.name || "Unnamed"}"`}
                   >
                     <RotateCw className="w-3.5 h-3.5" />
                   </button>
@@ -492,6 +498,7 @@ function APIKeysSection() {
                     onClick={() => handleRevoke(k.id)}
                     className="p-1.5 rounded-lg hover:bg-rose-500/10 text-[var(--text-secondary)] hover:text-rose-400 transition-colors"
                     title="Revoke key"
+                    aria-label={`Revoke API key "${k.name || "Unnamed"}"`}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -525,12 +532,14 @@ function APIKeysSection() {
                 onClick={handleCreate}
                 disabled={creating || !newKeyName.trim()}
                 className="px-4 py-2 rounded-lg bg-ocean-500/20 text-ocean-400 text-[12px] font-medium hover:bg-ocean-500/30 disabled:opacity-40 transition-colors border border-ocean-500/20"
+                aria-label="Generate API key"
               >
                 {creating ? "Generating..." : "Generate Key"}
               </button>
               <button
                 onClick={() => setShowCreateForm(false)}
                 className="px-4 py-2 rounded-lg text-[var(--text-secondary)] text-[12px] font-medium hover:bg-white/[0.06] transition-colors"
+                aria-label="Cancel key creation"
               >
                 Cancel
               </button>
@@ -544,6 +553,7 @@ function APIKeysSection() {
         <button
           onClick={() => setShowCreateForm(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-ocean-500/20 text-ocean-400 text-[12px] font-medium hover:bg-ocean-500/30 transition-colors border border-ocean-500/20"
+          aria-label="Generate new API key"
         >
           <Plus className="w-3.5 h-3.5" />
           Generate New Key
@@ -703,6 +713,7 @@ export default function APIDocsPage() {
                     ? "bg-ocean-500/20 text-ocean-400"
                     : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 }`}
+                aria-label={`Show ${tab === "python" ? "Python" : tab === "javascript" ? "JavaScript" : "cURL"} example`}
               >
                 {tab === "python" ? "Python" : tab === "javascript" ? "JavaScript" : "cURL"}
               </button>

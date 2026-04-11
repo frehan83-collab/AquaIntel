@@ -10,9 +10,13 @@ import io
 import time as _time
 import os
 
+import structlog
+
 from fastapi import APIRouter, Query, HTTPException, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 from sqlalchemy import select, func, text, case
+
+log = structlog.get_logger("admin_routes")
 
 from core.models import TreatmentOutcome, LiceRecord, Locality, User, WebhookConfig, Signal, AuditLog
 from core.async_db import get_async_session
@@ -72,8 +76,8 @@ async def admin_status():
     try:
         from core.api import app
         route_count = len([r for r in app.routes if hasattr(r, "path")])
-    except Exception:
-        pass
+    except Exception as exc:
+        log.warning("admin_status_check_failed", error=str(exc))
 
     # Engine count — count .py files in core/market/ (excluding __init__, __pycache__)
     engine_count = 0
@@ -84,8 +88,8 @@ async def admin_status():
                 f for f in os.listdir(market_dir)
                 if f.endswith(".py") and not f.startswith("__")
             ])
-    except Exception:
-        pass
+    except Exception as exc:
+        log.warning("admin_status_check_failed", error=str(exc))
 
     # Uptime
     uptime_seconds = round(_time.time() - _start_time)
@@ -118,8 +122,8 @@ async def admin_status():
             last_sub = result2.scalar()
             if last_sub:
                 last_submission = last_sub.isoformat() if isinstance(last_sub, dt.datetime) else str(last_sub)
-    except Exception:
-        pass
+    except Exception as exc:
+        log.warning("admin_status_check_failed", error=str(exc))
 
     return {
         "status": "healthy",
@@ -713,8 +717,8 @@ async def _csrd_export_impl(
                 "description": "Platform users as proxy for digital workforce engagement",
                 "esrs_ref": "ESRS S1 - Own Workforce",
             }
-    except Exception:
-        pass
+    except Exception as exc:
+        log.warning("admin_status_check_failed", error=str(exc))
 
     # ── Governance metrics ───────────────────────────────────────────
     governance = {

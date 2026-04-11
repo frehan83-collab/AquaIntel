@@ -9,11 +9,16 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import select
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from core.async_db import get_async_session
 from core.models import User
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+# Stricter rate limits for auth — prevent brute-force and enumeration
+_auth_limiter = Limiter(key_func=get_remote_address)
 
 
 class RegisterRequest(BaseModel):
@@ -29,6 +34,7 @@ class LoginRequest(BaseModel):
 
 
 @router.post("/register")
+@_auth_limiter.limit("5/minute")
 async def register(request: Request, req: RegisterRequest):
     """Register a new user. Starts on free tier."""
     from core.auth import hash_password, create_token
@@ -70,8 +76,9 @@ async def register(request: Request, req: RegisterRequest):
 
 
 @router.post("/login")
+@_auth_limiter.limit("10/minute")
 async def login(request: Request, req: LoginRequest):
-    """Login and receive JWT token."""
+    """Login and receive JWT token. Rate-limited to prevent brute-force."""
     from core.auth import verify_password, create_token, needs_rehash, hash_password
 
     async with get_async_session() as s:

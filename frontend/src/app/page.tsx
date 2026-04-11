@@ -12,6 +12,7 @@ import dynamic from "next/dynamic";
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
 import StatusBadge from "@/components/StatusBadge";
+import TickerStrip from "@/components/TickerStrip";
 
 const OceanAreaChart = dynamic(() => import("@/components/charts/OceanAreaChart"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
 const OceanBarChart = dynamic(() => import("@/components/charts/OceanBarChart"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
@@ -350,6 +351,15 @@ export default function DashboardPage() {
           )}
         </motion.div>
       </div>)}
+
+      {/* Live Ticker Strip */}
+      <TickerStrip items={[
+        { label: "SSB Spot", value: ssbSpot ? `NOK ${formatNumber(ssbSpot, locale, 1)}` : "—", change: 0, trend: "flat" as const },
+        { label: "Avg Lice", value: summary?.avg_adult_female_lice != null ? formatNumber(summary.avg_adult_female_lice, locale, 3) : "—", trend: (summary?.avg_adult_female_lice ?? 0) > 0.3 ? "up" as const : "down" as const },
+        { label: "Companies", value: leaders.length ? `${leaders.length}` : "—", trend: "flat" as const },
+        { label: "Anomaly", value: anomaly?.composite_score != null ? formatNumber(anomaly.composite_score, locale, 0) : "—", trend: (anomaly?.composite_score ?? 0) > 50 ? "up" as const : "flat" as const },
+        { label: "Signals", value: signals.length ? `${signals.length}` : "—", trend: "flat" as const },
+      ]} />
 
       {/* Key Metrics — collapsible */}
       {isVisible("kpi-strip") && <div style={{ order: widgetOrder("kpi-strip") }}><div>

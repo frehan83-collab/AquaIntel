@@ -10,6 +10,7 @@ import {
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import ProgressRing from "@/components/ProgressRing";
 import { api } from "@/lib/api";
 
 type CheckStatus = "pass" | "partial" | "fail";
@@ -190,6 +191,19 @@ function ASCComplianceContent() {
         />
       </div>
 
+      {/* Readiness Progress Ring */}
+      <GlassCard className="flex items-center gap-8 py-4">
+        <ProgressRing value={avgReadiness} size={100} strokeWidth={7} label="ASC Readiness" sublabel={`${daysLeft}d to deadline`} />
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-[var(--text-primary)]">
+            {avgReadiness >= 80 ? "Audit Ready" : avgReadiness >= 50 ? "Partial Compliance — Action Needed" : "Not Ready — Urgent Gaps"}
+          </p>
+          <p className="text-xs text-[var(--text-secondary)] mt-1">
+            ASC Farm Standard v1.0 mandatory from May 1, 2027. {daysLeft > 0 ? `${daysLeft} days remaining.` : "Deadline passed."}
+          </p>
+        </div>
+      </GlassCard>
+
       {/* Countdown Banner */}
       {daysLeft <= 365 && (
         <motion.div
@@ -229,6 +243,7 @@ function ASCComplianceContent() {
                       ? "bg-ocean-500/20 border border-ocean-500/30"
                       : "bg-white/5 hover:bg-white/10 border border-transparent"
                   }`}
+                  aria-label={`View readiness for ${f.locality_name}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="min-w-0">
@@ -317,6 +332,7 @@ function ASCComplianceContent() {
                     <button
                       onClick={() => toggleCategory(category)}
                       className="w-full flex items-center justify-between p-3 hover:bg-white/5 transition"
+                      aria-label={`${expandedCategories.has(category) ? "Collapse" : "Expand"} ${category}`}
                     >
                       <span className="text-white font-medium text-sm">{category}</span>
                       <div className="flex items-center gap-2">

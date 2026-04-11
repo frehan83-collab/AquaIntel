@@ -11,7 +11,10 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import operator as op_mod
+import structlog
 from typing import Optional
+
+log = structlog.get_logger("notification_routes")
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from sqlalchemy import select, update, delete
@@ -188,8 +191,8 @@ async def notification_history(
                 "metric_value": d.get("metric_value"),
                 "threshold": d.get("threshold"),
             })
-    except Exception:
-        pass
+    except Exception as exc:
+        log.warning("notification_op_failed", error=str(exc))
 
     # Source 2: AlertEngine (anomaly/regime/disease/price)
     try:
@@ -209,8 +212,8 @@ async def notification_history(
                 "metric_value": d.get("value"),
                 "threshold": d.get("threshold"),
             })
-    except Exception:
-        pass
+    except Exception as exc:
+        log.warning("notification_op_failed", error=str(exc))
 
     # Deduplicate by id
     seen_ids: set[str] = set()
@@ -261,8 +264,8 @@ async def mark_notifications_read(request: Request):
         from core.market.alert_engine import alert_engine
         for nid in ids:
             alert_engine.mark_read(str(nid))
-    except Exception:
-        pass
+    except Exception as exc:
+        log.warning("notification_op_failed", error=str(exc))
 
     return {"status": "ok", "marked": len(ids)}
 
@@ -284,8 +287,8 @@ async def mark_all_notifications_read():
             d = a.to_dict() if hasattr(a, "to_dict") else a
             _read_notification_ids.add(d.get("id", ""))
             count += 1
-    except Exception:
-        pass
+    except Exception as exc:
+        log.warning("notification_op_failed", error=str(exc))
 
     return {"status": "ok", "marked": count}
 

@@ -85,7 +85,7 @@ class Signal(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     created_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC))
-    ticker = Column(String(16), nullable=False)
+    ticker = Column(String(16), nullable=False, index=True)
     direction = Column(String(8))  # LONG / SHORT
     strength = Column(Float)  # 0-1 composite score
     lice_score = Column(Float)
@@ -103,9 +103,9 @@ class Order(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    signal_id = Column(Integer, ForeignKey("signals.id"))
-    created_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC))
-    ticker = Column(String(16), nullable=False)
+    signal_id = Column(Integer, ForeignKey("signals.id"), index=True)
+    created_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC), index=True)
+    ticker = Column(String(16), nullable=False, index=True)
     side = Column(String(8))  # BUY / SELL
     quantity = Column(Integer)
     price = Column(Float)
@@ -210,7 +210,7 @@ class Subscription(Base):
     __tablename__ = "subscriptions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     tier = Column(String(32), nullable=False)  # free/professional/enterprise/investor
     started_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC))
     expires_at = Column(DateTime)

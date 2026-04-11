@@ -170,6 +170,7 @@ export default function AdminPage() {
           <button
             onClick={() => { setLoading(true); fetchData(); }}
             className="p-2 rounded-lg bg-fjord-midwater/50 border border-white/[0.08] text-[var(--text-secondary)] hover:text-ocean-400 transition-colors"
+            aria-label="Refresh data"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
@@ -549,6 +550,7 @@ export default function AdminPage() {
                             ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                             : "bg-fjord-midwater/30 text-[var(--text-secondary)] border border-white/[0.06] hover:text-[var(--text-primary)]"
                         }`}
+                        aria-label="Export as CSV"
                       >
                         <FileSpreadsheet className="w-3 h-3" />
                         CSV
@@ -565,6 +567,7 @@ export default function AdminPage() {
                             ? "bg-ocean-500/20 text-ocean-400 border border-ocean-500/30"
                             : "bg-fjord-midwater/30 text-[var(--text-secondary)] border border-white/[0.06] hover:text-[var(--text-primary)]"
                         }`}
+                        aria-label="Export as JSON"
                       >
                         <FileJson className="w-3 h-3" />
                         JSON
@@ -588,6 +591,7 @@ export default function AdminPage() {
                         setTimeout(() => setExporting((prev) => ({ ...prev, [key]: false })), 2000);
                       }}
                       className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-ocean-500/10 border border-ocean-500/20 text-ocean-400 text-xs font-medium hover:bg-ocean-500/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      aria-label={`Export ${ds.label}`}
                     >
                       {isExporting ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -629,6 +633,7 @@ export default function AdminPage() {
                     });
                   }}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-ocean-500/20 border border-ocean-500/30 text-ocean-400 text-sm font-medium hover:bg-ocean-500/30 transition-colors"
+                  aria-label="Export all datasets"
                 >
                   <Download className="w-4 h-4" />
                   Export All Datasets
@@ -761,6 +766,7 @@ export default function AdminPage() {
                     fetchAuditLog(auditFilter || undefined, newOffset);
                   }}
                   className="p-1.5 rounded bg-fjord-midwater/50 border border-white/[0.08] text-[var(--text-secondary)] hover:text-ocean-400 disabled:opacity-30 transition-colors"
+                  aria-label="Previous page"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
@@ -772,6 +778,7 @@ export default function AdminPage() {
                     fetchAuditLog(auditFilter || undefined, newOffset);
                   }}
                   className="p-1.5 rounded bg-fjord-midwater/50 border border-white/[0.08] text-[var(--text-secondary)] hover:text-ocean-400 disabled:opacity-30 transition-colors"
+                  aria-label="Next page"
                 >
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>

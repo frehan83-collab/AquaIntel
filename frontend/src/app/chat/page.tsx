@@ -609,6 +609,7 @@ export default function ChatPage() {
                     key={label}
                     onClick={() => sendMessage(label)}
                     className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-ocean-300 bg-ocean-500/[0.07] border border-ocean-500/20 hover:bg-ocean-500/[0.14] hover:border-ocean-500/30 transition-all duration-200 cursor-pointer"
+                    aria-label={`Ask: ${label}`}
                   >
                     <Icon className="w-3 h-3 opacity-60" />
                     {label}
@@ -660,7 +661,8 @@ export default function ChatPage() {
           </OcButton>
           {["Why did lice spike in PA-6?", "What is the price outlook?", "Show disease risk for Mowi"].map((q) => (
             <button key={q} onClick={() => { setInput(q); }}
-              className="text-[11px] px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.06] text-[var(--text-secondary)] hover:text-ocean-400 hover:border-ocean-500/30 transition-colors">
+              className="text-[11px] px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.06] text-[var(--text-secondary)] hover:text-ocean-400 hover:border-ocean-500/30 transition-colors"
+              aria-label={`Set question: ${q}`}>
               {q}
             </button>
           ))}
