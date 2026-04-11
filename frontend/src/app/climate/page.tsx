@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Thermometer, RefreshCw, TrendingUp, TrendingDown, AlertTriangle,
-  Globe2, Activity, BarChart3, ArrowUp, ArrowDown, Minus,
+  Globe2, Activity, BarChart3, ArrowUp, ArrowDown, Minus, Waves,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import KPICard from "@/components/KPICard";
@@ -53,6 +53,7 @@ export default function ClimatePage() {
   const handleError = useApiError();
   const [dashboard, setDashboard] = useState<any>(null);
   const [projections, setProjections] = useState<any>(null);
+  const [heatwaveData, setHeatwaveData] = useState<any>(null);
   const [selectedPa, setSelectedPa] = useState(3);
   const [loading, setLoading] = useState(true);
   const [projLoading, setProjLoading] = useState(false);
@@ -61,10 +62,12 @@ export default function ClimatePage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [dash] = await Promise.allSettled([
+      const [dash, hw] = await Promise.allSettled([
         api.climateRiskScores(),
+        api.marineHeatwaveRisk(),
       ]);
       if (dash.status === "fulfilled") setDashboard(dash.value);
+      if (hw.status === "fulfilled") setHeatwaveData(hw.value);
     } catch (e) { handleError("climate_risk_scores")(e); }
     setLoading(false);
   };
@@ -165,6 +168,52 @@ export default function ClimatePage() {
           delay={0.09}
         />
       </div>
+
+      {/* Marine Heatwave Risk Status */}
+      {heatwaveData && (
+        <GlassCard delay={0.05} accent={
+          (heatwaveData.pa_risks || []).some((p: any) => p.status === "CRITICAL") ? "rose" :
+          (heatwaveData.pa_risks || []).some((p: any) => p.status === "WARNING") ? "amber" : "emerald"
+        }>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
+            <Waves className="w-4 h-4 text-sky-400" />
+            Marine Heatwave Risk
+            <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
+              Hobday et al. (2016) classification
+            </span>
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+            {(heatwaveData.pa_risks || []).map((pa: any) => {
+              const statusStyle =
+                pa.status === "CRITICAL" ? "bg-rose-500/15 border-rose-500/30 text-rose-400" :
+                pa.status === "WARNING" ? "bg-amber-500/15 border-amber-500/30 text-amber-400" :
+                pa.status === "WATCH" ? "bg-sky-500/15 border-sky-500/30 text-sky-400" :
+                "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
+              return (
+                <div key={pa.pa} className={`p-2.5 rounded-xl border ${statusStyle}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-semibold">PA-{pa.pa}</span>
+                    <span className="text-[10px] font-bold">{pa.status}</span>
+                  </div>
+                  {pa.sst_current_c != null && (
+                    <div className="text-[10px] opacity-80">
+                      SST: {formatNumber(pa.sst_current_c, locale, 1)}&deg;C
+                    </div>
+                  )}
+                  {pa.anomaly_c != null && (
+                    <div className="text-[10px] opacity-80">
+                      Anomaly: {pa.anomaly_c > 0 ? "+" : ""}{formatNumber(pa.anomaly_c, locale, 1)}&deg;C
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {heatwaveData.summary && (
+            <p className="text-[10px] text-[var(--text-secondary)] mt-3">{heatwaveData.summary}</p>
+          )}
+        </GlassCard>
+      )}
 
       {/* SST Year-over-Year Trend */}
       {yoyData && (

@@ -20,14 +20,22 @@ import DataQualityBadge from "@/components/DataQualityBadge";
 
 export default function SupplyForecastPage() {
   const [summary, setSummary] = useState<any>(null);
+  const [smoltData, setSmoltData] = useState<any>(null);
+  const [cohortData, setCohortData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { t, locale } = useTranslation();
 
   const load = async () => {
     setLoading(true);
     try {
-      const data = await api.supplySummary();
-      setSummary(data);
+      const [sum, smolt, cohort] = await Promise.allSettled([
+        api.supplySummary(),
+        api.smoltForecast(18),
+        api.cohortTimeline(),
+      ]);
+      if (sum.status === "fulfilled") setSummary(sum.value);
+      if (smolt.status === "fulfilled") setSmoltData(smolt.value);
+      if (cohort.status === "fulfilled") setCohortData(cohort.value);
     } catch { /* empty */ }
     setLoading(false);
   };
@@ -281,6 +289,103 @@ export default function SupplyForecastPage() {
           </div>
         </GlassCard>
       </div>
+
+      {/* Smolt Forecast — Monthly Releases & Harvest Projections */}
+      {smoltData && (
+        <GlassCard delay={0.22} accent="ocean">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
+            <Fish className="w-4 h-4 text-ocean-400" />
+            Smolt Forecast — Monthly Harvest Projections
+            <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-ocean-500/10 text-ocean-400 border border-ocean-500/20">
+              {smoltData.horizon_months || 18} months
+            </span>
+          </h3>
+          {smoltData.monthly_projections?.length > 0 ? (
+            <div className="space-y-1">
+              {smoltData.monthly_projections.map((m: any, i: number) => {
+                const maxH = Math.max(...(smoltData.monthly_projections || []).map((p: any) => p.harvest_tonnes || p.projected_harvest_tonnes || 0));
+                const val = m.harvest_tonnes || m.projected_harvest_tonnes || 0;
+                const pct = maxH > 0 ? (val / maxH) * 100 : 0;
+                return (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="text-[10px] font-mono text-[var(--text-secondary)] w-16 flex-shrink-0">
+                      {m.month || m.month_label || `M+${i + 1}`}
+                    </span>
+                    <div className="flex-1 h-3.5 bg-white/[0.04] rounded overflow-hidden">
+                      <div className="h-full rounded bg-ocean-500/50" style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className="text-[10px] font-mono text-[var(--text-secondary)] w-16 text-right flex-shrink-0">
+                      {formatNumber(val / 1000, locale, 1)}k t
+                    </span>
+                    {m.smolt_releases != null && (
+                      <span className="text-[9px] text-violet-400 w-16 text-right flex-shrink-0">
+                        {formatNumber(m.smolt_releases / 1_000_000, locale, 1)}M smolt
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-[var(--text-secondary)]">{t("common.no_data")}</p>
+          )}
+          {smoltData.total_harvest_tonnes != null && (
+            <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs">
+              <span className="text-[var(--text-secondary)]">Total projected harvest</span>
+              <span className="font-bold text-[var(--text-primary)]">
+                {formatNumber(smoltData.total_harvest_tonnes / 1000, locale)}k tonnes
+              </span>
+            </div>
+          )}
+        </GlassCard>
+      )}
+
+      {/* Cohort Timeline */}
+      {cohortData && (
+        <GlassCard delay={0.25} accent="violet">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-violet-400" />
+            Cohort Timeline
+            <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20">
+              {(Array.isArray(cohortData) ? cohortData : cohortData?.cohorts || []).length} cohorts
+            </span>
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-[11px]">
+              <thead>
+                <tr className="border-b border-white/[0.06]">
+                  <th className="text-left py-2 px-2 text-[var(--text-secondary)] font-medium uppercase tracking-wider">Intake</th>
+                  <th className="text-left py-2 px-2 text-[var(--text-secondary)] font-medium uppercase tracking-wider">Stage</th>
+                  <th className="text-right py-2 px-2 text-[var(--text-secondary)] font-medium uppercase tracking-wider">Smolt (M)</th>
+                  <th className="text-right py-2 px-2 text-[var(--text-secondary)] font-medium uppercase tracking-wider">Weight (kg)</th>
+                  <th className="text-right py-2 px-2 text-[var(--text-secondary)] font-medium uppercase tracking-wider">Harvest</th>
+                  <th className="text-right py-2 px-2 text-[var(--text-secondary)] font-medium uppercase tracking-wider">Volume (t)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(Array.isArray(cohortData) ? cohortData : cohortData?.cohorts || []).map((c: any, i: number) => {
+                  const stageColor =
+                    c.stage === "harvestable" ? "text-emerald-400" :
+                    c.stage === "pre-harvest" ? "text-amber-400" :
+                    c.stage === "grower" ? "text-ocean-400" : "text-[var(--text-secondary)]";
+                  return (
+                    <tr key={i} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                      <td className="py-2 px-2 font-mono text-[var(--text-secondary)]">{c.intake || c.intake_month || "\u2014"}</td>
+                      <td className={`py-2 px-2 font-semibold ${stageColor}`}>{c.stage || "\u2014"}</td>
+                      <td className="py-2 px-2 text-right font-mono">{c.n_smolt_millions != null ? formatNumber(c.n_smolt_millions, locale, 1) : "\u2014"}</td>
+                      <td className="py-2 px-2 text-right font-mono">{c.current_weight_kg != null ? formatNumber(c.current_weight_kg, locale, 2) : "\u2014"}</td>
+                      <td className="py-2 px-2 text-right text-[var(--text-secondary)]">{c.harvest_month || c.expected_harvest || "\u2014"}</td>
+                      <td className="py-2 px-2 text-right font-mono font-semibold">
+                        {c.projected_harvest_tonnes != null ? formatNumber(c.projected_harvest_tonnes / 1000, locale, 1) + "k" : "\u2014"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </GlassCard>
+      )}
 
       {/* Attribution */}
       <p className="text-[10px] text-[var(--text-secondary)] text-center opacity-60">

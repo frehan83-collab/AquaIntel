@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Zap, CheckCircle, XCircle, Clock, TrendingDown, TrendingUp, Loader2,
-  GitBranch, MessageSquare, Globe, RefreshCw, Shield, Download,
+  GitBranch, MessageSquare, Globe, RefreshCw, Shield, Download, AlertTriangle,
 } from "lucide-react";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
 import { useApiError } from "@/lib/useApiError";
@@ -27,6 +27,7 @@ export default function SignalsPage() {
   const [sentimentSignals, setSentimentSignals] = useState<any[]>([]);
   const [chileSignals, setChileSignals] = useState<any[]>([]);
   const [anomalyData, setAnomalyData] = useState<any>(null);
+  const [anomalyAlerts, setAnomalyAlerts] = useState<any[]>([]);
   const [causalData, setCausalData] = useState<any>(null);
   const [aisVessels, setAisVessels] = useState<any>(null);
   const [pairsDetail, setPairsDetail] = useState<any>(null);
@@ -50,6 +51,7 @@ export default function SignalsPage() {
       setSentimentSignals(Array.isArray(sent) ? sent : sent?.signals || []);
       setChileSignals(Array.isArray(chile) ? chile : chile?.signals || []);
       api.anomalyScores().then(setAnomalyData).catch(handleError("signals_anomaly_scores"));
+      api.anomalyAlerts().then((d: any) => setAnomalyAlerts(Array.isArray(d) ? d : d?.alerts || [])).catch(handleError("signals_anomaly_alerts"));
       api.causalSummary().then(setCausalData).catch(handleError("signals_causal_summary"));
       api.aisTreatmentSignals().then(setAisVessels).catch(handleError("signals_ais_treatment"));
     } catch {
@@ -211,6 +213,63 @@ export default function SignalsPage() {
                   })}
                 </div>
               )}
+            </GlassCard>
+          )}
+
+          {/* Anomaly Alerts */}
+          {anomalyAlerts.length > 0 && (
+            <GlassCard delay={0.04} accent="rose">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle className="w-4 h-4 text-rose-400" />
+                <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+                  Anomaly Alerts ({anomalyAlerts.length})
+                </h3>
+                <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                  Live threshold breaches
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                {anomalyAlerts.slice(0, 10).map((alert: any, i: number) => {
+                  const sevColor =
+                    alert.severity === "critical" ? "rose" :
+                    alert.severity === "high" ? "orange" :
+                    alert.severity === "medium" ? "amber" : "emerald";
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -6 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.03 + i * 0.02 }}
+                      className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]"
+                    >
+                      <span className={`text-${sevColor}-400`}>
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-[11px] font-semibold text-[var(--text-primary)]">
+                            {alert.source || alert.metric || alert.type || "Alert"}
+                          </span>
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded bg-${sevColor}-500/10 text-${sevColor}-400 border border-${sevColor}-500/15`}>
+                            {(alert.severity || "unknown").toUpperCase()}
+                          </span>
+                          {alert.pa != null && (
+                            <span className="text-[10px] text-[var(--text-secondary)]">PA-{alert.pa}</span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-[var(--text-secondary)] truncate">
+                          {alert.message || alert.description || "Threshold breach detected"}
+                        </p>
+                      </div>
+                      {alert.value != null && (
+                        <span className="text-[11px] font-mono font-bold text-[var(--text-primary)] flex-shrink-0">
+                          {typeof alert.value === "number" ? formatNumber(alert.value, locale, 2) : alert.value}
+                        </span>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </div>
             </GlassCard>
           )}
 

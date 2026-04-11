@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Globe2, RefreshCw, TrendingUp, TrendingDown, AlertTriangle,
-  BarChart3, Zap, Fish, Download, ArrowRightLeft,
+  BarChart3, Zap, Fish, Download, ArrowRightLeft, Anchor,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import KPICard from "@/components/KPICard";
@@ -41,6 +41,7 @@ export default function GlobalSupplyPage() {
   const [loading, setLoading] = useState(true);
   const [annualProd, setAnnualProd] = useState<any[]>([]);
   const [costHistory, setCostHistory] = useState<any[]>([]);
+  const [biomass, setBiomass] = useState<any>(null);
 
   const load = async () => {
     setLoading(true);
@@ -57,6 +58,7 @@ export default function GlobalSupplyPage() {
     } catch { /* empty */ }
     api.productionAnnual().then((d: any) => setAnnualProd(Array.isArray(d) ? d : d?.data || [])).catch(handleError("global_supply_production_annual"));
     api.feedCostOfficialHistory().then((d: any) => setCostHistory(Array.isArray(d) ? d : d?.data || d?.history || [])).catch(handleError("global_supply_feed_cost_history"));
+    api.biomassNational().then(setBiomass).catch(handleError("global_supply_biomass_national"));
     setLoading(false);
   };
 
@@ -125,6 +127,54 @@ export default function GlobalSupplyPage() {
               deltaType={data.norway_premium_pct > 5 ? "positive" : data.norway_premium_pct < -5 ? "negative" : undefined}
               icon={Fish} delay={0.12} />
           </div>
+
+          {/* National Biomass (Fiskeridirektoratet) */}
+          {biomass && (
+            <GlassCard delay={0.06} accent="ocean">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Anchor className="w-4 h-4 text-ocean-400" />
+                Norway Standing Biomass
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-ocean-500/10 text-ocean-400 border border-ocean-500/20 ml-auto">
+                  Fiskeridirektoratet
+                </span>
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center">
+                  <div className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-1">Total Biomass</div>
+                  <div className="text-lg font-bold text-[var(--text-primary)]">
+                    {biomass.total_biomass_tonnes != null
+                      ? `${formatNumber(biomass.total_biomass_tonnes / 1000, locale)}k t`
+                      : "\u2014"}
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center">
+                  <div className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-1">MAB Utilization</div>
+                  <div className={`text-lg font-bold ${
+                    (biomass.mab_utilization_pct || 0) > 95 ? "text-rose-400" :
+                    (biomass.mab_utilization_pct || 0) > 85 ? "text-amber-400" : "text-emerald-400"
+                  }`}>
+                    {biomass.mab_utilization_pct != null
+                      ? `${formatNumber(biomass.mab_utilization_pct, locale, 1)}%`
+                      : "\u2014"}
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center">
+                  <div className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-1">Localities</div>
+                  <div className="text-lg font-bold text-[var(--text-primary)]">
+                    {biomass.locality_count != null ? formatNumber(biomass.locality_count, locale) : "\u2014"}
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center">
+                  <div className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-1">National MTB</div>
+                  <div className="text-lg font-bold text-[var(--text-primary)]">
+                    {biomass.national_mtb_tonnes != null
+                      ? `${formatNumber(biomass.national_mtb_tonnes / 1000, locale)}k t`
+                      : "948k t"}
+                  </div>
+                </div>
+              </div>
+            </GlassCard>
+          )}
 
           {/* Supply Chain Sankey — Production Flow */}
           <GlassCard delay={0.08}>

@@ -33,6 +33,7 @@ export default function CanadaPage() {
   const handleError = useApiError();
   const [snapshot, setSnapshot] = useState<any>(null);
   const [liceByRegion, setLiceByRegion] = useState<any>(null);
+  const [nationalLice, setNationalLice] = useState<any>(null);
   const [norwayLice, setNorwayLice] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [yoyLice, setYoyLice] = useState<any>(null);
@@ -40,14 +41,16 @@ export default function CanadaPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [snap, regions, norLice] = await Promise.allSettled([
+      const [snap, regions, norLice, natLice] = await Promise.allSettled([
         api.canadaSnapshot(),
         api.canadaLiceByRegion(),
         api.liceSummary(),
+        api.canadaLice(),
       ]);
       if (snap.status === "fulfilled") setSnapshot(snap.value);
       if (regions.status === "fulfilled") setLiceByRegion(regions.value);
       if (norLice.status === "fulfilled") setNorwayLice(norLice.value?.avg_adult_female_lice || 0);
+      if (natLice.status === "fulfilled") setNationalLice(natLice.value);
     } catch (e) { handleError("canada_snapshot")(e); }
     setLoading(false);
   };
@@ -143,6 +146,67 @@ export default function CanadaPage() {
             years={yoyLice.years}
           />
         </div>
+      )}
+
+      {/* National Lice Trends */}
+      {nationalLice && (
+        <GlassCard delay={0.13} accent="ocean">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
+            <Fish className="w-4 h-4 text-ocean-400" />
+            National Lice Trends (DFO)
+            <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-ocean-500/10 text-ocean-400 border border-ocean-500/20">
+              All BC farms
+            </span>
+          </h3>
+          {(() => {
+            const trends = Array.isArray(nationalLice) ? nationalLice : nationalLice?.monthly_trends || nationalLice?.data || [];
+            if (trends.length === 0) {
+              return <p className="text-xs text-[var(--text-secondary)]">No national lice trend data available</p>;
+            }
+            const maxVal = Math.max(...trends.map((t: any) => t.avg_lice || t.avg_per_fish || t.value || 0), 1);
+            return (
+              <div className="space-y-1">
+                {trends.slice(-12).map((t: any, i: number) => {
+                  const val = t.avg_lice || t.avg_per_fish || t.value || 0;
+                  const pct = (val / maxVal) * 100;
+                  const label = t.month || t.period || t.date || `${i + 1}`;
+                  const aboveThreshold = val > 3;
+                  return (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="text-[10px] font-mono text-[var(--text-secondary)] w-16 flex-shrink-0">{label}</span>
+                      <div className="flex-1 h-3.5 bg-white/[0.04] rounded overflow-hidden relative">
+                        <div
+                          className={`h-full rounded ${aboveThreshold ? "bg-rose-500/60" : "bg-ocean-500/50"}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                        {/* Threshold marker at 3.0 */}
+                        <div
+                          className="absolute top-0 h-full w-0.5 bg-amber-400/60"
+                          style={{ left: `${Math.min(100, (3 / maxVal) * 100)}%` }}
+                        />
+                      </div>
+                      <span className={`text-[10px] font-mono w-10 text-right flex-shrink-0 ${
+                        aboveThreshold ? "text-rose-400 font-bold" : "text-[var(--text-secondary)]"
+                      }`}>
+                        {val.toFixed(1)}
+                      </span>
+                      {t.farms_reporting != null && (
+                        <span className="text-[9px] text-[var(--text-secondary)] w-14 text-right flex-shrink-0">
+                          {t.farms_reporting} farms
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+          <div className="flex items-center gap-4 mt-3 text-[9px] text-[var(--text-secondary)]">
+            <span className="flex items-center gap-1"><div className="w-3 h-2 bg-ocean-500/50 rounded" /> Below threshold</span>
+            <span className="flex items-center gap-1"><div className="w-3 h-2 bg-rose-500/60 rounded" /> Above 3.0</span>
+            <span className="flex items-center gap-1"><div className="w-0.5 h-2 bg-amber-400/60" /> BC threshold (3.0)</span>
+          </div>
+        </GlassCard>
       )}
 
       {/* June 2029 Transition Banner */}
