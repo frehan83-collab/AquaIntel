@@ -496,4 +496,76 @@ async def traffic_light_all_scenarios():
     return await traffic_light_simulator.simulate_all_pas()
 
 
+# ══════════════════════════════════════════════════════════════════════
+# NORKYST v3 OCEAN MODEL
+# ══════════════════════════════════════════════════════════════════════
+
+@router.get("/api/ocean/norkyst/current")
+async def norkyst_current(lat: float, lon: float):
+    """Current ocean conditions from NorKyst800 v3 (MET.no THREDDS)."""
+    from core.market.norkyst_client import norkyst_client
+    from core.market.data_provenance import DataProvenance
+    conditions = await norkyst_client.fetch_current_conditions(lat, lon)
+    if not conditions:
+        raise HTTPException(status_code=404, detail="No NorKyst data for location")
+    result = conditions.to_dict()
+    result["data_provenance"] = DataProvenance.live(
+        "MET.no THREDDS NorKyst800 v3 (800m resolution)", confidence=0.90,
+    ).to_dict()
+    return result
+
+@router.get("/api/ocean/norkyst/pa/{pa}")
+async def norkyst_pa_summary(pa: int):
+    """Ocean summary for a Norwegian Production Area from NorKyst800 v3."""
+    from core.market.norkyst_client import norkyst_client, PA_CENTROIDS
+    from core.market.data_provenance import DataProvenance
+    if pa not in PA_CENTROIDS:
+        raise HTTPException(status_code=400, detail=f"Invalid PA: {pa}. Valid: 1-13")
+    summary = await norkyst_client.fetch_pa_ocean_summary(pa)
+    if not summary:
+        raise HTTPException(status_code=404, detail=f"No NorKyst data for PA {pa}")
+    result = summary.to_dict()
+    result["data_provenance"] = DataProvenance.live(
+        "MET.no THREDDS NorKyst800 v3 (800m resolution)", confidence=0.90,
+    ).to_dict()
+    return result
+
+
+# ══════════════════════════════════════════════════════════════════════
+# NASA PACE SATELLITE (HAB / CHLOROPHYLL)
+# ══════════════════════════════════════════════════════════════════════
+
+@router.get("/api/satellite/pace/chlorophyll")
+async def pace_chlorophyll(lat: float, lon: float, date: str = ""):
+    """Chlorophyll-a from NASA PACE OCI hyperspectral sensor."""
+    from core.market.nasa_pace_client import nasa_pace_client
+    from core.market.data_provenance import DataProvenance
+    reading = await nasa_pace_client.fetch_chlorophyll(
+        lat, lon, date if date else None
+    )
+    if not reading:
+        raise HTTPException(status_code=404, detail="No PACE data for location/date")
+    result = reading.to_dict()
+    result["data_provenance"] = DataProvenance.live(
+        "NASA PACE OCI L3m NRT (hyperspectral ocean color)", confidence=0.85,
+    ).to_dict()
+    return result
+
+@router.get("/api/satellite/pace/hab-risk")
+async def pace_hab_risk(lat: float, lon: float, date: str = ""):
+    """Harmful algal bloom risk assessment from NASA PACE data."""
+    from core.market.nasa_pace_client import nasa_pace_client
+    from core.market.data_provenance import DataProvenance
+    assessment = await nasa_pace_client.fetch_hab_risk(
+        lat, lon, date if date else None
+    )
+    if not assessment:
+        raise HTTPException(status_code=404, detail="No PACE HAB data for location/date")
+    result = assessment.to_dict()
+    result["data_provenance"] = DataProvenance.live(
+        "NASA PACE OCI L3m NRT + HAB species heuristics", confidence=0.75,
+    ).to_dict()
+    return result
+
+
 

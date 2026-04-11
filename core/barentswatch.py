@@ -6,6 +6,24 @@ Swagger:  https://www.barentswatch.no/bwapi/openapi/index.html?urls.primaryName=
 Register: https://www.barentswatch.no/minside/ -> "Mine klienter"
 
 Base URL: https://www.barentswatch.no/bwapi
+
+──────────────────────────────────────────────────────────────────────────
+APRIL-MAY 2025 API CHANGES (BarentsWatch breaking changes):
+  - Sustainability in Aquaculture API REMOVED on April 7, 2025.
+    All /v1/geodata/sustainability/* endpoints are gone.
+  - Treatment data model updated: medicinal treatments no longer carry
+    start/end dates — only a treatment week.  New field: NumberOfCages.
+    Combination treatments (multiple methods in same week) now tracked.
+  - New disease endpoints added for diseases beyond PD/ISA (e.g. CMS,
+    HSMI, AGD).  The v3 disease endpoint already covers these.
+  - GET /v1/geodata/fishhealth/treatmenttypes added — canonical list of
+    treatment method codes.
+  - GET /v2/geodata/fishhealth/locality/{localityNo}/treatments/{year}
+    returns the updated treatment model with NumberOfCages and
+    combination treatment fields.
+  - GET /v1/geodata/fishhealth/disease/{year} added for national
+    disease summary by year.
+──────────────────────────────────────────────────────────────────────────
 """
 from __future__ import annotations
 
@@ -361,6 +379,45 @@ class BarentsWatchClient:
         if to_week:
             params["toweek"] = to_week
         return await self._get("/v1/geodata/download/fishhealth/preview", params)
+
+    # ══════════════════════════════════════════════════════════════════
+    # TREATMENTS — V2 (updated April 2025)
+    # ══════════════════════════════════════════════════════════════════
+    async def get_locality_treatments_v2(
+        self,
+        locality_no: int,
+        year: int,
+    ) -> list[dict]:
+        """
+        GET /v2/geodata/fishhealth/locality/{localityNo}/treatments/{year}
+        Returns treatment history for a locality in a given year.
+
+        Updated April 2025: medicinal treatments no longer have start/end
+        dates.  New fields: NumberOfCages, combination treatment data.
+        """
+        return await self._get(
+            f"/v2/geodata/fishhealth/locality/{locality_no}/treatments/{year}"
+        )
+
+    async def get_treatment_types(self) -> list[dict]:
+        """
+        GET /v1/geodata/fishhealth/treatmenttypes
+        Returns canonical list of treatment type codes used by BarentsWatch.
+        Added in 2025 API update.
+        """
+        return await self._get("/v1/geodata/fishhealth/treatmenttypes")
+
+    # ══════════════════════════════════════════════════════════════════
+    # NATIONAL DISEASE SUMMARY (added 2025)
+    # ══════════════════════════════════════════════════════════════════
+    async def get_national_disease_summary(self, year: int) -> dict:
+        """
+        GET /v1/geodata/fishhealth/disease/{year}
+        Returns national disease summary for a given year, covering all
+        registered diseases (ISA/ILA, PD, CMS, HSMI, AGD, etc.).
+        Added in 2025 API expansion.
+        """
+        return await self._get(f"/v1/geodata/fishhealth/disease/{year}")
 
     # ── Convenience helpers ───────────────────────────────────────────
     async def get_current_week_lice(
