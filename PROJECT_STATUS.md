@@ -2,7 +2,7 @@
 
 > **Repository:** [github.com/frehan83-collab/OpenClaw](https://github.com/frehan83-collab/OpenClaw) (private)
 
-Last updated: 2026-04-06
+Last updated: 2026-04-11 (Session 37)
 
 ---
 
@@ -10,18 +10,20 @@ Last updated: 2026-04-06
 
 | Metric | Count |
 |--------|-------|
-| API routes | ~300 |
-| Router modules | 24 |
-| Market engines | 60 + 3 ML = 63 |
-| Frontend pages | 63 |
-| Shared components | 32+ |
+| API routes | ~340 |
+| Router modules | 26 |
+| Market/data engines | ~75 (incl. 3 ML foundation models) |
+| Frontend pages | 63 (68 compiled routes) |
+| Shared components | 43+ |
 | Database tables | 31 |
-| DB migrations | 11 |
-| Test functions | 370 (344 passing) |
-| `api.py` lines | 1,405 |
-| `api.ts` methods | 270+ |
+| DB migrations | 14 |
+| Test functions | 447 (all passing) |
+| i18n keys | ~600 (NO/EN) |
+| Design tokens | 86 (Figma pipeline active) |
+| Data source clients | 45+ |
+| Historical data | SSB 26yr, FRED 35yr, MUR SST 44yr |
 | Next.js | 15.5.14 |
-| React | 19.2.4 |
+| React | 19.2.4 (with Compiler) |
 | FastAPI | 2.2.0 |
 
 ---
@@ -32,63 +34,62 @@ Last updated: 2026-04-06
 |---------|--------|-------|
 | Lice monitoring & analytics | Shipped | Real-time + historical |
 | Disease surveillance | Shipped | Multi-region alerts |
-| Market intelligence (53 engines) | Shipped | Spot, forward, FX, biomass |
+| Market intelligence (~75 engines) | Shipped | Spot, forward, FX, biomass |
 | Billing & subscription tiers | Shipped | 4-tier access control |
-| JWT auth + bcrypt | Shipped | Session management |
+| JWT auth + bcrypt + rate limiting | Shipped | Brute-force protection |
 | WebSocket real-time alerts | Shipped | Price, lice, disease |
 | Data provenance on all endpoints | Shipped | Source + freshness metadata |
+| DataQualityBadge | Shipped | 24/65 pages show provenance |
 | Scenario sandbox (compound sim) | Shipped | Multi-variable what-if |
 | Notification system | Shipped | Email + in-app |
 | MET.no weather forecast | Shipped | Norwegian coast coverage |
-| Decision engine | Shipped | Traffic-light recommendations |
+| Decision engine + SHAP explainability | Shipped | Bilingual factor importance |
 | YoY trend analysis | Shipped | 5-year rolling |
 | Demo mode | Shipped | Synthetic data for trials |
-| Pydantic v2 schemas | Shipped | Strict validation |
-| CI/CD pipeline | Shipped | Docker + deploy script |
+| CI/CD pipeline | Shipped | Docker + GHCR + Playwright E2E |
 | API documentation (OpenAPI) | Shipped | Auto-generated from FastAPI |
-| Efficacy marketplace | Shipped | Crowdsourced treatment benchmarks, validated input, seed data |
+| Efficacy marketplace | Shipped | Crowdsourced treatment benchmarks |
 | Bio Risk Map time slider | Shipped | 8-week historical snapshots |
 | WebSocket Command Centre | Shipped | Real-time streaming with fallback |
-| Excel export | Shipped | SheetJS-based .xlsx from DataTable |
+| Excel/CSV export | Shipped | SheetJS-based .xlsx from DataTable |
 | Regional Heatmap | Shipped | PA-level disease/lice visualization |
-| Decision feedback loop | Shipped | Marketplace outcomes improve recommendations |
-| Satellite intelligence | Shipped | SST, chlorophyll, farm cluster analysis |
-| Supply Chain Sankey | Shipped | SVG flow visualization on Global Supply |
-| Admin dashboard | Shipped | Data quality monitoring + platform health |
+| Satellite intelligence | Shipped | SST, chlorophyll, farm clusters |
+| Supply Chain Sankey | Shipped | SVG flow visualization |
+| Admin dashboard | Shipped | Data quality + platform health |
 | WCAG accessibility | Shipped | ARIA labels, skip-to-content, keyboard nav |
-| Dark/light theme | Shipped | Toggle in TopBar, persisted to localStorage |
-| Notification center | Shipped | Full history with severity/category filters |
-| API caching (ETag) | Shipped | 5-tier Cache-Control + 304 Not Modified |
-| Treatment cost comparison | Shipped | Interactive calculator with 7 methods |
-| Company comparison | Shipped | Side-by-side radar chart + metrics |
-| Webhook alerts | Shipped | Slack/Teams/generic, auto-disable on failure |
-| Farm Portfolio | Shipped | Multi-farm risk overview with saved farms |
-| API key management | Shipped | bcrypt-hashed keys, rate limiting, rotation |
-| Batch data export | Shipped | CSV/JSON admin compliance export |
-| Sidebar search | Shipped | Fuzzy search with Cmd+K shortcut |
-| Keyboard shortcuts | Shipped | Vim-style navigation, Cmd+K, help modal |
-| Custom alert rules | Shipped | User-defined thresholds with live evaluation |
-| Changelog page | Shipped | Release notes with What's New indicator |
-| i18n (NO/EN) | Shipped | Norwegian + English locale support |
-| Audit logging | Shipped | Admin audit trail with filters |
-| Bookmarkable filters | Shipped | URL-synced filter state across pages |
-| Dashboard customization | Shipped | User-configurable widget layout |
-| TimesFM 2.5 forecasting | Shipped | Google foundation model, XReg covariates, quantile head |
-| Euronext salmon futures | Shipped | ESF forward curve, basis analysis, term structure |
-| EUMOFA European market data | Shipped | EU salmon prices + trade flows |
-| Decision explainability (SHAP) | Shipped | Bilingual factor importance (EN/NO) |
-| Hybrid anomaly detection | Shipped | Isolation Forest + Z-score multivariate |
-| Playwright E2E tests | Shipped | 16 browser tests (navigation + API) |
-| Fiskeridirektoratet biomass API | Shipped | ArcGIS Open Data, locality-level standing biomass |
-| Marine heatwave early warning | Shipped | SST anomaly per PA, Hobday (2016) framework |
-| Treatment resistance tracker | Shipped | PA × method resistance matrix from Mattilsynet |
-| ASC compliance dashboard | Shipped | Audit readiness scoring, May 2027 countdown |
-| CSRD sustainability export | Shipped | EU CSRD-aligned reporting data package |
-| Lice emission quota tracking | Shipped | Projected emissions per IMR methodology |
-| Fishtalk 5 API integration | Shipped | Architecture-ready, awaiting credentials |
-| Property-based testing | Shipped | Hypothesis tests for numerical engines |
-| Next.js 15 + React 19 | Shipped | Performance upgrade, 63 pages build clean |
-| Satellite biomass estimation | Planned | Blocked on CDSE credentials |
+| Dark/light theme | Shipped | Toggle + design token system |
+| API caching (ETag + 5-tier) | Shipped | Cache-Control + 304 Not Modified |
+| Treatment cost comparison | Shipped | 7 methods, interactive calculator |
+| Company comparison (radar) | Shipped | Side-by-side metrics |
+| Webhook alerts (Slack/Teams) | Shipped | Auto-disable on failure |
+| Farm Portfolio | Shipped | Multi-farm risk overview |
+| API key management | Shipped | bcrypt-hashed, rotation |
+| Sidebar fuzzy search | Shipped | Cmd+K shortcut |
+| Custom alert rules | Shipped | User-defined thresholds |
+| i18n (NO/EN, ~600 keys) | Shipped | Locale-aware formatting |
+| Audit logging | Shipped | Admin trail with filters |
+| Dashboard customization | Shipped | Reorderable widget layout |
+| TimesFM 2.5 + Chronos-2 + MOIRAI-2 | Shipped | 3 foundation models + ensemble |
+| Euronext salmon futures | Shipped | ESF forward curve, basis, term structure |
+| EUMOFA European market data | Shipped | Prices + trade flows |
+| ASC compliance dashboard | Shipped | Readiness scoring, ProgressRing |
+| CSRD sustainability export | Shipped | EU-aligned reporting |
+| Lice emission quota tracking | Shipped | IMR methodology |
+| Property-based testing (Hypothesis) | Shipped | 45+ property tests |
+| Next.js 15 + React 19 + Compiler | Shipped | Automatic memoization |
+| Figma API build pipeline | Shipped | sync_figma_tokens.py + CI verification |
+| Design token system (86 tokens) | Shipped | CSS + TS + Tailwind + Figma Studio |
+| Micro-interactions | Shipped | Flash-update, card-hover, alert-pulse |
+| Content-shaped skeleton loaders | Shipped | 4 variants + shimmer animation |
+| Empty states (ocean SVG) | Shipped | 5 variants with illustrations |
+| US tariff impact analysis | Shipped | 15% Norway tariff modeling |
+| EUDR compliance countdown | Shipped | Dec 2026 deadline tracking |
+| MUR SST (44-year history) | Shipped | NASA JPL, 1km daily, 3-tier fallback |
+| NorKyst v3 (800m currents) | Shipped | Replaces broken CMEMS NorKyst800 |
+| NASA PACE HAB detection | Shipped | Hyperspectral phytoplankton species ID |
+| SEPA Scotland water quality | Shipped | Time Series API for farming regions |
+| Sernapesca Chile archive | Shipped | 23-year production/disease/export |
+| Historical data fetchers | Shipped | SSB 26yr, FRED 35yr, Fish Pool 18yr |
 
 ---
 
@@ -100,7 +101,7 @@ Last updated: 2026-04-06
 | Billing | `billing_routes.py` | 8 |
 | Lice data | `lice_routes.py` | 15 |
 | Disease | `disease_routes.py` | 12 |
-| Market intel | `market_routes.py` | 35 |
+| Market intel | `market_routes.py` | 40 |
 | Farm management | `farm_routes.py` | 10 |
 | Supply chain | `supply_routes.py` | 10 |
 | Analytics | `analytics_routes.py` | 18 |
@@ -111,29 +112,42 @@ Last updated: 2026-04-06
 | Decision engine | `decision_routes.py` | 8 |
 | Digital twin | `twin_routes.py` | 10 |
 | Traceability | `traceability_routes.py` | 8 |
-| Bio Risk snapshots | `bloom_routes.py` (bio_risk_router) | 1 |
-| Bloom/algae | `bloom_routes.py` | 6 |
-| Country profiles | `country_routes.py` | 8 |
+| Bloom/algae | `bloom_routes.py` | 7 |
+| Country profiles | `country_routes.py` | 16 |
 | Investor tools | `investor_routes.py` | 8 |
 | Webhooks | `webhook_routes.py` | 5 |
 | API keys | `apikey_routes.py` | 4 |
-| Misc / health | `misc_routes.py` | 6 |
+| Integrations | `integration_routes.py` | 4 |
+| Admin | `admin_routes.py` | 12 |
+| Misc / ocean / satellite | `misc_routes.py` | 16 |
 
 ---
 
 ## Data Source Inventory
 
-| Source | Engine(s) | Freshness |
-|--------|-----------|-----------|
-| Barentswatch (lice/disease) | lice_engine, disease_engine | Weekly |
-| MET.no (weather) | weather_engine | 6-hourly |
-| Fish Pool (spot/forward) | spot_engine, forward_engine | Daily |
-| Nasdaq Salmon Index | nsi_engine | Daily |
-| SSB (Statistics Norway) | export_engine, cost_engine | Monthly |
-| Marine Harvest / Mowi reports | earnings_engine | Quarterly |
-| USDA / FAO trade data | trade_flow_engine | Monthly |
-| Currency APIs (FX) | fx_engine | Hourly |
-| Internal PostgreSQL | Most engines | Live |
+| Source | Client/Engine | Data | Freshness | History |
+|--------|--------------|------|-----------|---------|
+| BarentsWatch | barentswatch.py | Lice, disease, treatments | Weekly | 2012+ |
+| SSB Table 03024 | ssb_price_client.py | Salmon prices NOK/kg | Weekly | 2000+ |
+| FRED (12 series) | feed_cost_engine.py | Commodities, FX, macro | 2-hourly | 1990+ |
+| MET.no | met_ocean.py | Sea temp forecast | 6-hourly | Real-time |
+| Copernicus CMEMS | climate_risk_engine.py | SST, chlorophyll | Daily | 2016+ |
+| NASA MUR SST | mur_sst_client.py | High-res SST (1km) | Daily | 1981+ |
+| NorKyst v3 | norkyst_client.py | Norwegian coastal currents (800m) | Hourly | Archive |
+| NASA PACE | nasa_pace_client.py | HAB species detection | Daily | 2024+ |
+| Yahoo Finance | competitiveness_engine.py | Equities, FX | 10-min | 5yr+ |
+| Fiskeridirektoratet | fiskeridir_biomass.py | Biomass, production | Monthly | 15yr+ |
+| Mattilsynet | mattilsynet_client.py | Disease cases, treatments | Weekly | 5yr+ |
+| WOAH WAHIS | disease_alerts.py | Global disease outbreaks | 6-hourly | Archive |
+| Sernapesca | chile_monitor.py | Chilean production/disease | Monthly | 2003+ |
+| SEPA Scotland | sepa_client.py | Water quality (temp, DO) | Hourly | Multi-year |
+| Marine Scotland | scotland_monitor.py | Lice CSV, farm data | Weekly | Archive |
+| DFO Canada | canada_monitor.py | Lice, mortality, health | Monthly | 2011+ |
+| Statistics Iceland | iceland_monitor.py | Production, exports, MAB | 6-hourly | Archive |
+| Hagstova Faroe | faroe_monitor.py | Harvest volumes | 6-hourly | Archive |
+| EUMOFA | eumofa_client.py, eumofa_trade_client.py | EU salmon trade flows | Weekly | Multi-year |
+| Euronext ESF | euronext_futures.py | Salmon futures | Daily | 2025+ |
+| Fish Pool Index | price_feed_hub.py | Historical spot index | Weekly | 2006-2024 |
 
 ---
 
@@ -148,20 +162,20 @@ Last updated: 2026-04-06
 │           ┌──────────┐ ┌──────────┐                  │
 │           │ FastAPI  │ │ Next.js  │                  │
 │           │ Backend  │ │ Frontend │                  │
-│           │250 routes│ │ 59 pages │                  │
+│           │340 routes│ │ 63 pages │                  │
 │           └────┬─────┘ └──────────┘                  │
 │                │                                     │
 │        ┌───────┼───────┐                             │
 │        v       v       v                             │
 │   ┌─────────┐┌──────┐┌─────────┐                    │
-│   │23 Router││Cache ││AsyncDB  │                    │
+│   │26 Router││Cache ││AsyncDB  │                    │
 │   │ Modules ││Layer ││Sessions │                    │
 │   └────┬────┘└──────┘└────┬────┘                    │
 │        │                   │                         │
 │   ┌────v────┐        ┌────v─────┐                   │
-│   │53 Market│        │PostgreSQL│                   │
+│   │~75 Data │        │PostgreSQL│                   │
 │   │ Engines │        │TimescaleDB                   │
-│   └─────────┘        │31 tables │                   │
-│                      └──────────┘                    │
+│   │+3 ML    │        │31 tables │                   │
+│   └─────────┘        └──────────┘                    │
 └─────────────────────────────────────────────────────┘
 ```

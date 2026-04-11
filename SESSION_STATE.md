@@ -1,61 +1,84 @@
-CURRENT: Session 30 COMPLETE
-LAST_UPDATED: 2026-04-08
-SESSION: 30 (5 commits)
+CURRENT: Sessions 33-37 COMPLETE
+LAST_UPDATED: 2026-04-11
+SESSIONS: 33-37 (10 commits)
 REPOSITORY: https://github.com/frehan83-collab/OpenClaw (private)
+PR: https://github.com/frehan83-collab/OpenClaw/pull/1
 
-## SESSION 30 — PRODUCTION HARDENING + PHASE 3 FEATURES
+## SESSION 33 — QUALITY ELEVATION + DESIGN COMPONENTS
 
-### Commit 1: Production Hardening (143 files, 1,046 insertions)
-- API retry/timeout: 10s AbortController + 3x exponential backoff in fetchAPI
-- 60 error.tsx: SegmentError component + per-route error boundaries
-- 55 loading.tsx: SkeletonCard + SkeletonDashboard components
-- Correlation ID middleware: X-Request-ID + structlog contextvars
-- next.config.mjs: poweredByHeader:false, optimizePackageImports
-- Bundle analyzer: @next/bundle-analyzer
-- Settings fail-fast: blocks SQLite + default secret in production
-- CI fix: removed || true, full test suite, --cov-fail-under=40
-- 4 new i18n keys
+### Commit: 108e611
+- Fix /api/market/price-outlook 500 → 4-phase graceful degradation
+- 50 new tests (conftest.py, 10 engine suites, price-outlook resilience)
+- Dynamic imports on 8 chart-heavy pages
+- Design tokens wired into 13 components
+- 5 new Figma-inspired components: ProgressRing, TickerStrip, BentoGrid, AnimatedGauge, MiniHeatmap
+- Mobile polish (DataTable scroll, touch targets, responsive grids)
+- Deployment prep (GHCR, Playwright CI, health checks, staging compose)
 
-### Commit 2: Phase 3 — Webhook Alerts + PDF Export (4 files)
-- Wire webhook dispatcher to threshold alert engine (critical/high auto-dispatch)
-- PDF export on dashboard, leaders, futures
+## SESSION 34 — SECURITY + COMMERCIAL + ACCESSIBILITY
 
-### Commit 3: N+1 Fix, Nginx, i18n, Print CSS (8 files, 180 insertions)
-- Fix N+1 query in treatment_optimizer (batch PA lice fetch)
-- Nginx security headers (5 headers) + commented SSL/TLS block
-- 14 new i18n keys (domain terms + common actions) = 545 total
-- Enhanced @media print CSS (A4, color-adjust, break-inside)
-- PDF export on portfolio, disease, global-supply, competitiveness
-- Sidebar ASC Compliance nav label fix
+### Commits: 74534c0, 088b7d8
+- Auth rate limiting: /register 5/min, /login 10/min
+- 26 bare except:pass → structlog warnings
+- DB indexes on Signal/Order/Subscription (Alembic 014)
+- US tariff impact banner, EUDR countdown, trade flow shifts
+- ProgressRing on welfare + ASC, TickerStrip on dashboard
+- WCAG aria-labels on 6 pages
+- DataQualityBadge on 24/65 pages (was 9)
 
-### Commit 4: Enhanced Offline Indicator + .gitignore (2 files)
-- 3-state OfflineIndicator: offline (amber), api-down (rose), reconnecting (ocean)
-- .hypothesis/ added to .gitignore
+## SESSION 35 — DESIGN EXCELLENCE + FIGMA PIPELINE
 
-### Commit 5: Auto-Migration + Startup Logging (1 file)
-- Alembic upgrade head on startup (safe, no-op if at head)
-- Structured startup config logging
+### Commits: 28001a4, e14ba33, 3c68d76
+- Figma API build pipeline: sync_figma_tokens.py, npm scripts, CI verification
+- Dashboard hero KPI (2fr spot price, asymmetric grid)
+- Micro-interactions: flash-update, card-hover, alert-critical-pulse CSS
+- useValueFlash hook wired into KPICard
+- Content-shaped skeleton loaders (4 variants + shimmer animation)
+- EmptyState component (5 variants with ocean SVG illustrations)
+- Market page: TickerStrip + professional country code badges (replaced emoji flags)
+- Farmer Daily: AnimatedGauge for lice level danger signal
 
-### Bug Fixes (across all commits)
-- Market FishPoolChart Math.min([]) crash
-- Norwegian i18n: "Søk", "nøkler", MAB→MTB
-- 7 unawaited coroutine bugs (esg_scorer, farm_graph×6, benchmarking)
-- N+1 query in treatment_optimizer
+## SESSION 36 — WIRE UNUSED API ENDPOINTS
 
-## METRICS
-- Tests: 432 (406 passed, 11 xfailed, 15 xpassed) — 0 failures
-- Warnings: 73 (was 80)
-- i18n keys: 545 (was 525)
-- Engines: 66
-- error.tsx: 60/60 routes
-- loading.tsx: 59/60 routes
-- Alembic migrations: 13
-- PDF export pages: 7 (dashboard, brief, farmer-daily, leaders, futures, portfolio, disease, global-supply, competitiveness)
-- Production readiness: ~99%
-- TypeScript: 0 errors
+### Commit: 8c1cbe4
+- Supply Forecast: smoltForecast + cohortTimeline wired
+- Global Supply: biomassNational wired (standing biomass KPIs)
+- Climate: marineHeatwaveRisk wired (PA-level status cards)
+- Signals: anomalyAlerts wired (Early Warning section)
+- Canada: canadaLice wired (national lice trends)
+
+## SESSION 37 — DATA SOURCE EXPANSION (7 NEW CLIENTS)
+
+### Commits: 9c2d4fe, aa330e1
+- MUR SST client: NASA JPL 1km daily SST (1981-present, 3-tier fallback)
+- NorKyst v3 client: 800m Norwegian coastal currents (replaces broken CMEMS)
+- NASA PACE client: HAB species detection (hyperspectral phytoplankton ID)
+- SEPA Scotland client: water quality near salmon farms
+- Sernapesca Chile client: 23-year production/disease/export archive
+- EUMOFA trade client: European salmon trade flows (imports/exports)
+- BarentsWatch updated: 3 new methods for April 2025 API changes
+- Historical data fetchers: SSB 26yr, FRED 35yr, Fish Pool 18yr
+- 18 new API endpoints across misc/country/market routers
+- Missing i18n key fixed (EUDR countdown)
+
+## METRICS (End of Session 37)
+- Tests: 447 (0 failures, 14 xfailed, 21 xpassed)
+- Engines: ~75 (was 69)
+- API endpoints: ~340 (was ~313)
+- Frontend pages: 63 (68 compiled routes)
+- Components: 43+ (was 38)
+- Alembic migrations: 14
+- i18n keys: ~600
+- TypeScript errors: 0
+- Design tokens: 86 (Figma pipeline active)
+- DataQualityBadge pages: 24/65
+- Data source clients: 45+ (was ~38)
+- Historical data coverage: SSB 26yr, FRED 35yr, MUR SST 44yr
 
 ## RESUME INSTRUCTIONS
 1. Backend: cd C:/Users/freha/OpenClaw && python main.py
 2. Frontend: cd C:/Users/freha/OpenClaw/frontend && npx next dev
 3. Tests: python -m pytest tests/ -v --tb=short
-4. Push: git add -A && git commit -m "Session 31: ..." && git push
+4. Figma sync: npm run tokens:sync (requires FIGMA_ACCESS_TOKEN)
+5. Historical data: python scripts/fetch_all_historical.py
+6. Push: git push origin master
