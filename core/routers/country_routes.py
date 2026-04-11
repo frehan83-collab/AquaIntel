@@ -378,3 +378,49 @@ async def china_demand_impact():
     if isinstance(result, dict):
         result["data_provenance"] = DataProvenance.live("SSB + customs data", confidence=0.75).to_dict()
     return result
+
+
+# ── Scotland Water Quality (SEPA) ────────────────────────────────────
+
+@router.get("/scotland/water-quality")
+@cached(ttl=21600)
+async def scotland_water_quality():
+    """Aggregated water quality near Scottish salmon farming regions from SEPA."""
+    from core.market.sepa_client import sepa_client
+    summary = await sepa_client.get_scottish_aquaculture_summary()
+    return {**summary, "data_provenance": DataProvenance.live("SEPA Time Series API", confidence=0.7).to_dict()}
+
+
+@router.get("/scotland/water-quality/{region}")
+@cached(ttl=21600)
+async def scotland_water_quality_region(region: str):
+    """Water quality for a specific Scottish farming region."""
+    from core.market.sepa_client import sepa_client
+    data = await sepa_client.get_region_water_quality(region)
+    return {**data, "data_provenance": DataProvenance.live("SEPA Time Series API", confidence=0.7).to_dict()}
+
+
+# ── Chile Historical Data (Sernapesca) ───────────────────────────────
+
+@router.get("/chile/production-history")
+@cached(ttl=86400)
+async def chile_production_history():
+    """Chilean salmon production history (23 years, Sernapesca yearbooks)."""
+    from core.market.sernapesca_historical import sernapesca_historical
+    return await sernapesca_historical.fetch_production_history()
+
+
+@router.get("/chile/disease-history")
+@cached(ttl=86400)
+async def chile_disease_history():
+    """Chilean ISA/SRS disease outbreak history."""
+    from core.market.sernapesca_historical import sernapesca_historical
+    return await sernapesca_historical.fetch_disease_history()
+
+
+@router.get("/chile/export-history")
+@cached(ttl=86400)
+async def chile_export_history():
+    """Chilean salmon export volume and value history."""
+    from core.market.sernapesca_historical import sernapesca_historical
+    return await sernapesca_historical.fetch_export_history()

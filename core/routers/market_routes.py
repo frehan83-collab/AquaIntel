@@ -675,3 +675,26 @@ async def futures_term_structure():
     """
     from core.market.euronext_futures import euronext_futures_engine
     return await euronext_futures_engine.get_term_structure()
+
+
+# ── EUMOFA Trade Flows ───────────────────────────────────────────────
+
+@router.get("/eumofa/imports/{country}")
+async def eumofa_imports_by_country(country: str):
+    """EU salmon import volumes for a specific country (e.g. FR, DE, ES)."""
+    from core.market.eumofa_trade_client import eumofa_trade_client
+    return await eumofa_trade_client.fetch_salmon_imports_by_country(country.upper())
+
+
+@router.get("/eumofa/exports/{origin}")
+async def eumofa_exports_by_origin(origin: str):
+    """Salmon export volumes from an origin country (e.g. NO, CL, GB)."""
+    from core.market.eumofa_trade_client import eumofa_trade_client
+    return await eumofa_trade_client.fetch_salmon_exports_by_origin(origin.upper())
+
+
+@router.get("/eumofa/trade-summary")
+async def eumofa_trade_summary():
+    """Comprehensive bilateral EU salmon trade flow summary."""
+    from core.market.eumofa_trade_client import eumofa_trade_client
+    return await eumofa_trade_client.fetch_trade_flow_summary()
