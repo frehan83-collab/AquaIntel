@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
 import { useCountUp } from "@/lib/useCountUp";
+import { useValueFlash } from "@/lib/useValueFlash";
 import { colors, chartPalette } from "@/lib/design-tokens";
 
 interface Props {
@@ -72,6 +73,8 @@ export default function KPICard({
     ? "#E8734A"
     : "#00D4C8";
 
+  const flash = useValueFlash(value);
+
   // Count-up animation for numeric values
   const numericValue = typeof value === "number" ? value : parseFloat(String(value));
   const isNumeric = !isNaN(numericValue) && isFinite(numericValue);
@@ -87,7 +90,8 @@ export default function KPICard({
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={cn(
-        "relative overflow-hidden",
+        "relative overflow-hidden card-hover",
+        flash && "flash-update",
         hero ? "rounded-2xl" : "rounded-xl",
         "bg-[var(--bg-card)] dark:bg-gradient-to-br dark:from-fjord-surface/60 dark:to-fjord-midwater/40",
         "border border-slate-200 dark:border-white/[0.08]",
