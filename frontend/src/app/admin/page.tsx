@@ -12,6 +12,7 @@ import {
 import GlassCard from "@/components/GlassCard";
 import KPICard from "@/components/KPICard";
 import { api } from "@/lib/api";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -157,9 +158,12 @@ export default function AdminPage() {
             </div>
             {t("admin.title")}
           </h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">
-            Platform health, data quality monitoring, and system status
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Platform health, data quality monitoring, and system status
+            </p>
+            <DataQualityBadge source="Platform Health" quality="live" />
+          </div>
         </div>
         <div className="flex items-center gap-3">
           {lastRefresh && (

@@ -14,6 +14,7 @@ import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -219,9 +220,12 @@ function LeadersPageInner() {
             <Trophy className="w-6 h-6 text-amber-400" />
             {t("leaders.title")}
           </h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">
-            Performance benchmarking powered by biological simulations
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Performance benchmarking powered by biological simulations
+            </p>
+            <DataQualityBadge source="BarentsWatch + ESG" quality="live" />
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button

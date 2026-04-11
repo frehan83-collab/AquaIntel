@@ -23,6 +23,7 @@ import { useToast } from "@/components/Toast";
 import { useApiError } from "@/lib/useApiError";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import FreshnessIndicator from "@/components/FreshnessIndicator";
+import DataQualityBadge from "@/components/DataQualityBadge";
 import { useDashboardLayout } from "@/lib/useDashboardLayout";
 import DashboardCustomizePanel from "@/components/DashboardCustomizePanel";
 import { chartPalette, colors } from "@/lib/design-tokens";
@@ -221,6 +222,7 @@ export default function DashboardPage() {
               Norwegian salmon aquaculture intelligence &mdash; {companiesWithData || "123"} companies tracked
             </p>
             <FreshnessIndicator lastUpdated={fetchedAt} />
+            <DataQualityBadge source="BarentsWatch + SSB" quality="live" />
           </div>
         </div>
         <div className="flex items-center gap-3">

@@ -15,6 +15,7 @@ import { api } from "@/lib/api";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
 import { useApiError } from "@/lib/useApiError";
 import { exportToCSV } from "@/lib/export";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -73,9 +74,12 @@ export default function GlobalSupplyPage() {
             <Globe2 className="w-6 h-6 text-ocean-400" />
             {t("global_supply.title")}
           </h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">
-            7-country live supply model &mdash; Norway, Chile, Iceland, Scotland, Canada, Faroes + Others
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-sm text-[var(--text-secondary)]">
+              7-country live supply model &mdash; Norway, Chile, Iceland, Scotland, Canada, Faroes + Others
+            </p>
+            <DataQualityBadge source="Multi-country (7 sources)" quality="live" />
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button

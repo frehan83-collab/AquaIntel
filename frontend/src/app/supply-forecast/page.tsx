@@ -16,6 +16,7 @@ import type { DataPoint } from "@/components/InteractiveChart";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 export default function SupplyForecastPage() {
   const [summary, setSummary] = useState<any>(null);
@@ -47,9 +48,12 @@ export default function SupplyForecastPage() {
             <TrendingUp className="w-6 h-6 text-ocean-400" />
             {t("supply.title")}
           </h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">
-            {t("supply.smolt_to_harvest")}
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-sm text-[var(--text-secondary)]">
+              {t("supply.smolt_to_harvest")}
+            </p>
+            <DataQualityBadge source="Smolt Model" quality="live" />
+          </div>
         </div>
         <OcButton variant="secondary" size="sm" onClick={load} loading={loading}
           leftIcon={<RefreshCw className="w-3.5 h-3.5" />}>Refresh</OcButton>

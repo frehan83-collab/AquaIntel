@@ -13,6 +13,7 @@ import { api } from "@/lib/api";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
 import dynamic from "next/dynamic";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import DataQualityBadge from "@/components/DataQualityBadge";
 const InteractiveChart = dynamic(() => import("@/components/InteractiveChart"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
 import type { DataPoint } from "@/components/InteractiveChart";
 
@@ -63,9 +64,12 @@ export default function CompetitivenessPage() {
             <Scale className="w-6 h-6 text-ocean-400" />
             {t("competitiveness.title")}
           </h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">
-            {t("competitiveness.fx_adjusted")}
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-sm text-[var(--text-secondary)]">
+              {t("competitiveness.fx_adjusted")}
+            </p>
+            <DataQualityBadge source="FRED + Yahoo Finance" quality="live" />
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button

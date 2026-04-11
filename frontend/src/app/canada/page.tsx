@@ -13,6 +13,7 @@ import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { useTranslation } from "@/lib/i18n";
 import { exportToCSV } from "@/lib/export";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -74,9 +75,12 @@ export default function CanadaPage() {
             <span className="text-lg">🇨🇦</span>
             {t("canada.title")}
           </h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">
-            DFO open data &mdash; richest public aquaculture dataset globally
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-sm text-[var(--text-secondary)]">
+              DFO open data &mdash; richest public aquaculture dataset globally
+            </p>
+            <DataQualityBadge source="DFO Canada" quality="live" />
+          </div>
         </div>
         <OcButton variant="secondary" size="sm" onClick={load} loading={loading}
           leftIcon={<RefreshCw className="w-3.5 h-3.5" />}>Refresh</OcButton>

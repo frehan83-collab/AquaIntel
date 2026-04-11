@@ -14,6 +14,7 @@ import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import DataQualityBadge from "@/components/DataQualityBadge";
 const InteractiveChart = dynamic(() => import("@/components/InteractiveChart"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
 import type { DataPoint } from "@/components/InteractiveChart";
 
@@ -118,9 +119,12 @@ export default function ClimatePage() {
             <Thermometer className="w-6 h-6 text-ocean-400" />
             {t("climate.title")}
           </h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">
-            Live SST stress, bloom risk &amp; lice pressure per production area
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Live SST stress, bloom risk &amp; lice pressure per production area
+            </p>
+            <DataQualityBadge source="MET.no" quality="live" />
+          </div>
         </div>
         <OcButton variant="secondary" size="sm" onClick={load} loading={loading}
           leftIcon={<RefreshCw className="w-3.5 h-3.5" />}>Refresh</OcButton>

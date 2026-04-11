@@ -15,6 +15,7 @@ import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import DataQualityBadge from "@/components/DataQualityBadge";
 const InteractiveChart = dynamic(() => import("@/components/InteractiveChart"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
 import type { DataPoint } from "@/components/InteractiveChart";
 
@@ -85,9 +86,12 @@ export default function FeedCostPage() {
             <Wheat className="w-6 h-6 text-amber-400" />
             {t("feed_cost.title")}
           </h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">
-            Official Fiskeridirektoratet cost data + live FRED feed prices &middot; Full cost stack
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Official Fiskeridirektoratet cost data + live FRED feed prices &middot; Full cost stack
+            </p>
+            <DataQualityBadge source="FRED + Fiskeridirektoratet" quality="live" />
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <OcButton variant="ghost" size="sm"

@@ -14,6 +14,7 @@ import { useTranslation } from "@/lib/i18n";
 import { useApiError } from "@/lib/useApiError";
 import DataTable, { Column } from "@/components/DataTable";
 import { trafficLight, colors } from "@/lib/design-tokens";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -122,9 +123,12 @@ export default function TrafficLightPage() {
               <Thermometer className="w-7 h-7 text-cyan-400" />
               {t("traffic_light.title")}
             </h1>
-            <p className="text-slate-400 text-sm mt-1">
-              Norway Production Area Capacity Planning (2027-2029)
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-slate-400 text-sm">
+                Norway Production Area Capacity Planning (2027-2029)
+              </p>
+              <DataQualityBadge source="BarentsWatch" quality="live" />
+            </div>
           </div>
           <OcButton variant="ghost" onClick={load}>
             <RefreshCw className="w-4 h-4 mr-1" /> Refresh

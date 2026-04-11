@@ -12,6 +12,7 @@ import ProgressRing from "@/components/ProgressRing";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { useTranslation, formatNumber } from "@/lib/i18n";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -133,9 +134,12 @@ export default function WelfarePage() {
               <Heart className="w-7 h-7 text-rose-400" />
               {t("welfare.title")}
             </h1>
-            <p className="text-sm text-[var(--text-secondary)] mt-1">
-              {t("welfare.subtitle")}
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-sm text-[var(--text-secondary)]">
+                {t("welfare.subtitle")}
+              </p>
+              <DataQualityBadge source="BarentsWatch + MET.no" quality="live" />
+            </div>
           </div>
         </div>
 

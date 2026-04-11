@@ -17,6 +17,7 @@ import { useApiError } from "@/lib/useApiError";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import InteractiveChart, { DataPoint } from "@/components/InteractiveChart";
 import FreshnessIndicator from "@/components/FreshnessIndicator";
+import DataQualityBadge from "@/components/DataQualityBadge";
 import dynamic from "next/dynamic";
 import type { PADataPoint } from "@/components/RegionalHeatmap";
 
@@ -100,6 +101,7 @@ export default function DiseasePage() {
               {t("disease.source_mattilsynet")} + {t("disease.source_woah")} {"\u2014"}real-time surveillance
             </p>
             <FreshnessIndicator lastUpdated={fetchedAt} />
+            <DataQualityBadge source="Mattilsynet + WOAH" quality="live" />
           </div>
         </div>
         <div className="flex items-center gap-2">

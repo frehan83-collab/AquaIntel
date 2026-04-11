@@ -11,6 +11,7 @@ import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -62,9 +63,12 @@ export default function IcelandPage() {
             <span className="text-lg">🇮🇸</span>
             {t("nav.iceland")}
           </h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">
-            5 live sources &mdash; fastest-growing Atlantic salmon producer (35% CAGR since 2016)
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-sm text-[var(--text-secondary)]">
+              5 live sources &mdash; fastest-growing Atlantic salmon producer (35% CAGR since 2016)
+            </p>
+            <DataQualityBadge source="Statistics Iceland" quality="live" />
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <OcButton variant="ghost" size="sm"
