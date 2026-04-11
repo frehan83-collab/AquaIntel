@@ -711,6 +711,7 @@ const translations: Record<string, Record<Locale, string>> = {
   "traceability.lot_tracking": { en: "Lot Tracking", no: "Partisporing" },
   "traceability.iuu_risk": { en: "IUU Risk Assessment", no: "IUU-risikovurdering" },
   "traceability.eudr_status": { en: "EUDR Compliance", no: "EUDR-samsvar" },
+  "traceability.eudr_countdown_title": { en: "EUDR Compliance Countdown", no: "EUDR-nedtelling" },
 
   // ── Error messages (user-facing) ──
   "error.data_unavailable": { en: "Data temporarily unavailable", no: "Data midlertidig utilgjengelig" },
