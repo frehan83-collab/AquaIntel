@@ -13,6 +13,7 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import AnimatedGauge from "@/components/AnimatedGauge";
 import { useTranslation, formatNumber, formatCurrency, formatDate } from "@/lib/i18n";
 import { dataColors, colors } from "@/lib/design-tokens";
 
@@ -425,6 +426,25 @@ export default function FarmerDailyPage() {
                   </p>
                 ))}
               </div>
+
+              {/* Lice Danger Gauge */}
+              {decision.lice_current != null && (
+                <div className="flex justify-center py-2">
+                  <AnimatedGauge
+                    value={decision.lice_current}
+                    min={0}
+                    max={1}
+                    label={t("farmer.lice_level")}
+                    unit="af/fish"
+                    size={140}
+                    thresholds={[
+                      { value: 20, color: "var(--positive)" },
+                      { value: 50, color: "var(--warning)" },
+                      { value: 100, color: "var(--danger)" },
+                    ]}
+                  />
+                </div>
+              )}
 
               {/* Method + Success + ROI row */}
               {decision.recommended_method && decision.recommended_method !== "none" && decision.recommended_method !== "monitoring" && (

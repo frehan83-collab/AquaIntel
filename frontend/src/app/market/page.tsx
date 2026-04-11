@@ -14,6 +14,7 @@ import dynamic from "next/dynamic";
 import ErrorBoundary from "@/components/ErrorBoundary";
 const InteractiveChart = dynamic(() => import("@/components/InteractiveChart"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
 import FreshnessIndicator from "@/components/FreshnessIndicator";
+import TickerStrip from "@/components/TickerStrip";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
 import { chartPalette, colors } from "@/lib/design-tokens";
 
@@ -145,10 +146,12 @@ function SeasonalBars({ data }: { data: SeasonalPoint[] }) {
 
 // ─── Export Destinations ──────────────────────────────────────────────────────
 
-const FLAG_EMOJIS: Record<string, string> = {
-  Poland: "🇵🇱", France: "🇫🇷", Denmark: "🇩🇰", Netherlands: "🇳🇱",
-  USA: "🇺🇸", UK: "🇬🇧", Germany: "🇩🇪", Japan: "🇯🇵",
-  China: "🇨🇳", Spain: "🇪🇸", Italy: "🇮🇹", Sweden: "🇸🇪",
+const COUNTRY_CODES: Record<string, string> = {
+  Poland: "PL", France: "FR", Denmark: "DK", Netherlands: "NL",
+  USA: "US", UK: "GB", Germany: "DE", Japan: "JP",
+  China: "CN", Spain: "ES", Italy: "IT", Sweden: "SE",
+  Portugal: "PT", Belgium: "BE", Finland: "FI", Brazil: "BR",
+  Thailand: "TH", "South Korea": "KR", Singapore: "SG",
 };
 
 function ExportBars({ data }: { data: ExportDest[] }) {
@@ -159,7 +162,9 @@ function ExportBars({ data }: { data: ExportDest[] }) {
     <div className="flex flex-col gap-3">
       {top5.map((d) => (
         <div key={d.country} className="flex items-center gap-3">
-          <span className="text-lg w-7 flex-shrink-0">{FLAG_EMOJIS[d.country] ?? "🐟"}</span>
+          <span className="text-xs font-mono bg-white/[0.06] px-1.5 py-0.5 rounded text-[var(--text-secondary)] w-7 text-center flex-shrink-0">
+            {COUNTRY_CODES[d.country] ?? "--"}
+          </span>
           <span className="text-xs text-white/70 w-24 flex-shrink-0 font-medium">{d.country}</span>
           <div className="flex-1 relative h-5">
             <div className="absolute inset-y-0 left-0 rounded-full bg-ocean-500/20 w-full" />
@@ -433,6 +438,54 @@ export default function MarketTerminalPage() {
         >
           <p className="text-sm text-[var(--text-primary)] font-medium">{narrative}</p>
         </motion.div>
+      )}
+
+      {/* ── Ticker Strip ──────────────────────────────────────────────────── */}
+      {!loading && (
+        <TickerStrip
+          className="rounded-xl"
+          speed={36}
+          items={[
+            ...(latestSSB ? [{
+              label: "SSB Spot",
+              value: `${formatCurrency(latestSSB.price_nok_kg, locale)}/kg`,
+            }] : []),
+            ...(latestFP ? [{
+              label: "Fish Pool",
+              value: `${formatNumber(latestFP.price, locale, 1)} NOK`,
+              change: fpChange,
+            }] : []),
+            ...(mowiPrice != null ? [{
+              label: "MOWI",
+              value: `${formatNumber(mowiPrice, locale, 1)} NOK`,
+              change: mowiChange,
+            }] : []),
+            ...(equity?.prices?.SALM != null ? [{
+              label: "SALM",
+              value: `${formatNumber(equity.prices.SALM, locale, 1)} NOK`,
+              change: equity.changes?.SALM ?? 0,
+            }] : []),
+            ...(equity?.prices?.LSG != null ? [{
+              label: "LSG",
+              value: `${formatNumber(equity.prices.LSG, locale, 1)} NOK`,
+              change: equity.changes?.LSG ?? 0,
+            }] : []),
+            ...(equity?.prices?.GSF != null ? [{
+              label: "GSF",
+              value: `${formatNumber(equity.prices.GSF, locale, 1)} NOK`,
+              change: equity.changes?.GSF ?? 0,
+            }] : []),
+            ...(equity?.prices?.BAKKA != null ? [{
+              label: "BAKKA",
+              value: `${formatNumber(equity.prices.BAKKA, locale, 1)} NOK`,
+              change: equity.changes?.BAKKA ?? 0,
+            }] : []),
+            ...(nokUsd > 0 ? [{
+              label: "NOK/USD",
+              value: formatNumber(nokUsd, locale, 2),
+            }] : []),
+          ]}
+        />
       )}
 
       {/* ── KPI Row ─────────────────────────────────────────────────────────── */}
