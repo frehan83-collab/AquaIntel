@@ -18,8 +18,11 @@ import {
 } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
+import DataQualityBadge from "@/components/DataQualityBadge";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
+import { useApiError } from "@/lib/useApiError";
 import { useTranslation } from "@/lib/i18n";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -53,6 +56,7 @@ const ACTION_CONFIG: Record<string, { color: string; bg: string; Icon: any; labe
 
 export default function HarvestPage() {
   const { t } = useTranslation();
+  const handleError = useApiError();
   const [localityNo, setLocalityNo] = useState(10469);
   const [companyName, setCompanyName] = useState("");
   const [weeks, setWeeks] = useState(12);
@@ -70,7 +74,8 @@ export default function HarvestPage() {
     try {
       const data = await api.harvestOptimize(localityNo);
       setOptimizeData(data);
-    } catch {
+    } catch (e) {
+      handleError("harvest_optimize")(e);
       setOptimizeData(null);
     }
     setLoading(false);
@@ -81,7 +86,8 @@ export default function HarvestPage() {
     try {
       const data = await api.harvestSimulate(localityNo, weeks);
       setSimulateData(data);
-    } catch {
+    } catch (e) {
+      handleError("harvest_simulate")(e);
       setSimulateData(null);
     }
     setSimLoading(false);
@@ -93,7 +99,8 @@ export default function HarvestPage() {
     try {
       const data = await api.harvestPortfolio(companyName.trim());
       setPortfolioData(data);
-    } catch {
+    } catch (e) {
+      handleError("harvest_portfolio")(e);
       setPortfolioData(null);
     }
     setPortLoading(false);
@@ -115,6 +122,7 @@ export default function HarvestPage() {
   const maxLice = Math.max(...trajectory.map((t: any) => t.lice_count || 0), 0.1);
 
   return (
+    <ErrorBoundary fallbackTitle="Harvest Optimizer error">
     <div className="space-y-6 p-6">
       {/* Header */}
       <motion.div
@@ -133,6 +141,7 @@ export default function HarvestPage() {
             RL-based harvest timing using live growth, lice, and market data
           </p>
         </div>
+        {optimizeData?.data_provenance && <DataQualityBadge provenance={optimizeData.data_provenance} />}
       </motion.div>
 
       {/* Tab Switcher */}
@@ -649,5 +658,6 @@ export default function HarvestPage() {
         </>
       )}
     </div>
+    </ErrorBoundary>
   );
 }

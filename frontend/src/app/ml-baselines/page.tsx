@@ -7,6 +7,8 @@ import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 type Series = "price" | "lice" | "temperature" | "supply";
 type Model = "chronos" | "timesfm" | "moirai";
@@ -80,11 +82,15 @@ export default function MLBaselinesPage() {
   };
 
   return (
+    <ErrorBoundary fallbackTitle="ML Baselines error">
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">{t("ml.title")}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">{t("ml.title")}</h1>
+            <DataQualityBadge quality="live" source="Foundation Models" />
+          </div>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
             Chronos-2 vs TimesFM 2.5 vs MOIRAI-2 &mdash; zero-shot time series forecasting
           </p>
@@ -327,5 +333,6 @@ export default function MLBaselinesPage() {
         </GlassCard>
       )}
     </div>
+    </ErrorBoundary>
   );
 }

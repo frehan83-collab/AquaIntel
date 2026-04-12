@@ -10,6 +10,7 @@ import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation, formatDate } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const TIER_DETAILS: Record<string, { icon: any; color: string; features: string[] }> = {
   professional: {
@@ -98,6 +99,7 @@ export default function BillingPage() {
   const sub = status?.subscription;
 
   return (
+    <ErrorBoundary fallbackTitle="Billing error">
     <div className="space-y-6">
       {/* Header */}
       <motion.div
@@ -319,5 +321,6 @@ export default function BillingPage() {
         )}
       </GlassCard>
     </div>
+    </ErrorBoundary>
   );
 }

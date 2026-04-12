@@ -47,10 +47,11 @@ export default function TraderPage() {
   const [modeling, setModeling] = useState(false);
   const [savedScenarios, setSavedScenarios] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [sentimentArticles, setSentimentArticles] = useState<any[]>([]);
 
   const load = async () => {
     setLoading(true);
-    const [r1, r2, r3, r4, r5, r6, r7] = await Promise.allSettled([
+    const [r1, r2, r3, r4, r5, r6, r7, r8] = await Promise.allSettled([
       api.spotPrice(),
       api.feedCostCompositeIndex(),
       api.supplyDemandBalance(),
@@ -58,6 +59,7 @@ export default function TraderPage() {
       api.signals(),
       api.forwardCurve(12),
       api.priceOutlookMulti().catch(handleError("trader_price_outlook_multi")),
+      api.sentimentArticles(48),
     ]);
     if (r1.status === "fulfilled") setSpotPrice(r1.value);
     if (r2.status === "fulfilled") setFeedIndex(r2.value);
@@ -69,6 +71,10 @@ export default function TraderPage() {
     }
     if (r6.status === "fulfilled") setForwardCurve(r6.value);
     if (r7.status === "fulfilled") setPriceOutlook(r7.value);
+    if (r8.status === "fulfilled") {
+      const arts = Array.isArray(r8.value) ? r8.value : r8.value?.articles || [];
+      setSentimentArticles(arts);
+    }
     setLoading(false);
   };
 
@@ -478,6 +484,38 @@ export default function TraderPage() {
             </div>
           )}
         </GlassCard>
+
+        {/* Sentiment Articles Feed */}
+        {sentimentArticles.length > 0 && (
+          <GlassCard>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                <Newspaper className="w-5 h-5 text-purple-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-white">Latest News</h2>
+              <span className="text-[10px] text-[var(--text-secondary)] ml-auto">{sentimentArticles.length} articles (48h)</span>
+            </div>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {sentimentArticles.slice(0, 8).map((a: any, i: number) => (
+                <div key={i} className="bg-white/5 rounded-lg p-3 flex items-start gap-3">
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 ${
+                    (a.sentiment_score || 0) > 0.2 ? "bg-emerald-500/20 text-emerald-400" :
+                    (a.sentiment_score || 0) < -0.2 ? "bg-rose-500/20 text-rose-400" :
+                    "bg-white/10 text-white/50"
+                  }`}>
+                    {(a.sentiment_score || 0) > 0.2 ? "+" : (a.sentiment_score || 0) < -0.2 ? "−" : "○"}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white font-medium truncate">{a.title || a.headline}</p>
+                    <p className="text-[10px] text-[var(--text-secondary)]">
+                      {a.source} {a.published_at ? `· ${formatDate(new Date(a.published_at), locale)}` : ""}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        )}
 
         {/* Forward Curve */}
         <GlassCard>

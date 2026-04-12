@@ -11,6 +11,7 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { resetOnboarding } from "@/components/OnboardingWizard";
 import { useTranslation } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -32,6 +33,7 @@ export default function SettingsPage() {
   useEffect(() => { load(); }, []);
 
   return (
+    <ErrorBoundary fallbackTitle="Settings error">
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
@@ -254,5 +256,6 @@ export default function SettingsPage() {
         All calculations use learned-principles model with live data only.
       </p>
     </div>
+    </ErrorBoundary>
   );
 }

@@ -13,6 +13,7 @@ import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { useTranslation } from "@/lib/i18n";
 import { exportToCSV } from "@/lib/export";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -69,6 +70,7 @@ export default function CanadaPage() {
   const sea = snapshot?.sea_conditions || {};
 
   return (
+    <ErrorBoundary fallbackTitle="Canada Intelligence error">
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
@@ -358,5 +360,6 @@ export default function CanadaPage() {
         Not financial or regulatory advice.
       </p>
     </div>
+    </ErrorBoundary>
   );
 }

@@ -10,6 +10,8 @@ import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -68,6 +70,7 @@ export default function ChinaDemandPage() {
   };
 
   return (
+    <ErrorBoundary fallbackTitle="China Demand error">
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
@@ -76,6 +79,7 @@ export default function ChinaDemandPage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-3">
             <Globe2 className="w-6 h-6 text-ocean-400" />
             {t("nav.china_demand")}
+            <DataQualityBadge quality="live" source="SSB Export Data" />
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
             Norwegian salmon exports to China &mdash; LIVE SSB data + global market estimates
@@ -415,5 +419,6 @@ export default function ChinaDemandPage() {
         All growth rates, market shares, and momentum are computed dynamically from the data.
       </div>
     </div>
+    </ErrorBoundary>
   );
 }

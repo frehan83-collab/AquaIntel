@@ -8,6 +8,7 @@ import {
   Code2, Play, Quote, ArrowRight,
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const FEATURES = [
   { icon: Bug, title: "Lice Intelligence", desc: "Real-time lice data for 1,815 Norwegian farms with GNN spread prediction", color: "text-rose-400" },
@@ -78,6 +79,7 @@ export default function LandingPage() {
   const [submitted, setSubmitted] = useState(false);
 
   return (
+    <ErrorBoundary fallbackTitle="Landing error">
     <div className="min-h-screen bg-ocean-950">
       {/* Hero */}
       <section className="relative overflow-hidden">
@@ -355,5 +357,6 @@ Authorization: Bearer eyJ...
         </div>
       </footer>
     </div>
+    </ErrorBoundary>
   );
 }

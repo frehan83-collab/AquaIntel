@@ -13,6 +13,7 @@ import GlassCard from "@/components/GlassCard";
 import KPICard from "@/components/KPICard";
 import { api } from "@/lib/api";
 import DataQualityBadge from "@/components/DataQualityBadge";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -148,6 +149,7 @@ export default function AdminPage() {
   const sources = quality?.sources || {};
 
   return (
+    <ErrorBoundary fallbackTitle="Admin Dashboard error">
     <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -797,5 +799,6 @@ export default function AdminPage() {
         OpenClaw v{status?.version || "2.1.0"} &middot; {status?.route_count || 0} routes &middot; {status?.engine_count || 0} engines &middot; {status?.db_table_count || 0} tables
       </div>
     </div>
+    </ErrorBoundary>
   );
 }

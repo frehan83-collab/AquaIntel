@@ -12,6 +12,7 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -111,6 +112,7 @@ export default function TwinPage() {
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3">
             <Boxes className="w-6 h-6 text-ocean-400" />
             {t("twin.title")}
+            <DataQualityBadge quality="live" source="Digital Twin Model" />
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
             Live virtual replica with autonomous agent swarm — {twinStatus?.total_localities || 0} localities

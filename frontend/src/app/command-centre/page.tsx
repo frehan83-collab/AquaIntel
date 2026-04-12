@@ -14,6 +14,7 @@ import { useToast } from "@/components/Toast";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useWebSocket } from "@/lib/useWebSocket";
 import { useTranslation } from "@/lib/i18n";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* ── WebSocket URLs ─────────────────────────────────────────────── */
 const BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000")
@@ -159,6 +160,7 @@ export default function CommandCentrePage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-3">
             <Radio className="w-6 h-6 text-ocean-400" />
             {t("nav.command_centre")}
+            <DataQualityBadge quality="live" source="Multi-source real-time" />
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
             Real-time market intelligence stream &mdash; {cmdConnected ? "live WebSocket" : polling ? "30s poll fallback" : "connecting..."}

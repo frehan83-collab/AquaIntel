@@ -12,6 +12,8 @@ import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import dynamic from "next/dynamic";
 import { api } from "@/lib/api";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 const BloomMap = dynamic(() => import("@/components/BloomMap"), {
   loading: () => <div className="h-[500px] bg-slate-800/50 rounded-xl animate-pulse flex items-center justify-center"><span className="text-slate-400">Loading map...</span></div>,
@@ -167,6 +169,7 @@ export default function BloomPage() {
   );
 
   return (
+    <ErrorBoundary fallbackTitle="Bloom Risk error">
     <div className="space-y-6">
       {/* Header */}
       <motion.div
@@ -175,9 +178,12 @@ export default function BloomPage() {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">
-            Algal Bloom Early Warning
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">
+              Algal Bloom Early Warning
+            </h1>
+            <DataQualityBadge quality="live" source="CMEMS Chlorophyll-a" />
+          </div>
           <p className="text-[var(--text-secondary)] text-sm mt-1">
             Satellite chlorophyll-a monitoring via Copernicus Marine Service
           </p>
@@ -496,5 +502,6 @@ export default function BloomPage() {
         </div>
       </GlassCard>
     </div>
+    </ErrorBoundary>
   );
 }

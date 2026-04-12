@@ -17,6 +17,7 @@ import { useApiError } from "@/lib/useApiError";
 import { exportToCSV } from "@/lib/export";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useTranslation } from "@/lib/i18n";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* ─── Anomaly styling ───────────────────────────────────────────────── */
 
@@ -84,6 +85,22 @@ const DATA_SOURCES: DataSourceDef[] = [
     resolution: "Per production area",
     icon: Activity,
   },
+  {
+    name: "NorKyst v3 (800m)",
+    provider: "MET.no THREDDS",
+    status: "active",
+    description: "High-resolution Norwegian coastal hydrodynamic model: SST, salinity, currents",
+    resolution: "800m grid, hourly",
+    icon: Waves,
+  },
+  {
+    name: "NASA PACE OCI",
+    provider: "NASA Goddard / OB.DAAC",
+    status: "active",
+    description: "Hyperspectral ocean color for HAB species detection and chlorophyll-a",
+    resolution: "~1km, daily NRT composites",
+    icon: Globe,
+  },
 ];
 
 /* ─── Helper: risk level color ──────────────────────────────────────── */
@@ -119,6 +136,8 @@ export default function SatellitePage() {
   const [bloomRiskData, setBloomRiskData] = useState<any>(null);
   const [sstProjections, setSstProjections] = useState<any>(null);
   const [selectedPa, setSelectedPa] = useState(3);
+  const [norkystData, setNorkystData] = useState<any>(null);
+  const [paceHabData, setPaceHabData] = useState<any>(null);
 
   const load = async () => {
     setLoading(true);
@@ -137,9 +156,18 @@ export default function SatellitePage() {
     setLoading(false);
   };
 
-  // Load SST projections when selected PA changes
+  // Load SST projections + NorKyst + PACE when selected PA changes
   useEffect(() => {
     api.climateProjections(selectedPa, 3).then(setSstProjections).catch(handleError("satellite_sst_projections"));
+    api.norkystPaSummary(selectedPa).then(setNorkystData).catch(handleError("satellite_norkyst"));
+    // PACE HAB risk for PA 3 centroid (approx Trøndelag coast)
+    const paCentroids: Record<number, [number, number]> = {
+      1: [58.5, 5.7], 2: [59.5, 5.3], 3: [60.3, 5.0], 4: [62.0, 6.0],
+      5: [63.0, 8.5], 6: [64.5, 11.0], 7: [65.5, 13.0], 8: [67.0, 14.5],
+      9: [68.5, 15.5], 10: [69.5, 17.0], 11: [70.0, 19.0], 12: [70.5, 24.0], 13: [71.0, 28.0],
+    };
+    const [lat, lon] = paCentroids[selectedPa] || [63.0, 8.5];
+    api.paceHabRisk(lat, lon).then(setPaceHabData).catch(handleError("satellite_pace_hab"));
   }, [selectedPa]);
 
   const runScan = async () => {
@@ -264,6 +292,7 @@ export default function SatellitePage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-3">
             <Satellite className="w-6 h-6 text-violet-400" />
             {t("nav.satellite_intel")}
+            <DataQualityBadge quality="live" source="Sentinel-2 + CMEMS" />
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
             Ocean monitoring &mdash; SST, chlorophyll-a, bloom risk, farm cluster analysis
@@ -722,6 +751,82 @@ export default function SatellitePage() {
               </table>
             </div>
           </details>
+        </GlassCard>
+      )}
+
+      {/* ── NorKyst v3 Ocean Conditions ────────────────────────── */}
+      {norkystData && !norkystData.error && (
+        <GlassCard delay={0.45} accent="none">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
+            <Waves className="w-4 h-4 text-ocean-400" />
+            NorKyst v3 — PA {selectedPa} Ocean Conditions
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {norkystData.sst_c != null && (
+              <div className="bg-white/[0.04] rounded-lg p-3 border border-white/[0.06]">
+                <p className="text-[10px] text-[var(--text-secondary)]">SST (800m)</p>
+                <p className="text-lg font-bold text-[var(--text-primary)]">{norkystData.sst_c?.toFixed(1)}°C</p>
+              </div>
+            )}
+            {norkystData.salinity_psu != null && (
+              <div className="bg-white/[0.04] rounded-lg p-3 border border-white/[0.06]">
+                <p className="text-[10px] text-[var(--text-secondary)]">Salinity</p>
+                <p className="text-lg font-bold text-[var(--text-primary)]">{norkystData.salinity_psu?.toFixed(1)} PSU</p>
+              </div>
+            )}
+            {norkystData.current_speed_ms != null && (
+              <div className="bg-white/[0.04] rounded-lg p-3 border border-white/[0.06]">
+                <p className="text-[10px] text-[var(--text-secondary)]">Current Speed</p>
+                <p className="text-lg font-bold text-[var(--text-primary)]">{norkystData.current_speed_ms?.toFixed(2)} m/s</p>
+              </div>
+            )}
+            {norkystData.current_direction_deg != null && (
+              <div className="bg-white/[0.04] rounded-lg p-3 border border-white/[0.06]">
+                <p className="text-[10px] text-[var(--text-secondary)]">Current Dir</p>
+                <p className="text-lg font-bold text-[var(--text-primary)]">{norkystData.current_direction_deg?.toFixed(0)}°</p>
+              </div>
+            )}
+          </div>
+          {norkystData.data_provenance && (
+            <p className="text-[9px] text-[var(--text-secondary)] mt-2">
+              Source: {norkystData.data_provenance?.source || "MET.no THREDDS NorKyst800 v3"}
+            </p>
+          )}
+        </GlassCard>
+      )}
+
+      {/* ── NASA PACE HAB Risk ────────────────────────────────── */}
+      {paceHabData && !paceHabData.error && (
+        <GlassCard delay={0.47} accent="none">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
+            <Globe className="w-4 h-4 text-emerald-400" />
+            NASA PACE — HAB Risk Assessment (PA {selectedPa})
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className={`rounded-lg p-3 border ${riskBg(paceHabData.risk_level || "LOW")}`}>
+              <p className="text-[10px] text-[var(--text-secondary)]">HAB Risk</p>
+              <p className={`text-lg font-bold ${riskColor(paceHabData.risk_level || "LOW")}`}>
+                {paceHabData.risk_level || "LOW"}
+              </p>
+            </div>
+            {paceHabData.chlorophyll_a_mg_m3 != null && (
+              <div className="bg-white/[0.04] rounded-lg p-3 border border-white/[0.06]">
+                <p className="text-[10px] text-[var(--text-secondary)]">Chl-a</p>
+                <p className="text-lg font-bold text-[var(--text-primary)]">{paceHabData.chlorophyll_a_mg_m3?.toFixed(2)} mg/m³</p>
+              </div>
+            )}
+            {paceHabData.dominant_species && (
+              <div className="bg-white/[0.04] rounded-lg p-3 border border-white/[0.06]">
+                <p className="text-[10px] text-[var(--text-secondary)]">Dominant Species</p>
+                <p className="text-sm font-medium text-[var(--text-primary)] italic">{paceHabData.dominant_species}</p>
+              </div>
+            )}
+          </div>
+          {paceHabData.data_provenance && (
+            <p className="text-[9px] text-[var(--text-secondary)] mt-2">
+              Source: {paceHabData.data_provenance?.source || "NASA PACE OCI L3m NRT"}
+            </p>
+          )}
         </GlassCard>
       )}
 

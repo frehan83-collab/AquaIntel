@@ -12,6 +12,8 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
+import DataQualityBadge from "@/components/DataQualityBadge";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -97,10 +99,14 @@ export default function PriceOutlookPage() {
   // ── Simple Card View (Farmer/Buyer) ──────────────────────
   if (viewMode === "simple") {
     return (
+      <ErrorBoundary fallbackTitle="Price Outlook error">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{t("nav.price_predictions")}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tight">{t("nav.price_predictions")}</h1>
+              <DataQualityBadge quality="live" source="SSB + ML Models" />
+            </div>
             <p className="text-sm text-[var(--text-secondary)] mt-1">
               Salmon spot price forecast driven by biological simulations
             </p>
@@ -148,11 +154,13 @@ export default function PriceOutlookPage() {
           {outlook?.disclaimer}
         </p>
       </div>
+      </ErrorBoundary>
     );
   }
 
   // ── Terminal View (Trader/Investor) ──────────────────────
   return (
+    <ErrorBoundary fallbackTitle="Price Outlook error">
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -608,5 +616,6 @@ export default function PriceOutlookPage() {
         {outlook?.disclaimer || "Price forecasts are probabilistic and not financial advice. Historical patterns do not guarantee future results."}
       </p>
     </div>
+    </ErrorBoundary>
   );
 }

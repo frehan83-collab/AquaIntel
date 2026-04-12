@@ -13,6 +13,7 @@ import DataQualityBadge from "@/components/DataQualityBadge";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { colors } from "@/lib/design-tokens";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -184,6 +185,7 @@ export default function BriefPage() {
   const feedTrend = feedData?.margin_trend || null;
 
   return (
+    <ErrorBoundary fallbackTitle="Morning Brief error">
     <div className="space-y-6 max-w-3xl mx-auto">
 
       {/* Header */}
@@ -390,6 +392,7 @@ export default function BriefPage() {
         Updated every 30 minutes. Not financial advice.
       </p>
     </div>
+    </ErrorBoundary>
   );
 }
 

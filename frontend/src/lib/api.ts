@@ -201,6 +201,16 @@ export const api = {
   oceanCurrentsRefresh: () => fetchAPI("/api/ocean/currents/refresh", { method: "POST" }),
   oceanTemperature: (lat: number, lon: number) => fetchAPI(`/api/ocean/temperature?lat=${lat}&lon=${lon}`),
 
+  // NorKyst v3 (800m resolution coastal model)
+  norkystCurrent: (lat: number, lon: number) => fetchAPI(`/api/ocean/norkyst/current?lat=${lat}&lon=${lon}`),
+  norkystPaSummary: (pa: number) => fetchAPI(`/api/ocean/norkyst/pa/${pa}`),
+
+  // NASA PACE Satellite (HAB / Chlorophyll)
+  paceChlorophyll: (lat: number, lon: number, date?: string) =>
+    fetchAPI(`/api/satellite/pace/chlorophyll?lat=${lat}&lon=${lon}${date ? `&date=${date}` : ""}`),
+  paceHabRisk: (lat: number, lon: number, date?: string) =>
+    fetchAPI(`/api/satellite/pace/hab-risk?lat=${lat}&lon=${lon}${date ? `&date=${date}` : ""}`),
+
   // Causal inference engine
   causalSummary: (maxLag?: number) => fetchAPI<CausalSummary>(`/api/causal/summary?max_lag=${maxLag || 16}`),
   causalGranger: (maxLag?: number) => fetchAPI(`/api/causal/granger?max_lag=${maxLag || 16}`),

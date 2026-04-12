@@ -12,6 +12,8 @@ import { OcButton } from "@/components/ui/Button";
 import dynamic from "next/dynamic";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 const ExposureMap = dynamic(() => import("@/components/ExposureMap"), {
   loading: () => <div className="h-[500px] bg-slate-800/50 rounded-xl animate-pulse flex items-center justify-center"><span className="text-slate-400">Loading map...</span></div>,
@@ -141,6 +143,7 @@ export default function ExposurePage() {
   Object.values(paStats).forEach(s => { s.avgLice = s.companies > 0 ? s.avgLice / s.companies : 0; });
 
   return (
+    <ErrorBoundary fallbackTitle="Exposure Map error">
     <div className="space-y-6">
 
       {/* Header */}
@@ -150,6 +153,7 @@ export default function ExposurePage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-3">
             <Map className="w-6 h-6 text-ocean-400" />
             Lice Exposure Map
+            <DataQualityBadge quality="live" source="BarentsWatch Farm Registry" />
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
             BarentsWatch real-time data &middot; Traffic light regime &middot; Farm network &middot; GNN forecasts
@@ -770,5 +774,6 @@ export default function ExposurePage() {
         </p>
       </div>
     </div>
+    </ErrorBoundary>
   );
 }

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { LogIn, UserPlus, Mail, Lock, Building2, Briefcase } from "lucide-react";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -49,6 +50,7 @@ export default function LoginPage() {
   };
 
   return (
+    <ErrorBoundary fallbackTitle="Login error">
     <div className="min-h-[80vh] flex items-center justify-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -187,5 +189,6 @@ export default function LoginPage() {
         </p>
       </motion.div>
     </div>
+    </ErrorBoundary>
   );
 }

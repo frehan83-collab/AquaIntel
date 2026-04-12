@@ -13,6 +13,7 @@ import type { SankeyData } from "@/components/SupplyChainSankey";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useApiError } from "@/lib/useApiError";
 import { exportToCSV } from "@/lib/export";
 import DataQualityBadge from "@/components/DataQualityBadge";
@@ -68,6 +69,7 @@ export default function GlobalSupplyPage() {
   const pressure = data?.price_pressure || "neutral";
 
   return (
+    <ErrorBoundary fallbackTitle="Global Supply error">
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between">
@@ -646,5 +648,6 @@ export default function GlobalSupplyPage() {
         Fiskeridirektoratet (monthly production). Updated every 2 hours. Not financial advice.
       </p>
     </div>
+    </ErrorBoundary>
   );
 }

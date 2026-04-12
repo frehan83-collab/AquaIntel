@@ -11,6 +11,7 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
 import DataTable, { Column } from "@/components/DataTable";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -76,6 +77,7 @@ export default function BenchmarkPage() {
     : leaderboard;
 
   return (
+    <ErrorBoundary fallbackTitle="Benchmark error">
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between">
@@ -318,5 +320,6 @@ export default function BenchmarkPage() {
         All comparisons are anonymous. Updated hourly.
       </p>
     </div>
+    </ErrorBoundary>
   );
 }

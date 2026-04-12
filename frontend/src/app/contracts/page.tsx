@@ -11,6 +11,7 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useTranslation } from "@/lib/i18n";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -93,6 +94,7 @@ export default function ContractsPage() {
               <FileText className="w-6 h-6 text-violet-400" />
             </div>
             {t("nav.contract_risk")}
+            <DataQualityBadge quality="live" source="SSB + Euronext" />
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
             Evaluate fixed-price contracts against live SSB spot &amp; ML forecasts

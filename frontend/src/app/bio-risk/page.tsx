@@ -13,6 +13,7 @@ import { useTranslation } from "@/lib/i18n";
 import { useApiError } from "@/lib/useApiError";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import FreshnessIndicator from "@/components/FreshnessIndicator";
+import DataQualityBadge from "@/components/DataQualityBadge";
 import type { PADataPoint } from "@/components/RegionalHeatmap";
 
 const BioRiskMap = dynamic(() => import("@/components/BioRiskMap"), {
@@ -136,6 +137,7 @@ export default function BioRiskPage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-3">
             <Shield className="w-6 h-6 text-ocean-400" />
             {t("bio_risk.title")}
+            <DataQualityBadge quality="live" source="BarentsWatch + CMEMS" />
           </h1>
           <div className="flex items-center gap-2 mt-1">
             <p className="text-sm text-[var(--text-secondary)]">

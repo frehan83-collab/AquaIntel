@@ -13,6 +13,7 @@ import DataQualityBadge from "@/components/DataQualityBadge";
 import RadarChart, { RadarDataset } from "@/components/RadarChart";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useApiError } from "@/lib/useApiError";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -325,6 +326,7 @@ export default function ComparePage() {
   }
 
   return (
+    <ErrorBoundary fallbackTitle="Company Comparison error">
     <div className="space-y-6">
       {/* Header */}
       <div>
@@ -716,5 +718,6 @@ export default function ComparePage() {
         </GlassCard>
       )}
     </div>
+    </ErrorBoundary>
   );
 }

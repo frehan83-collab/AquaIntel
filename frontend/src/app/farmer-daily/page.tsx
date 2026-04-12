@@ -83,6 +83,8 @@ export default function FarmerDailyPage() {
   const [treatmentHistory, setTreatmentHistory] = useState<any[]>([]);
   const [heatwave, setHeatwave] = useState<any>(null);
   const [resistance, setResistance] = useState<any>(null);
+  const [welfare, setWelfare] = useState<any>(null);
+  const [advisory, setAdvisory] = useState<any>(null);
 
   // Saved farms ("My Farms") list
   const [savedFarms, setSavedFarms] = useState<{locality_no: number; name: string}[]>(() => {
@@ -183,6 +185,8 @@ export default function FarmerDailyPage() {
     api.treatmentHistory(localityNo).then(setTreatmentHistory).catch(handleError("farmer_daily_treatment_history"));
     api.marineHeatwaveRisk().then(setHeatwave).catch(handleError("farmer_daily_heatwave"));
     api.resistanceMap().then(setResistance).catch(handleError("farmer_daily_resistance"));
+    api.welfareScore(localityNo).then(setWelfare).catch(handleError("farmer_daily_welfare"));
+    api.farmerAdvisory(localityNo).then(setAdvisory).catch(handleError("farmer_daily_advisory"));
   }, [localityNo]);
 
   const handleLogOutcome = async () => {
@@ -700,6 +704,87 @@ export default function FarmerDailyPage() {
                 High resistance detected in some production areas. Consider rotating treatment
                 methods to maintain efficacy. Check the Resistance Map for details.
               </p>
+            </GlassCard>
+          )}
+
+          {/* Fish Welfare Score */}
+          {welfare && !welfare.error && (
+            <GlassCard>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-ocean-400" />
+                Fish Welfare Score (SWIM)
+              </h3>
+              <div className="flex items-center gap-4 mb-3">
+                <div className={`text-3xl font-bold ${
+                  welfare.total_score >= 70 ? "text-emerald-400" :
+                  welfare.total_score >= 40 ? "text-amber-400" : "text-rose-400"
+                }`}>
+                  {welfare.total_score?.toFixed(0)}<span className="text-sm text-[var(--text-secondary)]">/100</span>
+                </div>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
+                  welfare.grade === "A" ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400" :
+                  welfare.grade === "B" ? "bg-ocean-500/15 border-ocean-500/30 text-ocean-400" :
+                  welfare.grade === "C" ? "bg-amber-500/15 border-amber-500/30 text-amber-400" :
+                  "bg-rose-500/15 border-rose-500/30 text-rose-400"
+                }`}>
+                  Grade {welfare.grade}
+                </span>
+                {welfare.predicted_mortality_7d != null && (
+                  <span className="text-xs text-[var(--text-secondary)]">
+                    7d mortality: {(welfare.predicted_mortality_7d * 100).toFixed(2)}%
+                  </span>
+                )}
+              </div>
+              {welfare.components && (
+                <div className="space-y-1.5">
+                  {Object.entries(welfare.components).map(([key, val]: [string, any]) => (
+                    <div key={key} className="flex items-center gap-2">
+                      <span className="text-[10px] text-[var(--text-secondary)] w-24 truncate capitalize">{key.replace(/_/g, " ")}</span>
+                      <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${
+                            (val as number) >= 70 ? "bg-emerald-400" :
+                            (val as number) >= 40 ? "bg-amber-400" : "bg-rose-400"
+                          }`}
+                          style={{ width: `${Math.min(100, val as number)}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] text-[var(--text-secondary)] w-8 text-right">{(val as number)?.toFixed(0)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {welfare.alert_reason && (
+                <p className="text-xs text-amber-400 mt-2">⚠ {welfare.alert_reason}</p>
+              )}
+            </GlassCard>
+          )}
+
+          {/* Farm Advisory Summary */}
+          {advisory && !advisory.error && (
+            <GlassCard>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-2 flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-ocean-400" />
+                Farm Advisory
+                {advisory.data_provenance && <DataQualityBadge provenance={advisory.data_provenance} />}
+              </h3>
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed mb-2">
+                {advisory.summary}
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {advisory.harvest_advice && (
+                  <div className="bg-white/[0.04] rounded-lg p-2">
+                    <span className="text-[var(--text-secondary)]">Harvest:</span>{" "}
+                    <span className="text-[var(--text-primary)]">{advisory.harvest_advice}</span>
+                  </div>
+                )}
+                {advisory.forecast_1w != null && (
+                  <div className="bg-white/[0.04] rounded-lg p-2">
+                    <span className="text-[var(--text-secondary)]">1w forecast:</span>{" "}
+                    <span className="text-[var(--text-primary)]">{advisory.forecast_1w?.toFixed(2)} lice</span>
+                  </div>
+                )}
+              </div>
             </GlassCard>
           )}
 

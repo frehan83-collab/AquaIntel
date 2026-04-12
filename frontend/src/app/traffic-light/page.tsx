@@ -15,6 +15,7 @@ import { useApiError } from "@/lib/useApiError";
 import DataTable, { Column } from "@/components/DataTable";
 import { trafficLight, colors } from "@/lib/design-tokens";
 import DataQualityBadge from "@/components/DataQualityBadge";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -114,6 +115,7 @@ export default function TrafficLightPage() {
   const pas = current?.production_areas || [];
 
   return (
+    <ErrorBoundary fallbackTitle="Traffic Light error">
     <div className="p-6 space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
@@ -392,5 +394,6 @@ export default function TrafficLightPage() {
         </div>
       </GlassCard>
     </div>
+    </ErrorBoundary>
   );
 }

@@ -5,6 +5,7 @@ import { Sunrise, TrendingUp, BarChart3, ArrowRight, Waves } from "lucide-react"
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
 import { setDemoState, type DemoPersona } from "@/components/DemoBanner";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 interface PersonaCard {
   persona: DemoPersona;
@@ -87,6 +88,7 @@ export default function WelcomePage() {
   };
 
   return (
+    <ErrorBoundary fallbackTitle="Welcome error">
     <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-6 py-12">
       {/* Header */}
       <motion.div
@@ -223,5 +225,6 @@ export default function WelcomePage() {
         </button>
       </motion.div>
     </div>
+    </ErrorBoundary>
   );
 }

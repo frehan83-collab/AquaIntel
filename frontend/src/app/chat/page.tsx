@@ -8,6 +8,7 @@ import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 // ─────────────────────────────────────────────────────────────────
 // Types
@@ -534,6 +535,7 @@ export default function ChatPage() {
   };
 
   return (
+    <ErrorBoundary fallbackTitle="AI Chat error">
     <div className="flex flex-col h-screen bg-[#040d14] text-white overflow-hidden">
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex-shrink-0 border-b border-white/[0.06] bg-white/[0.02] backdrop-blur-md px-6 py-4">
@@ -705,5 +707,6 @@ export default function ChatPage() {
         </p>
       </div>
     </div>
+    </ErrorBoundary>
   );
 }

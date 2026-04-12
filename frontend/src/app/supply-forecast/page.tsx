@@ -17,6 +17,7 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
 import DataQualityBadge from "@/components/DataQualityBadge";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function SupplyForecastPage() {
   const [summary, setSummary] = useState<any>(null);
@@ -47,6 +48,7 @@ export default function SupplyForecastPage() {
   const balance = summary?.demand_balance || {};
 
   return (
+    <ErrorBoundary fallbackTitle="Supply Forecast error">
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
@@ -393,5 +395,6 @@ export default function SupplyForecastPage() {
         Demand proxy: SSB export seasonality. Not financial or regulatory advice.
       </p>
     </div>
+    </ErrorBoundary>
   );
 }

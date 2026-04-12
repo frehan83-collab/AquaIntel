@@ -11,6 +11,8 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { exportToCSV } from "@/lib/export";
 import { useTranslation } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -75,6 +77,7 @@ export default function RASPage() {
   const maxTimeline = Math.max(...timelineData.map((y: any) => y.total || 0), 1);
 
   return (
+    <ErrorBoundary fallbackTitle="RAS Tracker error">
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
@@ -83,6 +86,7 @@ export default function RASPage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-3">
             <Factory className="w-7 h-7 text-ocean-400" />
             {t("nav.ras_tracker")}
+            <DataQualityBadge quality="live" source="Industry reports" />
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
             Land-based salmon farming &mdash; projects, capacity, and reality vs hype
@@ -412,5 +416,6 @@ export default function RASPage() {
         )}
       </GlassCard>
     </div>
+    </ErrorBoundary>
   );
 }

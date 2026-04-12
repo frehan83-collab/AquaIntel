@@ -14,6 +14,7 @@ import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { exportToCSV } from "@/lib/export";
 import { useTranslation } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -404,6 +405,7 @@ export default function ScenariosPage() {
   const fmtPct = (v?: number) => (v != null ? `${v >= 0 ? "+" : ""}${v.toFixed(1)}%` : "—");
 
   return (
+    <ErrorBoundary fallbackTitle="Scenarios error">
     <div className="min-h-screen p-6 space-y-6">
       {/* ── Header ── */}
       <motion.div
@@ -856,5 +858,6 @@ export default function ScenariosPage() {
         </div>
       </GlassCard>
     </div>
+    </ErrorBoundary>
   );
 }

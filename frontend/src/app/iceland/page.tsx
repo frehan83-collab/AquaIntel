@@ -12,6 +12,7 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import DataQualityBadge from "@/components/DataQualityBadge";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -54,6 +55,7 @@ export default function IcelandPage() {
     : null;
 
   return (
+    <ErrorBoundary fallbackTitle="Iceland error">
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
@@ -395,5 +397,6 @@ export default function IcelandPage() {
         ~2% of global Atlantic salmon supply. Not financial or regulatory advice.
       </p>
     </div>
+    </ErrorBoundary>
   );
 }

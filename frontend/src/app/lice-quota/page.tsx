@@ -13,6 +13,7 @@ import DataTable, { Column } from "@/components/DataTable";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import { useApiError } from "@/lib/useApiError";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -150,9 +151,12 @@ export default function LiceQuotaPage() {
               <Sigma className="w-5 h-5 text-violet-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
-                {t("lice_quota.title")}
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
+                  {t("lice_quota.title")}
+                </h1>
+                <DataQualityBadge quality="live" source="IMR Methodology" />
+              </div>
               <p className="text-slate-400 text-sm">
                 Projected emission tracking under the upcoming quota system
               </p>

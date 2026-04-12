@@ -2,7 +2,7 @@
 
 > **Repository:** [github.com/frehan83-collab/OpenClaw](https://github.com/frehan83-collab/OpenClaw) (private)
 
-Last updated: 2026-04-11 (Session 37)
+Last updated: 2026-04-12 (Session 38)
 
 ---
 
@@ -13,15 +13,17 @@ Last updated: 2026-04-11 (Session 37)
 | API routes | ~340 |
 | Router modules | 26 |
 | Market/data engines | ~75 (incl. 3 ML foundation models) |
-| Frontend pages | 63 (68 compiled routes) |
+| Frontend pages | 63 (73 compiled routes) |
 | Shared components | 43+ |
 | Database tables | 31 |
 | DB migrations | 14 |
-| Test functions | 447 (all passing) |
+| Test functions | 482 (all passing) |
 | i18n keys | ~600 (NO/EN) |
 | Design tokens | 86 (Figma pipeline active) |
 | Data source clients | 45+ |
 | Historical data | SSB 26yr, FRED 35yr, MUR SST 44yr |
+| ErrorBoundary coverage | 60/63 pages (95%) |
+| DataQualityBadge coverage | 44/63 pages (70%) |
 | Next.js | 15.5.14 |
 | React | 19.2.4 (with Compiler) |
 | FastAPI | 2.2.0 |
@@ -39,7 +41,7 @@ Last updated: 2026-04-11 (Session 37)
 | JWT auth + bcrypt + rate limiting | Shipped | Brute-force protection |
 | WebSocket real-time alerts | Shipped | Price, lice, disease |
 | Data provenance on all endpoints | Shipped | Source + freshness metadata |
-| DataQualityBadge | Shipped | 24/65 pages show provenance |
+| DataQualityBadge | Shipped | 44/63 pages show provenance (70%) |
 | Scenario sandbox (compound sim) | Shipped | Multi-variable what-if |
 | Notification system | Shipped | Email + in-app |
 | MET.no weather forecast | Shipped | Norwegian coast coverage |

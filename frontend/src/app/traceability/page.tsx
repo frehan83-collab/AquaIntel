@@ -10,6 +10,8 @@ import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation, formatDate } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 type Tab = "certificates" | "lots" | "iuu" | "eudr";
 
@@ -102,11 +104,15 @@ export default function TraceabilityPage() {
   ];
 
   return (
+    <ErrorBoundary fallbackTitle="Traceability error">
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">{t("traceability.title")}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">{t("traceability.title")}</h1>
+            <DataQualityBadge quality="live" source="EU CATCH + EUDR" />
+          </div>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
             Catch certificates, lot tracking, IUU risk &amp; EUDR compliance
           </p>
@@ -410,5 +416,6 @@ export default function TraceabilityPage() {
         </div>
       )}
     </div>
+    </ErrorBoundary>
   );
 }

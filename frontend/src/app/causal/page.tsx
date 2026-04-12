@@ -11,6 +11,8 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import { exportToCSV } from "@/lib/export";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -96,6 +98,7 @@ export default function CausalPage() {
   const asymmetry = summary?.asymmetry_detected;
 
   return (
+    <ErrorBoundary fallbackTitle="Causal Engine error">
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -103,6 +106,7 @@ export default function CausalPage() {
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3">
             <GitBranch className="w-6 h-6 text-ocean-400" />
             {t("causal.title")}
+            <DataQualityBadge quality="live" source="SSB + BarentsWatch" />
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
             Granger causality · Transfer entropy · PCMCI — discovers true lice→price lag from data
@@ -275,5 +279,6 @@ export default function CausalPage() {
         Use in conjunction with domain expertise. Not financial advice.
       </p>
     </div>
+    </ErrorBoundary>
   );
 }

@@ -15,6 +15,7 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import DataQualityBadge from "@/components/DataQualityBadge";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -722,8 +723,10 @@ function LeadersPageInner() {
 
 export default function LeadersPage() {
   return (
+    <ErrorBoundary fallbackTitle="Leaders & ESG error">
     <Suspense>
       <LeadersPageInner />
     </Suspense>
+    </ErrorBoundary>
   );
 }

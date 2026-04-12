@@ -11,6 +11,8 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { useTranslation } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -84,6 +86,7 @@ export default function InvestorPage() {
   const yellowPAs = regime.filter((s: any) => s.current_color === "yellow").length;
 
   return (
+    <ErrorBoundary fallbackTitle="Investor Intel error">
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between">
@@ -91,6 +94,7 @@ export default function InvestorPage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-3">
             <Briefcase className="w-6 h-6 text-violet-400" />
             {t("nav.investor_intel")}
+            <DataQualityBadge quality="live" source="Multi-source composite" />
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
             Portfolio exposure, ESG scoring, regulatory risk &mdash; institutional-grade analytics
@@ -435,5 +439,6 @@ export default function InvestorPage() {
         ESG scores computed from biological performance data. Not investment advice.
       </p>
     </div>
+    </ErrorBoundary>
   );
 }

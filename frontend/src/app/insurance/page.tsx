@@ -14,6 +14,7 @@ import { api } from "@/lib/api";
 import { exportToCSV } from "@/lib/export";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useTranslation } from "@/lib/i18n";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 const PRODUCT_ICONS: Record<string, any> = {
   lice_outbreak: Bug,
@@ -81,6 +82,7 @@ export default function InsurancePage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-3">
             <Shield className="w-6 h-6 text-emerald-400" />
             {t("nav.insurance")}
+            <DataQualityBadge quality="live" source="MET.no + BarentsWatch" />
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
             Index-based trigger monitoring &mdash; 5 products across lice, HAB, disease, temperature, supply

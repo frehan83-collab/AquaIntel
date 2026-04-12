@@ -9,6 +9,7 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import { useApiError } from "@/lib/useApiError";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -24,6 +25,8 @@ export default function FarmerPage() {
   const [selectedPa, setSelectedPa] = useState(3);
   const [oceanStatus, setOceanStatus] = useState<any>(null);
   const [yoyLice, setYoyLice] = useState<any>(null);
+  const [norkystData, setNorkystData] = useState<any>(null);
+  const [welfareData, setWelfareData] = useState<any>(null);
 
   const fetchData = async (loc: number) => {
     setLoading(true);
@@ -45,6 +48,10 @@ export default function FarmerPage() {
       api.oceanCurrentsStatus().then(setOceanStatus).catch(handleError("farmer_ocean_currents_status"));
       // Fetch lice YoY for selected PA
       api.yoyComparison("lice", selectedPa).then(setYoyLice).catch(handleError("farmer_yoy_lice_comparison"));
+      // Fetch NorKyst v3 high-res ocean data
+      api.norkystPaSummary(selectedPa).then(setNorkystData).catch(handleError("farmer_norkyst"));
+      // Fetch welfare score
+      api.welfareScore(loc).then(setWelfareData).catch(handleError("farmer_welfare"));
     } catch {
       setData(null);
     }
@@ -61,6 +68,7 @@ export default function FarmerPage() {
   const farm = data?.farm_detail || null;
 
   return (
+    <ErrorBoundary fallbackTitle="Farm Advisory error">
     <div className="space-y-6">
       {/* Header */}
       <motion.div
@@ -412,6 +420,97 @@ export default function FarmerPage() {
             </GlassCard>
           )}
 
+          {/* NorKyst v3 High-Res Ocean Data */}
+          {norkystData && !norkystData.error && (
+            <GlassCard delay={0.35} accent="ocean">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg bg-ocean-500/[0.08] flex items-center justify-center">
+                  <Waves className="w-3.5 h-3.5 text-ocean-400" />
+                </div>
+                <h3 className="text-sm font-semibold text-[var(--text-primary)]">NorKyst v3 (800m)</h3>
+                <span className="ml-auto text-[9px] text-ocean-400 px-1.5 py-0.5 rounded bg-ocean-500/10">MET.no THREDDS</span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {norkystData.sst_c != null && (
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center">
+                    <p className="text-lg font-bold text-ocean-400 tabular-nums">{norkystData.sst_c?.toFixed(1)}°C</p>
+                    <p className="text-[9px] text-[var(--text-secondary)]">SST (800m)</p>
+                  </div>
+                )}
+                {norkystData.salinity_psu != null && (
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center">
+                    <p className="text-lg font-bold text-emerald-400 tabular-nums">{norkystData.salinity_psu?.toFixed(1)} PSU</p>
+                    <p className="text-[9px] text-[var(--text-secondary)]">Salinity</p>
+                  </div>
+                )}
+                {norkystData.current_speed_ms != null && (
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center">
+                    <p className="text-lg font-bold text-violet-400 tabular-nums">{norkystData.current_speed_ms?.toFixed(2)} m/s</p>
+                    <p className="text-[9px] text-[var(--text-secondary)]">Current Speed</p>
+                  </div>
+                )}
+                {norkystData.current_direction_deg != null && (
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center">
+                    <p className="text-lg font-bold text-amber-400 tabular-nums">{norkystData.current_direction_deg?.toFixed(0)}°</p>
+                    <p className="text-[9px] text-[var(--text-secondary)]">Direction</p>
+                  </div>
+                )}
+              </div>
+            </GlassCard>
+          )}
+
+          {/* Fish Welfare Score */}
+          {welfareData && !welfareData.error && (
+            <GlassCard delay={0.37} accent="emerald">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/[0.08] flex items-center justify-center">
+                  <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                </div>
+                <h3 className="text-sm font-semibold text-[var(--text-primary)]">Welfare Score (SWIM)</h3>
+                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium border ${
+                  welfareData.grade === "A" ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400" :
+                  welfareData.grade === "B" ? "bg-ocean-500/15 border-ocean-500/30 text-ocean-400" :
+                  welfareData.grade === "C" ? "bg-amber-500/15 border-amber-500/30 text-amber-400" :
+                  "bg-rose-500/15 border-rose-500/30 text-rose-400"
+                }`}>
+                  Grade {welfareData.grade}
+                </span>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className={`text-3xl font-bold tabular-nums ${
+                  welfareData.total_score >= 70 ? "text-emerald-400" :
+                  welfareData.total_score >= 40 ? "text-amber-400" : "text-rose-400"
+                }`}>
+                  {welfareData.total_score?.toFixed(0)}<span className="text-sm text-[var(--text-secondary)]">/100</span>
+                </div>
+                {welfareData.predicted_mortality_7d != null && (
+                  <span className="text-xs text-[var(--text-secondary)]">
+                    7d mortality: {(welfareData.predicted_mortality_7d * 100).toFixed(2)}%
+                  </span>
+                )}
+              </div>
+              {welfareData.components && (
+                <div className="space-y-1.5 mt-3">
+                  {Object.entries(welfareData.components).map(([key, val]: [string, any]) => (
+                    <div key={key} className="flex items-center gap-2">
+                      <span className="text-[10px] text-[var(--text-secondary)] w-24 truncate capitalize">{key.replace(/_/g, " ")}</span>
+                      <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${
+                            (val as number) >= 70 ? "bg-emerald-400" :
+                            (val as number) >= 40 ? "bg-amber-400" : "bg-rose-400"
+                          }`}
+                          style={{ width: `${Math.min(100, val as number)}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] text-[var(--text-secondary)] w-8 text-right">{(val as number)?.toFixed(0)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </GlassCard>
+          )}
+
           {/* Farm Detail Panel */}
           <GlassCard delay={0.32} accent="emerald">
             <div className="flex items-center gap-2 mb-4">
@@ -444,5 +543,6 @@ export default function FarmerPage() {
         </>
       )}
     </div>
+    </ErrorBoundary>
   );
 }

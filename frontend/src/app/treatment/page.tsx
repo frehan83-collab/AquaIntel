@@ -23,10 +23,13 @@ import { OcButton } from "@/components/ui/Button";
 import InteractiveChart, { DataPoint } from "@/components/InteractiveChart";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const TREATMENT_KEYS = ["mechanical", "thermal", "medicinal_bath", "medicinal_feed", "cleaner_fish"];
+const REGULATORY_LIMIT = 0.5;
 
 export default function TreatmentPage() {
   const { t } = useTranslation();
@@ -123,12 +126,14 @@ export default function TreatmentPage() {
   };
 
   return (
+    <ErrorBoundary fallbackTitle="Treatment error">
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
           <Syringe className="w-7 h-7 text-cyan-400" />
           {t("nav.treatment_optimizer")}
+          <DataQualityBadge quality="live" source="BarentsWatch + Treatment DB" />
         </h1>
         <p className="text-slate-400 mt-1">
           Optimize treatment timing, compare methods, and coordinate PA-wide schedules using live lice and temperature data.
@@ -760,7 +765,6 @@ export default function TreatmentPage() {
         </GlassCard>
       )}
     </div>
+    </ErrorBoundary>
   );
 }
-
-const REGULATORY_LIMIT = 0.5;

@@ -15,6 +15,7 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useQueryParams } from "@/lib/useQueryParams";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -798,9 +799,12 @@ function NotificationCenter() {
             <Bell className="w-5 h-5 text-salmon" />
           </div>
           <div>
-            <h1 className="text-2xl font-display text-[var(--text-primary)]">
-              {t("notifications.title")}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-display text-[var(--text-primary)]">
+                {t("notifications.title")}
+              </h1>
+              <DataQualityBadge quality="live" source="Platform alerts" />
+            </div>
             <p className="text-sm text-[var(--text-secondary)]">
               {totalCount} {t("notifications.all")}, {unreadCount} {t("notifications.unread")}
             </p>

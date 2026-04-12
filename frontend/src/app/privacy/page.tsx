@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Shield, Database, Eye, Lock, Trash2, Brain, Mail, Cookie, Scale, Globe2 } from "lucide-react";
 import GlassCard from "@/components/GlassCard";
 import { useTranslation } from "@/lib/i18n";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const sections = [
   {
@@ -236,6 +237,7 @@ export default function PrivacyPage() {
   const { t } = useTranslation();
 
   return (
+    <ErrorBoundary fallbackTitle="Privacy Policy error">
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
@@ -275,5 +277,6 @@ export default function PrivacyPage() {
         </p>
       </GlassCard>
     </div>
+    </ErrorBoundary>
   );
 }
