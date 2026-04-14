@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 
 import httpx
 import structlog
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 log = structlog.get_logger(__name__)
 

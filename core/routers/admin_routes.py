@@ -12,7 +12,7 @@ import os
 
 import structlog
 
-from fastapi import APIRouter, Query, HTTPException, Request
+from fastapi import APIRouter, Query, HTTPException, Request, Depends
 from fastapi.responses import StreamingResponse, JSONResponse
 from sqlalchemy import select, func, text, case
 
@@ -20,8 +20,18 @@ log = structlog.get_logger("admin_routes")
 
 from core.models import TreatmentOutcome, LiceRecord, Locality, User, WebhookConfig, Signal, AuditLog
 from core.async_db import get_async_session
+from core.auth import get_current_user, TokenPayload
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+def _require_admin(user: TokenPayload | None = Depends(get_current_user)):
+    """Require authenticated user with investor/admin tier for admin endpoints."""
+    if user is None:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if user.tier not in ("investor", "admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
 
 _start_time = _time.time()
 
@@ -31,7 +41,7 @@ _start_time = _time.time()
 # ──────────────────────────────────────────────────────────────────────
 
 @router.get("/cache-stats")
-async def admin_cache_stats():
+async def admin_cache_stats(user: TokenPayload = Depends(_require_admin)):
     """Per-engine cache hit/miss ratios from the CacheManager.
 
     Returns global hit rate, TTL tier definitions, and per-engine breakdown
@@ -46,7 +56,7 @@ async def admin_cache_stats():
 # ──────────────────────────────────────────────────────────────────────
 
 @router.get("/status")
-async def admin_status():
+async def admin_status(user: TokenPayload = Depends(_require_admin)):
     """Platform health: engine count, route count, DB tables, cache, uptime."""
     from core.cache import engine_cache
 
@@ -148,7 +158,7 @@ async def admin_status():
 # ──────────────────────────────────────────────────────────────────────
 
 @router.get("/data-quality")
-async def admin_data_quality():
+async def admin_data_quality(user: TokenPayload = Depends(_require_admin)):
     """Data quality: per-source freshness, stale warnings, treatment breakdown."""
     now = dt.datetime.now(dt.UTC)
     sources = {}
@@ -354,7 +364,7 @@ def _build_csv(rows: list[dict]) -> str:
 
 
 @router.get("/export-summary")
-async def admin_export_summary():
+async def admin_export_summary(user: TokenPayload = Depends(_require_admin)):
     """Available datasets with row counts and date ranges for export UI."""
     datasets = {}
     async with get_async_session() as s:
@@ -403,6 +413,7 @@ async def admin_export_dataset(
     format: str = Query("json", pattern="^(csv|json)$"),
     from_date: str | None = Query(None, description="ISO date (YYYY-MM-DD) start filter"),
     to_date: str | None = Query(None, description="ISO date (YYYY-MM-DD) end filter"),
+    user: TokenPayload = Depends(_require_admin),
 ):
     """Export a dataset as CSV or JSON file download.
 
@@ -499,6 +510,7 @@ async def admin_audit_log(
     to_date: str | None = Query(None, description="ISO date (YYYY-MM-DD) end filter"),
     limit: int = Query(50, ge=1, le=500, description="Max entries to return"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
+    user: TokenPayload = Depends(_require_admin),
 ):
     """Paginated audit log of user actions with optional filters.
 

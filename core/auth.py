@@ -37,8 +37,16 @@ log = structlog.get_logger(__name__)
 # ── Config ────────────────────────────────────────────────────────────────────
 _env_secret = os.environ.get("FISHINTEL_JWT_SECRET", "")
 if not _env_secret:
-    log.warning("FISHINTEL_JWT_SECRET not set — generating ephemeral secret (tokens won't survive restarts)")
+    # In development, generate an ephemeral secret with a loud warning
+    if os.environ.get("FISHINTEL_ENV", "development") == "production":
+        raise RuntimeError(
+            "FISHINTEL_JWT_SECRET must be set in production. "
+            "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(64))\""
+        )
+    log.warning("FISHINTEL_JWT_SECRET not set — generating ephemeral secret (dev only, tokens won't survive restarts)")
     _env_secret = secrets.token_urlsafe(64)
+if len(_env_secret) < 32 or _env_secret in ("change-me", "secret", "test"):
+    log.warning("FISHINTEL_JWT_SECRET is too short or insecure — please use a strong random secret")
 SECRET_KEY = _env_secret
 ALGORITHM = "HS256"
 TOKEN_EXPIRY_HOURS = 24

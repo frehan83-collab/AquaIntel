@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 
 import httpx
 import structlog
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 log = structlog.get_logger(__name__)
 
@@ -56,10 +57,16 @@ class SSBPriceClient:
         self._cache_time: dt.datetime | None = None
         self._cache_ttl = dt.timedelta(hours=6)  # SSB updates weekly
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=15),
+        retry=retry_if_exception_type((httpx.ConnectError, httpx.ReadTimeout, httpx.ConnectTimeout)),
+        reraise=True,
+    )
     async def fetch_prices(self, n_weeks: int = 52) -> SSBPriceData:
         """
         Fetch the last n_weeks of salmon export prices from SSB.
-        Returns real NOK/kg prices.
+        Returns real NOK/kg prices. Retries up to 3 times on network errors.
         """
         now = dt.datetime.now(dt.UTC)
 

@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 import httpx
 import numpy as np
 import structlog
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from config.settings import settings
 
@@ -126,13 +127,19 @@ class METOceanClient:
         return observations
 
     # ── OceanForecast API (predictions) ──────────────────────────────
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=15),
+        retry=retry_if_exception_type((httpx.ConnectError, httpx.ReadTimeout, httpx.ConnectTimeout)),
+        reraise=True,
+    )
     async def get_ocean_forecast(
         self,
         lat: float,
         lon: float,
     ) -> list[SeaTempForecast]:
         """
-        Fetch ocean forecast for a specific location.
+        Fetch ocean forecast for a specific location. Retries up to 3x on network errors.
         GET https://api.met.no/weatherapi/oceanforecast/2.0/complete
         """
         forecasts = []

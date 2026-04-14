@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     # Dashboard
     dashboard_host: str = "0.0.0.0"
     dashboard_port: int = 8501
-    secret_key: str = "change-me"
+    secret_key: str = ""  # Must be set via env var; empty = auto-generate in dev
 
     # Database (override with DATABASE_URL env var for PostgreSQL)
     database_url: str = f"sqlite:///{ROOT_DIR / 'data' / 'openclaw.db'}"

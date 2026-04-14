@@ -9,10 +9,19 @@ from __future__ import annotations
 import json
 import datetime as dt
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
 from sqlalchemy import select, delete
 
+from core.auth import get_current_user, TokenPayload
+
 router = APIRouter(prefix="/api/webhooks", tags=["webhooks"])
+
+
+def _require_auth(user: TokenPayload | None = Depends(get_current_user)):
+    """Require authenticated user for webhook management."""
+    if user is None:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    return user
 
 # Available event types that can trigger webhooks
 WEBHOOK_EVENT_TYPES = [
@@ -33,14 +42,16 @@ async def list_event_types():
 
 
 @router.get("")
-async def list_webhooks():
-    """List all configured webhooks."""
+async def list_webhooks(user: TokenPayload = Depends(_require_auth)):
+    """List webhooks owned by the current user."""
     from core.async_db import get_async_session
     from core.models import WebhookConfig
 
     async with get_async_session() as s:
         result = await s.execute(
-            select(WebhookConfig).order_by(WebhookConfig.created_at.desc())
+            select(WebhookConfig)
+            .where(WebhookConfig.user_id == user.user_id)
+            .order_by(WebhookConfig.created_at.desc())
         )
         hooks = result.scalars().all()
         return {
@@ -63,8 +74,8 @@ async def list_webhooks():
 
 
 @router.post("")
-async def create_webhook(request: Request):
-    """Create a new webhook configuration."""
+async def create_webhook(request: Request, user: TokenPayload = Depends(_require_auth)):
+    """Create a new webhook configuration. user_id derived from JWT (never from body)."""
     from core.async_db import get_async_session
     from core.models import WebhookConfig
 
@@ -93,7 +104,7 @@ async def create_webhook(request: Request):
             webhook_type=webhook_type,
             events=json.dumps(events),
             is_active=True,
-            user_id=data.get("user_id"),
+            user_id=user.user_id,  # From JWT, never from request body
         )
         s.add(hook)
         await s.flush()
@@ -101,7 +112,7 @@ async def create_webhook(request: Request):
         # Audit: webhook created
         from core.audit import log_action, get_client_ip
         await log_action(
-            data.get("user_id"), "create_webhook",
+            user.user_id, "create_webhook",
             f"webhook:{hook.id}",
             details={"name": name, "type": webhook_type, "events": events},
             ip=get_client_ip(request),
@@ -121,8 +132,8 @@ async def create_webhook(request: Request):
 
 
 @router.delete("/{webhook_id}")
-async def delete_webhook(webhook_id: int, request: Request):
-    """Delete a webhook configuration."""
+async def delete_webhook(webhook_id: int, request: Request, user: TokenPayload = Depends(_require_auth)):
+    """Delete a webhook configuration. Only the owner can delete."""
     from core.async_db import get_async_session
     from core.models import WebhookConfig
 
@@ -132,6 +143,8 @@ async def delete_webhook(webhook_id: int, request: Request):
         )).scalar()
         if not hook:
             raise HTTPException(status_code=404, detail="Webhook not found")
+        if hook.user_id != user.user_id:
+            raise HTTPException(status_code=403, detail="Not your webhook")
         hook_name = hook.name
         hook_user = hook.user_id
         await s.delete(hook)
@@ -149,7 +162,7 @@ async def delete_webhook(webhook_id: int, request: Request):
 
 
 @router.post("/{webhook_id}/test")
-async def test_webhook(webhook_id: int):
+async def test_webhook(webhook_id: int, user: TokenPayload = Depends(_require_auth)):
     """Send a test payload to a webhook URL."""
     from core.async_db import get_async_session
     from core.models import WebhookConfig

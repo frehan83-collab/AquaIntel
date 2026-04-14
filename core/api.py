@@ -99,6 +99,37 @@ app = FastAPI(
     ],
 )
 
+# ── Global Exception Handler ────────────────────────────────────────
+# Catches unhandled errors from the 75% of endpoints without try/except,
+# returning clean JSON errors instead of raw 500 tracebacks.
+import structlog as _structlog
+_exc_log = _structlog.get_logger("exception_handler")
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Catch-all for unhandled exceptions — return clean JSON, log details."""
+    import httpx as _httpx
+    from sqlalchemy.exc import IntegrityError, OperationalError
+
+    if isinstance(exc, HTTPException):
+        raise exc  # Let FastAPI handle its own exceptions
+
+    if isinstance(exc, (_httpx.ConnectError, _httpx.ReadTimeout, _httpx.ConnectTimeout)):
+        _exc_log.warning("upstream_timeout", path=str(request.url.path), error=str(exc)[:200])
+        return JSONResponse(status_code=502, content={"detail": "Upstream data source temporarily unavailable"})
+
+    if isinstance(exc, (IntegrityError, OperationalError)):
+        _exc_log.error("database_error", path=str(request.url.path), error=str(exc)[:200])
+        return JSONResponse(status_code=503, content={"detail": "Database error — please retry"})
+
+    if isinstance(exc, ValueError):
+        return JSONResponse(status_code=400, content={"detail": str(exc)[:500]})
+
+    _exc_log.error("unhandled_exception", path=str(request.url.path), exc_type=type(exc).__name__, error=str(exc)[:300])
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
+
 _allowed_origins = os.environ.get(
     "FISHINTEL_CORS_ORIGINS",
     "http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:8000,https://fishintel.io,https://app.fishintel.io",
