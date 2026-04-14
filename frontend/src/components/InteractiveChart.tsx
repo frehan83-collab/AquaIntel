@@ -192,9 +192,22 @@ export default function InteractiveChart({
         style={{ overflow: "visible" }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
+        onFocus={() => { if (data.length > 0) setActiveIdx(0); }}
+        onBlur={() => setActiveIdx(null)}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowRight" && activeIdx !== null && activeIdx < data.length - 1) {
+            e.preventDefault();
+            setActiveIdx(activeIdx + 1);
+          } else if (e.key === "ArrowLeft" && activeIdx !== null && activeIdx > 0) {
+            e.preventDefault();
+            setActiveIdx(activeIdx - 1);
+          } else if (e.key === "Escape") {
+            setActiveIdx(null);
+          }
+        }}
         className="cursor-crosshair"
         role="img"
-        aria-label={`${title ? title + ": " : ""}Chart with ${data.length} data points${unit ? " in " + unit : ""}`}
+        aria-label={`${title ? title + ": " : ""}Interactive chart with ${data.length} data points${unit ? " in " + unit : ""}. Use arrow keys to navigate data points.`}
         tabIndex={0}
       >
         {/* ── Defs ── */}

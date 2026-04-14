@@ -141,8 +141,19 @@ export default function RegionalHeatmap({ data, title, metric, maxValue }: Regio
             return (
               <g
                 key={pa.pa}
+                role="button"
+                tabIndex={0}
+                aria-label={`PA ${pa.pa} ${pa.name}: ${d ? `${value} ${metric || ""} - ${intensityLabel(ratio)}` : "No data"}`}
                 onMouseEnter={() => setHoveredPA(pa.pa)}
                 onMouseLeave={() => setHoveredPA(null)}
+                onFocus={() => setHoveredPA(pa.pa)}
+                onBlur={() => setHoveredPA(null)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setHoveredPA(hoveredPA === pa.pa ? null : pa.pa);
+                  }
+                }}
                 style={{ cursor: "pointer" }}
               >
                 {/* Cell background */}

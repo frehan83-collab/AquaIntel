@@ -277,6 +277,8 @@ export default function SupplyChainSankey({
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHoveredLink(null)}
         className="cursor-default"
+        role="img"
+        aria-label={`${title ? title + ": " : ""}Supply chain Sankey diagram with ${nodes.length} nodes and ${links.length} flow links`}
       >
         {/* Links */}
         {links.map((lk, i) => {
@@ -295,8 +297,19 @@ export default function SupplyChainSankey({
               opacity={hoveredLink ? (isHovered ? 0.45 : 0.08) : 0.2}
               stroke={isHovered ? "rgba(255,255,255,0.3)" : "none"}
               strokeWidth={isHovered ? 0.5 : 0}
+              role="button"
+              tabIndex={0}
+              aria-label={`Flow: ${lk.label} (${lk.value}kt)`}
               onMouseEnter={() => setHoveredLink(lk)}
               onMouseLeave={() => setHoveredLink(null)}
+              onFocus={() => setHoveredLink(lk)}
+              onBlur={() => setHoveredLink(null)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setHoveredLink(hoveredLink === lk ? null : lk);
+                }
+              }}
               style={{ cursor: "pointer", transition: "opacity 0.2s" }}
             />
           );

@@ -100,6 +100,8 @@ export default function ConfidenceBand({
         viewBox={`0 0 ${width} ${height}`}
         className="w-full"
         style={{ maxHeight: height }}
+        role="img"
+        aria-label={`${title ? title + ": " : ""}Confidence band chart with ${data.length} data points${unit ? " in " + unit : ""}`}
       >
         {/* 95% band — lightest fill */}
         {band95Path && (
@@ -126,8 +128,19 @@ export default function ConfidenceBand({
               cy={sy(d.y)}
               r="10"
               fill="transparent"
+              role="button"
+              tabIndex={0}
+              aria-label={`Data point ${i + 1}: ${d.y.toFixed(3)}${unit}${d.lo80 != null && d.hi80 != null ? `, 80% range ${d.lo80.toFixed(3)} to ${d.hi80.toFixed(3)}` : ""}${d.lo95 != null && d.hi95 != null ? `, 95% range ${d.lo95.toFixed(3)} to ${d.hi95.toFixed(3)}` : ""}`}
               onMouseEnter={() => setHoverIdx(i)}
               onMouseLeave={() => setHoverIdx(null)}
+              onFocus={() => setHoverIdx(i)}
+              onBlur={() => setHoverIdx(null)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setHoverIdx(hoverIdx === i ? null : i);
+                }
+              }}
               style={{ cursor: "crosshair" }}
             />
             <circle

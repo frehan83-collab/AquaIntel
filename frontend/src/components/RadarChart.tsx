@@ -121,6 +121,8 @@ export default function RadarChart({
         height={size}
         viewBox={`0 0 ${size} ${size}`}
         className="overflow-visible"
+        role="img"
+        aria-label={`Radar chart comparing ${datasets.map(ds => ds.name).join(" and ")} across ${labels.join(", ")}`}
         onMouseLeave={() => setTooltip(null)}
       >
         {/* Background rings */}
@@ -185,8 +187,32 @@ export default function RadarChart({
               cy={p.y}
               r={radius * 0.25}
               fill="transparent"
+              role="button"
+              tabIndex={0}
+              aria-label={`${labels[i]} axis: ${datasets.map(ds => `${ds.name} ${(ds.values[i] * 100).toFixed(0)}%`).join(", ")}`}
               onMouseEnter={(e) => handleAxisHover(i, e)}
               onMouseMove={(e) => handleAxisHover(i, e)}
+              onFocus={(e) => handleAxisHover(i, e as unknown as React.MouseEvent)}
+              onBlur={() => setTooltip(null)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  if (tooltip?.label === labels[i]) {
+                    setTooltip(null);
+                  } else {
+                    setTooltip({
+                      x: p.x,
+                      y: p.y,
+                      label: labels[i],
+                      values: datasets.map((ds) => ({
+                        name: ds.name,
+                        value: ds.values[i],
+                        color: ds.color,
+                      })),
+                    });
+                  }
+                }
+              }}
               className="cursor-crosshair"
             />
           );
