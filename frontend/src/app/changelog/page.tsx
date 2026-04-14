@@ -185,7 +185,7 @@ function ReleaseCard({ release, isLatest, index }: { release: Release; isLatest:
               <Calendar className="w-3.5 h-3.5" />
               {formatReleaseDate(release.date, locale)}
             </span>
-            <span className="text-[var(--text-secondary)]/60">
+            <span className="text-[var(--text-secondary)]/80">
               {release.changes.length} changes
             </span>
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -307,7 +307,7 @@ export default function ChangelogPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
-        className="mt-12 text-center text-xs text-[var(--text-secondary)]/50"
+        className="mt-12 text-center text-xs text-[var(--text-secondary)]/70"
       >
         FishIntel Aquaculture Intelligence Platform &mdash; Built in Norway
       </motion.p>

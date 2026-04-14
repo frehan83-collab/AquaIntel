@@ -67,8 +67,8 @@ const TESTIMONIALS = [
 ];
 
 const STATS = [
-  { value: "229", label: "API Endpoints" },
-  { value: "53", label: "Market Engines" },
+  { value: "325", label: "API Endpoints" },
+  { value: "66", label: "Market Engines" },
   { value: "7", label: "Countries" },
   { value: "Real-time", label: "Data" },
 ];
@@ -149,7 +149,7 @@ export default function LandingPage() {
             <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 mt-12 text-sm">
               {[
                 { label: "Farms monitored", value: "1,815" },
-                { label: "API routes", value: "229" },
+                { label: "API routes", value: "325" },
                 { label: "FRED series", value: "12" },
                 { label: "Satellites", value: "CMEMS" },
               ].map(s => (
@@ -221,7 +221,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-4">
-                Build on top of 229 REST endpoints covering lice intelligence, price prediction,
+                Build on top of 325 REST endpoints covering lice intelligence, price prediction,
                 disease monitoring, supply chain, and ML models. Every response includes data provenance
                 so you always know the source, freshness, and confidence of the data.
               </p>

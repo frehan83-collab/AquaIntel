@@ -183,7 +183,7 @@ export default function LoginPage() {
           </motion.button>
         </form>
 
-        <p className="text-[10px] text-[var(--text-secondary)] text-center mt-6 opacity-50">
+        <p className="text-[10px] text-[var(--text-secondary)] text-center mt-6 opacity-70">
           Free tier includes Dashboard, Morning Brief, and basic lice data.
           Upgrade anytime for full access.
         </p>
