@@ -256,6 +256,11 @@ from core.routers.alerts_routes import router as alerts_router
 from core.routers.analytics_routes import router as analytics_router
 from core.routers.twin_routes import router as twin_router
 from core.routers.misc_routes import router as misc_router
+from core.routers.feed_cost_routes import router as feed_cost_router
+from core.routers.causal_routes import router as causal_router
+from core.routers.ocean_routes import router as ocean_router
+from core.routers.ras_routes import router as ras_router
+from core.routers.macro_routes import router as macro_router
 from core.routers.notification_routes import router as notification_router
 from core.routers.locality_routes import router as locality_router
 from core.routers.bloom_routes import router as bloom_router
@@ -284,6 +289,11 @@ app.include_router(alerts_router)
 app.include_router(analytics_router)
 app.include_router(twin_router)
 app.include_router(misc_router)
+app.include_router(feed_cost_router)
+app.include_router(causal_router)
+app.include_router(ocean_router)
+app.include_router(ras_router)
+app.include_router(macro_router)
 app.include_router(notification_router)
 app.include_router(locality_router)
 app.include_router(bloom_router)
