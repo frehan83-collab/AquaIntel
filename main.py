@@ -129,16 +129,36 @@ def main(api_only: bool, agents_only: bool, api_port: int) -> None:
     elif agents_only:
         asyncio.run(run_agents())
     else:
-        # Run both: agents in background, API in main thread
+        # Run both: agents as asyncio background task, API via uvicorn
         # For production, use separate processes or Docker services
-        import threading
+        import signal
 
-        agent_thread = threading.Thread(
-            target=lambda: asyncio.run(run_agents()),
-            daemon=True,
-        )
-        agent_thread.start()
-        run_api(port=api_port)
+        async def _run_both():
+            agent_task = asyncio.create_task(run_agents())
+            config = uvicorn.Config(
+                "core.api:app", host="0.0.0.0", port=api_port,
+                log_level="info", reload=False,
+            )
+            server = uvicorn.Server(config)
+
+            # Graceful shutdown: cancel agents on SIGTERM/SIGINT
+            loop = asyncio.get_event_loop()
+            for sig in (signal.SIGTERM, signal.SIGINT):
+                try:
+                    loop.add_signal_handler(sig, agent_task.cancel)
+                except NotImplementedError:
+                    pass  # Windows doesn't support add_signal_handler
+
+            try:
+                await server.serve()
+            finally:
+                agent_task.cancel()
+                try:
+                    await agent_task
+                except asyncio.CancelledError:
+                    log.info("agents.shutdown_complete")
+
+        asyncio.run(_run_both())
 
 
 if __name__ == "__main__":

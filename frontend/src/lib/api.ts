@@ -1,13 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * FishIntel Backend API Client
  * ============================
  * Typed API client for AquaIntelligence platform.
  * Response types defined in @/types/api.ts
  *
- * NOTE: eslint-disable kept temporarily during incremental typing migration.
- * Target: remove once all 180+ methods are fully typed (Session 29+).
+ * Session 39: Removed blanket eslint-disable. Core methods typed via generics.
+ * Remaining untyped methods return `unknown` (callers cast as needed).
  */
+/* eslint-disable @typescript-eslint/no-explicit-any -- Remaining ~30 methods with Record<string, any> params; tracked for incremental removal */
 import type {
   HealthResponse, LiceSummary, DecisionCard, FarmPortfolioResponse,
   BiomassNational, SSBPriceHistory, FeedCostLatest, CompetitivenessIndex,
@@ -23,7 +23,7 @@ import type {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-async function fetchAPI<T = any>(
+async function fetchAPI<T = unknown>(
   path: string,
   options?: RequestInit,
   _retries = 3,

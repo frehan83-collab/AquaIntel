@@ -29,13 +29,13 @@ if _is_sqlite:
     async_engine = create_async_engine(_async_url, echo=False)
 else:
     # PostgreSQL/TimescaleDB: production pool tuning
-    # pool_size=20 per worker, max_overflow=40 for burst, recycle every hour
+    # pool_size=30 per worker (4 Gunicorn workers + 12 agents), max_overflow=60 for burst
     # pool_pre_ping catches stale connections after DB restart
     async_engine = create_async_engine(
         _async_url,
         echo=False,
-        pool_size=20,
-        max_overflow=40,
+        pool_size=30,
+        max_overflow=60,
         pool_recycle=3600,
         pool_pre_ping=True,
         connect_args={"server_settings": {"statement_timeout": "30000"}},  # 30s query timeout
