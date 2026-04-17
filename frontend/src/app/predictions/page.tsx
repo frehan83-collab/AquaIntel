@@ -7,14 +7,14 @@ import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export default function PredictionsPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const handleError = useApiError();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -83,21 +83,21 @@ export default function PredictionsPage() {
 
   // Build narrative forecasts from real data
   const week1Forecast = liceMean > 0.4
-    ? `⚠ High lice pressure (${liceMean.toFixed(3)}) — imminent treatment risk across ${redPAs.length} PAs`
+    ? `⚠ High lice pressure (${formatNumber(liceMean, locale, 3)}) — imminent treatment risk across ${redPAs.length} PAs`
     : liceMean > 0.2
-    ? `Moderate lice pressure (${liceMean.toFixed(3)}) — monitor PAs: ${redPAs.slice(0, 3).join(", ") || "none elevated"}`
-    : `✅ Lice pressure within normal range (${liceMean.toFixed(3)}) — no immediate action`;
+    ? `Moderate lice pressure (${formatNumber(liceMean, locale, 3)}) — monitor PAs: ${redPAs.slice(0, 3).join(", ") || "none elevated"}`
+    : `✅ Lice pressure within normal range (${formatNumber(liceMean, locale, 3)}) — no immediate action`;
 
   const week2Forecast = priceOutlook4
-    ? `Price model predicts ${priceOutlook4.predicted_nok?.toFixed(1) || "—"} NOK/kg at 4-week horizon (${priceOutlook4.combined_signal || "neutral"})`
+    ? `Price model predicts ${priceOutlook4.predicted_nok != null ? formatNumber(priceOutlook4.predicted_nok, locale, 1) : "—"} NOK/kg at 4-week horizon (${priceOutlook4.combined_signal || "neutral"})`
     : "Run the pipeline to generate price predictions at 2–4 week horizon";
 
   const week4Forecast = priceOutlook4
-    ? `4-week: ${priceOutlook4.predicted_nok?.toFixed(1) || "—"} NOK/kg · CI: ${priceOutlook4.price_lo80?.toFixed(1) || "—"}–${priceOutlook4.price_hi80?.toFixed(1) || "—"}`
+    ? `4-week: ${priceOutlook4.predicted_nok != null ? formatNumber(priceOutlook4.predicted_nok, locale, 1) : "—"} NOK/kg · CI: ${priceOutlook4.price_lo80 != null ? formatNumber(priceOutlook4.price_lo80, locale, 1) : "—"}–${priceOutlook4.price_hi80 != null ? formatNumber(priceOutlook4.price_hi80, locale, 1) : "—"}`
     : "4-week price model pending — click Run Pipeline";
 
   const week8Forecast = priceOutlook8
-    ? `8-week: ${priceOutlook8.predicted_nok?.toFixed(1) || "—"} NOK/kg · Lice-causal lag fully priced in at this horizon`
+    ? `8-week: ${priceOutlook8.predicted_nok != null ? formatNumber(priceOutlook8.predicted_nok, locale, 1) : "—"} NOK/kg · Lice-causal lag fully priced in at this horizon`
     : "8-week model: Causal lag (6–10 weeks) will be fully reflected at this horizon";
 
   const shortConf = priceOutlook4?.confidence_score ?? 0.88;
@@ -140,7 +140,7 @@ export default function PredictionsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           label="Mean Lice Pressure"
-          value={liceMean > 0 ? liceMean.toFixed(3) : "—"}
+          value={liceMean > 0 ? formatNumber(liceMean, locale, 3) : "—"}
           delta={liceMean > 0.5 ? "ABOVE LIMIT" : liceMean > 0.2 ? "Moderate" : "Normal"}
           deltaType={liceMean > 0.5 ? "negative" : liceMean > 0.2 ? undefined : "positive"}
           icon={Gauge}
@@ -148,7 +148,7 @@ export default function PredictionsPage() {
         />
         <KPICard
           label="Max Pressure"
-          value={liceMax > 0 ? liceMax.toFixed(3) : "—"}
+          value={liceMax > 0 ? formatNumber(liceMax, locale, 3) : "—"}
           delta={liceMax > 0.5 ? "Above limit" : "Within limit"}
           deltaType={liceMax > 0.5 ? "negative" : "positive"}
           icon={TrendingUp}
@@ -156,7 +156,7 @@ export default function PredictionsPage() {
         />
         <KPICard
           label="Std Deviation"
-          value={liceStd > 0 ? liceStd.toFixed(3) : "—"}
+          value={liceStd > 0 ? formatNumber(liceStd, locale, 3) : "—"}
           delta={liceStd > 0.15 ? "High variability" : "Stable spread"}
           deltaType={liceStd > 0.15 ? "negative" : undefined}
           icon={Database}
@@ -215,7 +215,7 @@ export default function PredictionsPage() {
                 />
               </div>
               <span className="text-xs text-[var(--text-secondary)] font-mono tabular-nums">
-                {(shortConf * 100).toFixed(0)}% confidence
+                {formatNumber(shortConf * 100, locale, 0)}% confidence
               </span>
             </div>
           </div>
@@ -250,7 +250,7 @@ export default function PredictionsPage() {
                 />
               </div>
               <span className="text-xs text-[var(--text-secondary)] font-mono tabular-nums">
-                {(medConf * 100).toFixed(0)}% confidence
+                {formatNumber(medConf * 100, locale, 0)}% confidence
               </span>
             </div>
           </div>
@@ -271,8 +271,8 @@ export default function PredictionsPage() {
           <div className="p-5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center">
             <p className="text-3xl font-bold text-amber-400">
               {priceOutlook8
-                ? `${Math.abs(priceOutlook8.change_pct || 0).toFixed(1)}%`
-                : sitesAbove > 0 ? `${(sitesAbove * 2.1).toFixed(0)}` : "—"
+                ? `${formatNumber(Math.abs(priceOutlook8.change_pct || 0), locale, 1)}%`
+                : sitesAbove > 0 ? `${formatNumber(sitesAbove * 2.1, locale, 0)}` : "—"
               }
             </p>
             <p className="text-[11px] text-[var(--text-secondary)] mt-1 uppercase tracking-wider">
@@ -320,7 +320,7 @@ export default function PredictionsPage() {
                 ["Available", gnnStatus.available ? "Yes" : "No (install torch_geometric)"],
                 ["Trained", gnnStatus.trained ? `Yes (${gnnStatus.epochs_trained || 0} epochs)` : "Not yet"],
                 ["Nodes", gnnStatus.n_nodes ?? "—"],
-                ["Accuracy", gnnStatus.val_accuracy ? `${(gnnStatus.val_accuracy * 100).toFixed(1)}%` : "—"],
+                ["Accuracy", gnnStatus.val_accuracy ? `${formatNumber(gnnStatus.val_accuracy * 100, locale, 1)}%` : "—"],
                 ["Last trained", gnnStatus.last_trained ? gnnStatus.last_trained.slice(0, 10) : "Never"],
               ].map(([label, val]) => (
                 <div key={label as string} className="flex items-center justify-between py-1 border-b border-white/[0.04] last:border-0">
@@ -336,7 +336,7 @@ export default function PredictionsPage() {
                 }`}>
                   {gnnTrainResult.error
                     ? gnnTrainResult.error
-                    : `Trained ${gnnTrainResult.epochs_trained || 50} epochs · val acc ${gnnTrainResult.val_accuracy ? `${(gnnTrainResult.val_accuracy * 100).toFixed(1)}%` : "OK"}`
+                    : `Trained ${gnnTrainResult.epochs_trained || 50} epochs · val acc ${gnnTrainResult.val_accuracy ? `${formatNumber(gnnTrainResult.val_accuracy * 100, locale, 1)}%` : "OK"}`
                   }
                 </div>
               )}

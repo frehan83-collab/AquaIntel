@@ -2,26 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-export type Locale = "en" | "no";
-
-// ── Formatting utilities (MUST be near top for reliable webpack bundling) ──
-const _localeMap: Record<Locale, string> = { en: "en-US", no: "nb-NO" };
-
-export function formatDate(date: Date | string, locale: Locale): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  if (isNaN(d.getTime())) return String(date);
-  return d.toLocaleDateString(_localeMap[locale], { day: "numeric", month: "short", year: "numeric" });
-}
-
-export function formatNumber(n: number, locale: Locale, decimals = 0): string {
-  if (n == null || !isFinite(n)) return "\u2014";
-  return n.toLocaleString(_localeMap[locale], { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-}
-
-export function formatCurrency(n: number, locale: Locale, currency = "NOK"): string {
-  if (n == null || !isFinite(n)) return "\u2014";
-  return n.toLocaleString(_localeMap[locale], { style: "currency", currency, minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+// Re-export formatters from the canonical source (lib/format.ts) for backward compat.
+// Do not add new formatter logic here — edit lib/format.ts instead.
+import type { Locale } from "./format";
+export { formatDate, formatNumber, formatCurrency } from "./format";
+export type { Locale } from "./format";
 
 const STORAGE_KEY = "oc_locale";
 

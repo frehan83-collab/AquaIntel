@@ -1,4 +1,13 @@
-import PageLoader from "@/components/PageLoader";
+import KPISkeleton from "@/components/KPISkeleton";
+import ChartSkeleton from "@/components/ChartSkeleton";
+import TableSkeleton from "@/components/TableSkeleton";
+
 export default function Loading() {
-  return <PageLoader message="Loading market data..." />;
+  return (
+    <div className="space-y-6">
+      <KPISkeleton count={4} />
+      <ChartSkeleton height="h-96" />
+      <TableSkeleton rows={8} />
+    </div>
+  );
 }

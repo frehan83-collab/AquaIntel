@@ -10,7 +10,7 @@ import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -32,7 +32,7 @@ const SIGNAL_BG: Record<string, string> = {
 };
 
 export default function ContractsPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [evaluation, setEvaluation] = useState<any>(null);
   const [marketCtx, setMarketCtx] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -109,21 +109,21 @@ export default function ContractsPage() {
         className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <KPICard
           label="SSB Spot"
-          value={spot > 0 ? `${spot.toFixed(1)} NOK` : "--"}
+          value={spot > 0 ? `${formatNumber(spot, locale, 1)} NOK` : "--"}
           delta={marketCtx?.spot_week || "latest week"}
           deltaType="neutral"
           icon={DollarSign}
         />
         <KPICard
           label="4w Forecast"
-          value={fc4?.predicted_nok ? `${fc4.predicted_nok.toFixed(1)} NOK` : "--"}
+          value={fc4?.predicted_nok ? `${formatNumber(fc4.predicted_nok, locale, 1)} NOK` : "--"}
           delta={fc4?.direction || ""}
           deltaType={fc4?.direction === "bullish" ? "positive" : fc4?.direction === "bearish" ? "negative" : "neutral"}
           icon={TrendingUp}
         />
         <KPICard
           label="4w Range (95%)"
-          value={fc4 ? `${fc4.lo95.toFixed(0)}-${fc4.hi95.toFixed(0)}` : "--"}
+          value={fc4 ? `${formatNumber(fc4.lo95, locale, 0)}-${formatNumber(fc4.hi95, locale, 0)}` : "--"}
           delta="NOK/kg"
           deltaType="neutral"
           icon={BarChart3}
@@ -138,7 +138,7 @@ export default function ContractsPage() {
         <KPICard
           label="8w Forecast"
           value={marketCtx?.forecasts?.["8w"]?.predicted_nok
-            ? `${marketCtx.forecasts["8w"].predicted_nok.toFixed(1)} NOK` : "--"}
+            ? `${formatNumber(marketCtx.forecasts["8w"].predicted_nok, locale, 1)} NOK` : "--"}
           delta={marketCtx?.forecasts?.["8w"]?.direction || ""}
           deltaType={marketCtx?.forecasts?.["8w"]?.direction === "bullish" ? "positive" : marketCtx?.forecasts?.["8w"]?.direction === "bearish" ? "negative" : "neutral"}
           icon={TrendingUp}
@@ -146,7 +146,7 @@ export default function ContractsPage() {
         <KPICard
           label="12w Forecast"
           value={marketCtx?.forecasts?.["12w"]?.predicted_nok
-            ? `${marketCtx.forecasts["12w"].predicted_nok.toFixed(1)} NOK` : "--"}
+            ? `${formatNumber(marketCtx.forecasts["12w"].predicted_nok, locale, 1)} NOK` : "--"}
           delta={marketCtx?.forecasts?.["12w"]?.direction || ""}
           deltaType={marketCtx?.forecasts?.["12w"]?.direction === "bullish" ? "positive" : marketCtx?.forecasts?.["12w"]?.direction === "bearish" ? "negative" : "neutral"}
           icon={TrendingUp}
@@ -169,7 +169,7 @@ export default function ContractsPage() {
                   step="0.1"
                   value={contractPrice}
                   onChange={(e) => setContractPrice(e.target.value)}
-                  placeholder={spot > 0 ? `e.g. ${spot.toFixed(0)}` : "e.g. 85"}
+                  placeholder={spot > 0 ? `e.g. ${formatNumber(spot, locale, 0)}` : "e.g. 85"}
                   className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-[var(--text-primary)] text-sm focus:outline-none focus:border-violet-500/50"
                 />
               </div>
@@ -255,10 +255,10 @@ export default function ContractsPage() {
                     evaluation.pnl_direction === "profit" ? "text-emerald-400" :
                     evaluation.pnl_direction === "loss" ? "text-rose-400" : "text-slate-300"
                   }`}>
-                    {evaluation.mtm_pnl_nok >= 0 ? "+" : ""}{(evaluation.mtm_pnl_nok / 1e6).toFixed(2)}M NOK
+                    {evaluation.mtm_pnl_nok >= 0 ? "+" : ""}{formatNumber(evaluation.mtm_pnl_nok / 1e6, locale, 2)}M NOK
                   </p>
                   <p className="text-sm text-[var(--text-secondary)] mt-1">
-                    {evaluation.mtm_pnl_pct >= 0 ? "+" : ""}{evaluation.mtm_pnl_pct.toFixed(1)}% vs spot
+                    {evaluation.mtm_pnl_pct >= 0 ? "+" : ""}{formatNumber(evaluation.mtm_pnl_pct, locale, 1)}% vs spot
                   </p>
                 </div>
 
@@ -282,7 +282,7 @@ export default function ContractsPage() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-[var(--text-secondary)]">Price Delta</span>
                   <span className={evaluation.price_delta_nok >= 0 ? "text-emerald-400" : "text-rose-400"}>
-                    {evaluation.price_delta_nok >= 0 ? "+" : ""}{evaluation.price_delta_nok.toFixed(2)} NOK/kg
+                    {evaluation.price_delta_nok >= 0 ? "+" : ""}{formatNumber(evaluation.price_delta_nok, locale, 2)} NOK/kg
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
@@ -322,9 +322,9 @@ export default function ContractsPage() {
                 <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
                   <p className="text-xs text-[var(--text-secondary)]">Max Potential Loss</p>
                   <p className="text-2xl font-bold text-amber-400">
-                    {(evaluation.var_95_nok / 1e6).toFixed(2)}M NOK
+                    {formatNumber(evaluation.var_95_nok / 1e6, locale, 2)}M NOK
                   </p>
-                  <p className="text-xs text-[var(--text-secondary)]">{evaluation.var_95_pct.toFixed(1)}% of notional</p>
+                  <p className="text-xs text-[var(--text-secondary)]">{formatNumber(evaluation.var_95_pct, locale, 1)}% of notional</p>
                 </div>
                 {/* VaR gauge bar */}
                 <div className="relative h-3 rounded-full bg-white/10 overflow-hidden">
@@ -397,7 +397,7 @@ export default function ContractsPage() {
                     <div className="text-right">
                       <p className="text-xs text-[var(--text-secondary)]">Hedge Ratio</p>
                       <p className="text-2xl font-bold text-sky-400">
-                        {(evaluation.hedge_ratio * 100).toFixed(0)}%
+                        {formatNumber(evaluation.hedge_ratio * 100, locale, 0)}%
                       </p>
                     </div>
                   </div>
@@ -451,10 +451,10 @@ export default function ContractsPage() {
                         <div>
                           <span className="text-xs text-[var(--text-secondary)]">{h} horizon</span>
                           <p className="text-lg font-semibold text-[var(--text-primary)]">
-                            {fc.predicted_nok.toFixed(1)} <span className="text-xs">NOK/kg</span>
+                            {formatNumber(fc.predicted_nok, locale, 1)} <span className="text-xs">NOK/kg</span>
                           </p>
                           <p className="text-xs text-[var(--text-secondary)]">
-                            Range: {fc.lo95.toFixed(0)} &ndash; {fc.hi95.toFixed(0)} NOK
+                            Range: {formatNumber(fc.lo95, locale, 0)} &ndash; {formatNumber(fc.hi95, locale, 0)} NOK
                           </p>
                         </div>
                         <div className="text-right">
@@ -462,7 +462,7 @@ export default function ContractsPage() {
                           <p className="text-xs text-[var(--text-secondary)]">{fc.direction}</p>
                           {fc.confidence != null && (
                             <p className="text-xs text-[var(--text-secondary)]">
-                              conf: {(fc.confidence * 100).toFixed(0)}%
+                              conf: {formatNumber(fc.confidence * 100, locale, 0)}%
                             </p>
                           )}
                         </div>
@@ -481,7 +481,7 @@ export default function ContractsPage() {
                       <div key={i} className="flex items-center justify-between text-sm py-1 border-b border-white/5 last:border-0">
                         <span className="text-[var(--text-secondary)] text-xs font-mono">{p.week}</span>
                         <span className="text-[var(--text-primary)] font-medium">
-                          {p.price_nok.toFixed(1)} NOK/kg
+                          {formatNumber(p.price_nok, locale, 1)} NOK/kg
                         </span>
                       </div>
                     ))}

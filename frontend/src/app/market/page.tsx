@@ -154,7 +154,7 @@ const COUNTRY_CODES: Record<string, string> = {
   Thailand: "TH", "South Korea": "KR", Singapore: "SG",
 };
 
-function ExportBars({ data }: { data: ExportDest[] }) {
+function ExportBars({ data, locale }: { data: ExportDest[]; locale: "en" | "no" }) {
   if (!data.length) return <Skeleton className="h-40 w-full" />;
   const top5 = data.slice(0, 5);
   const maxVol = Math.max(...top5.map((d) => d.volume_tonnes));
@@ -176,10 +176,10 @@ function ExportBars({ data }: { data: ExportDest[] }) {
             />
           </div>
           <span className="text-xs text-white/50 w-20 text-right flex-shrink-0">
-            {(d.volume_tonnes / 1000).toFixed(1)}kt
+            {formatNumber(d.volume_tonnes / 1000, locale, 1)}kt
           </span>
           <span className="text-xs text-ocean-400 w-12 text-right flex-shrink-0 font-semibold">
-            {d.share_pct.toFixed(1)}%
+            {formatNumber(d.share_pct, locale, 1)}%
           </span>
         </div>
       ))}
@@ -342,8 +342,8 @@ export default function MarketTerminalPage() {
     const prev = ssbHistory.length > 1 ? ssbHistory[ssbHistory.length - 2] : null;
     const priceDelta = prev ? ((latest.price_nok_kg - prev.price_nok_kg) / prev.price_nok_kg * 100) : 0;
 
-    const parts: string[] = [`Salmon spot at NOK ${latest.price_nok_kg?.toFixed(1)}/kg`];
-    if (prev) parts.push(`${priceDelta > 0 ? "+" : ""}${priceDelta.toFixed(1)}% WoW`);
+    const parts: string[] = [`Salmon spot at NOK ${formatNumber(latest.price_nok_kg, locale, 1)}/kg`];
+    if (prev) parts.push(`${priceDelta > 0 ? "+" : ""}${formatNumber(priceDelta, locale, 1)}% WoW`);
 
     // Equity context
     if (equity?.prices) {
@@ -352,10 +352,10 @@ export default function MarketTerminalPage() {
       const salm = equity.prices.SALM;
       const salmDelta = equity.changes?.SALM;
       if (mowi != null && mowiDelta != null) {
-        parts.push(`MOWI ${mowiDelta >= 0 ? "+" : ""}${mowiDelta.toFixed(1)}%`);
+        parts.push(`MOWI ${mowiDelta >= 0 ? "+" : ""}${formatNumber(mowiDelta, locale, 1)}%`);
       }
       if (salm != null && salmDelta != null) {
-        parts.push(`SALM ${salmDelta >= 0 ? "+" : ""}${salmDelta.toFixed(1)}%`);
+        parts.push(`SALM ${salmDelta >= 0 ? "+" : ""}${formatNumber(salmDelta, locale, 1)}%`);
       }
     }
 
@@ -370,7 +370,7 @@ export default function MarketTerminalPage() {
     // Feed cost / macro context
     if (macroOil) {
       const oilVal = macroOil.latest_value || macroOil.value || macroOil.data?.[macroOil.data?.length - 1]?.value;
-      if (oilVal != null) parts.push(`WTI $${Number(oilVal).toFixed(0)}`);
+      if (oilVal != null) parts.push(`WTI $${formatNumber(Number(oilVal), locale, 0)}`);
     }
 
     return parts.join(" · ");
@@ -634,7 +634,7 @@ export default function MarketTerminalPage() {
               {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-7" />)}
             </div>
           ) : (
-            <ExportBars data={exports} />
+            <ExportBars data={exports} locale={locale} />
           )}
           {!loading && exports.length > 0 && (
             <div className="flex gap-6 mt-4 pt-4 border-t border-white/[0.04]">
@@ -882,6 +882,7 @@ export default function MarketTerminalPage() {
 
 // ── Collapsible Macro Intelligence Widget ────────────────────────────────────
 function MacroWidget() {
+  const { locale } = useTranslation();
   const handleError = useApiError();
   const [data, setData] = useState<any>(null);
   const [open, setOpen] = useState(true);
@@ -976,7 +977,7 @@ function MacroWidget() {
             <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
               <span className="text-[10px] text-[var(--text-secondary)]">NOK/USD</span>
               <span className="text-[11px] font-mono font-semibold text-[var(--text-primary)]">
-                {bm.nok_usd?.toFixed(2)}
+                {formatNumber(bm.nok_usd, locale, 2)}
                 {yoy.nok_usd ? (
                   <span className={`ml-1 text-[9px] ${yoy.nok_usd > 0 ? "text-rose-400" : "text-emerald-400"}`}>
                     {yoy.nok_usd > 0 ? "+" : ""}{yoy.nok_usd}%
@@ -988,7 +989,7 @@ function MacroWidget() {
               <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                 <span className="text-[10px] text-[var(--text-secondary)]">EUR/NOK</span>
                 <span className="text-[11px] font-mono font-semibold text-[var(--text-primary)]">
-                  {bm.eur_nok?.toFixed(2)}
+                  {formatNumber(bm.eur_nok, locale, 2)}
                 </span>
               </div>
             )}
@@ -996,7 +997,7 @@ function MacroWidget() {
               <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                 <span className="text-[10px] text-[var(--text-secondary)]">NOK/CNY</span>
                 <span className="text-[11px] font-mono font-semibold text-[var(--text-primary)]">
-                  {bm.nok_cny?.toFixed(4)}
+                  {formatNumber(bm.nok_cny, locale, 4)}
                 </span>
               </div>
             )}

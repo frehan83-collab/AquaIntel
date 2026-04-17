@@ -12,7 +12,7 @@ import { OcButton } from "@/components/ui/Button";
 import DataQualityBadge from "@/components/DataQualityBadge";
 import RadarChart, { RadarDataset } from "@/components/RadarChart";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useApiError } from "@/lib/useApiError";
 
@@ -84,6 +84,7 @@ function CompanySelector({
   onClear: () => void;
   color: string;
 }) {
+  const { locale } = useTranslation();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -184,7 +185,7 @@ function CompanySelector({
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium truncate">{co.name}</div>
                       <div className="text-[10px] text-[var(--text-secondary)]">
-                        Lice: {co.avg_lice?.toFixed(3)} · Score: {co.performance_score?.toFixed(0)}
+                        Lice: {formatNumber(co.avg_lice, locale, 3)} · Score: {formatNumber(co.performance_score, locale, 0)}
                       </div>
                     </div>
                     {co.ticker && (
@@ -221,7 +222,7 @@ function normalize(val: number, min: number, max: number, invert = false): numbe
 }
 
 export default function ComparePage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const handleError = useApiError();
   const [allCompanies, setAllCompanies] = useState<any[]>([]);
   const [diseaseMap, setDiseaseMap] = useState<Record<string, any>>({});
@@ -347,7 +348,7 @@ export default function ComparePage() {
           label="Best Lice Score"
           value={
             companyCount > 0
-              ? Math.min(...activeCompanies.map((c: any) => c.avg_lice || 99)).toFixed(3)
+              ? formatNumber(Math.min(...activeCompanies.map((c: any) => c.avg_lice || 99)), locale, 3)
               : "--"
           }
           icon={Bug}
@@ -357,7 +358,7 @@ export default function ComparePage() {
           label="Best Overall"
           value={
             companyCount > 0
-              ? Math.max(...activeCompanies.map((c: any) => c.performance_score || 0)).toFixed(0)
+              ? formatNumber(Math.max(...activeCompanies.map((c: any) => c.performance_score || 0)), locale, 0)
               : "--"
           }
           icon={Trophy}
@@ -445,20 +446,20 @@ export default function ComparePage() {
                 label="Avg Lice (adult female)"
                 icon={Bug}
                 values={activeCompanies.map((c: any) => c.avg_lice)}
-                format={(v) => v.toFixed(3)}
+                format={(v) => formatNumber(v, locale, 3)}
                 lowerIsBetter
               />
               <MetricRow
                 label="Performance Score"
                 icon={Trophy}
                 values={activeCompanies.map((c: any) => c.performance_score)}
-                format={(v) => v.toFixed(1)}
+                format={(v) => formatNumber(v, locale, 1)}
               />
               <MetricRow
                 label="12-Week Outlook"
                 icon={TrendingUp}
                 values={activeCompanies.map((c: any) => c.outlook_index)}
-                format={(v) => v.toFixed(0)}
+                format={(v) => formatNumber(v, locale, 0)}
               />
               <MetricRow
                 label="Risk Level Score"
@@ -486,25 +487,25 @@ export default function ComparePage() {
                 label="Environmental (E)"
                 icon={Leaf}
                 values={activeCompanies.map((c: any) => esgCache[c.name]?.environmental)}
-                format={(v) => v.toFixed(1)}
+                format={(v) => formatNumber(v, locale, 1)}
               />
               <MetricRow
                 label="Social (S)"
                 icon={Shield}
                 values={activeCompanies.map((c: any) => esgCache[c.name]?.social)}
-                format={(v) => v.toFixed(1)}
+                format={(v) => formatNumber(v, locale, 1)}
               />
               <MetricRow
                 label="Governance (G)"
                 icon={Shield}
                 values={activeCompanies.map((c: any) => esgCache[c.name]?.governance)}
-                format={(v) => v.toFixed(1)}
+                format={(v) => formatNumber(v, locale, 1)}
               />
               <MetricRow
                 label="Total ESG Score"
                 icon={BarChart3}
                 values={activeCompanies.map((c: any) => esgCache[c.name]?.total_score)}
-                format={(v) => v.toFixed(1)}
+                format={(v) => formatNumber(v, locale, 1)}
               />
             </div>
 
@@ -518,26 +519,26 @@ export default function ComparePage() {
                 icon={Factory}
                 values={activeCompanies.map((c: any) => c.production_volume_tonnes)}
                 format={(v) =>
-                  v >= 1000 ? `${(v / 1000).toFixed(1)}k t` : `${v.toFixed(0)} t`
+                  v >= 1000 ? `${formatNumber(v / 1000, locale, 1)}k t` : `${formatNumber(v, locale, 0)} t`
                 }
               />
               <MetricRow
                 label="Farm Count"
                 icon={Factory}
                 values={activeCompanies.map((c: any) => c.n_localities)}
-                format={(v) => v.toFixed(0)}
+                format={(v) => formatNumber(v, locale, 0)}
               />
               <MetricRow
                 label="Lice Records"
                 icon={BarChart3}
                 values={activeCompanies.map((c: any) => c.n_lice_records)}
-                format={(v) => v.toLocaleString()}
+                format={(v) => formatNumber(v, locale, 0)}
               />
               <MetricRow
                 label="Production Areas"
                 icon={BarChart3}
                 values={activeCompanies.map((c: any) => c.production_areas?.length || 0)}
-                format={(v) => v.toFixed(0)}
+                format={(v) => formatNumber(v, locale, 0)}
               />
             </div>
 
@@ -550,21 +551,21 @@ export default function ComparePage() {
                 label="Total Disease Events"
                 icon={Shield}
                 values={activeCompanies.map((c: any) => diseaseMap[c.name]?.total || 0)}
-                format={(v) => v.toFixed(0)}
+                format={(v) => formatNumber(v, locale, 0)}
                 lowerIsBetter
               />
               <MetricRow
                 label="ISA Cases"
                 icon={AlertTriangle}
                 values={activeCompanies.map((c: any) => diseaseMap[c.name]?.isa || 0)}
-                format={(v) => v.toFixed(0)}
+                format={(v) => formatNumber(v, locale, 0)}
                 lowerIsBetter
               />
               <MetricRow
                 label="PD Cases"
                 icon={AlertTriangle}
                 values={activeCompanies.map((c: any) => diseaseMap[c.name]?.pd || 0)}
-                format={(v) => v.toFixed(0)}
+                format={(v) => formatNumber(v, locale, 0)}
                 lowerIsBetter
               />
             </div>
@@ -599,12 +600,12 @@ export default function ComparePage() {
                     <div>
                       <span className="text-[var(--text-secondary)]">Avg Lice</span>
                       <div className={`font-mono font-bold ${co.avg_lice > 0.3 ? "text-rose-400" : co.avg_lice > 0.15 ? "text-amber-400" : "text-emerald-400"}`}>
-                        {co.avg_lice?.toFixed(3)}
+                        {formatNumber(co.avg_lice, locale, 3)}
                       </div>
                     </div>
                     <div>
                       <span className="text-[var(--text-secondary)]">Score</span>
-                      <div className="font-mono font-bold">{co.performance_score?.toFixed(0)}</div>
+                      <div className="font-mono font-bold">{formatNumber(co.performance_score, locale, 0)}</div>
                     </div>
                     <div>
                       <span className="text-[var(--text-secondary)]">Risk</span>
@@ -624,7 +625,7 @@ export default function ComparePage() {
                       <span className="text-[var(--text-secondary)]">Volume</span>
                       <div className="font-mono font-bold">
                         {co.production_volume_tonnes >= 1000
-                          ? `${(co.production_volume_tonnes / 1000).toFixed(1)}k t`
+                          ? `${formatNumber(co.production_volume_tonnes / 1000, locale, 1)}k t`
                           : `${co.production_volume_tonnes} t`}
                       </div>
                     </div>
@@ -655,7 +656,7 @@ export default function ComparePage() {
                                 transition={{ duration: 0.5 }}
                               />
                             </div>
-                            <span className="text-[10px] font-mono w-8 text-right">{bar.val?.toFixed(1)}</span>
+                            <span className="text-[10px] font-mono w-8 text-right">{formatNumber(bar.val, locale, 1)}</span>
                           </div>
                         ))}
                       </div>

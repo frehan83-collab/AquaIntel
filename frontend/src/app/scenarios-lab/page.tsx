@@ -10,7 +10,7 @@ import GlassCard from "@/components/GlassCard";
 import DataQualityBadge from "@/components/DataQualityBadge";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
-import { useTranslation, formatDate } from "@/lib/i18n";
+import { useTranslation, formatDate, formatNumber } from "@/lib/i18n";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -351,17 +351,17 @@ export default function ScenarioLabPage() {
           />
           <KPICard
             label="Production Impact"
-            value={`${compound.national_production_impact_pct > 0 ? "+" : ""}${compound.national_production_impact_pct.toFixed(3)}%`}
+            value={`${compound.national_production_impact_pct > 0 ? "+" : ""}${formatNumber(compound.national_production_impact_pct, locale, 3)}%`}
             icon={Activity}
           />
           <KPICard
             label="Price Effect"
-            value={`${compound.price_impact_pct > 0 ? "+" : ""}${compound.price_impact_pct.toFixed(2)}%`}
+            value={`${compound.price_impact_pct > 0 ? "+" : ""}${formatNumber(compound.price_impact_pct, locale, 2)}%`}
             icon={TrendingDown}
           />
           <KPICard
             label={t("scenarios.compound_impact")}
-            value={`${compound.interaction_multiplier.toFixed(2)}x`}
+            value={`${formatNumber(compound.interaction_multiplier, locale, 2)}x`}
             icon={Layers}
             delta={compound.severity.toUpperCase()}
             deltaType={compound.severity === "critical" || compound.severity === "high" ? "negative" : "neutral"}
@@ -585,19 +585,19 @@ export default function ScenarioLabPage() {
                             <div>
                               <span className="text-[var(--text-secondary)]">Revenue</span>
                               <div className="font-mono text-[var(--text-primary)]">
-                                {(imp.total_revenue_impact_mnok || 0).toFixed(1)} MNOK
+                                {formatNumber(imp.total_revenue_impact_mnok || 0, locale, 1)} MNOK
                               </div>
                             </div>
                             <div>
                               <span className="text-[var(--text-secondary)]">Production</span>
                               <div className="font-mono text-[var(--text-primary)]">
-                                {(imp.national_production_impact_pct || 0).toFixed(3)}%
+                                {formatNumber(imp.national_production_impact_pct || 0, locale, 3)}%
                               </div>
                             </div>
                             <div>
                               <span className="text-[var(--text-secondary)]">Price Effect</span>
                               <div className="font-mono text-[var(--text-primary)]">
-                                {(imp.price_impact_pct || 0).toFixed(2)}%
+                                {formatNumber(imp.price_impact_pct || 0, locale, 2)}%
                               </div>
                             </div>
                             <div>
@@ -667,10 +667,10 @@ export default function ScenarioLabPage() {
                             <span className="text-[var(--text-secondary)] ml-1">{ci.company_name}</span>
                           </td>
                           <td className={`py-2 text-right font-mono ${ci.total_revenue_impact_mnok < 0 ? "text-rose-400" : "text-emerald-400"}`}>
-                            {ci.total_revenue_impact_mnok.toFixed(1)}
+                            {formatNumber(ci.total_revenue_impact_mnok, locale, 1)}
                           </td>
                           <td className={`py-2 text-right font-mono ${ci.total_ebit_impact_mnok < 0 ? "text-rose-400" : "text-emerald-400"}`}>
-                            {ci.total_ebit_impact_mnok.toFixed(1)}
+                            {formatNumber(ci.total_ebit_impact_mnok, locale, 1)}
                           </td>
                           <td className="py-2 text-right font-mono text-[var(--text-primary)]">
                             {ci.total_production_impact_tonnes.toLocaleString()}

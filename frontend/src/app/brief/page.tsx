@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import { motion } from "framer-motion";
 import {
   Newspaper, RefreshCw, TrendingUp, TrendingDown, Bug, Shield,
@@ -84,7 +84,7 @@ function extractNumber(sec: any): number | null {
 }
 
 export default function BriefPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [brief, setBrief] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [anomalyData, setAnomalyData] = useState<any>(null);
@@ -181,7 +181,7 @@ export default function BriefPage() {
   const liceDelta = liceSec?.sentiment === "alert" ? "Above limit" : liceSec?.sentiment === "bearish" ? "Elevated" : null;
   const anomalyScore = anomalyData?.composite_score ?? null;
   const anomalyLevel = anomalyData?.risk_level ?? null;
-  const feedPressure = feedSec?.value || (feedData?.margin_pct ? `${feedData.margin_pct.toFixed(0)}%` : null);
+  const feedPressure = feedSec?.value || (feedData?.margin_pct ? `${formatNumber(feedData.margin_pct, locale, 0)}%` : null);
   const feedTrend = feedData?.margin_trend || null;
 
   return (
@@ -244,7 +244,7 @@ export default function BriefPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <KPICard
             label="SSB Spot Price"
-            value={spotPrice != null ? `NOK ${spotPrice.toFixed(1)}` : "--"}
+            value={spotPrice != null ? `NOK ${formatNumber(spotPrice, locale, 1)}` : "--"}
             delta={spotDelta || undefined}
             deltaType={priceSec?.sentiment === "bullish" ? "positive" : priceSec?.sentiment === "bearish" ? "negative" : "neutral"}
             icon={Fish}
@@ -269,7 +269,7 @@ export default function BriefPage() {
           />
           <KPICard
             label="Lice Average"
-            value={liceAvg != null ? liceAvg.toFixed(3) : "--"}
+            value={liceAvg != null ? formatNumber(liceAvg, locale, 3) : "--"}
             delta={liceDelta || undefined}
             deltaType={liceSec?.sentiment === "alert" ? "negative" : liceSec?.sentiment === "bearish" ? "negative" : "positive"}
             icon={Bug}
@@ -296,7 +296,7 @@ export default function BriefPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
         >
-          <EsgMoversCard section={esgSec} />
+          <EsgMoversCard section={esgSec} locale={locale} />
         </motion.div>
       )}
 
@@ -490,7 +490,7 @@ function EarlyWarningCard({ section, anomalyData }: { section: any; anomalyData:
 }
 
 /* ─── ESG Movers Card ─────────────────────────────────────────────── */
-function EsgMoversCard({ section }: { section: any }) {
+function EsgMoversCard({ section, locale }: { section: any; locale: "en" | "no" }) {
   const movers = parseEsgMovers(section.detail);
   const isStable = section.sentiment === "neutral" && movers.length === 0;
 
@@ -541,11 +541,11 @@ function EsgMoversCard({ section }: { section: any }) {
                   <span className={`text-[12px] font-bold font-mono ${
                     improving ? "text-emerald-400" : "text-rose-400"
                   }`}>
-                    {improving ? "+" : ""}{m.delta.toFixed(1)}
+                    {improving ? "+" : ""}{formatNumber(m.delta, locale, 1)}
                   </span>
                   <div className="w-px h-3 bg-white/[0.1]" />
                   <span className="text-[11px] font-mono text-[var(--text-secondary)]">
-                    {m.score.toFixed(0)}
+                    {formatNumber(m.score, locale, 0)}
                   </span>
                 </div>
               </div>

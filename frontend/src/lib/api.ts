@@ -23,7 +23,7 @@ import type {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-async function fetchAPI<T = unknown>(
+async function fetchAPI<T = any>(
   path: string,
   options?: RequestInit,
   _retries = 3,

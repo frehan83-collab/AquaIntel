@@ -22,7 +22,7 @@ import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import InteractiveChart, { DataPoint } from "@/components/InteractiveChart";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DataQualityBadge from "@/components/DataQualityBadge";
 
@@ -32,7 +32,7 @@ const TREATMENT_KEYS = ["mechanical", "thermal", "medicinal_bath", "medicinal_fe
 const REGULATORY_LIMIT = 0.5;
 
 export default function TreatmentPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [localityNo, setLocalityNo] = useState(10469);
   const [budgetInput, setBudgetInput] = useState("");
   const [selectedPa, setSelectedPa] = useState(3);
@@ -195,14 +195,14 @@ export default function TreatmentPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <KPICard
               label="Current Lice"
-              value={optimizeData.current_lice?.toFixed(3)}
+              value={formatNumber(optimizeData.current_lice, locale, 3)}
               delta="adult female/fish"
               deltaType={optimizeData.current_lice >= 0.5 ? "negative" : optimizeData.current_lice >= 0.2 ? "neutral" : "positive"}
               icon={TrendingDown}
             />
             <KPICard
               label="SST"
-              value={`${optimizeData.current_sst_c?.toFixed(1)}\u00B0C`}
+              value={`${formatNumber(optimizeData.current_sst_c, locale, 1)}\u00B0C`}
               delta="sea surface temp"
               icon={BarChart3}
             />
@@ -222,7 +222,7 @@ export default function TreatmentPage() {
             />
             <KPICard
               label="Est. Cost"
-              value={`${((rec?.projected_cost_nok || 0) / 1000).toFixed(0)}k NOK`}
+              value={`${formatNumber((rec?.projected_cost_nok || 0) / 1000, locale, 0)}k NOK`}
               delta="treatment cost"
               icon={DollarSign}
             />
@@ -256,7 +256,7 @@ export default function TreatmentPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-slate-400 text-sm">Projected lice at treatment:</span>
-                  <span className="text-white">{rec.projected_lice_at_treatment?.toFixed(4)}</span>
+                  <span className="text-white">{formatNumber(rec.projected_lice_at_treatment, locale, 4)}</span>
                 </div>
                 {optimizeData.budget_nok && (
                   <div className="flex items-center gap-3">
@@ -359,10 +359,10 @@ export default function TreatmentPage() {
                     <td className="py-2 px-2 text-right text-cyan-300">{t.efficacy_pct}%</td>
                     <td className="py-2 px-2 text-right text-orange-300">{t.mortality_pct}%</td>
                     <td className="py-2 px-2 text-right text-slate-300">{t.cost_per_fish_nok} NOK</td>
-                    <td className="py-2 px-2 text-right text-slate-300">{(t.total_cost_nok / 1000).toFixed(0)}k</td>
+                    <td className="py-2 px-2 text-right text-slate-300">{formatNumber(t.total_cost_nok / 1000, locale, 0)}k</td>
                     <td className="py-2 px-2 text-right text-slate-300">{t.recovery_weeks}w</td>
-                    <td className="py-2 px-2 text-right text-emerald-300">{t.post_treatment_lice?.toFixed(4)}</td>
-                    <td className="py-2 px-2 text-right font-bold text-amber-300">{t.roi_score?.toFixed(3)}</td>
+                    <td className="py-2 px-2 text-right text-emerald-300">{formatNumber(t.post_treatment_lice, locale, 4)}</td>
+                    <td className="py-2 px-2 text-right font-bold text-amber-300">{formatNumber(t.roi_score, locale, 3)}</td>
                     <td className="py-2 px-2 text-center">
                       {t.suitable ? (
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 mx-auto" />
@@ -406,7 +406,7 @@ export default function TreatmentPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div className="bg-slate-800/50 rounded p-3">
               <div className="text-xs text-slate-400">Treatment Cost</div>
-              <div className="text-lg font-bold text-white">{(costBenefitData.treatment_cost_nok / 1000).toFixed(0)}k NOK</div>
+              <div className="text-lg font-bold text-white">{formatNumber(costBenefitData.treatment_cost_nok / 1000, locale, 0)}k NOK</div>
             </div>
             <div className="bg-slate-800/50 rounded p-3">
               <div className="text-xs text-slate-400">Mortality</div>
@@ -414,12 +414,12 @@ export default function TreatmentPage() {
             </div>
             <div className="bg-slate-800/50 rounded p-3">
               <div className="text-xs text-slate-400">Regulatory Risk Avoided</div>
-              <div className="text-lg font-bold text-emerald-300">{(costBenefitData.regulatory_risk_cost_nok / 1000).toFixed(0)}k NOK</div>
+              <div className="text-lg font-bold text-emerald-300">{formatNumber(costBenefitData.regulatory_risk_cost_nok / 1000, locale, 0)}k NOK</div>
             </div>
             <div className="bg-slate-800/50 rounded p-3">
               <div className="text-xs text-slate-400">Net Benefit (ROI)</div>
               <div className={`text-lg font-bold ${costBenefitData.net_benefit_nok >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                {costBenefitData.net_benefit_nok >= 0 ? "+" : ""}{(costBenefitData.net_benefit_nok / 1000).toFixed(0)}k NOK ({costBenefitData.roi_ratio}x)
+                {costBenefitData.net_benefit_nok >= 0 ? "+" : ""}{formatNumber(costBenefitData.net_benefit_nok / 1000, locale, 0)}k NOK ({costBenefitData.roi_ratio}x)
               </div>
             </div>
           </div>
@@ -504,7 +504,7 @@ export default function TreatmentPage() {
           </div>
           <div>
             <label className="block text-xs text-slate-400 mb-1">
-              Current Lice Level: <span className="text-white font-medium">{ccLiceLevel.toFixed(1)} adult female/fish</span>
+              Current Lice Level: <span className="text-white font-medium">{formatNumber(ccLiceLevel, locale, 1)} adult female/fish</span>
             </label>
             <input
               type="range"
@@ -531,7 +531,7 @@ export default function TreatmentPage() {
           {ccData && (
             <span className="text-xs text-slate-500">
               SST: {ccData.inputs?.sea_temp_c}&deg;C | Fish: {(ccData.inputs?.fish_count || 0).toLocaleString()} |
-              Avoided loss (4w): {((ccData.avoided_loss_4w_nok || 0) / 1000).toFixed(0)}k NOK
+              Avoided loss (4w): {formatNumber((ccData.avoided_loss_4w_nok || 0) / 1000, locale, 0)}k NOK
             </span>
           )}
         </div>
@@ -584,17 +584,17 @@ export default function TreatmentPage() {
                         )}
                       </td>
                       <td className="py-2 px-2 text-right text-slate-300">
-                        {(m.total_with_mortality_nok / 1000).toFixed(0)}k
+                        {formatNumber(m.total_with_mortality_nok / 1000, locale, 0)}k
                         <span className="block text-[10px] text-slate-500">
-                          +{(m.mortality_cost_nok / 1000).toFixed(0)}k mort
+                          +{formatNumber(m.mortality_cost_nok / 1000, locale, 0)}k mort
                         </span>
                       </td>
                       <td className="py-2 px-2 text-right text-cyan-300">{m.efficacy_pct}%</td>
-                      <td className="py-2 px-2 text-right text-emerald-300">{m.post_treatment_lice.toFixed(3)}</td>
+                      <td className="py-2 px-2 text-right text-emerald-300">{formatNumber(m.post_treatment_lice, locale, 3)}</td>
                       <td className={`py-2 px-2 text-right font-medium ${
                         m.roi >= 1 ? "text-emerald-400" : m.roi >= 0 ? "text-amber-400" : "text-rose-400"
                       }`}>
-                        {m.roi >= 0 ? "+" : ""}{m.roi.toFixed(1)}x
+                        {m.roi >= 0 ? "+" : ""}{formatNumber(m.roi, locale, 1)}x
                       </td>
                       <td className="py-2 px-2 text-right text-orange-300">{m.mortality_risk_pct}%</td>
                       <td className="py-2 px-2 text-center">
@@ -616,7 +616,7 @@ export default function TreatmentPage() {
                         )}
                       </td>
                       <td className="py-2 px-2 text-right font-bold text-amber-300">
-                        {m.recommendation_score.toFixed(2)}
+                        {formatNumber(m.recommendation_score, locale, 2)}
                       </td>
                     </tr>
                   ))}
@@ -657,7 +657,7 @@ export default function TreatmentPage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                     <div>
                       <span className="text-slate-400 text-xs">Total Cost</span>
-                      <div className="text-white font-medium">{(rec.total_with_mortality_nok / 1000).toFixed(0)}k NOK</div>
+                      <div className="text-white font-medium">{formatNumber(rec.total_with_mortality_nok / 1000, locale, 0)}k NOK</div>
                     </div>
                     <div>
                       <span className="text-slate-400 text-xs">Efficacy</span>
@@ -666,7 +666,7 @@ export default function TreatmentPage() {
                     <div>
                       <span className="text-slate-400 text-xs">ROI</span>
                       <div className={`font-medium ${rec.roi >= 1 ? "text-emerald-400" : "text-amber-400"}`}>
-                        {rec.roi >= 0 ? "+" : ""}{rec.roi.toFixed(1)}x
+                        {rec.roi >= 0 ? "+" : ""}{formatNumber(rec.roi, locale, 1)}x
                       </div>
                     </div>
                     <div>
@@ -699,7 +699,7 @@ export default function TreatmentPage() {
             </div>
             <div className="bg-slate-800/50 rounded p-3">
               <div className="text-xs text-slate-400">Total Est. Cost</div>
-              <div className="text-lg font-bold text-cyan-300">{(networkData.total_estimated_cost_nok / 1_000_000).toFixed(1)}M NOK</div>
+              <div className="text-lg font-bold text-cyan-300">{formatNumber(networkData.total_estimated_cost_nok / 1_000_000, locale, 1)}M NOK</div>
             </div>
             <div className="bg-slate-800/50 rounded p-3">
               <div className="text-xs text-slate-400">Network Risk</div>
@@ -731,16 +731,16 @@ export default function TreatmentPage() {
                       <td className="py-2 px-2 text-white text-xs">{entry.farm_name?.slice(0, 25)}</td>
                       <td className="py-2 px-2 text-right text-slate-300">{entry.locality_no}</td>
                       <td className={`py-2 px-2 text-right font-medium ${entry.current_lice >= 0.5 ? "text-rose-400" : entry.current_lice >= 0.2 ? "text-amber-400" : "text-emerald-400"}`}>
-                        {entry.current_lice?.toFixed(3)}
+                        {formatNumber(entry.current_lice, locale, 3)}
                       </td>
-                      <td className="py-2 px-2 text-right text-slate-300">{entry.sst_c?.toFixed(1)}&deg;C</td>
+                      <td className="py-2 px-2 text-right text-slate-300">{formatNumber(entry.sst_c, locale, 1)}&deg;C</td>
                       <td className="py-2 px-2 text-center">{priorityBadge(entry.priority)}</td>
                       <td className="py-2 px-2 text-center text-white font-medium">
                         {entry.recommended_week > 0 ? `W${entry.recommended_week}` : "-"}
                       </td>
                       <td className="py-2 px-2 text-cyan-300 text-xs">{entry.recommended_treatment}</td>
                       <td className="py-2 px-2 text-right text-slate-300">
-                        {entry.estimated_cost_nok > 0 ? `${(entry.estimated_cost_nok / 1000).toFixed(0)}k` : "-"}
+                        {entry.estimated_cost_nok > 0 ? `${formatNumber(entry.estimated_cost_nok / 1000, locale, 0)}k` : "-"}
                       </td>
                       <td className="py-2 px-2 text-slate-400 text-xs max-w-[200px] truncate" title={entry.reason}>{entry.reason}</td>
                     </tr>

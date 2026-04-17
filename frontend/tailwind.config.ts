@@ -88,6 +88,30 @@ const config: Config = {
         sans: ["var(--font-sans)", "DM Sans", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
         display: ["var(--font-display)", "DM Serif Display", "Georgia", "serif"],
         mono: ["var(--font-mono)", "JetBrains Mono", "Fira Code", "monospace"],
+        data: ["var(--font-mono)", "JetBrains Mono", "Fira Code", "monospace"],
+      },
+      lineHeight: {
+        display: "var(--leading-display)",
+        heading: "var(--leading-heading)",
+        ui: "var(--leading-ui)",
+        body: "var(--leading-body)",
+      },
+      transitionDuration: {
+        instant: "60ms",
+        fast: "120ms",
+        base: "200ms",
+        slow: "320ms",
+        slower: "480ms",
+      },
+      transitionTimingFunction: {
+        "out-token": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "in-token": "cubic-bezier(0.4, 0, 1, 1)",
+        "in-out-token": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "bounce-token": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+      },
+      fontSize: {
+        "2xs": ["0.625rem", { lineHeight: "1rem" }],    // 10px — charts only
+        "3xs": ["0.5625rem", { lineHeight: "0.875rem" }], // 9px — chart axis
       },
       boxShadow: {
         glass: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",

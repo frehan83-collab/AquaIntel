@@ -9,7 +9,7 @@ import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DataQualityBadge from "@/components/DataQualityBadge";
 
@@ -22,7 +22,7 @@ const FLAG_EMOJI: Record<string, string> = {
 };
 
 export default function ChinaDemandPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [snapshot, setSnapshot] = useState<any>(null);
   const [signals, setSignals] = useState<any>(null);
   const [impact, setImpact] = useState<any>(null);
@@ -93,7 +93,7 @@ export default function ChinaDemandPage() {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <KPICard
           label="China Total Imports"
-          value={chinaTotal.tonnes_annual ? `${(chinaTotal.tonnes_annual / 1000).toFixed(0)}k t` : "\u2014"}
+          value={chinaTotal.tonnes_annual ? `${formatNumber(chinaTotal.tonnes_annual / 1000, locale, 0)}k t` : "\u2014"}
           delta={chinaTotal.estimate_year ? `${chinaTotal.estimate_year} estimate` : ""}
           deltaType="neutral"
           icon={Globe2}
@@ -119,7 +119,7 @@ export default function ChinaDemandPage() {
         <KPICard
           label="Demand Signal"
           value={signals?.signal_label || "\u2014"}
-          delta={signals?.signal_score ? `Score: ${signals.signal_score.toFixed(2)}` : ""}
+          delta={signals?.signal_score ? `Score: ${formatNumber(signals.signal_score, locale, 2)}` : ""}
           deltaType={signals?.signal_direction?.includes("bullish") ? "positive" : signals?.signal_direction?.includes("bearish") ? "negative" : "neutral"}
           icon={Zap}
           delay={0.15}
@@ -242,7 +242,7 @@ export default function ChinaDemandPage() {
                 <div className="p-3 rounded-lg bg-white/[0.03]">
                   <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Vol-Price Correlation</p>
                   <p className="text-lg font-bold text-[var(--text-primary)]">
-                    {impact.correlation_vol_price?.toFixed(2) || "\u2014"}
+                    {impact.correlation_vol_price != null ? formatNumber(impact.correlation_vol_price, locale, 2) : "\u2014"}
                   </p>
                 </div>
                 <div className="p-3 rounded-lg bg-white/[0.03]">
@@ -307,7 +307,7 @@ export default function ChinaDemandPage() {
                 </div>
                 <div className="p-3 rounded-lg bg-white/[0.03]">
                   <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Seasonal Index</p>
-                  <p className="text-lg font-bold text-[var(--text-primary)]">{signals.seasonal_index?.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-[var(--text-primary)]">{formatNumber(signals.seasonal_index, locale, 2)}</p>
                   <p className="text-[10px] text-[var(--text-muted)]">{signals.seasonal_label}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-white/[0.03]">

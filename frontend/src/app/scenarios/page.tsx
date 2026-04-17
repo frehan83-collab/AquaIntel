@@ -13,7 +13,7 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { exportToCSV } from "@/lib/export";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -285,7 +285,7 @@ function FanChart({ multi }: { multi: MultiResult }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ScenariosPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const handleError = useApiError();
 
   // Parameter state
@@ -397,12 +397,12 @@ export default function ScenariosPage() {
           : Object.values(result.scenarios).filter((v): v is number => typeof v === "number");
         if (vals.length === 0) return null;
         const above = vals.filter((v) => v > (result.current_price || result.current_spot_nok || 0)).length;
-        return ((above / vals.length) * 100).toFixed(1);
+        return formatNumber((above / vals.length) * 100, locale, 1);
       })()
     : null;
 
-  const fmtNOK = (v?: number) => (v != null ? `NOK ${v.toFixed(2)}` : "—");
-  const fmtPct = (v?: number) => (v != null ? `${v >= 0 ? "+" : ""}${v.toFixed(1)}%` : "—");
+  const fmtNOK = (v?: number) => (v != null ? `NOK ${formatNumber(v, locale, 2)}` : "—");
+  const fmtPct = (v?: number) => (v != null ? `${v >= 0 ? "+" : ""}${formatNumber(v, locale, 1)}%` : "—");
 
   return (
     <ErrorBoundary fallbackTitle="Scenarios error">
@@ -586,7 +586,7 @@ export default function ScenariosPage() {
           <KPICard
             label="Upside (P90)"
             value={fmtNOK(dist.p90)}
-            delta={`+${((dist.p90 - result.current_price) / result.current_price * 100).toFixed(1)}%`}
+            delta={`+${formatNumber((dist.p90 - result.current_price) / result.current_price * 100, locale, 1)}%`}
             deltaType="positive"
             icon={TrendingUp}
             delay={0.1}
@@ -594,7 +594,7 @@ export default function ScenariosPage() {
           <KPICard
             label="Downside (P10)"
             value={fmtNOK(dist.p10)}
-            delta={`${((dist.p10 - result.current_price) / result.current_price * 100).toFixed(1)}%`}
+            delta={`${formatNumber((dist.p10 - result.current_price) / result.current_price * 100, locale, 1)}%`}
             deltaType="negative"
             icon={TrendingDown}
             delay={0.15}
@@ -749,7 +749,7 @@ export default function ScenariosPage() {
                     <div className="flex justify-between">
                       <span className="text-[var(--text-secondary)]">P10–P90 Range</span>
                       <span className="text-[var(--text-secondary)] text-[10px]">
-                        {(col.result.distribution.p90 - col.result.distribution.p10).toFixed(2)}
+                        {formatNumber(col.result.distribution.p90 - col.result.distribution.p10, locale, 2)}
                       </span>
                     </div>
                   </div>
@@ -799,16 +799,16 @@ export default function ScenariosPage() {
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between">
                       <span className="text-[var(--text-secondary)]">National MAB</span>
-                      <span className="font-semibold text-[var(--text-primary)]">{typeof mab === "number" ? `${(mab / 1000).toFixed(0)}k t` : String(mab)}</span>
+                      <span className="font-semibold text-[var(--text-primary)]">{typeof mab === "number" ? `${formatNumber(mab / 1000, locale, 0)}k t` : String(mab)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[var(--text-secondary)]">Utilization</span>
-                      <span className="font-semibold text-[var(--text-primary)]">{typeof util === "number" ? `${(util * 100).toFixed(1)}%` : String(util)}</span>
+                      <span className="font-semibold text-[var(--text-primary)]">{typeof util === "number" ? `${formatNumber(util * 100, locale, 1)}%` : String(util)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[var(--text-secondary)]">Harvest Impact</span>
                       <span className={typeof delta === "number" && delta >= 0 ? "text-emerald-400" : "text-rose-400"}>
-                        {typeof delta === "number" ? `${delta >= 0 ? "+" : ""}${(delta * 100).toFixed(1)}%` : String(delta)}
+                        {typeof delta === "number" ? `${delta >= 0 ? "+" : ""}${formatNumber(delta * 100, locale, 1)}%` : String(delta)}
                       </span>
                     </div>
                   </div>

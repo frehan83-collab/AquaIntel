@@ -1,3 +1,6 @@
+// ⚠️  UNUSED — NOT IMPORTED BY ANY COMPONENT
+// This file is a Figma-sync artifact. Runtime source of truth is globals.css.
+// Session 39 audit: kept only for Figma round-trip; do not import from pages.
 // Auto-generated TypeScript theme object
 // Source: design tokens pipeline
 // Generated: 2026-04-08T16:50:18.495Z

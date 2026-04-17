@@ -10,7 +10,7 @@ import GlassCard from "@/components/GlassCard";
 import { ChartContainer, OceanAreaChart } from "@/components/charts";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DataQualityBadge from "@/components/DataQualityBadge";
 
@@ -26,7 +26,7 @@ const AGENTS = [
 ];
 
 export default function TwinPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [twinStatus, setTwinStatus] = useState<any>(null);
   const [simResult, setSimResult] = useState<any>(null);
   const [syncing, setSyncing] = useState(false);
@@ -139,7 +139,7 @@ export default function TwinPage() {
         />
         <KPICard
           label="National Avg Lice"
-          value={twinStatus?.national_avg_lice?.toFixed(3) || "—"}
+          value={twinStatus?.national_avg_lice != null ? formatNumber(twinStatus.national_avg_lice, locale, 3) : "—"}
           deltaType={twinStatus?.national_avg_lice < 0.2 ? "positive" : "negative"}
           icon={Bug}
           delay={0.03}
@@ -153,7 +153,7 @@ export default function TwinPage() {
         />
         <KPICard
           label="Total Biomass"
-          value={twinStatus?.total_biomass_tonnes ? `${(twinStatus.total_biomass_tonnes / 1000).toFixed(0)}kt` : "—"}
+          value={twinStatus?.total_biomass_tonnes ? `${formatNumber(twinStatus.total_biomass_tonnes / 1000, locale, 0)}kt` : "—"}
           icon={Fish}
           delay={0.09}
         />
@@ -278,15 +278,15 @@ export default function TwinPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <KPICard
                 label="Lice Reduction"
-                value={`${simResult.impact?.lice_reduction_pct > 0 ? "-" : "+"}${Math.abs(simResult.impact?.lice_reduction_pct || 0).toFixed(1)}%`}
+                value={`${simResult.impact?.lice_reduction_pct > 0 ? "-" : "+"}${formatNumber(Math.abs(simResult.impact?.lice_reduction_pct || 0), locale, 1)}%`}
                 deltaType={simResult.impact?.lice_reduction_pct > 0 ? "positive" : "negative"}
                 icon={Bug}
                 delay={0}
               />
               <KPICard
                 label="Final Avg Lice"
-                value={simResult.final?.avg_lice?.toFixed(3) || "—"}
-                delta={`Baseline: ${simResult.baseline?.avg_lice?.toFixed(3)}`}
+                value={simResult.final?.avg_lice != null ? formatNumber(simResult.final.avg_lice, locale, 3) : "—"}
+                delta={`Baseline: ${formatNumber(simResult.baseline?.avg_lice, locale, 3)}`}
                 deltaType={simResult.final?.avg_lice < simResult.baseline?.avg_lice ? "positive" : "negative"}
                 icon={TrendingDown}
                 delay={0.03}
@@ -355,6 +355,7 @@ export default function TwinPage() {
 
 // ── Biomass & Supply Outlook Section ────────────────��────────────────────────
 function BiomassOutlookSection() {
+  const { locale } = useTranslation();
   const [outlook, setOutlook] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [horizon, setHorizon] = useState(20);
@@ -408,14 +409,14 @@ function BiomassOutlookSection() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <KPICard
               label="Standing Biomass"
-              value={outlook.current_biomass_tonnes ? `${(outlook.current_biomass_tonnes / 1000).toFixed(0)}k t` : "\u2014"}
+              value={outlook.current_biomass_tonnes ? `${formatNumber(outlook.current_biomass_tonnes / 1000, locale, 0)}k t` : "\u2014"}
               delta="Live weight"
               icon={Fish} delay={0}
             />
             <KPICard
               label="MAB Utilization"
               value={outlook.utilization_pct != null ? `${outlook.utilization_pct}%` : "—"}
-              delta={outlook.national_mab ? `MAB: ${(outlook.national_mab / 1000).toFixed(0)}k t` : "—"}
+              delta={outlook.national_mab ? `MAB: ${formatNumber(outlook.national_mab / 1000, locale, 0)}k t` : "—"}
               deltaType={(outlook.utilization_pct ?? 0) > 90 ? "negative" : "positive"}
               icon={BarChart3} delay={0.03}
             />
@@ -471,7 +472,7 @@ function BiomassOutlookSection() {
                       <div className="absolute right-0 top-0 w-px h-full bg-rose-500/30" />
                     </div>
                     <span className="text-[9px] font-mono text-[var(--text-secondary)] w-14 text-right">
-                      {(b / 1000).toFixed(0)}k t
+                      {formatNumber(b / 1000, locale, 0)}k t
                     </span>
                   </div>
                 );

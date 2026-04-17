@@ -11,7 +11,7 @@ import GlassCard from "@/components/GlassCard";
 import KPICard from "@/components/KPICard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 
 const VERDICT_COLORS: Record<string, string> = {
   "Top Performer": "text-emerald-400",
@@ -30,7 +30,7 @@ const VERDICT_BG: Record<string, string> = {
 };
 
 export default function PrivacyBenchmarkPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [companyName, setCompanyName] = useState("Mowi");
   const [report, setReport] = useState<any>(null);
   const [cohorts, setCohorts] = useState<any[]>([]);
@@ -110,7 +110,7 @@ export default function PrivacyBenchmarkPage() {
               value={cohort.size_tier?.charAt(0).toUpperCase() + (cohort.size_tier?.slice(1) || "")}
               delta={cohort.description} icon={Users} delay={0} />
             <KPICard label="Cohort Rank"
-              value={`P${report.overall_percentile?.toFixed(0) || 50}`}
+              value={`P${report.overall_percentile != null ? formatNumber(report.overall_percentile, locale, 0) : 50}`}
               delta={report.overall_verdict}
               deltaType={report.overall_percentile >= 60 ? "positive" : report.overall_percentile <= 40 ? "negative" : "neutral"}
               icon={Award} delay={0.03} />
@@ -139,22 +139,22 @@ export default function PrivacyBenchmarkPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-[var(--text-secondary)]">Your Value</span>
-                    <span className="text-sm font-bold text-[var(--text-primary)]">{m.your_value?.toFixed(3)}</span>
+                    <span className="text-sm font-bold text-[var(--text-primary)]">{formatNumber(m.your_value, locale, 3)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-[var(--text-secondary)]">Cohort Avg <Lock className="w-2.5 h-2.5 inline ml-0.5 opacity-40" /></span>
-                    <span className="text-sm text-[var(--text-secondary)]">~{m.cohort_avg?.toFixed(3)}</span>
+                    <span className="text-sm text-[var(--text-secondary)]">~{formatNumber(m.cohort_avg, locale, 3)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-[var(--text-secondary)]">Industry Avg <Lock className="w-2.5 h-2.5 inline ml-0.5 opacity-40" /></span>
-                    <span className="text-sm text-[var(--text-secondary)]">~{m.industry_avg?.toFixed(3)}</span>
+                    <span className="text-sm text-[var(--text-secondary)]">~{formatNumber(m.industry_avg, locale, 3)}</span>
                   </div>
 
                   {/* Percentile bar */}
                   <div className="pt-2">
                     <div className="flex justify-between text-[9px] text-[var(--text-secondary)] mb-1">
                       <span>Cohort Percentile</span>
-                      <span className={VERDICT_COLORS[m.verdict]}>{m.cohort_percentile?.toFixed(0)}th</span>
+                      <span className={VERDICT_COLORS[m.verdict]}>{formatNumber(m.cohort_percentile, locale, 0)}th</span>
                     </div>
                     <div className="h-2 bg-white/[0.06] rounded-full overflow-hidden">
                       <motion.div

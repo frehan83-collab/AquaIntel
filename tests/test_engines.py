@@ -293,7 +293,6 @@ class TestESGScorer:
         from core.market.esg_scorer import esg_scorer
         assert esg_scorer is not None
 
-    @pytest.mark.xfail(reason="ESG compute_all is now async, internally calls async top50")
     def test_get_all_returns_data(self):
         from core.market.esg_scorer import esg_scorer
         result = run_async(esg_scorer.compute_all())

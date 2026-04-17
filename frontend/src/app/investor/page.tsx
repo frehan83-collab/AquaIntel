@@ -10,7 +10,7 @@ import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DataQualityBadge from "@/components/DataQualityBadge";
 
@@ -19,7 +19,7 @@ import DataQualityBadge from "@/components/DataQualityBadge";
 const TICKERS = ["MOWI", "SALM", "LSG", "GSF", "BAKKA"];
 
 export default function InvestorPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const handleError = useApiError();
   const [companies, setCompanies] = useState<any[]>([]);
   const [esg, setEsg] = useState<any[]>([]);
@@ -112,7 +112,7 @@ export default function InvestorPage() {
           deltaType={(disease?.active_cases || 0) > 5 ? "negative" : "positive"}
           icon={AlertTriangle} delay={0} />
         <KPICard label="Avg Lice (National)"
-          value={lice ? `${Number(lice.avg_adult_female_lice).toFixed(3)}` : "\u2014"}
+          value={lice ? formatNumber(Number(lice.avg_adult_female_lice), locale, 3) : "\u2014"}
           delta={lice ? `${lice.sites_above_threshold} sites >0.5` : undefined}
           deltaType={lice?.avg_adult_female_lice > 0.3 ? "negative" : "positive"}
           icon={Bug} delay={0} />
@@ -180,7 +180,7 @@ export default function InvestorPage() {
                       <Wheat className="w-3 h-3" /> Feed Pressure Index
                     </span>
                     <span className="text-[11px] font-mono font-bold">
-                      {Number(macro.indices.feed_pressure.value).toFixed(1)}
+                      {formatNumber(Number(macro.indices.feed_pressure.value), locale, 1)}
                     </span>
                   </div>
                   <div className="w-full h-1.5 rounded-full bg-white/[0.06]">
@@ -200,7 +200,7 @@ export default function InvestorPage() {
                     <Activity className="w-3 h-3" /> NOK/USD
                   </span>
                   <span className="text-[11px] font-mono font-bold text-ocean-300">
-                    {Number(macro.benchmarks.nok_usd).toFixed(4)}
+                    {formatNumber(Number(macro.benchmarks.nok_usd), locale, 4)}
                   </span>
                 </div>
               )}
@@ -244,7 +244,7 @@ export default function InvestorPage() {
                     <p className="text-[10px] text-[var(--text-secondary)]">{co.name}</p>
                   </div>
                   {price && (
-                    <span className="text-sm font-bold text-ocean-300">NOK {Number(price).toFixed(0)}</span>
+                    <span className="text-sm font-bold text-ocean-300">NOK {formatNumber(Number(price), locale, 0)}</span>
                   )}
                 </div>
 
@@ -253,7 +253,7 @@ export default function InvestorPage() {
                   <div>
                     <p className={`text-xs font-bold ${
                       co.avg_lice > 0.3 ? "text-rose-400" : co.avg_lice > 0.15 ? "text-amber-400" : "text-emerald-400"
-                    }`}>{co.avg_lice?.toFixed(3) || "\u2014"}</p>
+                    }`}>{co.avg_lice != null ? formatNumber(co.avg_lice, locale, 3) : "\u2014"}</p>
                     <p className="text-[8px] text-[var(--text-secondary)]">Avg Lice</p>
                   </div>
                   <div>
@@ -289,12 +289,12 @@ export default function InvestorPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[var(--text-secondary)]">Performance Score</span>
-                      <span className="font-bold">{co.performance_score?.toFixed(0)}</span>
+                      <span className="font-bold">{formatNumber(co.performance_score, locale, 0)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[var(--text-secondary)]">% Above Threshold</span>
                       <span className={co.pct_above_threshold > 20 ? "text-rose-400" : "text-emerald-400"}>
-                        {co.pct_above_threshold?.toFixed(1)}%
+                        {formatNumber(co.pct_above_threshold, locale, 1)}%
                       </span>
                     </div>
                     {esgScore && (
@@ -357,7 +357,7 @@ export default function InvestorPage() {
                 <div className="flex justify-between p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                   <span className="text-[11px] text-[var(--text-secondary)]">Fish Pool Index</span>
                   <span className="text-[11px] font-mono font-bold text-amber-300">
-                    &euro;{Number(equity.benchmarks.fpi_eur_per_kg).toFixed(2)}/kg
+                    &euro;{formatNumber(Number(equity.benchmarks.fpi_eur_per_kg), locale, 2)}/kg
                   </span>
                 </div>
               )}
@@ -365,7 +365,7 @@ export default function InvestorPage() {
                 <div className="flex justify-between p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                   <span className="text-[11px] text-[var(--text-secondary)]">SSB Export Spot</span>
                   <span className="text-[11px] font-mono font-bold text-ocean-300">
-                    NOK {Number(equity.benchmarks.ssb_nok_per_kg).toFixed(1)}/kg
+                    NOK {formatNumber(Number(equity.benchmarks.ssb_nok_per_kg), locale, 1)}/kg
                   </span>
                 </div>
               )}
@@ -426,7 +426,7 @@ export default function InvestorPage() {
             <div key={label} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
               <div className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-1">{label}</div>
               <div className="text-lg font-bold text-[var(--text-primary)]">
-                {prefix}{(data?.latest_value || data?.value || data?.data?.[data?.data?.length - 1]?.value || 0).toFixed(2)}{suffix}
+                {prefix}{formatNumber(data?.latest_value || data?.value || data?.data?.[data?.data?.length - 1]?.value || 0, locale, 2)}{suffix}
               </div>
               <div className="text-[10px] text-[var(--text-secondary)] mt-0.5">24-month FRED data</div>
             </div>

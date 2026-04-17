@@ -11,7 +11,7 @@ import KPICard from "@/components/KPICard";
 import { OcButton } from "@/components/ui/Button";
 import dynamic from "next/dynamic";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DataQualityBadge from "@/components/DataQualityBadge";
 
@@ -54,7 +54,7 @@ const PA_NAMES: Record<number, string> = {
 };
 
 export default function ExposurePage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   // Exposure data
   const [companies, setCompanies] = useState<any[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
@@ -123,7 +123,7 @@ export default function ExposurePage() {
   const maxLice = summary?.max_adult_female_lice ?? 0;
   const nAbove = summary?.sites_above_threshold ?? 0;
   const nTotal = summary?.records ?? 1;
-  const pctAbove = ((nAbove / nTotal) * 100).toFixed(1);
+  const pctAbove = formatNumber((nAbove / nTotal) * 100, locale, 1);
 
   const redPAs = regimeStates.filter(s => s.current_color === "red").length;
   const yellowPAs = regimeStates.filter(s => s.current_color === "yellow").length;
@@ -190,14 +190,14 @@ export default function ExposurePage() {
         />
         <KPICard
           label="Avg Lice"
-          value={avgLice?.toFixed(3) ?? "\u2014"}
+          value={avgLice != null ? formatNumber(avgLice, locale, 3) : "\u2014"}
           delta={avgLice < 0.2 ? "Below limit" : avgLice < 0.5 ? "Elevated" : "ABOVE LIMIT"}
           deltaType={avgLice < 0.2 ? "positive" : "negative"}
           icon={Bug} delay={0.04}
         />
         <KPICard
           label="Max Observed"
-          value={maxLice?.toFixed(2) ?? "\u2014"}
+          value={maxLice != null ? formatNumber(maxLice, locale, 2) : "\u2014"}
           delta={maxLice > 0.5 ? "Exceeds 0.5 threshold" : "Within limit"}
           deltaType={maxLice > 0.5 ? "negative" : "positive"}
           icon={AlertTriangle} delay={0.08}
@@ -303,7 +303,7 @@ export default function ExposurePage() {
                     {state.current_color?.toUpperCase()}
                   </span>
                   <div className="flex items-center gap-1 text-[9px] text-[var(--text-secondary)]">
-                    <span>P: {(state.lice_pressure_score * 100).toFixed(0)}%</span>
+                    <span>P: {formatNumber(state.lice_pressure_score * 100, locale, 0)}%</span>
                     {isSelected && <ChevronRight className="w-3 h-3 text-ocean-400" />}
                   </div>
                 </div>
@@ -340,7 +340,7 @@ export default function ExposurePage() {
               <div>
                 <div className="text-[10px] text-[var(--text-secondary)] mb-1">Lice Pressure</div>
                 <div className="text-sm font-bold text-[var(--text-primary)]">
-                  {(paDetail.lice_pressure_score * 100).toFixed(0)}%
+                  {formatNumber(paDetail.lice_pressure_score * 100, locale, 0)}%
                 </div>
               </div>
               <div>
@@ -415,7 +415,7 @@ export default function ExposurePage() {
                 <p className="text-xs font-bold text-[var(--text-primary)]">PA-{pa}</p>
                 <p className={`text-lg font-bold mt-1 ${
                   s.avgLice >= 0.3 ? "text-rose-400" : s.avgLice >= 0.15 ? "text-amber-400" : "text-emerald-400"
-                }`}>{s.avgLice.toFixed(3)}</p>
+                }`}>{formatNumber(s.avgLice, locale, 3)}</p>
                 <p className="text-[10px] text-[var(--text-secondary)]">{s.companies} cos &middot; {s.totalLocs} sites</p>
               </motion.div>
             );
@@ -445,7 +445,7 @@ export default function ExposurePage() {
                     <span className={TRAFFIC_LIGHT_TEXT[alert.current]}>{alert.current}</span>
                     <span className="text-[var(--text-secondary)]">&rarr;</span>
                     <span className={TRAFFIC_LIGHT_TEXT[alert.predicted]}>{alert.predicted}</span>
-                    <span className="text-[var(--text-secondary)] ml-1">({(alert.probability * 100).toFixed(0)}%)</span>
+                    <span className="text-[var(--text-secondary)] ml-1">({formatNumber(alert.probability * 100, locale, 0)}%)</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-[9px] text-[var(--text-secondary)]">
@@ -539,10 +539,10 @@ export default function ExposurePage() {
                     />
                   </div>
                   <span className="text-[9px] font-semibold text-rose-400 w-8 text-right">
-                    {(farm.exceed_probability * 100).toFixed(0)}%
+                    {formatNumber(farm.exceed_probability * 100, locale, 0)}%
                   </span>
                   <span className="text-[9px] text-[var(--text-secondary)] w-12 text-right">
-                    {farm.predicted_lice?.toFixed(2)} lice
+                    {formatNumber(farm.predicted_lice, locale, 2)} lice
                   </span>
                 </div>
               ))}
@@ -581,7 +581,7 @@ export default function ExposurePage() {
                   ["Connections", graphSummary.n_connections ?? "\u2014"],
                   ["Clusters", graphSummary.n_clusters ?? "\u2014"],
                   ["Above threshold", graphSummary.n_above_threshold ?? "\u2014"],
-                  ["Avg lice (network)", (graphSummary.avg_lice ?? 0).toFixed(3)],
+                  ["Avg lice (network)", formatNumber(graphSummary.avg_lice ?? 0, locale, 3)],
                 ].map(([label, val]) => (
                   <div key={label as string} className="flex items-center justify-between py-1 border-b border-white/[0.04] last:border-0">
                     <span className="text-[11px] text-[var(--text-secondary)]">{label}</span>
@@ -617,7 +617,7 @@ export default function ExposurePage() {
                       <span className="text-[10px] text-rose-400">{cl.farm_count ?? cl.size ?? "?"} farms</span>
                     </div>
                     <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
-                      Avg lice: {(cl.avg_lice ?? cl.mean_lice ?? 0).toFixed(3)} &middot; PA {cl.pa ?? cl.production_area ?? "?"}
+                      Avg lice: {formatNumber(cl.avg_lice ?? cl.mean_lice ?? 0, locale, 3)} &middot; PA {cl.pa ?? cl.production_area ?? "?"}
                     </p>
                     {cl.dominant_company && (
                       <p className="text-[9px] text-rose-400 mt-0.5">{cl.dominant_company}</p>
@@ -649,7 +649,7 @@ export default function ExposurePage() {
                       <span className="text-[10px] text-amber-400">&rarr; {cas.affected_farms ?? cas.n_affected ?? "?"} farms</span>
                     </div>
                     <p className="text-[10px] text-[var(--text-secondary)] mt-0.5 truncate">
-                      Risk: {cas.cascade_risk?.toFixed(2) ?? "?"} &middot; {cas.direction ?? "downflow"}
+                      Risk: {cas.cascade_risk != null ? formatNumber(cas.cascade_risk, locale, 2) : "?"} &middot; {cas.direction ?? "downflow"}
                     </p>
                   </div>
                 ))}
@@ -705,12 +705,12 @@ export default function ExposurePage() {
                   <td className="py-2.5 px-3">
                     <span className={`font-mono text-xs ${
                       co.avg_lice > 0.3 ? "text-rose-400" : co.avg_lice > 0.15 ? "text-amber-400" : "text-emerald-400"
-                    }`}>{co.avg_lice?.toFixed(3) || "\u2014"}</span>
+                    }`}>{co.avg_lice != null ? formatNumber(co.avg_lice, locale, 3) : "\u2014"}</span>
                   </td>
                   <td className="py-2.5 px-3">
                     <span className={`text-xs font-bold ${
                       co.performance_score >= 70 ? "text-emerald-400" : co.performance_score >= 40 ? "text-amber-400" : "text-rose-400"
-                    }`}>{co.performance_score?.toFixed(0)}</span>
+                    }`}>{formatNumber(co.performance_score, locale, 0)}</span>
                   </td>
                   <td className="py-2.5 px-3">
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${
@@ -748,9 +748,9 @@ export default function ExposurePage() {
             {[
               { label: "Company", value: selectedCompany.name },
               { label: "Sites", value: selectedCompany.n_localities },
-              { label: "Avg Lice", value: selectedCompany.avg_lice?.toFixed(4) },
-              { label: "Max Lice", value: selectedCompany.max_lice?.toFixed(4) },
-              { label: "Score", value: selectedCompany.performance_score?.toFixed(1) },
+              { label: "Avg Lice", value: selectedCompany.avg_lice != null ? formatNumber(selectedCompany.avg_lice, locale, 4) : "\u2014" },
+              { label: "Max Lice", value: selectedCompany.max_lice != null ? formatNumber(selectedCompany.max_lice, locale, 4) : "\u2014" },
+              { label: "Score", value: selectedCompany.performance_score != null ? formatNumber(selectedCompany.performance_score, locale, 1) : "\u2014" },
               { label: "Production Areas", value: selectedCompany.production_areas?.map((p: number) => `PA-${p}`).join(", ") },
               { label: "Risk Level", value: selectedCompany.risk_level },
               { label: "Lice Records", value: selectedCompany.n_lice_records?.toLocaleString() },

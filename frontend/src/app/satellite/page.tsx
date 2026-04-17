@@ -16,7 +16,7 @@ import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { exportToCSV } from "@/lib/export";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* ─── Anomaly styling ───────────────────────────────────────────────── */
@@ -122,7 +122,7 @@ function riskBg(level: string): string {
 /* ─── Page ──────────────────────────────────────────────────────────── */
 
 export default function SatellitePage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const handleError = useApiError();
   const [status, setStatus] = useState<any>(null);
   const [snapshot, setSnapshot] = useState<any>(null);
@@ -368,7 +368,7 @@ export default function SatellitePage() {
                   onClick={() => setSelectedPa(pa.pa)}>
                   <div className="text-[10px] text-[var(--text-secondary)]">PA {pa.pa}</div>
                   <div className="text-sm font-bold text-[var(--text-primary)]">
-                    {pa.sst_current_c != null ? `${pa.sst_current_c.toFixed(1)}°C` : "N/A"}
+                    {pa.sst_current_c != null ? `${formatNumber(pa.sst_current_c, locale, 1)}°C` : "N/A"}
                   </div>
                   <div className={`text-[9px] ${riskColor(pa.risk_level)}`}>
                     {pa.risk_level}
@@ -392,9 +392,9 @@ export default function SatellitePage() {
             SST Trend &mdash; PA {selectedPa} ({sstProjections?.pa_name || ""})
             <span className="text-[10px] font-normal text-[var(--text-secondary)] ml-auto">
               {sstProjections?.trend_direction === "warming"
-                ? `+${sstProjections.trend_c_per_year?.toFixed(2)}°C/yr`
+                ? `+${formatNumber(sstProjections.trend_c_per_year, locale, 2)}°C/yr`
                 : sstProjections?.trend_direction === "cooling"
-                ? `${sstProjections.trend_c_per_year?.toFixed(2)}°C/yr`
+                ? `${formatNumber(sstProjections.trend_c_per_year, locale, 2)}°C/yr`
                 : "Stable trend"}
             </span>
           </h3>
@@ -412,7 +412,7 @@ export default function SatellitePage() {
               <span>Projected:</span>
               {sstProjections.projections.map((p: any) => (
                 <span key={p.year} className="text-cyan-400 font-mono">
-                  {p.year}: {p.projected_sst_c?.toFixed(1)}°C
+                  {p.year}: {formatNumber(p.projected_sst_c, locale, 1)}°C
                 </span>
               ))}
               <span className="ml-auto opacity-60">Optimal: {sstProjections.optimal_sst_c}°C</span>
@@ -652,8 +652,8 @@ export default function SatellitePage() {
                     <p className="text-[10px] text-[var(--text-secondary)] truncate">{a.anomaly_detail}</p>
                   </div>
                   <div className="text-right flex-shrink-0 text-[10px]">
-                    <div className="text-[var(--text-secondary)]">NDWI: {a.ndwi?.toFixed(3)}</div>
-                    <div className="text-[var(--text-secondary)]">NDVI: {a.ndvi?.toFixed(3)}</div>
+                    <div className="text-[var(--text-secondary)]">NDWI: {formatNumber(a.ndwi, locale, 3)}</div>
+                    <div className="text-[var(--text-secondary)]">NDVI: {formatNumber(a.ndvi, locale, 3)}</div>
                   </div>
                 </motion.div>
               );
@@ -671,9 +671,9 @@ export default function SatellitePage() {
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: "Avg NDWI", value: summary.avg_ndwi?.toFixed(4) || "\u2014", desc: "Water presence index" },
-              { label: "Avg NDVI", value: summary.avg_ndvi?.toFixed(4) || "\u2014", desc: "Vegetation/chlorophyll" },
-              { label: "Avg Turbidity", value: summary.avg_turbidity?.toFixed(4) || "\u2014", desc: "Surface disturbance" },
+              { label: "Avg NDWI", value: summary.avg_ndwi != null ? formatNumber(summary.avg_ndwi, locale, 4) : "\u2014", desc: "Water presence index" },
+              { label: "Avg NDVI", value: summary.avg_ndvi != null ? formatNumber(summary.avg_ndvi, locale, 4) : "\u2014", desc: "Vegetation/chlorophyll" },
+              { label: "Avg Turbidity", value: summary.avg_turbidity != null ? formatNumber(summary.avg_turbidity, locale, 4) : "\u2014", desc: "Surface disturbance" },
               { label: "Anomaly Rate", value: `${summary.anomaly_rate_pct || 0}%`, desc: "Farms with anomalies" },
             ].map(({ label, value, desc }) => (
               <div key={label} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
@@ -732,10 +732,10 @@ export default function SatellitePage() {
                         <span className="text-[var(--text-primary)]">{r.name}</span>
                         <span className="text-[9px] text-[var(--text-secondary)] ml-1">#{r.locality_no}</span>
                       </td>
-                      <td className="py-2 px-3 font-mono text-[10px] text-[var(--text-secondary)]">{r.ndwi?.toFixed(3)}</td>
-                      <td className="py-2 px-3 font-mono text-[10px] text-[var(--text-secondary)]">{r.ndvi?.toFixed(3)}</td>
-                      <td className="py-2 px-3 font-mono text-[10px] text-[var(--text-secondary)]">{r.turbidity?.toFixed(3)}</td>
-                      <td className="py-2 px-3 font-mono text-[10px] text-[var(--text-secondary)]">{r.cloud_pct?.toFixed(0)}%</td>
+                      <td className="py-2 px-3 font-mono text-[10px] text-[var(--text-secondary)]">{formatNumber(r.ndwi, locale, 3)}</td>
+                      <td className="py-2 px-3 font-mono text-[10px] text-[var(--text-secondary)]">{formatNumber(r.ndvi, locale, 3)}</td>
+                      <td className="py-2 px-3 font-mono text-[10px] text-[var(--text-secondary)]">{formatNumber(r.turbidity, locale, 3)}</td>
+                      <td className="py-2 px-3 font-mono text-[10px] text-[var(--text-secondary)]">{formatNumber(r.cloud_pct, locale, 0)}%</td>
                       <td className="py-2 px-3">
                         {r.anomaly_detected ? (
                           <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
@@ -765,25 +765,25 @@ export default function SatellitePage() {
             {norkystData.sst_c != null && (
               <div className="bg-white/[0.04] rounded-lg p-3 border border-white/[0.06]">
                 <p className="text-[10px] text-[var(--text-secondary)]">SST (800m)</p>
-                <p className="text-lg font-bold text-[var(--text-primary)]">{norkystData.sst_c?.toFixed(1)}°C</p>
+                <p className="text-lg font-bold text-[var(--text-primary)]">{formatNumber(norkystData.sst_c, locale, 1)}°C</p>
               </div>
             )}
             {norkystData.salinity_psu != null && (
               <div className="bg-white/[0.04] rounded-lg p-3 border border-white/[0.06]">
                 <p className="text-[10px] text-[var(--text-secondary)]">Salinity</p>
-                <p className="text-lg font-bold text-[var(--text-primary)]">{norkystData.salinity_psu?.toFixed(1)} PSU</p>
+                <p className="text-lg font-bold text-[var(--text-primary)]">{formatNumber(norkystData.salinity_psu, locale, 1)} PSU</p>
               </div>
             )}
             {norkystData.current_speed_ms != null && (
               <div className="bg-white/[0.04] rounded-lg p-3 border border-white/[0.06]">
                 <p className="text-[10px] text-[var(--text-secondary)]">Current Speed</p>
-                <p className="text-lg font-bold text-[var(--text-primary)]">{norkystData.current_speed_ms?.toFixed(2)} m/s</p>
+                <p className="text-lg font-bold text-[var(--text-primary)]">{formatNumber(norkystData.current_speed_ms, locale, 2)} m/s</p>
               </div>
             )}
             {norkystData.current_direction_deg != null && (
               <div className="bg-white/[0.04] rounded-lg p-3 border border-white/[0.06]">
                 <p className="text-[10px] text-[var(--text-secondary)]">Current Dir</p>
-                <p className="text-lg font-bold text-[var(--text-primary)]">{norkystData.current_direction_deg?.toFixed(0)}°</p>
+                <p className="text-lg font-bold text-[var(--text-primary)]">{formatNumber(norkystData.current_direction_deg, locale, 0)}°</p>
               </div>
             )}
           </div>
@@ -812,7 +812,7 @@ export default function SatellitePage() {
             {paceHabData.chlorophyll_a_mg_m3 != null && (
               <div className="bg-white/[0.04] rounded-lg p-3 border border-white/[0.06]">
                 <p className="text-[10px] text-[var(--text-secondary)]">Chl-a</p>
-                <p className="text-lg font-bold text-[var(--text-primary)]">{paceHabData.chlorophyll_a_mg_m3?.toFixed(2)} mg/m³</p>
+                <p className="text-lg font-bold text-[var(--text-primary)]">{formatNumber(paceHabData.chlorophyll_a_mg_m3, locale, 2)} mg/m³</p>
               </div>
             )}
             {paceHabData.dominant_species && (

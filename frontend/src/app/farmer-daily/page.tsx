@@ -719,7 +719,7 @@ export default function FarmerDailyPage() {
                   welfare.total_score >= 70 ? "text-emerald-400" :
                   welfare.total_score >= 40 ? "text-amber-400" : "text-rose-400"
                 }`}>
-                  {welfare.total_score?.toFixed(0)}<span className="text-sm text-[var(--text-secondary)]">/100</span>
+                  {formatNumber(welfare.total_score, locale, 0)}<span className="text-sm text-[var(--text-secondary)]">/100</span>
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
                   welfare.grade === "A" ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400" :
@@ -731,7 +731,7 @@ export default function FarmerDailyPage() {
                 </span>
                 {welfare.predicted_mortality_7d != null && (
                   <span className="text-xs text-[var(--text-secondary)]">
-                    7d mortality: {(welfare.predicted_mortality_7d * 100).toFixed(2)}%
+                    7d mortality: {formatNumber(welfare.predicted_mortality_7d * 100, locale, 2)}%
                   </span>
                 )}
               </div>
@@ -749,7 +749,7 @@ export default function FarmerDailyPage() {
                           style={{ width: `${Math.min(100, val as number)}%` }}
                         />
                       </div>
-                      <span className="text-[10px] text-[var(--text-secondary)] w-8 text-right">{(val as number)?.toFixed(0)}</span>
+                      <span className="text-[10px] text-[var(--text-secondary)] w-8 text-right">{formatNumber(val as number, locale, 0)}</span>
                     </div>
                   ))}
                 </div>
@@ -781,7 +781,7 @@ export default function FarmerDailyPage() {
                 {advisory.forecast_1w != null && (
                   <div className="bg-white/[0.04] rounded-lg p-2">
                     <span className="text-[var(--text-secondary)]">1w forecast:</span>{" "}
-                    <span className="text-[var(--text-primary)]">{advisory.forecast_1w?.toFixed(2)} lice</span>
+                    <span className="text-[var(--text-primary)]">{formatNumber(advisory.forecast_1w, locale, 2)} lice</span>
                   </div>
                 )}
               </div>

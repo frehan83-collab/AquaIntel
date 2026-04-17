@@ -23,7 +23,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -55,7 +55,7 @@ const ACTION_CONFIG: Record<string, { color: string; bg: string; Icon: any; labe
 };
 
 export default function HarvestPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const handleError = useApiError();
   const [localityNo, setLocalityNo] = useState(10469);
   const [companyName, setCompanyName] = useState("");
@@ -215,29 +215,29 @@ export default function HarvestPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <KPICard
                 label={t("harvest.expected_weight")}
-                value={`${state.fish_weight_kg?.toFixed(2)} kg`}
+                value={`${formatNumber(state.fish_weight_kg, locale, 2)} kg`}
                 icon={Fish}
               />
               <KPICard
                 label="Lice Count"
-                value={state.lice_count?.toFixed(2)}
+                value={formatNumber(state.lice_count, locale, 2)}
                 icon={AlertTriangle}
                 delta={state.lice_count > 0.4 ? "above threshold" : "normal range"}
                 deltaType={state.lice_count > 0.4 ? "negative" : "positive"}
               />
               <KPICard
                 label="Sea Temp"
-                value={`${state.sea_temp_c?.toFixed(1)}\u00B0C`}
+                value={`${formatNumber(state.sea_temp_c, locale, 1)}\u00B0C`}
                 icon={Thermometer}
               />
               <KPICard
                 label="SSB Price"
-                value={`NOK ${state.market_price_nok?.toFixed(1)}`}
+                value={`NOK ${formatNumber(state.market_price_nok, locale, 1)}`}
                 icon={DollarSign}
               />
               <KPICard
                 label="Biomass"
-                value={`${state.cage_biomass_tonnes?.toFixed(0)} t`}
+                value={`${formatNumber(state.cage_biomass_tonnes, locale, 0)} t`}
                 icon={BarChart3}
               />
               <KPICard
@@ -287,19 +287,19 @@ export default function HarvestPage() {
                 <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                   <p className="text-xs text-[var(--text-secondary)]">Harvest Now</p>
                   <p className="text-lg font-bold text-[var(--text-primary)]">
-                    NOK {rev.harvest_now_nok_per_fish?.toFixed(1)}/fish
+                    NOK {formatNumber(rev.harvest_now_nok_per_fish, locale, 1)}/fish
                   </p>
                   <p className="text-sm text-[var(--text-secondary)]">
-                    Total: {rev.harvest_now_total_mnok?.toFixed(1)} MNOK
+                    Total: {formatNumber(rev.harvest_now_total_mnok, locale, 1)} MNOK
                   </p>
                 </div>
                 <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                   <p className="text-xs text-[var(--text-secondary)]">Harvest +4 Weeks</p>
                   <p className="text-lg font-bold text-[var(--text-primary)]">
-                    NOK {rev.harvest_4w_nok_per_fish?.toFixed(1)}/fish
+                    NOK {formatNumber(rev.harvest_4w_nok_per_fish, locale, 1)}/fish
                   </p>
                   <p className="text-sm text-[var(--text-secondary)]">
-                    Total: {rev.harvest_4w_total_mnok?.toFixed(1)} MNOK
+                    Total: {formatNumber(rev.harvest_4w_total_mnok, locale, 1)} MNOK
                   </p>
                 </div>
                 <div className="bg-white/5 rounded-xl p-4 border border-white/10">
@@ -312,7 +312,7 @@ export default function HarvestPage() {
                     }`}
                   >
                     {(rev.difference_pct || 0) > 0 ? "+" : ""}
-                    {rev.difference_pct?.toFixed(1)}%
+                    {formatNumber(rev.difference_pct, locale, 1)}%
                   </p>
                   <p className="text-sm text-[var(--text-secondary)]">
                     vs harvesting today
@@ -453,7 +453,7 @@ export default function HarvestPage() {
                           >
                             <td className="px-2 py-1 text-[var(--text-primary)]">{t.week}</td>
                             <td className="px-2 py-1 text-right text-[var(--text-primary)]">
-                              {t.fish_weight_kg?.toFixed(2)}
+                              {formatNumber(t.fish_weight_kg, locale, 2)}
                             </td>
                             <td
                               className={`px-2 py-1 text-right ${
@@ -464,13 +464,13 @@ export default function HarvestPage() {
                                   : "text-[var(--text-primary)]"
                               }`}
                             >
-                              {t.lice_count?.toFixed(3)}
+                              {formatNumber(t.lice_count, locale, 3)}
                             </td>
                             <td className="px-2 py-1 text-right text-[var(--text-secondary)]">
-                              {t.sea_temp_c?.toFixed(1)}
+                              {formatNumber(t.sea_temp_c, locale, 1)}
                             </td>
                             <td className="px-2 py-1 text-right text-[var(--text-secondary)]">
-                              {t.cage_biomass_tonnes?.toFixed(0)}
+                              {formatNumber(t.cage_biomass_tonnes, locale, 0)}
                             </td>
                             <td className="px-2 py-1">
                               <span className={`text-xs font-medium ${aCfg.color}`}>
@@ -560,12 +560,12 @@ export default function HarvestPage() {
                 />
                 <KPICard
                   label="Current Rev"
-                  value={`${portfolioData.summary.total_current_revenue_mnok?.toFixed(0)} MNOK`}
+                  value={`${formatNumber(portfolioData.summary.total_current_revenue_mnok, locale, 0)} MNOK`}
                   icon={DollarSign}
                 />
                 <KPICard
                   label="Revenue Uplift"
-                  value={`${(portfolioData.summary.revenue_uplift_pct || 0) > 0 ? "+" : ""}${portfolioData.summary.revenue_uplift_pct?.toFixed(1)}%`}
+                  value={`${(portfolioData.summary.revenue_uplift_pct || 0) > 0 ? "+" : ""}${formatNumber(portfolioData.summary.revenue_uplift_pct, locale, 1)}%`}
                   icon={TrendingUp}
                   delta="if optimal timing"
                 />
@@ -615,7 +615,7 @@ export default function HarvestPage() {
                               </span>
                             </td>
                             <td className="px-2 py-2 text-right text-[var(--text-primary)]">
-                              {f.fish_weight_kg?.toFixed(2)}
+                              {formatNumber(f.fish_weight_kg, locale, 2)}
                             </td>
                             <td
                               className={`px-2 py-2 text-right ${
@@ -626,16 +626,16 @@ export default function HarvestPage() {
                                   : "text-[var(--text-primary)]"
                               }`}
                             >
-                              {f.lice_count?.toFixed(2)}
+                              {formatNumber(f.lice_count, locale, 2)}
                             </td>
                             <td className="px-2 py-2 text-right text-[var(--text-secondary)]">
-                              {f.price_nok?.toFixed(1)}
+                              {formatNumber(f.price_nok, locale, 1)}
                             </td>
                             <td className="px-2 py-2 text-right text-[var(--text-primary)]">
-                              {f.current_revenue_mnok?.toFixed(1)}
+                              {formatNumber(f.current_revenue_mnok, locale, 1)}
                             </td>
                             <td className="px-2 py-2 text-right text-emerald-400">
-                              {f.projected_revenue_mnok?.toFixed(1)}
+                              {formatNumber(f.projected_revenue_mnok, locale, 1)}
                             </td>
                           </tr>
                         );

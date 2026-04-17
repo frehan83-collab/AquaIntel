@@ -11,7 +11,7 @@ import TrendComparison from "@/components/TrendComparison";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import { exportToCSV } from "@/lib/export";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DataQualityBadge from "@/components/DataQualityBadge";
@@ -30,7 +30,7 @@ const REGION_COLORS: Record<string, string> = {
 };
 
 export default function CanadaPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const handleError = useApiError();
   const [snapshot, setSnapshot] = useState<any>(null);
   const [liceByRegion, setLiceByRegion] = useState<any>(null);
@@ -95,7 +95,7 @@ export default function CanadaPage() {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <KPICard
           label="Avg Lice / Fish"
-          value={lice.avg_per_fish != null ? lice.avg_per_fish.toFixed(1) : "—"}
+          value={lice.avg_per_fish != null ? formatNumber(lice.avg_per_fish, locale, 1) : "—"}
           delta={lice.avg_per_fish > 3 ? "ABOVE BC THRESHOLD (3.0)" : "Below threshold"}
           deltaType={lice.avg_per_fish > 3 ? "negative" : "positive"}
           icon={Fish}
@@ -190,7 +190,7 @@ export default function CanadaPage() {
                       <span className={`text-[10px] font-mono w-10 text-right flex-shrink-0 ${
                         aboveThreshold ? "text-rose-400 font-bold" : "text-[var(--text-secondary)]"
                       }`}>
-                        {val.toFixed(1)}
+                        {formatNumber(val, locale, 1)}
                       </span>
                       {t.farms_reporting != null && (
                         <span className="text-[9px] text-[var(--text-secondary)] w-14 text-right flex-shrink-0">
@@ -270,7 +270,7 @@ export default function CanadaPage() {
                     <span className={`text-[11px] font-mono font-bold ${
                       avg > 3 ? "text-rose-400" : avg > 1 ? "text-amber-400" : "text-emerald-400"
                     }`}>
-                      {avg > 0 ? avg.toFixed(1) : "—"}
+                      {avg > 0 ? formatNumber(avg, locale, 1) : "—"}
                     </span>
                   </div>
                 </div>
@@ -302,7 +302,7 @@ export default function CanadaPage() {
                   <p className={`text-xl font-bold ${
                     (lice.avg_per_fish || 0) > 3 ? "text-rose-400" : "text-emerald-400"
                   }`}>
-                    {lice.avg_per_fish?.toFixed(1) || "—"}
+                    {lice.avg_per_fish != null ? formatNumber(lice.avg_per_fish, locale, 1) : "—"}
                   </p>
                   <p className="text-[9px] text-[var(--text-secondary)]">threshold: 3.0</p>
                 </div>
@@ -311,7 +311,7 @@ export default function CanadaPage() {
                   <p className={`text-xl font-bold ${
                     norwayLice > 0.5 ? "text-rose-400" : "text-emerald-400"
                   }`}>
-                    {norwayLice > 0 ? norwayLice.toFixed(3) : "—"}
+                    {norwayLice > 0 ? formatNumber(norwayLice, locale, 3) : "—"}
                   </p>
                   <p className="text-[9px] text-[var(--text-secondary)]">threshold: 0.5</p>
                 </div>

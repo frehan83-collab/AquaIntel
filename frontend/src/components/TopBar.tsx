@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, MessageSquare, User, TrendingUp, CheckCheck, AlertTriangle, ShieldAlert, Activity, BarChart3, Bug, Waves, Sun, Moon } from "lucide-react";
+import { Bell, MessageSquare, User, TrendingUp, CheckCheck, AlertTriangle, ShieldAlert, Activity, BarChart3, Bug, Waves, Sun, Moon, Rows3, Rows2 } from "lucide-react";
 import { useTheme } from "@/lib/useTheme";
+import { useDensity } from "@/lib/useDensity";
 import { useTranslation } from "@/lib/i18n";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
@@ -63,6 +64,7 @@ export default function TopBar() {
 
   // Theme toggle
   const { theme, toggleTheme } = useTheme();
+  const { density, toggleDensity } = useDensity();
 
   // Language toggle
   const { t, locale, setLocale } = useTranslation();
@@ -200,6 +202,16 @@ export default function TopBar() {
           title={locale === "en" ? "Switch to Norwegian" : "Bytt til engelsk"}
         >
           {locale === "en" ? "NO" : "EN"}
+        </button>
+
+        {/* Density Toggle */}
+        <button
+          onClick={toggleDensity}
+          className="p-1.5 rounded-lg text-slate-500 dark:text-[var(--text-secondary)] hover:text-slate-700 dark:hover:text-[var(--text-primary)] hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+          aria-label={density === "comfortable" ? "Switch to compact density" : "Switch to comfortable density"}
+          title={density === "comfortable" ? "Compact density (traders)" : "Comfortable density (farmers)"}
+        >
+          {density === "comfortable" ? <Rows3 className="w-4 h-4" /> : <Rows2 className="w-4 h-4" />}
         </button>
 
         {/* Theme Toggle */}

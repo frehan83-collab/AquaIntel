@@ -6,7 +6,7 @@ import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DataQualityBadge from "@/components/DataQualityBadge";
 
@@ -28,7 +28,7 @@ const SERIES_CONFIG: Record<Series, { label: string; icon: any; unit: string }> 
 };
 
 export default function MLBaselinesPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [series, setSeries] = useState<Series>("price");
   const [model, setModel] = useState<Model>("chronos");
   const [horizon, setHorizon] = useState(4);
@@ -197,7 +197,7 @@ export default function MLBaselinesPage() {
                 <div className="text-xs">
                   <span className="text-[var(--text-secondary)]">Last Observed</span>
                   <div className="text-lg font-bold text-[var(--text-primary)]">
-                    {forecast.last_value?.toFixed(2)} <span className="text-xs font-normal">{SERIES_CONFIG[series].unit}</span>
+                    {formatNumber(forecast.last_value, locale, 2)} <span className="text-xs font-normal">{SERIES_CONFIG[series].unit}</span>
                   </div>
                 </div>
                 <div className="text-xs">
@@ -262,9 +262,9 @@ export default function MLBaselinesPage() {
                 {(forecast.median || []).map((v: number, i: number) => (
                   <div key={i} className="flex text-xs py-1 border-b border-white/[0.03]">
                     <span className="w-12 text-[var(--text-secondary)]">+{i + 1}</span>
-                    <span className="flex-1 text-right text-[var(--text-primary)] font-medium">{v.toFixed(2)}</span>
-                    <span className="flex-1 text-right text-[var(--text-secondary)]">{forecast.lo80?.[i]?.toFixed(2)}</span>
-                    <span className="flex-1 text-right text-[var(--text-secondary)]">{forecast.hi80?.[i]?.toFixed(2)}</span>
+                    <span className="flex-1 text-right text-[var(--text-primary)] font-medium">{formatNumber(v, locale, 2)}</span>
+                    <span className="flex-1 text-right text-[var(--text-secondary)]">{forecast.lo80?.[i] != null ? formatNumber(forecast.lo80[i], locale, 2) : "\u2014"}</span>
+                    <span className="flex-1 text-right text-[var(--text-secondary)]">{forecast.hi80?.[i] != null ? formatNumber(forecast.hi80[i], locale, 2) : "\u2014"}</span>
                   </div>
                 ))}
               </div>
@@ -295,8 +295,8 @@ export default function MLBaselinesPage() {
                 {Object.entries(comparison.models || {}).map(([name, m]: [string, any]) => (
                   <div key={name} className="flex items-center text-xs py-1.5 border-b border-white/[0.03]">
                     <span className="flex-1 text-[var(--text-primary)] font-medium">{name}</span>
-                    <span className="w-20 text-right text-[var(--text-primary)]">{m.mape?.toFixed(2)}%</span>
-                    <span className="w-20 text-right text-[var(--text-primary)]">{m.rmse?.toFixed(2)}</span>
+                    <span className="w-20 text-right text-[var(--text-primary)]">{formatNumber(m.mape, locale, 2)}%</span>
+                    <span className="w-20 text-right text-[var(--text-primary)]">{formatNumber(m.rmse, locale, 2)}</span>
                     <span className="w-24 text-right text-[var(--text-primary)]">
                       {m.coverage_80 !== undefined ? `${m.coverage_80}%` : "\u2014"}
                     </span>
@@ -318,10 +318,10 @@ export default function MLBaselinesPage() {
                   {(comparison.actual || []).map((a: number, i: number) => (
                     <div key={i} className="flex text-xs py-1 border-b border-white/[0.03]">
                       <span className="w-12 text-[var(--text-secondary)]">+{i + 1}</span>
-                      <span className="flex-1 text-right text-[var(--text-primary)] font-bold">{a.toFixed(2)}</span>
+                      <span className="flex-1 text-right text-[var(--text-primary)] font-bold">{formatNumber(a, locale, 2)}</span>
                       {Object.values(comparison.models || {}).map((m: any, j: number) => (
                         <span key={j} className="flex-1 text-right text-[var(--text-secondary)]">
-                          {m.median?.[i]?.toFixed(2) ?? "\u2014"}
+                          {m.median?.[i] != null ? formatNumber(m.median[i], locale, 2) : "\u2014"}
                         </span>
                       ))}
                     </div>

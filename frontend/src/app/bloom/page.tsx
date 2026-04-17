@@ -6,7 +6,7 @@ import {
   ArrowUp, ArrowDown, Minus, Shield, Download,
 } from "lucide-react";
 import { exportToCSV } from "@/lib/export";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
@@ -121,7 +121,7 @@ function ChlSparkline({ data }: { data: number[] }) {
 }
 
 export default function BloomPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [risks, setRisks] = useState<RiskAssessment[]>([]);
   const [alerts, setAlerts] = useState<BloomAlert[]>([]);
   const [filter, setFilter] = useState<string>("ALL");
@@ -146,13 +146,13 @@ export default function BloomPage() {
     const elevated = risks.filter((r) => r.risk_level === "ELEVATED").length;
     const low = risks.filter((r) => r.risk_level === "LOW").length;
     const avgChl = risks.length
-      ? (risks.reduce((s, r) => s + (r.chl_a || 0), 0) / risks.length).toFixed(2)
+      ? formatNumber(risks.reduce((s, r) => s + (r.chl_a || 0), 0) / risks.length, locale, 2)
       : "0.00";
     const avgSst = risks.length
-      ? (risks.reduce((s, r) => s + (r.sst || 0), 0) / risks.filter(r => r.sst != null).length).toFixed(1)
+      ? formatNumber(risks.reduce((s, r) => s + (r.sst || 0), 0) / risks.filter(r => r.sst != null).length, locale, 1)
       : "—";
     return { critical, high, elevated, low, total: risks.length, avgChl, avgSst };
-  }, [risks]);
+  }, [risks, locale]);
 
   // Filtered localities
   const filteredRisks = useMemo(() => {
@@ -408,17 +408,17 @@ export default function BloomPage() {
                           <RiskBadge level={r.risk_level} />
                         </td>
                         <td className="px-3 py-3 text-right font-mono font-semibold text-[var(--text-primary)] tabular-nums">
-                          {r.risk_score?.toFixed(0)}
+                          {formatNumber(r.risk_score, locale, 0)}
                         </td>
                         <td className="px-3 py-3 text-right font-mono tabular-nums">
                           <span
                             style={{ color: r.chl_a >= 5 ? RISK_COLORS.HIGH : r.chl_a >= 2 ? RISK_COLORS.ELEVATED : RISK_COLORS.LOW }}
                           >
-                            {r.chl_a?.toFixed(2)}
+                            {formatNumber(r.chl_a, locale, 2)}
                           </span>
                         </td>
                         <td className="px-3 py-3 text-right font-mono text-[var(--text-secondary)] tabular-nums">
-                          {r.sst != null ? `${r.sst.toFixed(1)}C` : "—"}
+                          {r.sst != null ? `${formatNumber(r.sst, locale, 1)}C` : "—"}
                         </td>
                         <td className="px-3 py-3 text-center">
                           {r.chl_a_sparkline && r.chl_a_sparkline.length >= 2 ? (

@@ -7,14 +7,14 @@ import GlassCard from "@/components/GlassCard";
 import TrendComparison from "@/components/TrendComparison";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import { useApiError } from "@/lib/useApiError";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export default function FarmerPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const handleError = useApiError();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -262,7 +262,7 @@ export default function FarmerPage() {
                       (gnnPred.predicted_lice ?? gnnPred.pred_lice ?? 0) > 0.5 ? "text-rose-400" :
                       (gnnPred.predicted_lice ?? gnnPred.pred_lice ?? 0) > 0.2 ? "text-amber-400" : "text-emerald-400"
                     }`}>
-                      {(gnnPred.predicted_lice ?? gnnPred.pred_lice ?? 0).toFixed(3)}
+                      {formatNumber(gnnPred.predicted_lice ?? gnnPred.pred_lice ?? 0, locale, 3)}
                     </span>
                   </div>
                   {gnnPred.outbreak_prob !== undefined && (
@@ -271,13 +271,13 @@ export default function FarmerPage() {
                       <span className={`text-[11px] font-bold ${
                         gnnPred.outbreak_prob > 0.6 ? "text-rose-400" : gnnPred.outbreak_prob > 0.3 ? "text-amber-400" : "text-emerald-400"
                       }`}>
-                        {(gnnPred.outbreak_prob * 100).toFixed(1)}%
+                        {formatNumber(gnnPred.outbreak_prob * 100, locale, 1)}%
                       </span>
                     </div>
                   )}
                   {gnnPred.confidence && (
                     <p className="text-[10px] text-[var(--text-secondary)] mt-1 opacity-60">
-                      Model confidence: {(gnnPred.confidence * 100).toFixed(0)}% · GATv2 temporal graph network
+                      Model confidence: {formatNumber(gnnPred.confidence * 100, locale, 0)}% · GATv2 temporal graph network
                     </p>
                   )}
                 </div>
@@ -305,7 +305,7 @@ export default function FarmerPage() {
                     ["Cluster ID", farmGraphData.cluster_id ?? "—"],
                     ["Cluster risk", farmGraphData.cluster_risk ?? "—"],
                     ["Upstream farms", farmGraphData.n_upstream ?? "—"],
-                    ["Cascade risk score", farmGraphData.cascade_risk?.toFixed(2) ?? "—"],
+                    ["Cascade risk score", farmGraphData.cascade_risk != null ? formatNumber(farmGraphData.cascade_risk, locale, 2) : "—"],
                   ].map(([label, val]) => (
                     <div key={label as string} className="flex items-center justify-between py-1 border-b border-white/[0.04] last:border-0">
                       <span className="text-[11px] text-[var(--text-secondary)]">{label}</span>
@@ -433,25 +433,25 @@ export default function FarmerPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {norkystData.sst_c != null && (
                   <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center">
-                    <p className="text-lg font-bold text-ocean-400 tabular-nums">{norkystData.sst_c?.toFixed(1)}°C</p>
+                    <p className="text-lg font-bold text-ocean-400 tabular-nums">{formatNumber(norkystData.sst_c, locale, 1)}°C</p>
                     <p className="text-[9px] text-[var(--text-secondary)]">SST (800m)</p>
                   </div>
                 )}
                 {norkystData.salinity_psu != null && (
                   <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center">
-                    <p className="text-lg font-bold text-emerald-400 tabular-nums">{norkystData.salinity_psu?.toFixed(1)} PSU</p>
+                    <p className="text-lg font-bold text-emerald-400 tabular-nums">{formatNumber(norkystData.salinity_psu, locale, 1)} PSU</p>
                     <p className="text-[9px] text-[var(--text-secondary)]">Salinity</p>
                   </div>
                 )}
                 {norkystData.current_speed_ms != null && (
                   <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center">
-                    <p className="text-lg font-bold text-violet-400 tabular-nums">{norkystData.current_speed_ms?.toFixed(2)} m/s</p>
+                    <p className="text-lg font-bold text-violet-400 tabular-nums">{formatNumber(norkystData.current_speed_ms, locale, 2)} m/s</p>
                     <p className="text-[9px] text-[var(--text-secondary)]">Current Speed</p>
                   </div>
                 )}
                 {norkystData.current_direction_deg != null && (
                   <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center">
-                    <p className="text-lg font-bold text-amber-400 tabular-nums">{norkystData.current_direction_deg?.toFixed(0)}°</p>
+                    <p className="text-lg font-bold text-amber-400 tabular-nums">{formatNumber(norkystData.current_direction_deg, locale, 0)}°</p>
                     <p className="text-[9px] text-[var(--text-secondary)]">Direction</p>
                   </div>
                 )}
@@ -481,11 +481,11 @@ export default function FarmerPage() {
                   welfareData.total_score >= 70 ? "text-emerald-400" :
                   welfareData.total_score >= 40 ? "text-amber-400" : "text-rose-400"
                 }`}>
-                  {welfareData.total_score?.toFixed(0)}<span className="text-sm text-[var(--text-secondary)]">/100</span>
+                  {formatNumber(welfareData.total_score, locale, 0)}<span className="text-sm text-[var(--text-secondary)]">/100</span>
                 </div>
                 {welfareData.predicted_mortality_7d != null && (
                   <span className="text-xs text-[var(--text-secondary)]">
-                    7d mortality: {(welfareData.predicted_mortality_7d * 100).toFixed(2)}%
+                    7d mortality: {formatNumber(welfareData.predicted_mortality_7d * 100, locale, 2)}%
                   </span>
                 )}
               </div>
@@ -503,7 +503,7 @@ export default function FarmerPage() {
                           style={{ width: `${Math.min(100, val as number)}%` }}
                         />
                       </div>
-                      <span className="text-[10px] text-[var(--text-secondary)] w-8 text-right">{(val as number)?.toFixed(0)}</span>
+                      <span className="text-[10px] text-[var(--text-secondary)] w-8 text-right">{formatNumber(val as number, locale, 0)}</span>
                     </div>
                   ))}
                 </div>
