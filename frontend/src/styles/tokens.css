@@ -2,7 +2,7 @@
  * Source of truth: docs/figma-tokens-studio.json
  * Pipeline:       scripts/extract-design-tokens.ts
  * Runtime:        frontend/src/app/globals.css (hand-authored; this file is a backup)
- * Generated:      2026-04-17T11:31:10.526Z
+ * Generated:      2026-04-17T12:42:35.801Z
  *
  * The runtime app loads globals.css, not this file. This file exists so the
  * token pipeline round-trips through Figma cleanly.

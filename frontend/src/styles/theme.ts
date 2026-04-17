@@ -1,6 +1,6 @@
 // Auto-generated TypeScript theme object
 // Source: docs/figma-tokens-studio.json
-// Generated: 2026-04-17T11:31:10.527Z
+// Generated: 2026-04-17T12:42:35.802Z
 // ⚠️  UNUSED by runtime — kept only as a Figma-sync artifact. Runtime source of truth: globals.css.
 
 export const theme = {

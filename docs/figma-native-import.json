@@ -1,0 +1,737 @@
+{
+  "OpenClaw / Session 39": {
+    "$extensions": {
+      "com.figma.variables": {
+        "modes": [
+          "Light",
+          "Dark"
+        ],
+        "defaultMode": "Dark",
+        "description": "Full OpenClaw design system — 120 tokens. Generated from docs/figma-tokens-studio.json."
+      }
+    },
+    "variables": {
+      "typography/fontFamilies/sans": {
+        "$type": "fontFamily",
+        "$value": {
+          "Light": "DM Sans",
+          "Dark": "DM Sans"
+        }
+      },
+      "typography/fontFamilies/display": {
+        "$type": "fontFamily",
+        "$value": {
+          "Light": "DM Serif Display",
+          "Dark": "DM Serif Display"
+        }
+      },
+      "typography/fontFamilies/mono": {
+        "$type": "fontFamily",
+        "$value": {
+          "Light": "JetBrains Mono",
+          "Dark": "JetBrains Mono"
+        }
+      },
+      "typography/fontFamilies/data": {
+        "$type": "fontFamily",
+        "$value": {
+          "Light": "JetBrains Mono",
+          "Dark": "JetBrains Mono"
+        }
+      },
+      "typography/fontSize/3xs": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "9",
+          "Dark": "9"
+        }
+      },
+      "typography/fontSize/2xs": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "10",
+          "Dark": "10"
+        }
+      },
+      "typography/fontSize/xs": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "12",
+          "Dark": "12"
+        }
+      },
+      "typography/fontSize/sm": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "14",
+          "Dark": "14"
+        }
+      },
+      "typography/fontSize/base": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "16",
+          "Dark": "16"
+        }
+      },
+      "typography/fontSize/lg": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "18",
+          "Dark": "18"
+        }
+      },
+      "typography/fontSize/xl": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "20",
+          "Dark": "20"
+        }
+      },
+      "typography/fontSize/2xl": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "24",
+          "Dark": "24"
+        }
+      },
+      "typography/fontSize/3xl": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "30",
+          "Dark": "30"
+        }
+      },
+      "typography/fontSize/4xl": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "36",
+          "Dark": "36"
+        }
+      },
+      "typography/fontWeight/regular": {
+        "$type": "number",
+        "$value": {
+          "Light": "400",
+          "Dark": "400"
+        }
+      },
+      "typography/fontWeight/medium": {
+        "$type": "number",
+        "$value": {
+          "Light": "500",
+          "Dark": "500"
+        }
+      },
+      "typography/fontWeight/semibold": {
+        "$type": "number",
+        "$value": {
+          "Light": "600",
+          "Dark": "600"
+        }
+      },
+      "typography/fontWeight/bold": {
+        "$type": "number",
+        "$value": {
+          "Light": "700",
+          "Dark": "700"
+        }
+      },
+      "typography/lineHeight/display": {
+        "$type": "number",
+        "$value": {
+          "Light": "1.15",
+          "Dark": "1.15"
+        }
+      },
+      "typography/lineHeight/heading": {
+        "$type": "number",
+        "$value": {
+          "Light": "1.25",
+          "Dark": "1.25"
+        }
+      },
+      "typography/lineHeight/ui": {
+        "$type": "number",
+        "$value": {
+          "Light": "1.4",
+          "Dark": "1.4"
+        }
+      },
+      "typography/lineHeight/body": {
+        "$type": "number",
+        "$value": {
+          "Light": "1.5",
+          "Dark": "1.5"
+        }
+      },
+      "typography/lineHeight/tight": {
+        "$type": "number",
+        "$value": {
+          "Light": "1.1",
+          "Dark": "1.1"
+        }
+      },
+      "spacing/1": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "4",
+          "Dark": "4"
+        }
+      },
+      "spacing/2": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "8",
+          "Dark": "8"
+        }
+      },
+      "spacing/3": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "12",
+          "Dark": "12"
+        }
+      },
+      "spacing/4": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "16",
+          "Dark": "16"
+        }
+      },
+      "spacing/5": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "20",
+          "Dark": "20"
+        }
+      },
+      "spacing/6": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "24",
+          "Dark": "24"
+        }
+      },
+      "spacing/8": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "32",
+          "Dark": "32"
+        }
+      },
+      "spacing/10": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "40",
+          "Dark": "40"
+        }
+      },
+      "spacing/12": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "48",
+          "Dark": "48"
+        }
+      },
+      "spacing/16": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "64",
+          "Dark": "64"
+        }
+      },
+      "spacing/20": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "80",
+          "Dark": "80"
+        }
+      },
+      "borderRadius/sm": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "6",
+          "Dark": "6"
+        }
+      },
+      "borderRadius/md": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "8",
+          "Dark": "8"
+        }
+      },
+      "borderRadius/lg": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "12",
+          "Dark": "12"
+        }
+      },
+      "borderRadius/xl": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "16",
+          "Dark": "16"
+        }
+      },
+      "borderRadius/2xl": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "20",
+          "Dark": "20"
+        }
+      },
+      "borderRadius/full": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "9999",
+          "Dark": "9999"
+        }
+      },
+      "motion/duration/instant": {
+        "$type": "string",
+        "$value": {
+          "Light": "60ms",
+          "Dark": "60ms"
+        }
+      },
+      "motion/duration/fast": {
+        "$type": "string",
+        "$value": {
+          "Light": "120ms",
+          "Dark": "120ms"
+        }
+      },
+      "motion/duration/base": {
+        "$type": "string",
+        "$value": {
+          "Light": "200ms",
+          "Dark": "200ms"
+        }
+      },
+      "motion/duration/slow": {
+        "$type": "string",
+        "$value": {
+          "Light": "320ms",
+          "Dark": "320ms"
+        }
+      },
+      "motion/duration/slower": {
+        "$type": "string",
+        "$value": {
+          "Light": "480ms",
+          "Dark": "480ms"
+        }
+      },
+      "motion/easing/out": {
+        "$type": "string",
+        "$value": {
+          "Light": "cubic-bezier(0.16, 1, 0.3, 1)",
+          "Dark": "cubic-bezier(0.16, 1, 0.3, 1)"
+        }
+      },
+      "motion/easing/in": {
+        "$type": "string",
+        "$value": {
+          "Light": "cubic-bezier(0.4, 0, 1, 1)",
+          "Dark": "cubic-bezier(0.4, 0, 1, 1)"
+        }
+      },
+      "motion/easing/inOut": {
+        "$type": "string",
+        "$value": {
+          "Light": "cubic-bezier(0.4, 0, 0.2, 1)",
+          "Dark": "cubic-bezier(0.4, 0, 0.2, 1)"
+        }
+      },
+      "motion/easing/bounce": {
+        "$type": "string",
+        "$value": {
+          "Light": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+          "Dark": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+        }
+      },
+      "elevation/0": {
+        "$type": "shadow",
+        "$value": {
+          "Light": "none",
+          "Dark": "none"
+        }
+      },
+      "elevation/1": {
+        "$type": "shadow",
+        "$value": {
+          "Light": "0 1px 2px rgba(0,0,0,0.2)",
+          "Dark": "0 1px 2px rgba(0,0,0,0.2)"
+        }
+      },
+      "elevation/2": {
+        "$type": "shadow",
+        "$value": {
+          "Light": "0 4px 12px rgba(0,0,0,0.25)",
+          "Dark": "0 4px 12px rgba(0,0,0,0.25)"
+        }
+      },
+      "elevation/3": {
+        "$type": "shadow",
+        "$value": {
+          "Light": "0 8px 32px rgba(0,0,0,0.3)",
+          "Dark": "0 8px 32px rgba(0,0,0,0.3)"
+        }
+      },
+      "elevation/4": {
+        "$type": "shadow",
+        "$value": {
+          "Light": "0 16px 48px rgba(0,0,0,0.35)",
+          "Dark": "0 16px 48px rgba(0,0,0,0.35)"
+        }
+      },
+      "elevation/5": {
+        "$type": "shadow",
+        "$value": {
+          "Light": "0 24px 64px rgba(0,0,0,0.4)",
+          "Dark": "0 24px 64px rgba(0,0,0,0.4)"
+        }
+      },
+      "density/comfortable/paddingSm": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "8",
+          "Dark": "8"
+        }
+      },
+      "density/comfortable/paddingMd": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "12",
+          "Dark": "12"
+        }
+      },
+      "density/comfortable/paddingLg": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "16",
+          "Dark": "16"
+        }
+      },
+      "density/comfortable/rowHeight": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "44",
+          "Dark": "44"
+        }
+      },
+      "density/compact/paddingSm": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "4",
+          "Dark": "4"
+        }
+      },
+      "density/compact/paddingMd": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "8",
+          "Dark": "8"
+        }
+      },
+      "density/compact/paddingLg": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "12",
+          "Dark": "12"
+        }
+      },
+      "density/compact/rowHeight": {
+        "$type": "dimension",
+        "$value": {
+          "Light": "32",
+          "Dark": "32"
+        }
+      },
+      "chart/1": {
+        "$type": "color",
+        "$value": {
+          "Light": "#00D4C8",
+          "Dark": "#00D4C8"
+        }
+      },
+      "chart/2": {
+        "$type": "color",
+        "$value": {
+          "Light": "#E8734A",
+          "Dark": "#E8734A"
+        }
+      },
+      "chart/3": {
+        "$type": "color",
+        "$value": {
+          "Light": "#8B5CF6",
+          "Dark": "#8B5CF6"
+        }
+      },
+      "chart/4": {
+        "$type": "color",
+        "$value": {
+          "Light": "#F59E0B",
+          "Dark": "#F59E0B"
+        }
+      },
+      "chart/5": {
+        "$type": "color",
+        "$value": {
+          "Light": "#EC4899",
+          "Dark": "#EC4899"
+        }
+      },
+      "chart/6": {
+        "$type": "color",
+        "$value": {
+          "Light": "#10B981",
+          "Dark": "#10B981"
+        }
+      },
+      "chart/7": {
+        "$type": "color",
+        "$value": {
+          "Light": "#6366F1",
+          "Dark": "#6366F1"
+        }
+      },
+      "chart/8": {
+        "$type": "color",
+        "$value": {
+          "Light": "#14B8A6",
+          "Dark": "#14B8A6"
+        }
+      },
+      "data/biomass": {
+        "$type": "color",
+        "$value": {
+          "Light": "#F59E0B",
+          "Dark": "#F59E0B"
+        }
+      },
+      "data/lice": {
+        "$type": "color",
+        "$value": {
+          "Light": "#F43F5E",
+          "Dark": "#F43F5E"
+        }
+      },
+      "data/temperature": {
+        "$type": "color",
+        "$value": {
+          "Light": "#3B82F6",
+          "Dark": "#3B82F6"
+        }
+      },
+      "data/mortality": {
+        "$type": "color",
+        "$value": {
+          "Light": "#9F1239",
+          "Dark": "#9F1239"
+        }
+      },
+      "data/feeding": {
+        "$type": "color",
+        "$value": {
+          "Light": "#059669",
+          "Dark": "#059669"
+        }
+      },
+      "data/oxygen": {
+        "$type": "color",
+        "$value": {
+          "Light": "#06B6D4",
+          "Dark": "#06B6D4"
+        }
+      },
+      "traffic/green": {
+        "$type": "color",
+        "$value": {
+          "Light": "#22C55E",
+          "Dark": "#22C55E"
+        }
+      },
+      "traffic/yellow": {
+        "$type": "color",
+        "$value": {
+          "Light": "#EAB308",
+          "Dark": "#EAB308"
+        }
+      },
+      "traffic/red": {
+        "$type": "color",
+        "$value": {
+          "Light": "#EF4444",
+          "Dark": "#EF4444"
+        }
+      },
+      "salmon": {
+        "$type": "color",
+        "$value": {
+          "Light": "#E8734A",
+          "Dark": "#E8734A"
+        }
+      },
+      "danger": {
+        "$type": "color",
+        "$value": {
+          "Light": "#F43F5E",
+          "Dark": "#F43F5E"
+        }
+      },
+      "success": {
+        "$type": "color",
+        "$value": {
+          "Light": "#10B981",
+          "Dark": "#10B981"
+        }
+      },
+      "warning": {
+        "$type": "color",
+        "$value": {
+          "Light": "#F59E0B",
+          "Dark": "#F59E0B"
+        }
+      },
+      "positive": {
+        "$type": "color",
+        "$value": {
+          "Light": "#34D399",
+          "Dark": "#34D399"
+        }
+      },
+      "negative": {
+        "$type": "color",
+        "$value": {
+          "Light": "#FB7185",
+          "Dark": "#FB7185"
+        }
+      },
+      "bg/primary": {
+        "$type": "color",
+        "$value": {
+          "Light": "#F8FAFB",
+          "Dark": "#060F1C"
+        }
+      },
+      "bg/secondary": {
+        "$type": "color",
+        "$value": {
+          "Light": "#EFF3F6",
+          "Dark": "#0A1A2F"
+        }
+      },
+      "text/primary": {
+        "$type": "color",
+        "$value": {
+          "Light": "#1A2332",
+          "Dark": "#E8EDF2"
+        }
+      },
+      "text/secondary": {
+        "$type": "color",
+        "$value": {
+          "Light": "#5A6B7D",
+          "Dark": "#94A3B8"
+        }
+      },
+      "accent": {
+        "$type": "color",
+        "$value": {
+          "Light": "#00A89F",
+          "Dark": "#00D4C8"
+        }
+      },
+      "border": {
+        "$type": "color",
+        "$value": {
+          "Light": "#D1D5DB",
+          "Dark": "#1E293B"
+        }
+      },
+      "surface/0": {
+        "$type": "color",
+        "$value": {
+          "Light": "#F8FAFB",
+          "Dark": "#060F1C"
+        }
+      },
+      "surface/1": {
+        "$type": "color",
+        "$value": {
+          "Light": "#FFFFFF",
+          "Dark": "#0A1629"
+        }
+      },
+      "surface/2": {
+        "$type": "color",
+        "$value": {
+          "Light": "#F1F5F9",
+          "Dark": "#0F1D33"
+        }
+      },
+      "surface/3": {
+        "$type": "color",
+        "$value": {
+          "Light": "#E2E8F0",
+          "Dark": "#152640"
+        }
+      },
+      "surface/4": {
+        "$type": "color",
+        "$value": {
+          "Light": "#CBD5E1",
+          "Dark": "#1A2F4D"
+        }
+      },
+      "glass/subtle": {
+        "$type": "color",
+        "$value": {
+          "Light": "rgba(0,0,0,0.02)",
+          "Dark": "rgba(255,255,255,0.04)"
+        }
+      },
+      "glass/base": {
+        "$type": "color",
+        "$value": {
+          "Light": "rgba(0,0,0,0.04)",
+          "Dark": "rgba(255,255,255,0.06)"
+        }
+      },
+      "glass/strong": {
+        "$type": "color",
+        "$value": {
+          "Light": "rgba(0,0,0,0.08)",
+          "Dark": "rgba(255,255,255,0.10)"
+        }
+      },
+      "glass/borderSubtle": {
+        "$type": "color",
+        "$value": {
+          "Light": "rgba(0,0,0,0.05)",
+          "Dark": "rgba(255,255,255,0.06)"
+        }
+      },
+      "glass/borderBase": {
+        "$type": "color",
+        "$value": {
+          "Light": "rgba(0,0,0,0.08)",
+          "Dark": "rgba(255,255,255,0.08)"
+        }
+      },
+      "glass/borderStrong": {
+        "$type": "color",
+        "$value": {
+          "Light": "rgba(0,0,0,0.12)",
+          "Dark": "rgba(255,255,255,0.12)"
+        }
+      }
+    }
+  }
+}

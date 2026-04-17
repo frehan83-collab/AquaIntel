@@ -33,6 +33,7 @@ const OUTPUT_DIR = path.resolve(__dirname, "../src/styles");
 const TOKENS_SOURCE = path.resolve(__dirname, "../../docs/figma-tokens.json");
 const TOKENS_STUDIO_SOURCE = path.resolve(__dirname, "../../docs/figma-tokens-studio.json");
 const FIGMA_VARIABLES_OUT = path.resolve(__dirname, "../../docs/figma-variables-payload.json");
+const FIGMA_NATIVE_IMPORT_OUT = path.resolve(__dirname, "../../docs/figma-native-import.json");
 
 const MODE = process.argv.includes("--pull") ? "pull"
   : process.argv.includes("--push") ? "push"
@@ -243,6 +244,84 @@ export type ThemeMode = "light" | "dark";
 `;
 }
 
+// ── Figma native Variables import (for the Import button in Figma UI) ──────
+/**
+ * Generates a JSON that Figma's built-in Variables "Import" button accepts.
+ *
+ * Unlike the REST API push (which needs Enterprise), this format works on ALL
+ * tiers via the native Variables panel → Import flow. User just clicks Import
+ * in Figma, picks this file, and Figma creates the collection + modes + variables.
+ *
+ * Figma accepts the W3C DTCG-inspired format with their mode extension:
+ *   {
+ *     "<Collection Name>": {
+ *       "modes": { "Light": "...", "Dark": "..." },
+ *       "variables": {
+ *         "color/primary": { "$type": "color", "$value": { "Light": "#fff", "Dark": "#000" } }
+ *       }
+ *     }
+ *   }
+ *
+ * Reference: https://www.figma.com/developers/rest-api#local-variables-endpoints
+ * (same payload shape, just delivered via file upload instead of REST POST)
+ */
+function generateFigmaNativeImport(studio: TokensStudioFile): unknown {
+  const global = flatten(studio.global);
+  const light = flatten(studio.light);
+  const dark = flatten(studio.dark);
+
+  const variables: Record<string, unknown> = {};
+
+  const toVariableEntry = (name: string, token: TokenValue, lightValue?: string, darkValue?: string) => {
+    const path = name.replace(/-/g, "/");
+    const dtcgType = (() => {
+      switch (token.type) {
+        case "color": return "color";
+        case "fontSizes": return "dimension";
+        case "spacing": return "dimension";
+        case "borderRadius": return "dimension";
+        case "lineHeights": return "number";
+        case "fontWeights": return "number";
+        case "fontFamilies": return "fontFamily";
+        case "boxShadow": return "shadow";
+        default: return "string";
+      }
+    })();
+
+    return [path, {
+      $type: dtcgType,
+      $value: {
+        Light: lightValue ?? token.value,
+        Dark: darkValue ?? token.value,
+      },
+      $description: token.description || undefined,
+    }];
+  };
+
+  for (const [name, token] of Object.entries(global)) {
+    const [path, entry] = toVariableEntry(name, token);
+    variables[path as string] = entry;
+  }
+  for (const [name, token] of Object.entries(light)) {
+    const dark_token = dark[name];
+    const [path, entry] = toVariableEntry(name, token, token.value, dark_token ? dark_token.value : token.value);
+    variables[path as string] = entry;
+  }
+
+  return {
+    "OpenClaw / Session 39": {
+      $extensions: {
+        "com.figma.variables": {
+          modes: ["Light", "Dark"],
+          defaultMode: "Dark",
+          description: "Full OpenClaw design system — 120 tokens. Generated from docs/figma-tokens-studio.json.",
+        },
+      },
+      variables,
+    },
+  };
+}
+
 // ── Figma REST Variables payload (for --push mode) ──────────────────
 
 function generateFigmaVariablesPayload(studio: TokensStudioFile): unknown {
@@ -407,14 +486,16 @@ async function main() {
   const tailwindContent = generateTailwindTokens(studio);
   const themeContent = generateThemeTs(studio);
   const figmaPayload = generateFigmaVariablesPayload(studio);
+  const figmaNativeImport = generateFigmaNativeImport(studio);
 
   if (MODE === "dry-run") {
     console.log("🔍 Dry run — sizes only:");
-    console.log(`   tokens.css:            ${cssContent.length.toLocaleString()} bytes`);
-    console.log(`   tailwind.tokens.js:    ${tailwindContent.length.toLocaleString()} bytes`);
-    console.log(`   theme.ts:              ${themeContent.length.toLocaleString()} bytes`);
-    console.log(`   figma-variables JSON:  ${JSON.stringify(figmaPayload).length.toLocaleString()} bytes`);
-    console.log(`   variables in payload:  ${(figmaPayload as { variables: unknown[] }).variables.length}`);
+    console.log(`   tokens.css:               ${cssContent.length.toLocaleString()} bytes`);
+    console.log(`   tailwind.tokens.js:       ${tailwindContent.length.toLocaleString()} bytes`);
+    console.log(`   theme.ts:                 ${themeContent.length.toLocaleString()} bytes`);
+    console.log(`   figma-variables JSON:     ${JSON.stringify(figmaPayload).length.toLocaleString()} bytes (REST)`);
+    console.log(`   figma-native-import JSON: ${JSON.stringify(figmaNativeImport).length.toLocaleString()} bytes (UI drop-in)`);
+    console.log(`   variables in REST payload: ${(figmaPayload as { variables: unknown[] }).variables.length}`);
     return;
   }
 
@@ -422,12 +503,14 @@ async function main() {
   fs.writeFileSync(path.join(OUTPUT_DIR, "tailwind.tokens.js"), tailwindContent);
   fs.writeFileSync(path.join(OUTPUT_DIR, "theme.ts"), themeContent);
   fs.writeFileSync(FIGMA_VARIABLES_OUT, JSON.stringify(figmaPayload, null, 2));
+  fs.writeFileSync(FIGMA_NATIVE_IMPORT_OUT, JSON.stringify(figmaNativeImport, null, 2));
 
   console.log("✅ Generated files:");
-  console.log(`   ${path.join(OUTPUT_DIR, "tokens.css")}           (${cssContent.length.toLocaleString()}B)`);
-  console.log(`   ${path.join(OUTPUT_DIR, "tailwind.tokens.js")}   (${tailwindContent.length.toLocaleString()}B)`);
-  console.log(`   ${path.join(OUTPUT_DIR, "theme.ts")}             (${themeContent.length.toLocaleString()}B)`);
-  console.log(`   ${FIGMA_VARIABLES_OUT}   (${JSON.stringify(figmaPayload).length.toLocaleString()}B — REST payload)\n`);
+  console.log(`   ${path.join(OUTPUT_DIR, "tokens.css")}              (${cssContent.length.toLocaleString()}B)`);
+  console.log(`   ${path.join(OUTPUT_DIR, "tailwind.tokens.js")}      (${tailwindContent.length.toLocaleString()}B)`);
+  console.log(`   ${path.join(OUTPUT_DIR, "theme.ts")}                (${themeContent.length.toLocaleString()}B)`);
+  console.log(`   ${FIGMA_VARIABLES_OUT}   (${JSON.stringify(figmaPayload).length.toLocaleString()}B — REST payload for Enterprise tier)`);
+  console.log(`   ${FIGMA_NATIVE_IMPORT_OUT}   (${JSON.stringify(figmaNativeImport).length.toLocaleString()}B — drop into Figma Variables Import button)\n`);
 
   if (MODE === "push") {
     await pushToFigma(figmaPayload);

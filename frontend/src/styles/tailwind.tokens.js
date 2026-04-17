@@ -1,6 +1,6 @@
 // Auto-generated Tailwind token extension
 // Source: docs/figma-tokens-studio.json
-// Generated: 2026-04-17T11:31:10.527Z
+// Generated: 2026-04-17T12:42:35.802Z
 // NOTE: frontend/tailwind.config.ts is the live config. This file is a Figma-sync artifact.
 
 module.exports = {
