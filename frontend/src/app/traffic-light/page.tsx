@@ -10,7 +10,7 @@ import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import TrafikklysIndicator from "@/components/TrafikklysIndicator";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import { useApiError } from "@/lib/useApiError";
 import DataTable, { Column } from "@/components/DataTable";
 import { trafficLight, colors } from "@/lib/design-tokens";
@@ -65,7 +65,7 @@ function impactArrow(val: number) {
 }
 
 export default function TrafficLightPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const handleError = useApiError();
   const [current, setCurrent] = useState<any>(null);
   const [simulation, setSimulation] = useState<any>(null);
@@ -290,7 +290,7 @@ export default function TrafficLightPage() {
               <div className="bg-white/5 rounded-lg p-4">
                 <p className="text-xs text-slate-400">Revenue Impact</p>
                 <p className={`text-lg font-bold ${simulation.revenue_impact_mnok > 0 ? "text-emerald-400" : simulation.revenue_impact_mnok < 0 ? "text-rose-400" : "text-slate-300"}`}>
-                  {impactArrow(simulation.revenue_impact_mnok)} {Math.abs(simulation.revenue_impact_mnok || 0).toFixed(1)} MNOK
+                  {impactArrow(simulation.revenue_impact_mnok)} {formatNumber(Math.abs(simulation.revenue_impact_mnok || 0), locale, 1)} MNOK
                 </p>
                 <p className="text-xs text-slate-500">@ {simulation.spot_price_nok_kg} NOK/kg</p>
               </div>
@@ -337,7 +337,7 @@ export default function TrafficLightPage() {
                     key: "revenue_impact_mnok", label: "Revenue (MNOK)", sortable: true, align: "right" as const,
                     render: (val: any) => (
                       <span className={`font-mono ${val > 0 ? "text-emerald-400" : val < 0 ? "text-rose-400" : "text-slate-300"}`}>
-                        {val > 0 ? "+" : ""}{val?.toFixed(1)}
+                        {val > 0 ? "+" : ""}{formatNumber(val, locale, 1)}
                       </span>
                     ),
                   },

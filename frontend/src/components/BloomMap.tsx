@@ -2,6 +2,7 @@
 import { useMemo, useState, useCallback } from "react";
 import MapGL, { NavigationControl, Source, Layer } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -41,6 +42,7 @@ function chlRadius(chl: number): number {
 }
 
 export default function BloomMap({ risks, onSiteClick }: BloomMapProps) {
+  const { locale } = useTranslation();
   const [hoveredSite, setHoveredSite] = useState<any>(null);
   const [cursor, setCursor]           = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
@@ -243,17 +245,17 @@ export default function BloomMap({ risks, onSiteClick }: BloomMapProps) {
                          Number(hoveredSite.chl_a) >= 5  ? "#F97316" :
                          Number(hoveredSite.chl_a) >= 2  ? "#F59E0B" : "#10B981",
                 }}>
-                  {Number(hoveredSite.chl_a).toFixed(2)} mg/m³
+                  {formatNumber(Number(hoveredSite.chl_a), locale, 2)} mg/m³
                 </span>
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-[var(--text-secondary)]">Risk score</span>
-                <span className="font-mono">{Number(hoveredSite.risk_score).toFixed(0)}</span>
+                <span className="font-mono">{formatNumber(Number(hoveredSite.risk_score), locale, 0)}</span>
               </div>
               {hoveredSite.sst != null && (
                 <div className="flex justify-between gap-4">
                   <span className="text-[var(--text-secondary)]">Sea temp (SST)</span>
-                  <span className="font-mono">{Number(hoveredSite.sst).toFixed(1)} °C</span>
+                  <span className="font-mono">{formatNumber(Number(hoveredSite.sst), locale, 1)} °C</span>
                 </div>
               )}
               {hoveredSite.chl_a_trend != null && (

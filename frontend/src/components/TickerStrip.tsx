@@ -1,6 +1,7 @@
 "use client";
 import { cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 
 interface TickerItem {
   label: string;
@@ -69,6 +70,7 @@ export function TickerStrip({ items, speed = 30, className }: TickerStripProps) 
 }
 
 function TickerEntry({ item }: { item: TickerItem }) {
+  const { locale } = useTranslation();
   const trend = item.trend ?? (item.change != null ? (item.change > 0 ? "up" : item.change < 0 ? "down" : "flat") : undefined);
 
   const TrendIcon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
@@ -93,7 +95,7 @@ function TickerEntry({ item }: { item: TickerItem }) {
           {item.change != null && (
             <span className="text-[10px] font-semibold font-mono">
               {item.change > 0 ? "+" : ""}
-              {item.change.toFixed(1)}%
+              {formatNumber(item.change, locale, 1)}%
             </span>
           )}
         </span>

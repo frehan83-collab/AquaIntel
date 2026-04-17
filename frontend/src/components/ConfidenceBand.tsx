@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { chartPalette } from "@/lib/design-tokens";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 
 interface DataPoint {
   x: number;
@@ -31,6 +32,7 @@ export default function ConfidenceBand({
   unit = "",
   title,
 }: Props) {
+  const { locale } = useTranslation();
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   if (!data || data.length < 2) return null;
@@ -130,7 +132,7 @@ export default function ConfidenceBand({
               fill="transparent"
               role="button"
               tabIndex={0}
-              aria-label={`Data point ${i + 1}: ${d.y.toFixed(3)}${unit}${d.lo80 != null && d.hi80 != null ? `, 80% range ${d.lo80.toFixed(3)} to ${d.hi80.toFixed(3)}` : ""}${d.lo95 != null && d.hi95 != null ? `, 95% range ${d.lo95.toFixed(3)} to ${d.hi95.toFixed(3)}` : ""}`}
+              aria-label={`Data point ${i + 1}: ${formatNumber(d.y, locale, 3)}${unit}${d.lo80 != null && d.hi80 != null ? `, 80% range ${formatNumber(d.lo80, locale, 3)} to ${formatNumber(d.hi80, locale, 3)}` : ""}${d.lo95 != null && d.hi95 != null ? `, 95% range ${formatNumber(d.lo95, locale, 3)} to ${formatNumber(d.hi95, locale, 3)}` : ""}`}
               onMouseEnter={() => setHoverIdx(i)}
               onMouseLeave={() => setHoverIdx(null)}
               onFocus={() => setHoverIdx(i)}
@@ -210,17 +212,17 @@ export default function ConfidenceBand({
           }}
         >
           <div className="font-semibold text-[var(--accent)]">
-            {hovered.y.toFixed(3)}
+            {formatNumber(hovered.y, locale, 3)}
             {unit}
           </div>
           {hovered.lo80 != null && hovered.hi80 != null && (
             <div className="opacity-70">
-              80%: {hovered.lo80.toFixed(3)} &ndash; {hovered.hi80.toFixed(3)}
+              80%: {formatNumber(hovered.lo80, locale, 3)} &ndash; {formatNumber(hovered.hi80, locale, 3)}
             </div>
           )}
           {hovered.lo95 != null && hovered.hi95 != null && (
             <div className="opacity-50">
-              95%: {hovered.lo95.toFixed(3)} &ndash; {hovered.hi95.toFixed(3)}
+              95%: {formatNumber(hovered.lo95, locale, 3)} &ndash; {formatNumber(hovered.hi95, locale, 3)}
             </div>
           )}
         </div>

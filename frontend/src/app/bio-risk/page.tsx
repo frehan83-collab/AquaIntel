@@ -9,7 +9,7 @@ import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import dynamic from "next/dynamic";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import { useApiError } from "@/lib/useApiError";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import FreshnessIndicator from "@/components/FreshnessIndicator";
@@ -39,7 +39,7 @@ const WEEK_LABELS = (() => {
 })();
 
 export default function BioRiskPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const handleError = useApiError();
   const [lice, setLice] = useState<any>(null);
   const [bloom, setBloom] = useState<any[]>([]);
@@ -100,7 +100,7 @@ export default function BioRiskPage() {
 
   // Derive KPI values: use snapshot when available, fall back to live data
   const useSnapshot = snapshot && !snapshotLoading;
-  const kpiLiceAvg = useSnapshot ? Number(snapshot.lice?.avg || 0).toFixed(3) : (lice ? Number(lice.avg_adult_female_lice).toFixed(3) : "\u2014");
+  const kpiLiceAvg = useSnapshot ? formatNumber(Number(snapshot.lice?.avg || 0), locale, 3) : (lice ? formatNumber(Number(lice.avg_adult_female_lice), locale, 3) : "\u2014");
   const kpiLiceHigh = useSnapshot ? `${snapshot.lice?.high_count || 0} sites > 0.5` : (lice ? `${lice.sites_above_threshold} sites > 0.5` : undefined);
   const kpiLiceNeg = useSnapshot ? (snapshot.lice?.avg || 0) > 0.3 : (lice?.avg_adult_female_lice || 0) > 0.3;
 

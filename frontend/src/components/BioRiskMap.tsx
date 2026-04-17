@@ -5,6 +5,7 @@ import type { MapRef } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -39,6 +40,7 @@ const VIEW_POSITIONS: Record<CountryView, { longitude: number; latitude: number;
 };
 
 export default function BioRiskMap({ onSiteClick }: BioRiskMapProps) {
+  const { locale } = useTranslation();
   const mapRef = useRef<MapRef>(null);
   const handleError = useApiError();
   const [layers, setLayers] = useState<Set<LayerToggle>>(() => new Set<LayerToggle>(["lice", "bloom", "disease", "global_farms"]));
@@ -409,8 +411,8 @@ export default function BioRiskMap({ onSiteClick }: BioRiskMapProps) {
               <>
                 {hovered.company && <p className="text-[10px] text-ocean-400">{hovered.company}</p>}
                 <p className="text-[10px] text-[var(--text-secondary)]">
-                  Lice: <span className={hovered.lice >= 0.5 ? "text-rose-400 font-bold" : "text-emerald-400"}>{Number(hovered.lice).toFixed(3)}</span>
-                  {hovered.temp ? ` · ${Number(hovered.temp).toFixed(1)}°C` : ""}
+                  Lice: <span className={hovered.lice >= 0.5 ? "text-rose-400 font-bold" : "text-emerald-400"}>{formatNumber(Number(hovered.lice), locale, 3)}</span>
+                  {hovered.temp ? ` · ${formatNumber(Number(hovered.temp), locale, 1)}°C` : ""}
                 </p>
               </>
             )}
@@ -423,8 +425,8 @@ export default function BioRiskMap({ onSiteClick }: BioRiskMapProps) {
                     hovered.risk_level === "HIGH" ? "text-orange-400 font-bold" :
                     hovered.risk_level === "ELEVATED" ? "text-amber-400 font-bold" : "text-emerald-400"
                   }>{hovered.risk_level}</span>
-                  {hovered.chl_a ? ` · Chl-a ${Number(hovered.chl_a).toFixed(1)} mg/m³` : ""}
-                  {hovered.sst ? ` · SST ${Number(hovered.sst).toFixed(1)}°C` : ""}
+                  {hovered.chl_a ? ` · Chl-a ${formatNumber(Number(hovered.chl_a), locale, 1)} mg/m³` : ""}
+                  {hovered.sst ? ` · SST ${formatNumber(Number(hovered.sst), locale, 1)}°C` : ""}
                 </p>
               </>
             )}
@@ -447,9 +449,9 @@ export default function BioRiskMap({ onSiteClick }: BioRiskMapProps) {
                 {hovered.species && <p className="text-[10px] text-[var(--text-secondary)]">{hovered.species}</p>}
                 {hovered.sst && (
                   <p className="text-[10px] text-[var(--text-secondary)]">
-                    SST: {Number(hovered.sst).toFixed(1)}°C
-                    {hovered.air_temp ? ` · Air: ${Number(hovered.air_temp).toFixed(1)}°C` : ""}
-                    {hovered.wind_ms ? ` · Wind: ${Number(hovered.wind_ms).toFixed(1)} m/s` : ""}
+                    SST: {formatNumber(Number(hovered.sst), locale, 1)}°C
+                    {hovered.air_temp ? ` · Air: ${formatNumber(Number(hovered.air_temp), locale, 1)}°C` : ""}
+                    {hovered.wind_ms ? ` · Wind: ${formatNumber(Number(hovered.wind_ms), locale, 1)} m/s` : ""}
                   </p>
                 )}
                 {hovered.bloom_risk && hovered.bloom_risk !== "unknown" && (

@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { colors } from "@/lib/design-tokens";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -28,6 +29,7 @@ interface Top50ChartProps {
 }
 
 export default function Top50Chart({ companies, onCompanyClick }: Top50ChartProps) {
+  const { locale } = useTranslation();
   const [sortMode, setSortMode] = useState<SortMode>("volume");
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
@@ -141,11 +143,11 @@ export default function Top50Chart({ companies, onCompanyClick }: Top50ChartProp
                               <span className={cn("font-mono font-bold",
                                 co.avg_lice >= 0.5 ? "text-rose-400" :
                                 co.avg_lice >= 0.3 ? "text-amber-400" : "text-emerald-400"
-                              )}>{co.avg_lice.toFixed(3)}</span>
+                              )}>{formatNumber(co.avg_lice, locale, 3)}</span>
                             </div>
                             <div className="flex justify-between text-[10px]">
                               <span className="text-[var(--text-secondary)]">Score</span>
-                              <span className="font-mono font-semibold text-ocean-400">{co.performance_score.toFixed(0)}</span>
+                              <span className="font-mono font-semibold text-ocean-400">{formatNumber(co.performance_score, locale, 0)}</span>
                             </div>
                             <div className="flex justify-between text-[10px]">
                               <span className="text-[var(--text-secondary)]">Sites</span>

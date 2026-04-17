@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Bell, MessageSquare, User, TrendingUp, CheckCheck, AlertTriangle, ShieldAlert, Activity, BarChart3, Bug, Waves, Sun, Moon, Rows3, Rows2 } from "lucide-react";
 import { useTheme } from "@/lib/useTheme";
 import { useDensity } from "@/lib/useDensity";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
@@ -171,11 +171,11 @@ export default function TopBar() {
             title="Go to Price Outlook"
             role="link"
             tabIndex={0}
-            aria-label={`Spot price ${spotPrice?.toFixed(1)} NOK per kg - Go to Price Outlook`}
+            aria-label={`Spot price ${spotPrice != null ? formatNumber(spotPrice, locale, 1) : ""} NOK per kg - Go to Price Outlook`}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") router.push("/price-outlook"); }}
           >
             <span className="text-[13px] font-data font-semibold text-[var(--text-primary)]">
-              {spotPrice.toFixed(1)}
+              {formatNumber(spotPrice, locale, 1)}
             </span>
             <span className="text-[10px] text-[var(--text-secondary)]">NOK/kg</span>
           </div>

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo, useRef, useCallback } from "react";
 import { chartPalette } from "@/lib/design-tokens";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * SupplyChainSankey — Pure SVG Sankey diagram for salmon production flow
@@ -215,6 +216,7 @@ export default function SupplyChainSankey({
   title,
   height: H = 360,
 }: SupplyChainSankeyProps) {
+  const { locale } = useTranslation();
   const W = 760;
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoveredLink, setHoveredLink] = useState<LayoutLink | null>(null);
@@ -409,7 +411,7 @@ export default function SupplyChainSankey({
               <div className="flex justify-between gap-4">
                 <span className="text-[var(--text-secondary)]">Share</span>
                 <span className="font-mono text-[var(--text-secondary)]">
-                  {((hoveredLink.value / Math.max(nodes.filter(n => n.column === 0).reduce((s, n) => s + n.value, 0), 1)) * 100).toFixed(1)}%
+                  {formatNumber((hoveredLink.value / Math.max(nodes.filter(n => n.column === 0).reduce((s, n) => s + n.value, 0), 1)) * 100, locale, 1)}%
                 </span>
               </div>
             </div>

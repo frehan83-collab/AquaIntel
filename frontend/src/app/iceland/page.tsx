@@ -10,14 +10,14 @@ import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import DataQualityBadge from "@/components/DataQualityBadge";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export default function IcelandPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [snapshot, setSnapshot] = useState<any>(null);
   const [production, setProduction] = useState<any>(null);
   const [exports, setExports] = useState<any>(null);
@@ -51,7 +51,7 @@ export default function IcelandPage() {
   const lastProd = prodHistory.length > 0 ? prodHistory[prodHistory.length - 1] : null;
   const prevProd = prodHistory.length > 1 ? prodHistory[prodHistory.length - 2] : null;
   const growthPct = lastProd && prevProd && prevProd.total_tonnes > 0
-    ? ((lastProd.total_tonnes - prevProd.total_tonnes) / prevProd.total_tonnes * 100).toFixed(1)
+    ? formatNumber((lastProd.total_tonnes - prevProd.total_tonnes) / prevProd.total_tonnes * 100, locale, 1)
     : null;
 
   return (
@@ -87,7 +87,7 @@ export default function IcelandPage() {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <KPICard
           label="Total MAB"
-          value={snapshot?.total_mab_tonnes ? `${(snapshot.total_mab_tonnes / 1000).toFixed(1)}K t` : "—"}
+          value={snapshot?.total_mab_tonnes ? `${formatNumber(snapshot.total_mab_tonnes / 1000, locale, 1)}K t` : "—"}
           delta="Maximum Allowed Biomass"
           deltaType="neutral"
           icon={BarChart3}

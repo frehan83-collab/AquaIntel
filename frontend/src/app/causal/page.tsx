@@ -9,14 +9,14 @@ import GlassCard from "@/components/GlassCard";
 import KPICard from "@/components/KPICard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import { exportToCSV } from "@/lib/export";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-function LagBarChart({ results, type }: { results: any[]; type: "granger" | "te" }) {
+function LagBarChart({ results, type, locale }: { results: any[]; type: "granger" | "te"; locale: "en" | "no" }) {
   if (!results || results.length === 0) return null;
 
   const values = results.map((r: any) => type === "granger" ? r.f_stat : r.z_score);
@@ -52,7 +52,7 @@ function LagBarChart({ results, type }: { results: any[]; type: "granger" | "te"
             <span className={`text-[9px] font-mono w-12 text-right ${
               isDominant ? "text-ocean-400 font-bold" : sig ? "text-emerald-400" : "text-[var(--text-secondary)]"
             }`}>
-              {val.toFixed(2)}
+              {formatNumber(val, locale, 2)}
             </span>
             {sig && <span className="text-[8px] text-emerald-400">*</span>}
           </div>
@@ -66,7 +66,7 @@ function LagBarChart({ results, type }: { results: any[]; type: "granger" | "te"
 }
 
 export default function CausalPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -209,7 +209,7 @@ export default function CausalPage() {
                   {t("causal.granger_relationships")}
                   <span className="ml-auto text-[9px] text-[var(--text-secondary)]">Lice → Price</span>
                 </h3>
-                <LagBarChart results={grangerResults} type="granger" />
+                <LagBarChart results={grangerResults} type="granger" locale={locale} />
               </GlassCard>
             )}
 
@@ -221,7 +221,7 @@ export default function CausalPage() {
                   Transfer Entropy (KSG estimator)
                   <span className="ml-auto text-[9px] text-[var(--text-secondary)]">Lice → Price</span>
                 </h3>
-                <LagBarChart results={teResults} type="te" />
+                <LagBarChart results={teResults} type="te" locale={locale} />
               </GlassCard>
             )}
           </div>

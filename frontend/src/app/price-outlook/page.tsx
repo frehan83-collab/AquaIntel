@@ -545,7 +545,7 @@ export default function PriceOutlookPage() {
                     Actual: <span className="text-[var(--text-primary)] font-semibold">{formatNumber(r.actual || r.actual_nok || 0, locale, 1)}</span>
                   </span>
                   <span className={`text-[10px] font-mono ${Math.abs(r.error_pct || ((r.predicted || 0) - (r.actual || 0)) / Math.max(r.actual || 1, 1) * 100) < 5 ? "text-emerald-400" : "text-amber-400"}`}>
-                    {(r.error_pct || ((r.predicted || 0) - (r.actual || 0)) / Math.max(r.actual || 1, 1) * 100).toFixed(1)}%
+                    {formatNumber(r.error_pct || ((r.predicted || 0) - (r.actual || 0)) / Math.max(r.actual || 1, 1) * 100, locale, 1)}%
                   </span>
                 </div>
               </div>

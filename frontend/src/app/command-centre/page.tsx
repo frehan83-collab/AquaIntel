@@ -13,7 +13,7 @@ import { OcButton } from "@/components/ui/Button";
 import { useToast } from "@/components/Toast";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useWebSocket } from "@/lib/useWebSocket";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* ── WebSocket URLs ─────────────────────────────────────────────── */
@@ -28,7 +28,7 @@ const WS_ALERTS = `${BASE}/ws/alerts`;
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function CommandCentrePage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { addToast } = useToast();
   const [data, setData] = useState<any>(null);
   const [alertData, setAlertData] = useState<any>(null);
@@ -219,7 +219,7 @@ export default function CommandCentrePage() {
           value={ais.active_vessels || ais.n_vessels || ais.tracks?.length || 0}
           icon={Ship} delay={0} />
         <KPICard label="Sentiment Score"
-          value={(sentiment.score || sentiment.avg_score || 0).toFixed(2)}
+          value={formatNumber(sentiment.score || sentiment.avg_score || 0, locale, 2)}
           deltaType={sentiment.direction === "bullish" ? "positive" : sentiment.direction === "bearish" ? "negative" : "neutral"}
           icon={MessageSquare} delay={0.03} />
         <KPICard label="Farm Network"
@@ -299,7 +299,7 @@ export default function CommandCentrePage() {
                     <span className={`text-[9px] font-semibold ${
                       (a.sentiment || a.score || 0) > 0 ? "text-emerald-400" :
                       (a.sentiment || a.score || 0) < 0 ? "text-rose-400" : "text-amber-400"
-                    }`}>{(a.sentiment || a.score || 0).toFixed(2)}</span>
+                    }`}>{formatNumber(a.sentiment || a.score || 0, locale, 2)}</span>
                   </div>
                 </div>
               ))}
@@ -375,7 +375,7 @@ export default function CommandCentrePage() {
                         "bg-white/[0.04] text-[var(--text-secondary)]"
                       }`}>{ps.signal || "MONITOR"}</span>
                     </div>
-                    <p className="text-[9px] text-[var(--text-secondary)]">z={ps.z_score?.toFixed(2)}</p>
+                    <p className="text-[9px] text-[var(--text-secondary)]">z={formatNumber(ps.z_score, locale, 2)}</p>
                   </div>
                 ))}
                 {(pairs.signals || data?.pairs_signals || []).length === 0 && (

@@ -6,7 +6,7 @@ import {
   Bug, Syringe, Building2, Thermometer, Download,
 } from "lucide-react";
 import { exportToCSV } from "@/lib/export";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
 import TrendComparison from "@/components/TrendComparison";
@@ -35,7 +35,7 @@ const SEVERITY_STYLES: Record<string, string> = {
 };
 
 export default function DiseasePage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const handleError = useApiError();
   const [alerts, setAlerts] = useState<any>(null);
   const [norway, setNorway] = useState<any>(null);
@@ -429,7 +429,7 @@ export default function DiseasePage() {
               render: (_v: any, row: any) => {
                 const af = row.lice?.adult_female;
                 return af != null ? (
-                  <span className={af > 0.5 ? "text-rose-400" : "text-emerald-400"}>{af.toFixed(2)}</span>
+                  <span className={af > 0.5 ? "text-rose-400" : "text-emerald-400"}>{formatNumber(af, locale, 2)}</span>
                 ) : "—";
               },
             },

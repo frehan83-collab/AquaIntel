@@ -2,6 +2,7 @@
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { colors, dataColors } from "@/lib/design-tokens";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 
 interface MiniHeatmapProps {
   /** 2D array of values (rows x cols) */
@@ -60,6 +61,7 @@ export function MiniHeatmap({
   showValues = false,
   className,
 }: MiniHeatmapProps) {
+  const { locale } = useTranslation();
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
   // Compute global min/max for normalization
@@ -153,7 +155,7 @@ export function MiniHeatmap({
                 onMouseEnter={(e) => handleMouseEnter(ri, ci, e)}
                 onMouseLeave={handleMouseLeave}
               >
-                {showValues ? (val % 1 !== 0 ? val.toFixed(1) : val) : null}
+                {showValues ? (val % 1 !== 0 ? formatNumber(val, locale, 1) : val) : null}
               </div>
             );
           })}
@@ -185,7 +187,7 @@ export function MiniHeatmap({
           )}
           <span className="font-bold">
             {data[tooltip.row][tooltip.col] % 1 !== 0
-              ? data[tooltip.row][tooltip.col].toFixed(2)
+              ? formatNumber(data[tooltip.row][tooltip.col], locale, 2)
               : data[tooltip.row][tooltip.col]}
           </span>
         </div>

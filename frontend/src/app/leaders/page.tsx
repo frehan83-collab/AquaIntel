@@ -111,14 +111,14 @@ function DualSparkline({
   );
 }
 
-function ScoreBar({ score, label, max = 100 }: { score: number; label: string; max?: number }) {
+function ScoreBar({ score, label, max = 100, locale }: { score: number; label: string; max?: number; locale: "en" | "no" }) {
   const pct = Math.min(100, (score / max) * 100);
   const color = pct >= 70 ? "from-emerald-600 to-emerald-400" : pct >= 40 ? "from-amber-600 to-amber-400" : "from-rose-600 to-rose-400";
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
         <span className="text-[11px] text-[var(--text-secondary)]">{label}</span>
-        <span className="text-[11px] font-mono font-semibold">{score.toFixed(0)}</span>
+        <span className="text-[11px] font-mono font-semibold">{formatNumber(score, locale, 0)}</span>
       </div>
       <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
         <motion.div
@@ -572,6 +572,7 @@ function LeadersPageInner() {
                       key={key}
                       label={key.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}
                       score={val}
+                      locale={locale}
                     />
                   ))}
                 </div>

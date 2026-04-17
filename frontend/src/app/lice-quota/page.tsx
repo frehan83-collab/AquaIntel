@@ -11,7 +11,7 @@ import { OcButton } from "@/components/ui/Button";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DataTable, { Column } from "@/components/DataTable";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import { useApiError } from "@/lib/useApiError";
 import DataQualityBadge from "@/components/DataQualityBadge";
 
@@ -52,7 +52,7 @@ function utilizationBar(pct: number) {
 }
 
 export default function LiceQuotaPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const handleError = useApiError();
   const [national, setNational] = useState<any>(null);
   const [selectedPa, setSelectedPa] = useState<number | null>(null);
@@ -274,7 +274,7 @@ export default function LiceQuotaPage() {
                     <div className="bg-white/5 rounded-lg p-3">
                       <div className="text-xs text-slate-400">Utilization</div>
                       <div className="text-lg font-bold text-white">
-                        {paDetail.utilization_pct?.toFixed(1)}%
+                        {formatNumber(paDetail.utilization_pct, locale, 1)}%
                       </div>
                     </div>
                     <div className="bg-white/5 rounded-lg p-3">

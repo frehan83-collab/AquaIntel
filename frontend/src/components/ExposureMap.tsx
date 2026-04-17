@@ -7,6 +7,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 
 interface Site {
   id: number;
@@ -25,6 +26,7 @@ interface ExposureMapProps {
 }
 
 export default function ExposureMap({ onSiteClick }: ExposureMapProps) {
+  const { locale } = useTranslation();
   const handleError = useApiError();
   const [sites, setSites] = useState<Site[]>([]);
   const [diseaseGeo, setDiseaseGeo] = useState<any>(null);
@@ -312,7 +314,7 @@ export default function ExposureMap({ onSiteClick }: ExposureMapProps) {
                   Number(hoveredSite.lice) >= 0.5 ? "text-rose-400" :
                   Number(hoveredSite.lice) >= 0.3 ? "text-amber-400" :
                   Number(hoveredSite.lice) >= 0.15 ? "text-ocean-400" : "text-emerald-400"
-                }`}>{Number(hoveredSite.lice).toFixed(3)}</span>
+                }`}>{formatNumber(Number(hoveredSite.lice), locale, 3)}</span>
               </div>
               {hoveredSite.pa && (
                 <div className="flex justify-between">
@@ -323,7 +325,7 @@ export default function ExposureMap({ onSiteClick }: ExposureMapProps) {
               {hoveredSite.temp && (
                 <div className="flex justify-between">
                   <span className="text-[var(--text-secondary)]">Sea temp</span>
-                  <span className="font-mono">{Number(hoveredSite.temp).toFixed(1)}°C</span>
+                  <span className="font-mono">{formatNumber(Number(hoveredSite.temp), locale, 1)}°C</span>
                 </div>
               )}
               <div className="flex justify-between">

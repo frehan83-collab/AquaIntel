@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useCallback } from "react";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 
 export interface RadarDataset {
   name: string;
@@ -28,6 +29,7 @@ export default function RadarChart({
   rings = 4,
   className = "",
 }: Props) {
+  const { locale } = useTranslation();
   const [tooltip, setTooltip] = useState<{
     x: number;
     y: number;
@@ -189,7 +191,7 @@ export default function RadarChart({
               fill="transparent"
               role="button"
               tabIndex={0}
-              aria-label={`${labels[i]} axis: ${datasets.map(ds => `${ds.name} ${(ds.values[i] * 100).toFixed(0)}%`).join(", ")}`}
+              aria-label={`${labels[i]} axis: ${datasets.map(ds => `${ds.name} ${formatNumber(ds.values[i] * 100, locale, 0)}%`).join(", ")}`}
               onMouseEnter={(e) => handleAxisHover(i, e)}
               onMouseMove={(e) => handleAxisHover(i, e)}
               onFocus={(e) => handleAxisHover(i, e as unknown as React.MouseEvent)}
@@ -267,7 +269,7 @@ export default function RadarChart({
                 style={{ backgroundColor: v.color }}
               />
               <span className="text-[var(--text-secondary)]">{v.name}:</span>
-              <span className="font-mono font-semibold">{(v.value * 100).toFixed(0)}%</span>
+              <span className="font-mono font-semibold">{formatNumber(v.value * 100, locale, 0)}%</span>
             </div>
           ))}
         </div>

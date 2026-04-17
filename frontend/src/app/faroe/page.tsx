@@ -10,14 +10,14 @@ import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import DataQualityBadge from "@/components/DataQualityBadge";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export default function FaroePage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [snapshot, setSnapshot] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -36,7 +36,7 @@ export default function FaroePage() {
   const latest = production.length > 0 ? production[production.length - 1] : null;
   const prev = production.length > 1 ? production[production.length - 2] : null;
   const yoyGrowth = latest && prev && prev.total_t > 0
-    ? ((latest.total_t - prev.total_t) / prev.total_t * 100).toFixed(1)
+    ? formatNumber((latest.total_t - prev.total_t) / prev.total_t * 100, locale, 1)
     : null;
   const regions = snapshot?.regions || [];
 
@@ -73,7 +73,7 @@ export default function FaroePage() {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <KPICard
           label="Latest Production"
-          value={latest ? `${(latest.total_t / 1000).toFixed(0)}K t` : "—"}
+          value={latest ? `${formatNumber(latest.total_t / 1000, locale, 0)}K t` : "—"}
           delta={yoyGrowth ? `${yoyGrowth}% YoY` : "—"}
           deltaType={yoyGrowth && parseFloat(yoyGrowth) > 0 ? "positive" : "negative"}
           icon={BarChart3}

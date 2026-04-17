@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -600,6 +601,7 @@ function StepAlerts({
   prefs: AlertPrefs;
   setPrefs: React.Dispatch<React.SetStateAction<AlertPrefs>>;
 }) {
+  const { locale } = useTranslation();
   const toggles: { key: keyof Pick<AlertPrefs, "lice" | "price" | "disease" | "temperature">; label: string; desc: string; icon: typeof Bell; color: string }[] = [
     { key: "lice", label: "Lice Alerts", desc: "When adult female lice exceed your threshold", icon: Bell, color: "text-rose-400" },
     { key: "price", label: "Price Alerts", desc: "When spot price changes by your specified percentage", icon: TrendingUp, color: "text-amber-400" },
@@ -669,7 +671,7 @@ function StepAlerts({
           min={0.1}
           max={2.0}
           step={0.1}
-          format={(v) => v.toFixed(1)}
+          format={(v) => formatNumber(v, locale, 1)}
           onChange={(v) => setPrefs((p) => ({ ...p, lice_threshold: v }))}
         />
       )}

@@ -8,6 +8,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { chartPalette, colors } from "@/lib/design-tokens";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 
 const CLUSTER_COLORS = [
   ...chartPalette,
@@ -21,6 +22,7 @@ const getCoord = (n: any): [number, number] => [
 ];
 
 export default function FarmNetworkMap() {
+  const { locale } = useTranslation();
   const handleError = useApiError();
   const [mapData, setMapData] = useState<any>(null);
   const [popup, setPopup] = useState<any>(null);
@@ -175,14 +177,14 @@ export default function FarmNetworkMap() {
             <div className="p-2 text-xs space-y-1" style={{ color: colors.text.primary, background: colors.surface["1"], borderRadius: 8, minWidth: 180 }}>
               <div className="font-bold text-sm">{popup.name}</div>
               <div className="text-gray-400">{popup.company} &middot; PA-{popup.pa}</div>
-              <div>Lice: <span className={popup.lice >= 0.5 ? "text-red-400" : popup.lice >= 0.2 ? "text-yellow-400" : "text-green-400"}>{Number(popup.lice).toFixed(3)}</span></div>
+              <div>Lice: <span className={popup.lice >= 0.5 ? "text-red-400" : popup.lice >= 0.2 ? "text-yellow-400" : "text-green-400"}>{formatNumber(Number(popup.lice), locale, 3)}</span></div>
               {farmDetail && (
                 <div className="border-t border-white/10 pt-1 mt-1">
                   <div className="text-gray-400 mb-0.5">Neighbors ({farmDetail.neighbors?.length || farmDetail.n_neighbors || 0})</div>
                   {(farmDetail.neighbors || []).slice(0, 4).map((nb: any, i: number) => (
                     <div key={i} className="flex justify-between text-[10px]">
                       <span>{nb.name || `Farm ${nb.locality_no}`}</span>
-                      <span className="text-gray-400">{nb.distance_km?.toFixed(1)}km</span>
+                      <span className="text-gray-400">{formatNumber(nb.distance_km, locale, 1)}km</span>
                     </div>
                   ))}
                 </div>

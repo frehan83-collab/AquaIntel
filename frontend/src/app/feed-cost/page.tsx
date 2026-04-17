@@ -353,7 +353,7 @@ export default function FeedCostPage() {
                       {INGREDIENT_LABEL_KEYS[name] ? t(INGREDIENT_LABEL_KEYS[name]) : name}
                     </span>
                     <span className="text-[10px] font-mono font-semibold text-[var(--text-primary)]">
-                      {typeof weight === "number" ? `${(weight * 100).toFixed(0)}%` : String(weight)}
+                      {typeof weight === "number" ? `${formatNumber(weight * 100, locale, 0)}%` : String(weight)}
                     </span>
                   </div>
                 ))}
@@ -527,7 +527,7 @@ function OfficialCostSection({ data }: { data: any }) {
               </div>
               <div className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06] text-center">
                 <p className="text-xs font-bold text-rose-400">
-                  +{(((histData[histData.length-1]?.total_cost / histData[0]?.total_cost) - 1) * 100).toFixed(0)}%
+                  +{formatNumber(((histData[histData.length-1]?.total_cost / histData[0]?.total_cost) - 1) * 100, locale, 0)}%
                 </p>
                 <p className="text-[8px] text-[var(--text-secondary)]">{histData.length}yr change</p>
               </div>

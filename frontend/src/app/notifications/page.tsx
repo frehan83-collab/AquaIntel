@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback, useRef, Suspense } from "react";
-import { useTranslation, formatDate } from "@/lib/i18n";
+import { useTranslation, formatDate, formatNumber } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -522,7 +522,7 @@ function AlertRulesSection() {
                       </span>
                       {eval_ && eval_.current_value !== null && eval_.current_value !== undefined && (
                         <span className={`font-bold ${isTriggered ? "text-rose-400" : "text-emerald-400"}`}>
-                          (current: {eval_.current_value.toFixed(3)})
+                          (current: {formatNumber(eval_.current_value, locale, 3)})
                         </span>
                       )}
                     </div>

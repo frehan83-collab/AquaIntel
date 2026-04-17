@@ -13,7 +13,7 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { exportToCSV } from "@/lib/export";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import DataQualityBadge from "@/components/DataQualityBadge";
 
 const PRODUCT_ICONS: Record<string, any> = {
@@ -39,7 +39,7 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 export default function InsurancePage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [dashboard, setDashboard] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [scanning, setScanning] = useState(false);
@@ -112,7 +112,7 @@ export default function InsurancePage() {
         <KPICard label="Pending" value={pending}
           icon={Clock} delay={0.06} />
         <KPICard label="Est. Payout"
-          value={`NOK ${(totalPayout / 1_000_000).toFixed(1)}M`}
+          value={`NOK ${formatNumber(totalPayout / 1_000_000, locale, 1)}M`}
           icon={DollarSign} delay={0.09} />
         <KPICard label="Products Active" value={dashboard?.products_available || 5}
           icon={Shield} delay={0.12} />
@@ -200,13 +200,13 @@ export default function InsurancePage() {
                     </div>
                     <div className="flex items-center gap-3 text-[9px] text-[var(--text-secondary)]">
                       <span>Value: <span className="text-rose-400 font-semibold">{t.actual_value}</span> (threshold: {t.threshold})</span>
-                      <span>+{t.breach_pct?.toFixed(0)}% above</span>
+                      <span>+{formatNumber(t.breach_pct, locale, 0)}% above</span>
                       <span>Confirmation: {t.confirmation_progress}/{t.confirmation_required}</span>
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <div className="text-xs font-bold text-[var(--text-primary)]">
-                      NOK {((t.estimated_payout_nok || 0) / 1000).toFixed(0)}K
+                      NOK {formatNumber((t.estimated_payout_nok || 0) / 1000, locale, 0)}K
                     </div>
                     <div className="text-[9px] text-[var(--text-secondary)]">{t.data_source}</div>
                   </div>

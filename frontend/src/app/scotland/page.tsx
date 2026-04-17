@@ -10,7 +10,7 @@ import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import DataQualityBadge from "@/components/DataQualityBadge";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
@@ -27,7 +27,7 @@ const REGION_COLORS: Record<string, string> = {
 };
 
 export default function ScotlandPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [snapshot, setSnapshot] = useState<any>(null);
   const [norwayLice, setNorwayLice] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -83,7 +83,7 @@ export default function ScotlandPage() {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <KPICard
           label="Annual Production"
-          value={snapshot?.production_tonnes ? `${(snapshot.production_tonnes / 1000).toFixed(0)}K t` : "—"}
+          value={snapshot?.production_tonnes ? `${formatNumber(snapshot.production_tonnes / 1000, locale, 0)}K t` : "—"}
           delta="7% of global supply"
           deltaType="neutral"
           icon={BarChart3}
@@ -229,8 +229,8 @@ export default function ScotlandPage() {
               </div>
               <div className="grid grid-cols-3 gap-2 mt-1">
                 <div className="text-[10px] text-[var(--text-secondary)]">Avg Lice</div>
-                <div className="text-center text-[11px] text-[var(--text-primary)]">{snapshot?.avg_lice != null ? Number(snapshot.avg_lice).toFixed(3) : "—"}</div>
-                <div className="text-center text-[11px] text-[var(--text-primary)]">{norwayLice > 0 ? norwayLice.toFixed(3) : "—"}</div>
+                <div className="text-center text-[11px] text-[var(--text-primary)]">{snapshot?.avg_lice != null ? formatNumber(Number(snapshot.avg_lice), locale, 3) : "—"}</div>
+                <div className="text-center text-[11px] text-[var(--text-primary)]">{norwayLice > 0 ? formatNumber(norwayLice, locale, 3) : "—"}</div>
               </div>
               <div className="grid grid-cols-3 gap-2 mt-1">
                 <div className="text-[10px] text-[var(--text-secondary)]">Regulator</div>

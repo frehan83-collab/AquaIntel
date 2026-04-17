@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import { colors } from "@/lib/design-tokens";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 
 interface DataPoint {
   week: number;
@@ -39,6 +40,7 @@ export default function TrendComparison({
   twoYearsAgo,
   years = [],
 }: TrendComparisonProps) {
+  const { locale } = useTranslation();
   const [hovered, setHovered] = useState<number | null>(null);
 
   const { minVal, maxVal, currentLatest, prevLatest, delta, deltaDir } = useMemo(() => {
@@ -139,7 +141,7 @@ export default function TrendComparison({
           {label || metric} YoY
         </span>
         <span className="text-sm font-bold text-[var(--text-primary)]">
-          {currentLatest.toFixed(metric === "price" ? 1 : 2)}{unit && ` ${unit}`}
+          {formatNumber(currentLatest, locale, metric === "price" ? 1 : 2)}{unit && ` ${unit}`}
         </span>
         <span
           className={`text-[11px] font-medium flex items-center gap-0.5 ${
@@ -147,7 +149,7 @@ export default function TrendComparison({
           }`}
         >
           {deltaDir === "up" ? "\u25B2" : deltaDir === "down" ? "\u25BC" : "\u2500"}
-          {Math.abs(delta).toFixed(1)}% vs {years[1] || "prev"}
+          {formatNumber(Math.abs(delta), locale, 1)}% vs {years[1] || "prev"}
         </span>
       </div>
 
@@ -155,11 +157,11 @@ export default function TrendComparison({
       {hoveredWeek && (
         <div className="absolute -top-16 left-1/2 -translate-x-1/2 px-3 py-2 rounded-lg bg-ocean-950/95 border border-white/10 text-[10px] z-50 whitespace-nowrap shadow-lg pointer-events-none">
           <div className="text-ocean-400 font-semibold">
-            Wk {hoveredWeek.week}: {hoveredWeek.value.toFixed(2)}{unit && ` ${unit}`}
+            Wk {hoveredWeek.week}: {formatNumber(hoveredWeek.value, locale, 2)}{unit && ` ${unit}`}
           </div>
           {hoveredPrev && (
             <div className="text-white/50">
-              {years[1] || "Prev"} Wk {hoveredPrev.week}: {hoveredPrev.value.toFixed(2)}{unit && ` ${unit}`}
+              {years[1] || "Prev"} Wk {hoveredPrev.week}: {formatNumber(hoveredPrev.value, locale, 2)}{unit && ` ${unit}`}
             </div>
           )}
           <div className="text-[9px] text-white/30 mt-0.5 flex gap-3">
