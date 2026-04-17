@@ -484,27 +484,191 @@ export default function DesignSystemPage() {
         ]} />
       </section>
 
+      {/* ── Motion Tokens (Session 39) ───────────────────────── */}
+      <section>
+        <h2 className="section-header">Motion Tokens (Session 39)</h2>
+        <p className="text-xs text-[var(--text-secondary)] mb-3">
+          4 durations &times; 4 easings. Wired to Tailwind <code className="font-mono">duration-{"{token}"}</code> +
+          <code className="font-mono"> ease-{"{token}"}-token</code>. Consumed by framer-motion via CSS vars.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <GlassCard accent="violet">
+            <p className="text-sm font-semibold mb-3">Durations</p>
+            <div className="space-y-2">
+              {[
+                { name: "instant", ms: 60, desc: "Micro-feedback" },
+                { name: "fast", ms: 120, desc: "Hover, focus" },
+                { name: "base", ms: 200, desc: "Standard fade" },
+                { name: "slow", ms: 320, desc: "Modal enter" },
+                { name: "slower", ms: 480, desc: "Orchestration" },
+              ].map((d) => (
+                <div key={d.name} className="flex items-center gap-3 p-2 rounded bg-white/[0.03]">
+                  <div className="w-20 text-xs font-mono">{d.name}</div>
+                  <motion.div
+                    className="h-1.5 bg-[var(--accent)] rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${d.ms * 0.3}px` }}
+                    transition={{ duration: d.ms / 1000, repeat: Infinity, repeatType: "reverse" }}
+                  />
+                  <div className="ml-auto text-[10px] text-[var(--text-secondary)] font-mono">{d.ms}ms</div>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+          <GlassCard accent="emerald">
+            <p className="text-sm font-semibold mb-3">Easing Curves</p>
+            <div className="space-y-2">
+              {[
+                { name: "out", curve: "cubic-bezier(0.16, 1, 0.3, 1)", desc: "Entrance" },
+                { name: "in", curve: "cubic-bezier(0.4, 0, 1, 1)", desc: "Exit" },
+                { name: "inOut", curve: "cubic-bezier(0.4, 0, 0.2, 1)", desc: "Symmetric" },
+                { name: "bounce", curve: "cubic-bezier(0.34, 1.56, 0.64, 1)", desc: "Playful overshoot" },
+              ].map((e) => (
+                <div key={e.name} className="flex items-center gap-3 p-2 rounded bg-white/[0.03]">
+                  <div className="w-16 text-xs font-mono">{e.name}</div>
+                  <div className="flex-1 text-[10px] text-[var(--text-secondary)] font-mono truncate">{e.curve}</div>
+                  <div className="text-[10px] text-[var(--text-secondary)]">{e.desc}</div>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        </div>
+      </section>
+
+      {/* ── Elevation Scale (Session 39) ──────────────────────── */}
+      <section>
+        <h2 className="section-header">Elevation Scale (Session 39)</h2>
+        <p className="text-xs text-[var(--text-secondary)] mb-3">
+          Replaces 6 ad-hoc shadow tokens with a 5-step linear scale. 0 = flat, 5 = topmost overlay.
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {[
+            { level: 0, desc: "Flat, no shadow" },
+            { level: 1, desc: "Hovered item" },
+            { level: 2, desc: "Card, raised" },
+            { level: 3, desc: "Elevated card (default Glass)" },
+            { level: 4, desc: "Dialog, popover" },
+            { level: 5, desc: "Modal, topmost" },
+          ].map((e) => (
+            <div
+              key={e.level}
+              className="p-5 rounded-xl bg-[var(--surface-1)] border border-white/[0.06]"
+              style={{ boxShadow: `var(--elevation-${e.level})` }}
+            >
+              <div className="text-lg font-semibold">elevation-{e.level}</div>
+              <div className="text-xs text-[var(--text-secondary)] mt-1">{e.desc}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Glass Opacity Ladder (Session 39) ─────────────────── */}
+      <section>
+        <h2 className="section-header">Glass Opacity Ladder (Session 39)</h2>
+        <p className="text-xs text-[var(--text-secondary)] mb-3">
+          3-step canonical scale replacing 5+ ad-hoc opacities. Use via <code className="font-mono">var(--glass-base)</code>.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { name: "subtle", bg: "rgba(255,255,255,0.04)", border: "rgba(255,255,255,0.06)", desc: "Faint overlay (default Card)" },
+            { name: "base", bg: "rgba(255,255,255,0.06)", border: "rgba(255,255,255,0.08)", desc: "Standard glass (GlassCard)" },
+            { name: "strong", bg: "rgba(255,255,255,0.10)", border: "rgba(255,255,255,0.12)", desc: "Prominent card (hover)" },
+          ].map((g) => (
+            <div
+              key={g.name}
+              className="p-6 rounded-xl backdrop-blur-md"
+              style={{ background: g.bg, border: `1px solid ${g.border}` }}
+            >
+              <div className="text-lg font-semibold">glass-{g.name}</div>
+              <div className="text-xs text-[var(--text-secondary)] mt-1">{g.desc}</div>
+              <div className="text-[10px] font-mono text-[var(--text-secondary)] mt-2">{g.bg}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Line-Height Tokens (Session 39) ────────────────────── */}
+      <section>
+        <h2 className="section-header">Line-Height Tokens (Session 39)</h2>
+        <p className="text-xs text-[var(--text-secondary)] mb-3">
+          Semantic line-heights replacing ad-hoc numeric values. Wired to Tailwind via <code className="font-mono">leading-{"{token}"}</code>.
+        </p>
+        <div className="grid grid-cols-1 gap-3">
+          {[
+            { name: "display", lh: 1.15, desc: "Hero numbers, H1" },
+            { name: "heading", lh: 1.25, desc: "H2-H3" },
+            { name: "ui", lh: 1.4, desc: "Buttons, labels, nav" },
+            { name: "body", lh: 1.5, desc: "Paragraphs, prose" },
+            { name: "tight", lh: 1.1, desc: "Dense numeric metrics" },
+          ].map((l) => (
+            <div key={l.name} className="p-3 rounded bg-white/[0.03] border border-white/[0.06]">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-mono text-[var(--accent)]">leading-{l.name}</span>
+                <span className="text-[10px] text-[var(--text-secondary)]">{l.lh} — {l.desc}</span>
+              </div>
+              <p className="text-sm" style={{ lineHeight: l.lh }}>
+                The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.
+                Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt.
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Density Mode (Session 39) ─────────────────────────── */}
+      <section>
+        <h2 className="section-header">Density Mode (Session 39)</h2>
+        <p className="text-xs text-[var(--text-secondary)] mb-3">
+          Comfortable (default, farmer persona) vs Compact (trader persona with multiple dashboards).
+          Toggle via the <kbd className="text-[10px] font-mono bg-white/[0.08] px-1 rounded">Rows</kbd> button in the top bar.
+          Wired to <code className="font-mono">data-density</code> attribute on <code className="font-mono">&lt;html&gt;</code>.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 rounded-xl bg-[var(--surface-1)] border border-white/[0.06]">
+            <p className="text-sm font-semibold mb-2">Comfortable</p>
+            <div className="space-y-2 text-xs font-mono text-[var(--text-secondary)]">
+              <div>--density-padding-sm: 8px</div>
+              <div>--density-padding-md: 12px</div>
+              <div>--density-padding-lg: 16px</div>
+              <div>--density-row-height: 44px</div>
+            </div>
+          </div>
+          <div className="p-4 rounded-xl bg-[var(--surface-1)] border border-white/[0.06]">
+            <p className="text-sm font-semibold mb-2">Compact</p>
+            <div className="space-y-2 text-xs font-mono text-[var(--text-secondary)]">
+              <div>--density-padding-sm: 4px</div>
+              <div>--density-padding-md: 8px</div>
+              <div>--density-padding-lg: 12px</div>
+              <div>--density-row-height: 32px</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Token Stats ─────────────────────────────────────────── */}
       <section>
         <h2 className="section-header">Token Stats</h2>
         <GlassCard accent="salmon">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
-              <p className="text-2xl font-bold text-kpi text-[var(--accent)]">86</p>
+              <p className="text-2xl font-bold text-kpi text-[var(--accent)]">120</p>
               <p className="text-xs text-[var(--text-secondary)]">Total Tokens</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-kpi text-[var(--accent)]">34</p>
+              <p className="text-2xl font-bold text-kpi text-[var(--accent)]">42</p>
               <p className="text-xs text-[var(--text-secondary)]">Color Tokens</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-kpi text-[var(--accent)]">8</p>
-              <p className="text-xs text-[var(--text-secondary)]">Components</p>
+              <p className="text-2xl font-bold text-kpi text-[var(--accent)]">14</p>
+              <p className="text-xs text-[var(--text-secondary)]">UI Primitives</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-kpi text-[var(--accent)]">2</p>
               <p className="text-xs text-[var(--text-secondary)]">Themes (L/D)</p>
             </div>
+          </div>
+          <div className="mt-3 pt-3 border-t border-white/[0.06] text-[10px] text-[var(--text-secondary)] text-center">
+            Session 39: +motion (9) +elevation (6) +glass (6) +line-height (5) +density (8) +font-size (2) = <b className="text-[var(--accent)]">36 new tokens</b>
           </div>
         </GlassCard>
       </section>

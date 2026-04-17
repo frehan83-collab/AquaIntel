@@ -1,0 +1,2769 @@
+{
+  "variableCollections": [
+    {
+      "action": "CREATE",
+      "id": "col_openclaw_s39",
+      "name": "OpenClaw / Session 39",
+      "initialModeId": "mode_light"
+    }
+  ],
+  "variableModes": [
+    {
+      "action": "CREATE",
+      "id": "mode_light",
+      "name": "Light",
+      "variableCollectionId": "col_openclaw_s39"
+    },
+    {
+      "action": "CREATE",
+      "id": "mode_dark",
+      "name": "Dark",
+      "variableCollectionId": "col_openclaw_s39"
+    }
+  ],
+  "variables": [
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontFamilies_sans",
+      "name": "typography/fontFamilies/sans",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontfamilies-sans)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontFamilies_display",
+      "name": "typography/fontFamilies/display",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontfamilies-display)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontFamilies_mono",
+      "name": "typography/fontFamilies/mono",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontfamilies-mono)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontFamilies_data",
+      "name": "typography/fontFamilies/data",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontfamilies-data)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontSize_3xs",
+      "name": "typography/fontSize/3xs",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontsize-3xs)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontSize_2xs",
+      "name": "typography/fontSize/2xs",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontsize-2xs)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontSize_xs",
+      "name": "typography/fontSize/xs",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontsize-xs)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontSize_sm",
+      "name": "typography/fontSize/sm",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontsize-sm)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontSize_base",
+      "name": "typography/fontSize/base",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontsize-base)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontSize_lg",
+      "name": "typography/fontSize/lg",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontsize-lg)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontSize_xl",
+      "name": "typography/fontSize/xl",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontsize-xl)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontSize_2xl",
+      "name": "typography/fontSize/2xl",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontsize-2xl)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontSize_3xl",
+      "name": "typography/fontSize/3xl",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontsize-3xl)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontSize_4xl",
+      "name": "typography/fontSize/4xl",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontsize-4xl)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontWeight_regular",
+      "name": "typography/fontWeight/regular",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontweight-regular)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontWeight_medium",
+      "name": "typography/fontWeight/medium",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontweight-medium)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontWeight_semibold",
+      "name": "typography/fontWeight/semibold",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontweight-semibold)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_fontWeight_bold",
+      "name": "typography/fontWeight/bold",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--typography-fontweight-bold)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_lineHeight_display",
+      "name": "typography/lineHeight/display",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--typography-lineheight-display)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_lineHeight_heading",
+      "name": "typography/lineHeight/heading",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--typography-lineheight-heading)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_lineHeight_ui",
+      "name": "typography/lineHeight/ui",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--typography-lineheight-ui)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_lineHeight_body",
+      "name": "typography/lineHeight/body",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--typography-lineheight-body)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_typography_lineHeight_tight",
+      "name": "typography/lineHeight/tight",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--typography-lineheight-tight)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_spacing_1",
+      "name": "spacing/1",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--spacing-1)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_spacing_2",
+      "name": "spacing/2",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--spacing-2)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_spacing_3",
+      "name": "spacing/3",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--spacing-3)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_spacing_4",
+      "name": "spacing/4",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--spacing-4)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_spacing_5",
+      "name": "spacing/5",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--spacing-5)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_spacing_6",
+      "name": "spacing/6",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--spacing-6)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_spacing_8",
+      "name": "spacing/8",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--spacing-8)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_spacing_10",
+      "name": "spacing/10",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--spacing-10)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_spacing_12",
+      "name": "spacing/12",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--spacing-12)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_spacing_16",
+      "name": "spacing/16",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--spacing-16)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_spacing_20",
+      "name": "spacing/20",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--spacing-20)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_borderRadius_sm",
+      "name": "borderRadius/sm",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--borderradius-sm)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_borderRadius_md",
+      "name": "borderRadius/md",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--borderradius-md)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_borderRadius_lg",
+      "name": "borderRadius/lg",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--borderradius-lg)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_borderRadius_xl",
+      "name": "borderRadius/xl",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--borderradius-xl)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_borderRadius_2xl",
+      "name": "borderRadius/2xl",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--borderradius-2xl)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_borderRadius_full",
+      "name": "borderRadius/full",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--borderradius-full)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_motion_duration_instant",
+      "name": "motion/duration/instant",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--motion-duration-instant)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_motion_duration_fast",
+      "name": "motion/duration/fast",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--motion-duration-fast)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_motion_duration_base",
+      "name": "motion/duration/base",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--motion-duration-base)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_motion_duration_slow",
+      "name": "motion/duration/slow",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--motion-duration-slow)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_motion_duration_slower",
+      "name": "motion/duration/slower",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--motion-duration-slower)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_motion_easing_out",
+      "name": "motion/easing/out",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--motion-easing-out)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_motion_easing_in",
+      "name": "motion/easing/in",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--motion-easing-in)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_motion_easing_inOut",
+      "name": "motion/easing/inOut",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--motion-easing-inout)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_motion_easing_bounce",
+      "name": "motion/easing/bounce",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--motion-easing-bounce)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_elevation_0",
+      "name": "elevation/0",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--elevation-0)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_elevation_1",
+      "name": "elevation/1",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--elevation-1)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_elevation_2",
+      "name": "elevation/2",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--elevation-2)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_elevation_3",
+      "name": "elevation/3",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--elevation-3)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_elevation_4",
+      "name": "elevation/4",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--elevation-4)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_elevation_5",
+      "name": "elevation/5",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "STRING",
+      "codeSyntax": {
+        "WEB": "var(--elevation-5)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_density_comfortable_paddingSm",
+      "name": "density/comfortable/paddingSm",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--density-comfortable-paddingsm)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_density_comfortable_paddingMd",
+      "name": "density/comfortable/paddingMd",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--density-comfortable-paddingmd)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_density_comfortable_paddingLg",
+      "name": "density/comfortable/paddingLg",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--density-comfortable-paddinglg)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_density_comfortable_rowHeight",
+      "name": "density/comfortable/rowHeight",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--density-comfortable-rowheight)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_density_compact_paddingSm",
+      "name": "density/compact/paddingSm",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--density-compact-paddingsm)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_density_compact_paddingMd",
+      "name": "density/compact/paddingMd",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--density-compact-paddingmd)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_density_compact_paddingLg",
+      "name": "density/compact/paddingLg",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--density-compact-paddinglg)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_density_compact_rowHeight",
+      "name": "density/compact/rowHeight",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "FLOAT",
+      "codeSyntax": {
+        "WEB": "var(--density-compact-rowheight)"
+      },
+      "scopes": [
+        "ALL_SCOPES"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_chart_1",
+      "name": "chart/1",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--chart-1)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_chart_2",
+      "name": "chart/2",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--chart-2)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_chart_3",
+      "name": "chart/3",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--chart-3)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_chart_4",
+      "name": "chart/4",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--chart-4)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_chart_5",
+      "name": "chart/5",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--chart-5)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_chart_6",
+      "name": "chart/6",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--chart-6)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_chart_7",
+      "name": "chart/7",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--chart-7)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_chart_8",
+      "name": "chart/8",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--chart-8)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_data_biomass",
+      "name": "data/biomass",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--data-biomass)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_data_lice",
+      "name": "data/lice",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--data-lice)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_data_temperature",
+      "name": "data/temperature",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--data-temperature)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_data_mortality",
+      "name": "data/mortality",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--data-mortality)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_data_feeding",
+      "name": "data/feeding",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--data-feeding)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_data_oxygen",
+      "name": "data/oxygen",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--data-oxygen)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_traffic_green",
+      "name": "traffic/green",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--traffic-green)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_traffic_yellow",
+      "name": "traffic/yellow",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--traffic-yellow)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_traffic_red",
+      "name": "traffic/red",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--traffic-red)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_salmon",
+      "name": "salmon",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--salmon)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_danger",
+      "name": "danger",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--danger)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_success",
+      "name": "success",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--success)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_warning",
+      "name": "warning",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--warning)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_positive",
+      "name": "positive",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--positive)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_negative",
+      "name": "negative",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--negative)"
+      },
+      "scopes": [
+        "ALL_FILLS",
+        "STROKE_COLOR"
+      ]
+    },
+    {
+      "action": "CREATE",
+      "id": "var_bg_primary",
+      "name": "bg/primary",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--bg-primary)"
+      }
+    },
+    {
+      "action": "CREATE",
+      "id": "var_bg_secondary",
+      "name": "bg/secondary",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--bg-secondary)"
+      }
+    },
+    {
+      "action": "CREATE",
+      "id": "var_text_primary",
+      "name": "text/primary",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--text-primary)"
+      }
+    },
+    {
+      "action": "CREATE",
+      "id": "var_text_secondary",
+      "name": "text/secondary",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--text-secondary)"
+      }
+    },
+    {
+      "action": "CREATE",
+      "id": "var_accent",
+      "name": "accent",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--accent)"
+      }
+    },
+    {
+      "action": "CREATE",
+      "id": "var_border",
+      "name": "border",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--border)"
+      }
+    },
+    {
+      "action": "CREATE",
+      "id": "var_surface_0",
+      "name": "surface/0",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--surface-0)"
+      }
+    },
+    {
+      "action": "CREATE",
+      "id": "var_surface_1",
+      "name": "surface/1",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--surface-1)"
+      }
+    },
+    {
+      "action": "CREATE",
+      "id": "var_surface_2",
+      "name": "surface/2",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--surface-2)"
+      }
+    },
+    {
+      "action": "CREATE",
+      "id": "var_surface_3",
+      "name": "surface/3",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--surface-3)"
+      }
+    },
+    {
+      "action": "CREATE",
+      "id": "var_surface_4",
+      "name": "surface/4",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--surface-4)"
+      }
+    },
+    {
+      "action": "CREATE",
+      "id": "var_glass_subtle",
+      "name": "glass/subtle",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--glass-subtle)"
+      }
+    },
+    {
+      "action": "CREATE",
+      "id": "var_glass_base",
+      "name": "glass/base",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--glass-base)"
+      }
+    },
+    {
+      "action": "CREATE",
+      "id": "var_glass_strong",
+      "name": "glass/strong",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--glass-strong)"
+      }
+    },
+    {
+      "action": "CREATE",
+      "id": "var_glass_borderSubtle",
+      "name": "glass/borderSubtle",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--glass-bordersubtle)"
+      }
+    },
+    {
+      "action": "CREATE",
+      "id": "var_glass_borderBase",
+      "name": "glass/borderBase",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--glass-borderbase)"
+      }
+    },
+    {
+      "action": "CREATE",
+      "id": "var_glass_borderStrong",
+      "name": "glass/borderStrong",
+      "variableCollectionId": "col_openclaw_s39",
+      "resolvedType": "COLOR",
+      "codeSyntax": {
+        "WEB": "var(--glass-borderstrong)"
+      }
+    }
+  ],
+  "variableModeValues": [
+    {
+      "variableId": "var_typography_fontFamilies_sans",
+      "modeId": "mode_light",
+      "value": "DM Sans"
+    },
+    {
+      "variableId": "var_typography_fontFamilies_sans",
+      "modeId": "mode_dark",
+      "value": "DM Sans"
+    },
+    {
+      "variableId": "var_typography_fontFamilies_display",
+      "modeId": "mode_light",
+      "value": "DM Serif Display"
+    },
+    {
+      "variableId": "var_typography_fontFamilies_display",
+      "modeId": "mode_dark",
+      "value": "DM Serif Display"
+    },
+    {
+      "variableId": "var_typography_fontFamilies_mono",
+      "modeId": "mode_light",
+      "value": "JetBrains Mono"
+    },
+    {
+      "variableId": "var_typography_fontFamilies_mono",
+      "modeId": "mode_dark",
+      "value": "JetBrains Mono"
+    },
+    {
+      "variableId": "var_typography_fontFamilies_data",
+      "modeId": "mode_light",
+      "value": "JetBrains Mono"
+    },
+    {
+      "variableId": "var_typography_fontFamilies_data",
+      "modeId": "mode_dark",
+      "value": "JetBrains Mono"
+    },
+    {
+      "variableId": "var_typography_fontSize_3xs",
+      "modeId": "mode_light",
+      "value": 9
+    },
+    {
+      "variableId": "var_typography_fontSize_3xs",
+      "modeId": "mode_dark",
+      "value": 9
+    },
+    {
+      "variableId": "var_typography_fontSize_2xs",
+      "modeId": "mode_light",
+      "value": 10
+    },
+    {
+      "variableId": "var_typography_fontSize_2xs",
+      "modeId": "mode_dark",
+      "value": 10
+    },
+    {
+      "variableId": "var_typography_fontSize_xs",
+      "modeId": "mode_light",
+      "value": 12
+    },
+    {
+      "variableId": "var_typography_fontSize_xs",
+      "modeId": "mode_dark",
+      "value": 12
+    },
+    {
+      "variableId": "var_typography_fontSize_sm",
+      "modeId": "mode_light",
+      "value": 14
+    },
+    {
+      "variableId": "var_typography_fontSize_sm",
+      "modeId": "mode_dark",
+      "value": 14
+    },
+    {
+      "variableId": "var_typography_fontSize_base",
+      "modeId": "mode_light",
+      "value": 16
+    },
+    {
+      "variableId": "var_typography_fontSize_base",
+      "modeId": "mode_dark",
+      "value": 16
+    },
+    {
+      "variableId": "var_typography_fontSize_lg",
+      "modeId": "mode_light",
+      "value": 18
+    },
+    {
+      "variableId": "var_typography_fontSize_lg",
+      "modeId": "mode_dark",
+      "value": 18
+    },
+    {
+      "variableId": "var_typography_fontSize_xl",
+      "modeId": "mode_light",
+      "value": 20
+    },
+    {
+      "variableId": "var_typography_fontSize_xl",
+      "modeId": "mode_dark",
+      "value": 20
+    },
+    {
+      "variableId": "var_typography_fontSize_2xl",
+      "modeId": "mode_light",
+      "value": 24
+    },
+    {
+      "variableId": "var_typography_fontSize_2xl",
+      "modeId": "mode_dark",
+      "value": 24
+    },
+    {
+      "variableId": "var_typography_fontSize_3xl",
+      "modeId": "mode_light",
+      "value": 30
+    },
+    {
+      "variableId": "var_typography_fontSize_3xl",
+      "modeId": "mode_dark",
+      "value": 30
+    },
+    {
+      "variableId": "var_typography_fontSize_4xl",
+      "modeId": "mode_light",
+      "value": 36
+    },
+    {
+      "variableId": "var_typography_fontSize_4xl",
+      "modeId": "mode_dark",
+      "value": 36
+    },
+    {
+      "variableId": "var_typography_fontWeight_regular",
+      "modeId": "mode_light",
+      "value": 400
+    },
+    {
+      "variableId": "var_typography_fontWeight_regular",
+      "modeId": "mode_dark",
+      "value": 400
+    },
+    {
+      "variableId": "var_typography_fontWeight_medium",
+      "modeId": "mode_light",
+      "value": 500
+    },
+    {
+      "variableId": "var_typography_fontWeight_medium",
+      "modeId": "mode_dark",
+      "value": 500
+    },
+    {
+      "variableId": "var_typography_fontWeight_semibold",
+      "modeId": "mode_light",
+      "value": 600
+    },
+    {
+      "variableId": "var_typography_fontWeight_semibold",
+      "modeId": "mode_dark",
+      "value": 600
+    },
+    {
+      "variableId": "var_typography_fontWeight_bold",
+      "modeId": "mode_light",
+      "value": 700
+    },
+    {
+      "variableId": "var_typography_fontWeight_bold",
+      "modeId": "mode_dark",
+      "value": 700
+    },
+    {
+      "variableId": "var_typography_lineHeight_display",
+      "modeId": "mode_light",
+      "value": 1.15
+    },
+    {
+      "variableId": "var_typography_lineHeight_display",
+      "modeId": "mode_dark",
+      "value": 1.15
+    },
+    {
+      "variableId": "var_typography_lineHeight_heading",
+      "modeId": "mode_light",
+      "value": 1.25
+    },
+    {
+      "variableId": "var_typography_lineHeight_heading",
+      "modeId": "mode_dark",
+      "value": 1.25
+    },
+    {
+      "variableId": "var_typography_lineHeight_ui",
+      "modeId": "mode_light",
+      "value": 1.4
+    },
+    {
+      "variableId": "var_typography_lineHeight_ui",
+      "modeId": "mode_dark",
+      "value": 1.4
+    },
+    {
+      "variableId": "var_typography_lineHeight_body",
+      "modeId": "mode_light",
+      "value": 1.5
+    },
+    {
+      "variableId": "var_typography_lineHeight_body",
+      "modeId": "mode_dark",
+      "value": 1.5
+    },
+    {
+      "variableId": "var_typography_lineHeight_tight",
+      "modeId": "mode_light",
+      "value": 1.1
+    },
+    {
+      "variableId": "var_typography_lineHeight_tight",
+      "modeId": "mode_dark",
+      "value": 1.1
+    },
+    {
+      "variableId": "var_spacing_1",
+      "modeId": "mode_light",
+      "value": 4
+    },
+    {
+      "variableId": "var_spacing_1",
+      "modeId": "mode_dark",
+      "value": 4
+    },
+    {
+      "variableId": "var_spacing_2",
+      "modeId": "mode_light",
+      "value": 8
+    },
+    {
+      "variableId": "var_spacing_2",
+      "modeId": "mode_dark",
+      "value": 8
+    },
+    {
+      "variableId": "var_spacing_3",
+      "modeId": "mode_light",
+      "value": 12
+    },
+    {
+      "variableId": "var_spacing_3",
+      "modeId": "mode_dark",
+      "value": 12
+    },
+    {
+      "variableId": "var_spacing_4",
+      "modeId": "mode_light",
+      "value": 16
+    },
+    {
+      "variableId": "var_spacing_4",
+      "modeId": "mode_dark",
+      "value": 16
+    },
+    {
+      "variableId": "var_spacing_5",
+      "modeId": "mode_light",
+      "value": 20
+    },
+    {
+      "variableId": "var_spacing_5",
+      "modeId": "mode_dark",
+      "value": 20
+    },
+    {
+      "variableId": "var_spacing_6",
+      "modeId": "mode_light",
+      "value": 24
+    },
+    {
+      "variableId": "var_spacing_6",
+      "modeId": "mode_dark",
+      "value": 24
+    },
+    {
+      "variableId": "var_spacing_8",
+      "modeId": "mode_light",
+      "value": 32
+    },
+    {
+      "variableId": "var_spacing_8",
+      "modeId": "mode_dark",
+      "value": 32
+    },
+    {
+      "variableId": "var_spacing_10",
+      "modeId": "mode_light",
+      "value": 40
+    },
+    {
+      "variableId": "var_spacing_10",
+      "modeId": "mode_dark",
+      "value": 40
+    },
+    {
+      "variableId": "var_spacing_12",
+      "modeId": "mode_light",
+      "value": 48
+    },
+    {
+      "variableId": "var_spacing_12",
+      "modeId": "mode_dark",
+      "value": 48
+    },
+    {
+      "variableId": "var_spacing_16",
+      "modeId": "mode_light",
+      "value": 64
+    },
+    {
+      "variableId": "var_spacing_16",
+      "modeId": "mode_dark",
+      "value": 64
+    },
+    {
+      "variableId": "var_spacing_20",
+      "modeId": "mode_light",
+      "value": 80
+    },
+    {
+      "variableId": "var_spacing_20",
+      "modeId": "mode_dark",
+      "value": 80
+    },
+    {
+      "variableId": "var_borderRadius_sm",
+      "modeId": "mode_light",
+      "value": 6
+    },
+    {
+      "variableId": "var_borderRadius_sm",
+      "modeId": "mode_dark",
+      "value": 6
+    },
+    {
+      "variableId": "var_borderRadius_md",
+      "modeId": "mode_light",
+      "value": 8
+    },
+    {
+      "variableId": "var_borderRadius_md",
+      "modeId": "mode_dark",
+      "value": 8
+    },
+    {
+      "variableId": "var_borderRadius_lg",
+      "modeId": "mode_light",
+      "value": 12
+    },
+    {
+      "variableId": "var_borderRadius_lg",
+      "modeId": "mode_dark",
+      "value": 12
+    },
+    {
+      "variableId": "var_borderRadius_xl",
+      "modeId": "mode_light",
+      "value": 16
+    },
+    {
+      "variableId": "var_borderRadius_xl",
+      "modeId": "mode_dark",
+      "value": 16
+    },
+    {
+      "variableId": "var_borderRadius_2xl",
+      "modeId": "mode_light",
+      "value": 20
+    },
+    {
+      "variableId": "var_borderRadius_2xl",
+      "modeId": "mode_dark",
+      "value": 20
+    },
+    {
+      "variableId": "var_borderRadius_full",
+      "modeId": "mode_light",
+      "value": 9999
+    },
+    {
+      "variableId": "var_borderRadius_full",
+      "modeId": "mode_dark",
+      "value": 9999
+    },
+    {
+      "variableId": "var_motion_duration_instant",
+      "modeId": "mode_light",
+      "value": 60
+    },
+    {
+      "variableId": "var_motion_duration_instant",
+      "modeId": "mode_dark",
+      "value": 60
+    },
+    {
+      "variableId": "var_motion_duration_fast",
+      "modeId": "mode_light",
+      "value": 120
+    },
+    {
+      "variableId": "var_motion_duration_fast",
+      "modeId": "mode_dark",
+      "value": 120
+    },
+    {
+      "variableId": "var_motion_duration_base",
+      "modeId": "mode_light",
+      "value": 200
+    },
+    {
+      "variableId": "var_motion_duration_base",
+      "modeId": "mode_dark",
+      "value": 200
+    },
+    {
+      "variableId": "var_motion_duration_slow",
+      "modeId": "mode_light",
+      "value": 320
+    },
+    {
+      "variableId": "var_motion_duration_slow",
+      "modeId": "mode_dark",
+      "value": 320
+    },
+    {
+      "variableId": "var_motion_duration_slower",
+      "modeId": "mode_light",
+      "value": 480
+    },
+    {
+      "variableId": "var_motion_duration_slower",
+      "modeId": "mode_dark",
+      "value": 480
+    },
+    {
+      "variableId": "var_motion_easing_out",
+      "modeId": "mode_light",
+      "value": "cubic-bezier(0.16, 1, 0.3, 1)"
+    },
+    {
+      "variableId": "var_motion_easing_out",
+      "modeId": "mode_dark",
+      "value": "cubic-bezier(0.16, 1, 0.3, 1)"
+    },
+    {
+      "variableId": "var_motion_easing_in",
+      "modeId": "mode_light",
+      "value": "cubic-bezier(0.4, 0, 1, 1)"
+    },
+    {
+      "variableId": "var_motion_easing_in",
+      "modeId": "mode_dark",
+      "value": "cubic-bezier(0.4, 0, 1, 1)"
+    },
+    {
+      "variableId": "var_motion_easing_inOut",
+      "modeId": "mode_light",
+      "value": "cubic-bezier(0.4, 0, 0.2, 1)"
+    },
+    {
+      "variableId": "var_motion_easing_inOut",
+      "modeId": "mode_dark",
+      "value": "cubic-bezier(0.4, 0, 0.2, 1)"
+    },
+    {
+      "variableId": "var_motion_easing_bounce",
+      "modeId": "mode_light",
+      "value": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+    },
+    {
+      "variableId": "var_motion_easing_bounce",
+      "modeId": "mode_dark",
+      "value": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+    },
+    {
+      "variableId": "var_elevation_0",
+      "modeId": "mode_light",
+      "value": "none"
+    },
+    {
+      "variableId": "var_elevation_0",
+      "modeId": "mode_dark",
+      "value": "none"
+    },
+    {
+      "variableId": "var_elevation_1",
+      "modeId": "mode_light",
+      "value": "0 1px 2px rgba(0,0,0,0.2)"
+    },
+    {
+      "variableId": "var_elevation_1",
+      "modeId": "mode_dark",
+      "value": "0 1px 2px rgba(0,0,0,0.2)"
+    },
+    {
+      "variableId": "var_elevation_2",
+      "modeId": "mode_light",
+      "value": "0 4px 12px rgba(0,0,0,0.25)"
+    },
+    {
+      "variableId": "var_elevation_2",
+      "modeId": "mode_dark",
+      "value": "0 4px 12px rgba(0,0,0,0.25)"
+    },
+    {
+      "variableId": "var_elevation_3",
+      "modeId": "mode_light",
+      "value": "0 8px 32px rgba(0,0,0,0.3)"
+    },
+    {
+      "variableId": "var_elevation_3",
+      "modeId": "mode_dark",
+      "value": "0 8px 32px rgba(0,0,0,0.3)"
+    },
+    {
+      "variableId": "var_elevation_4",
+      "modeId": "mode_light",
+      "value": "0 16px 48px rgba(0,0,0,0.35)"
+    },
+    {
+      "variableId": "var_elevation_4",
+      "modeId": "mode_dark",
+      "value": "0 16px 48px rgba(0,0,0,0.35)"
+    },
+    {
+      "variableId": "var_elevation_5",
+      "modeId": "mode_light",
+      "value": "0 24px 64px rgba(0,0,0,0.4)"
+    },
+    {
+      "variableId": "var_elevation_5",
+      "modeId": "mode_dark",
+      "value": "0 24px 64px rgba(0,0,0,0.4)"
+    },
+    {
+      "variableId": "var_density_comfortable_paddingSm",
+      "modeId": "mode_light",
+      "value": 8
+    },
+    {
+      "variableId": "var_density_comfortable_paddingSm",
+      "modeId": "mode_dark",
+      "value": 8
+    },
+    {
+      "variableId": "var_density_comfortable_paddingMd",
+      "modeId": "mode_light",
+      "value": 12
+    },
+    {
+      "variableId": "var_density_comfortable_paddingMd",
+      "modeId": "mode_dark",
+      "value": 12
+    },
+    {
+      "variableId": "var_density_comfortable_paddingLg",
+      "modeId": "mode_light",
+      "value": 16
+    },
+    {
+      "variableId": "var_density_comfortable_paddingLg",
+      "modeId": "mode_dark",
+      "value": 16
+    },
+    {
+      "variableId": "var_density_comfortable_rowHeight",
+      "modeId": "mode_light",
+      "value": 44
+    },
+    {
+      "variableId": "var_density_comfortable_rowHeight",
+      "modeId": "mode_dark",
+      "value": 44
+    },
+    {
+      "variableId": "var_density_compact_paddingSm",
+      "modeId": "mode_light",
+      "value": 4
+    },
+    {
+      "variableId": "var_density_compact_paddingSm",
+      "modeId": "mode_dark",
+      "value": 4
+    },
+    {
+      "variableId": "var_density_compact_paddingMd",
+      "modeId": "mode_light",
+      "value": 8
+    },
+    {
+      "variableId": "var_density_compact_paddingMd",
+      "modeId": "mode_dark",
+      "value": 8
+    },
+    {
+      "variableId": "var_density_compact_paddingLg",
+      "modeId": "mode_light",
+      "value": 12
+    },
+    {
+      "variableId": "var_density_compact_paddingLg",
+      "modeId": "mode_dark",
+      "value": 12
+    },
+    {
+      "variableId": "var_density_compact_rowHeight",
+      "modeId": "mode_light",
+      "value": 32
+    },
+    {
+      "variableId": "var_density_compact_rowHeight",
+      "modeId": "mode_dark",
+      "value": 32
+    },
+    {
+      "variableId": "var_chart_1",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0,
+        "g": 0.8313725490196079,
+        "b": 0.7843137254901961,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_chart_1",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0,
+        "g": 0.8313725490196079,
+        "b": 0.7843137254901961,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_chart_2",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.9098039215686274,
+        "g": 0.45098039215686275,
+        "b": 0.2901960784313726,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_chart_2",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.9098039215686274,
+        "g": 0.45098039215686275,
+        "b": 0.2901960784313726,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_chart_3",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.5450980392156862,
+        "g": 0.3607843137254902,
+        "b": 0.9647058823529412,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_chart_3",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.5450980392156862,
+        "g": 0.3607843137254902,
+        "b": 0.9647058823529412,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_chart_4",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.9607843137254902,
+        "g": 0.6196078431372549,
+        "b": 0.043137254901960784,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_chart_4",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.9607843137254902,
+        "g": 0.6196078431372549,
+        "b": 0.043137254901960784,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_chart_5",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.9254901960784314,
+        "g": 0.2823529411764706,
+        "b": 0.6,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_chart_5",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.9254901960784314,
+        "g": 0.2823529411764706,
+        "b": 0.6,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_chart_6",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.06274509803921569,
+        "g": 0.7254901960784313,
+        "b": 0.5058823529411764,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_chart_6",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.06274509803921569,
+        "g": 0.7254901960784313,
+        "b": 0.5058823529411764,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_chart_7",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.38823529411764707,
+        "g": 0.4,
+        "b": 0.9450980392156862,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_chart_7",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.38823529411764707,
+        "g": 0.4,
+        "b": 0.9450980392156862,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_chart_8",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.0784313725490196,
+        "g": 0.7215686274509804,
+        "b": 0.6509803921568628,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_chart_8",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.0784313725490196,
+        "g": 0.7215686274509804,
+        "b": 0.6509803921568628,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_data_biomass",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.9607843137254902,
+        "g": 0.6196078431372549,
+        "b": 0.043137254901960784,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_data_biomass",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.9607843137254902,
+        "g": 0.6196078431372549,
+        "b": 0.043137254901960784,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_data_lice",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.9568627450980393,
+        "g": 0.24705882352941178,
+        "b": 0.3686274509803922,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_data_lice",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.9568627450980393,
+        "g": 0.24705882352941178,
+        "b": 0.3686274509803922,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_data_temperature",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.23137254901960785,
+        "g": 0.5098039215686274,
+        "b": 0.9647058823529412,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_data_temperature",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.23137254901960785,
+        "g": 0.5098039215686274,
+        "b": 0.9647058823529412,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_data_mortality",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.6235294117647059,
+        "g": 0.07058823529411765,
+        "b": 0.2235294117647059,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_data_mortality",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.6235294117647059,
+        "g": 0.07058823529411765,
+        "b": 0.2235294117647059,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_data_feeding",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.0196078431372549,
+        "g": 0.5882352941176471,
+        "b": 0.4117647058823529,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_data_feeding",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.0196078431372549,
+        "g": 0.5882352941176471,
+        "b": 0.4117647058823529,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_data_oxygen",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.023529411764705882,
+        "g": 0.7137254901960784,
+        "b": 0.8313725490196079,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_data_oxygen",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.023529411764705882,
+        "g": 0.7137254901960784,
+        "b": 0.8313725490196079,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_traffic_green",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.13333333333333333,
+        "g": 0.7725490196078432,
+        "b": 0.3686274509803922,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_traffic_green",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.13333333333333333,
+        "g": 0.7725490196078432,
+        "b": 0.3686274509803922,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_traffic_yellow",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.9176470588235294,
+        "g": 0.7019607843137254,
+        "b": 0.03137254901960784,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_traffic_yellow",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.9176470588235294,
+        "g": 0.7019607843137254,
+        "b": 0.03137254901960784,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_traffic_red",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.9372549019607843,
+        "g": 0.26666666666666666,
+        "b": 0.26666666666666666,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_traffic_red",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.9372549019607843,
+        "g": 0.26666666666666666,
+        "b": 0.26666666666666666,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_salmon",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.9098039215686274,
+        "g": 0.45098039215686275,
+        "b": 0.2901960784313726,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_salmon",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.9098039215686274,
+        "g": 0.45098039215686275,
+        "b": 0.2901960784313726,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_danger",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.9568627450980393,
+        "g": 0.24705882352941178,
+        "b": 0.3686274509803922,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_danger",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.9568627450980393,
+        "g": 0.24705882352941178,
+        "b": 0.3686274509803922,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_success",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.06274509803921569,
+        "g": 0.7254901960784313,
+        "b": 0.5058823529411764,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_success",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.06274509803921569,
+        "g": 0.7254901960784313,
+        "b": 0.5058823529411764,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_warning",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.9607843137254902,
+        "g": 0.6196078431372549,
+        "b": 0.043137254901960784,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_warning",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.9607843137254902,
+        "g": 0.6196078431372549,
+        "b": 0.043137254901960784,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_positive",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.20392156862745098,
+        "g": 0.8274509803921568,
+        "b": 0.6,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_positive",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.20392156862745098,
+        "g": 0.8274509803921568,
+        "b": 0.6,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_negative",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.984313725490196,
+        "g": 0.44313725490196076,
+        "b": 0.5215686274509804,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_negative",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.984313725490196,
+        "g": 0.44313725490196076,
+        "b": 0.5215686274509804,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_bg_primary",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.9725490196078431,
+        "g": 0.9803921568627451,
+        "b": 0.984313725490196,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_bg_secondary",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.9372549019607843,
+        "g": 0.9529411764705882,
+        "b": 0.9647058823529412,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_text_primary",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.10196078431372549,
+        "g": 0.13725490196078433,
+        "b": 0.19607843137254902,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_text_secondary",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.35294117647058826,
+        "g": 0.4196078431372549,
+        "b": 0.49019607843137253,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_accent",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0,
+        "g": 0.6588235294117647,
+        "b": 0.6235294117647059,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_border",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.8196078431372549,
+        "g": 0.8352941176470589,
+        "b": 0.8588235294117647,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_surface_0",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.9725490196078431,
+        "g": 0.9803921568627451,
+        "b": 0.984313725490196,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_surface_1",
+      "modeId": "mode_light",
+      "value": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_surface_2",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.9450980392156862,
+        "g": 0.9607843137254902,
+        "b": 0.9764705882352941,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_surface_3",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.8862745098039215,
+        "g": 0.9098039215686274,
+        "b": 0.9411764705882353,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_surface_4",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0.796078431372549,
+        "g": 0.8352941176470589,
+        "b": 0.8823529411764706,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_glass_subtle",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.02
+      }
+    },
+    {
+      "variableId": "var_glass_base",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.04
+      }
+    },
+    {
+      "variableId": "var_glass_strong",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.08
+      }
+    },
+    {
+      "variableId": "var_glass_borderSubtle",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.05
+      }
+    },
+    {
+      "variableId": "var_glass_borderBase",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.08
+      }
+    },
+    {
+      "variableId": "var_glass_borderStrong",
+      "modeId": "mode_light",
+      "value": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0.12
+      }
+    },
+    {
+      "variableId": "var_bg_primary",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.023529411764705882,
+        "g": 0.058823529411764705,
+        "b": 0.10980392156862745,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_bg_secondary",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.0392156862745098,
+        "g": 0.10196078431372549,
+        "b": 0.1843137254901961,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_text_primary",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.9098039215686274,
+        "g": 0.9294117647058824,
+        "b": 0.9490196078431372,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_text_secondary",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.5803921568627451,
+        "g": 0.6392156862745098,
+        "b": 0.7215686274509804,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_accent",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0,
+        "g": 0.8313725490196079,
+        "b": 0.7843137254901961,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_border",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.11764705882352941,
+        "g": 0.1607843137254902,
+        "b": 0.23137254901960785,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_surface_0",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.023529411764705882,
+        "g": 0.058823529411764705,
+        "b": 0.10980392156862745,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_surface_1",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.0392156862745098,
+        "g": 0.08627450980392157,
+        "b": 0.1607843137254902,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_surface_2",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.058823529411764705,
+        "g": 0.11372549019607843,
+        "b": 0.2,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_surface_3",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.08235294117647059,
+        "g": 0.14901960784313725,
+        "b": 0.25098039215686274,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_surface_4",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 0.10196078431372549,
+        "g": 0.1843137254901961,
+        "b": 0.30196078431372547,
+        "a": 1
+      }
+    },
+    {
+      "variableId": "var_glass_subtle",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 0.04
+      }
+    },
+    {
+      "variableId": "var_glass_base",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 0.06
+      }
+    },
+    {
+      "variableId": "var_glass_strong",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 0.1
+      }
+    },
+    {
+      "variableId": "var_glass_borderSubtle",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 0.06
+      }
+    },
+    {
+      "variableId": "var_glass_borderBase",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 0.08
+      }
+    },
+    {
+      "variableId": "var_glass_borderStrong",
+      "modeId": "mode_dark",
+      "value": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 0.12
+      }
+    }
+  ]
+}

@@ -1,4 +1,14 @@
 {
+  "$schema": "https://tokens.studio/schema.json",
+  "$metadata": {
+    "version": "2.0.0",
+    "lastSynced": "2026-04-14",
+    "source": "OpenClaw / FishIntel design system",
+    "generator": "docs/figma-tokens.json → scripts/extract-design-tokens.ts → tokens.css + tailwind.tokens.js + theme.ts",
+    "modes": ["light", "dark"],
+    "activeMode": "dark",
+    "session": "39 — audit remediation (motion + glass ladder + elevation + density + line-heights)"
+  },
   "global": {
     "colors": {
       "bg": {
@@ -8,7 +18,7 @@
       "accent": { "value": "#00D4C8", "type": "color", "description": "Primary interactive cyan" },
       "text": {
         "primary": { "value": "#E8EDF2", "type": "color", "description": "Main content text (dark)" },
-        "secondary": { "value": "#8899AA", "type": "color", "description": "Labels, descriptions (dark)" }
+        "secondary": { "value": "#94A3B8", "type": "color", "description": "Labels, descriptions (dark) — updated Session 38 for contrast" }
       },
       "border": { "value": "#1E293B", "type": "color", "description": "Dividers (dark)" },
       "danger": { "value": "#F43F5E", "type": "color", "description": "Errors, destructive" },
@@ -24,9 +34,9 @@
         "oxygen": { "value": "#06B6D4", "type": "color", "description": "O2 levels" }
       },
       "traffic": {
-        "green": { "value": "#22C55E", "type": "color", "description": "Traffic light green (+6% MTB)" },
-        "yellow": { "value": "#EAB308", "type": "color", "description": "Traffic light yellow (0% MTB)" },
-        "red": { "value": "#EF4444", "type": "color", "description": "Traffic light red (-6% MTB)" }
+        "green": { "value": "#22C55E", "type": "color", "description": "Trafikklys green (+6% MTB)" },
+        "yellow": { "value": "#EAB308", "type": "color", "description": "Trafikklys yellow (0% MTB)" },
+        "red": { "value": "#EF4444", "type": "color", "description": "Trafikklys red (-6% MTB)" }
       },
       "positive": { "value": "#34D399", "type": "color", "description": "Good trends" },
       "negative": { "value": "#FB7185", "type": "color", "description": "Bad trends" },
@@ -50,11 +60,14 @@
     },
     "typography": {
       "fontFamilies": {
-        "sans": { "value": "DM Sans", "type": "fontFamilies" },
-        "display": { "value": "DM Serif Display", "type": "fontFamilies" },
-        "mono": { "value": "JetBrains Mono", "type": "fontFamilies" }
+        "sans": { "value": "DM Sans", "type": "fontFamilies", "description": "Body & UI" },
+        "display": { "value": "DM Serif Display", "type": "fontFamilies", "description": "Hero headings & H1" },
+        "mono": { "value": "JetBrains Mono", "type": "fontFamilies", "description": "Code blocks" },
+        "data": { "value": "JetBrains Mono", "type": "fontFamilies", "description": "Numeric displays (KPIs, prices)" }
       },
       "fontSize": {
+        "3xs": { "value": "9", "type": "fontSizes", "description": "Chart axis labels only" },
+        "2xs": { "value": "10", "type": "fontSizes", "description": "Tiny labels, badges" },
         "xs": { "value": "12", "type": "fontSizes" },
         "sm": { "value": "14", "type": "fontSizes" },
         "base": { "value": "16", "type": "fontSizes" },
@@ -71,14 +84,11 @@
         "bold": { "value": "700", "type": "fontWeights" }
       },
       "lineHeight": {
-        "xs": { "value": "16", "type": "lineHeights" },
-        "sm": { "value": "20", "type": "lineHeights" },
-        "base": { "value": "24", "type": "lineHeights" },
-        "lg": { "value": "28", "type": "lineHeights" },
-        "xl": { "value": "28", "type": "lineHeights" },
-        "2xl": { "value": "32", "type": "lineHeights" },
-        "3xl": { "value": "36", "type": "lineHeights" },
-        "4xl": { "value": "40", "type": "lineHeights" }
+        "display": { "value": "1.15", "type": "lineHeights", "description": "Hero numbers, H1" },
+        "heading": { "value": "1.25", "type": "lineHeights", "description": "H2-H3" },
+        "ui": { "value": "1.4", "type": "lineHeights", "description": "Buttons, labels, nav" },
+        "body": { "value": "1.5", "type": "lineHeights", "description": "Paragraphs, prose" },
+        "tight": { "value": "1.1", "type": "lineHeights", "description": "Dense numeric metrics" }
       }
     },
     "spacing": {
@@ -102,9 +112,32 @@
       "2xl": { "value": "20", "type": "borderRadius" },
       "full": { "value": "9999", "type": "borderRadius" }
     },
+    "motion": {
+      "duration": {
+        "instant": { "value": "60ms", "type": "other", "description": "Micro-feedback (button press flash)" },
+        "fast": { "value": "120ms", "type": "other", "description": "Hover, focus" },
+        "base": { "value": "200ms", "type": "other", "description": "Standard fade/rise" },
+        "slow": { "value": "320ms", "type": "other", "description": "Modal enter, page transition" },
+        "slower": { "value": "480ms", "type": "other", "description": "Complex orchestration" }
+      },
+      "easing": {
+        "out": { "value": "cubic-bezier(0.16, 1, 0.3, 1)", "type": "other", "description": "Entrance — pronounced deceleration" },
+        "in": { "value": "cubic-bezier(0.4, 0, 1, 1)", "type": "other", "description": "Exit — accelerate out" },
+        "inOut": { "value": "cubic-bezier(0.4, 0, 0.2, 1)", "type": "other", "description": "Symmetric transitions" },
+        "bounce": { "value": "cubic-bezier(0.34, 1.56, 0.64, 1)", "type": "other", "description": "Playful overshoot" }
+      }
+    },
+    "elevation": {
+      "0": { "value": "none", "type": "boxShadow", "description": "Flat, no shadow" },
+      "1": { "value": "0 1px 2px rgba(0,0,0,0.2)", "type": "boxShadow", "description": "Subtle lift (hovered item)" },
+      "2": { "value": "0 4px 12px rgba(0,0,0,0.25)", "type": "boxShadow", "description": "Card / raised element" },
+      "3": { "value": "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)", "type": "boxShadow", "description": "Elevated card (default Glass)" },
+      "4": { "value": "0 16px 48px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)", "type": "boxShadow", "description": "Dialog, popover" },
+      "5": { "value": "0 24px 64px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)", "type": "boxShadow", "description": "Modal, topmost overlay" }
+    },
     "effects": {
       "shadow": {
-        "glass": { "value": "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)", "type": "boxShadow", "description": "Primary glass card shadow" },
+        "glass": { "value": "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)", "type": "boxShadow", "description": "Primary glass card shadow (= elevation-3)" },
         "panel": { "value": "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03), inset 0 -1px 2px rgba(0,0,0,0.2)", "type": "boxShadow", "description": "Elevated panel shadow" },
         "glow": { "value": "0 0 30px rgba(0,212,200,0.2)", "type": "boxShadow", "description": "Cyan accent glow" },
         "glow-sm": { "value": "0 0 16px rgba(0,212,200,0.15)", "type": "boxShadow", "description": "Small cyan glow" },
@@ -115,12 +148,34 @@
         "glass": { "value": "blur(16px) saturate(180%)", "type": "other", "description": "Glassmorphism backdrop" }
       }
     },
+    "glass": {
+      "subtle": { "value": "rgba(255,255,255,0.04)", "type": "color", "description": "Faint overlay (default Card bg)" },
+      "base": { "value": "rgba(255,255,255,0.06)", "type": "color", "description": "Standard glass (GlassCard)" },
+      "strong": { "value": "rgba(255,255,255,0.10)", "type": "color", "description": "Prominent card (elevated state)" },
+      "borderSubtle": { "value": "rgba(255,255,255,0.06)", "type": "color", "description": "Soft divider" },
+      "borderBase": { "value": "rgba(255,255,255,0.08)", "type": "color", "description": "Standard card border" },
+      "borderStrong": { "value": "rgba(255,255,255,0.12)", "type": "color", "description": "Prominent border (hover state)" }
+    },
     "opacity": {
-      "glass-light": { "value": "0.06", "type": "opacity", "description": "Glass background light" },
-      "glass-medium": { "value": "0.10", "type": "opacity", "description": "Glass background medium" },
-      "glass-border": { "value": "0.08", "type": "opacity", "description": "Glass border" },
+      "glass-light": { "value": "0.06", "type": "opacity", "description": "Glass background light (legacy — prefer glass.base)" },
+      "glass-medium": { "value": "0.10", "type": "opacity", "description": "Glass background medium (legacy — prefer glass.strong)" },
+      "glass-border": { "value": "0.08", "type": "opacity", "description": "Glass border (legacy — prefer glass.borderBase)" },
       "contour": { "value": "0.015", "type": "opacity", "description": "Bathymetric contour lines" },
       "hover-border": { "value": "0.15", "type": "opacity", "description": "Salmon hover border" }
+    },
+    "density": {
+      "comfortable": {
+        "paddingSm": { "value": "8", "type": "spacing", "description": "Comfortable mode small padding" },
+        "paddingMd": { "value": "12", "type": "spacing", "description": "Comfortable mode medium padding" },
+        "paddingLg": { "value": "16", "type": "spacing", "description": "Comfortable mode large padding" },
+        "rowHeight": { "value": "44", "type": "spacing", "description": "Comfortable mode row height" }
+      },
+      "compact": {
+        "paddingSm": { "value": "4", "type": "spacing", "description": "Compact mode small padding (trader)" },
+        "paddingMd": { "value": "8", "type": "spacing", "description": "Compact mode medium padding" },
+        "paddingLg": { "value": "12", "type": "spacing", "description": "Compact mode large padding" },
+        "rowHeight": { "value": "32", "type": "spacing", "description": "Compact mode row height" }
+      }
     }
   }
 }

@@ -1,36 +1,77 @@
-/* ⚠️  UNLOADED — NOT IMPORTED BY THE APP                                    */
-/* This file is an artifact of the Figma-token extraction pipeline. The runtime */
-/* source of truth is frontend/src/app/globals.css. Do not reference this file */
-/* in layout.tsx or any component — regenerate via scripts/extract-design-tokens.ts */
-/* when Figma tokens change, then manually sync any new tokens to globals.css.  */
-/* Session 39 audit flagged this as drift risk. Kept for Figma sync only.      */
-/* Generated: 2026-04-08T16:50:18.495Z */
+/* Auto-generated design tokens — DO NOT EDIT MANUALLY.
+ * Source of truth: docs/figma-tokens-studio.json
+ * Pipeline:       scripts/extract-design-tokens.ts
+ * Runtime:        frontend/src/app/globals.css (hand-authored; this file is a backup)
+ * Generated:      2026-04-17T11:31:10.526Z
+ *
+ * The runtime app loads globals.css, not this file. This file exists so the
+ * token pipeline round-trips through Figma cleanly.
+ */
 
 :root {
-  --bg-primary: #F8FAFB;
-  --bg-secondary: #EFF3F6;
-  --bg-card: rgba(0, 0, 0, 0.03);
-  --accent: #00A89F;
-  --accent-dim: rgba(0, 168, 159, 0.12);
-  --text-primary: #1A2332;
-  --text-secondary: #5A6B7D;
-  --border: rgba(0, 0, 0, 0.08);
-  --danger: #F43F5E;
-  --success: #10B981;
-  --warning: #F59E0B;
-  --salmon: #E8734A;
-  --color-biomass: #F59E0B;
-  --color-lice: #F43F5E;
-  --color-temperature: #3B82F6;
-  --color-mortality: #9F1239;
-  --color-feeding: #059669;
-  --color-oxygen: #06B6D4;
-  --color-traffic-green: #22C55E;
-  --color-traffic-yellow: #EAB308;
-  --color-traffic-red: #EF4444;
-  --color-positive: #34D399;
-  --color-negative: #FB7185;
-  --color-warning: #FBBF24;
+  --typography-fontfamilies-sans: "DM Sans", system-ui, sans-serif;
+  --typography-fontfamilies-display: "DM Serif Display", system-ui, sans-serif;
+  --typography-fontfamilies-mono: "JetBrains Mono", system-ui, sans-serif;
+  --typography-fontfamilies-data: "JetBrains Mono", system-ui, sans-serif;
+  --typography-fontsize-3xs: 0.5625rem;
+  --typography-fontsize-2xs: 0.625rem;
+  --typography-fontsize-xs: 0.75rem;
+  --typography-fontsize-sm: 0.875rem;
+  --typography-fontsize-base: 1rem;
+  --typography-fontsize-lg: 1.125rem;
+  --typography-fontsize-xl: 1.25rem;
+  --typography-fontsize-2xl: 1.5rem;
+  --typography-fontsize-3xl: 1.875rem;
+  --typography-fontsize-4xl: 2.25rem;
+  --typography-fontweight-regular: 400;
+  --typography-fontweight-medium: 500;
+  --typography-fontweight-semibold: 600;
+  --typography-fontweight-bold: 700;
+  --typography-lineheight-display: 1.15;
+  --typography-lineheight-heading: 1.25;
+  --typography-lineheight-ui: 1.4;
+  --typography-lineheight-body: 1.5;
+  --typography-lineheight-tight: 1.1;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+  --spacing-20: 80px;
+  --borderradius-sm: 6px;
+  --borderradius-md: 8px;
+  --borderradius-lg: 12px;
+  --borderradius-xl: 16px;
+  --borderradius-2xl: 20px;
+  --borderradius-full: 9999px;
+  --motion-duration-instant: 60ms;
+  --motion-duration-fast: 120ms;
+  --motion-duration-base: 200ms;
+  --motion-duration-slow: 320ms;
+  --motion-duration-slower: 480ms;
+  --motion-easing-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-easing-in: cubic-bezier(0.4, 0, 1, 1);
+  --motion-easing-inout: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --elevation-0: none;
+  --elevation-1: 0 1px 2px rgba(0,0,0,0.2);
+  --elevation-2: 0 4px 12px rgba(0,0,0,0.25);
+  --elevation-3: 0 8px 32px rgba(0,0,0,0.3);
+  --elevation-4: 0 16px 48px rgba(0,0,0,0.35);
+  --elevation-5: 0 24px 64px rgba(0,0,0,0.4);
+  --density-comfortable-paddingsm: 8px;
+  --density-comfortable-paddingmd: 12px;
+  --density-comfortable-paddinglg: 16px;
+  --density-comfortable-rowheight: 44px;
+  --density-compact-paddingsm: 4px;
+  --density-compact-paddingmd: 8px;
+  --density-compact-paddinglg: 12px;
+  --density-compact-rowheight: 32px;
   --chart-1: #00D4C8;
   --chart-2: #E8734A;
   --chart-3: #8B5CF6;
@@ -39,76 +80,57 @@
   --chart-6: #10B981;
   --chart-7: #6366F1;
   --chart-8: #14B8A6;
+  --data-biomass: #F59E0B;
+  --data-lice: #F43F5E;
+  --data-temperature: #3B82F6;
+  --data-mortality: #9F1239;
+  --data-feeding: #059669;
+  --data-oxygen: #06B6D4;
+  --traffic-green: #22C55E;
+  --traffic-yellow: #EAB308;
+  --traffic-red: #EF4444;
+  --salmon: #E8734A;
+  --danger: #F43F5E;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --positive: #34D399;
+  --negative: #FB7185;
+
+  --bg-primary: #F8FAFB;
+  --bg-secondary: #EFF3F6;
+  --text-primary: #1A2332;
+  --text-secondary: #5A6B7D;
+  --accent: #00A89F;
+  --border: #D1D5DB;
   --surface-0: #F8FAFB;
   --surface-1: #FFFFFF;
   --surface-2: #F1F5F9;
   --surface-3: #E2E8F0;
   --surface-4: #CBD5E1;
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
-  --text-4xl: 2.25rem;
-  --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
-  --font-display: 'DM Serif Display', Georgia, serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-  --space-16: 64px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
-  --radius-full: 9999px;
+  --glass-subtle: rgba(0,0,0,0.02);
+  --glass-base: rgba(0,0,0,0.04);
+  --glass-strong: rgba(0,0,0,0.08);
+  --glass-bordersubtle: rgba(0,0,0,0.05);
+  --glass-borderbase: rgba(0,0,0,0.08);
+  --glass-borderstrong: rgba(0,0,0,0.12);
 }
 
 .dark {
   --bg-primary: #060F1C;
   --bg-secondary: #0A1A2F;
-  --bg-card: rgba(255, 255, 255, 0.04);
-  --accent: #00D4C8;
-  --accent-dim: rgba(0, 212, 200, 0.15);
   --text-primary: #E8EDF2;
-  --text-secondary: #8899AA;
-  --border: rgba(255, 255, 255, 0.06);
-  --danger: #F43F5E;
-  --success: #10B981;
-  --warning: #F59E0B;
-  --salmon: #E8734A;
-  --color-biomass: #F59E0B;
-  --color-lice: #F43F5E;
-  --color-temperature: #3B82F6;
-  --color-mortality: #9F1239;
-  --color-feeding: #059669;
-  --color-oxygen: #06B6D4;
-  --color-traffic-green: #22C55E;
-  --color-traffic-yellow: #EAB308;
-  --color-traffic-red: #EF4444;
-  --color-positive: #34D399;
-  --color-negative: #FB7185;
-  --color-warning: #FBBF24;
-  --chart-1: #00D4C8;
-  --chart-2: #E8734A;
-  --chart-3: #8B5CF6;
-  --chart-4: #F59E0B;
-  --chart-5: #EC4899;
-  --chart-6: #10B981;
-  --chart-7: #6366F1;
-  --chart-8: #14B8A6;
+  --text-secondary: #94A3B8;
+  --accent: #00D4C8;
+  --border: #1E293B;
   --surface-0: #060F1C;
   --surface-1: #0A1629;
   --surface-2: #0F1D33;
   --surface-3: #152640;
   --surface-4: #1A2F4D;
+  --glass-subtle: rgba(255,255,255,0.04);
+  --glass-base: rgba(255,255,255,0.06);
+  --glass-strong: rgba(255,255,255,0.10);
+  --glass-bordersubtle: rgba(255,255,255,0.06);
+  --glass-borderbase: rgba(255,255,255,0.08);
+  --glass-borderstrong: rgba(255,255,255,0.12);
 }
