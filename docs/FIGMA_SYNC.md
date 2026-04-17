@@ -1,9 +1,24 @@
 # Figma Sync — OpenClaw Design System
 
-**Last updated:** 2026-04-14 (Session 39)
+**Last updated:** 2026-04-17 (Session 39)
 **Status:** Ready for Figma designer handoff
+**Target file:** [OpenClaw Design System](https://www.figma.com/design/UklcflWFBHal5xPSrSQolq/OpenClaw-Design-System) (Laksekongen org, Professional tier)
+**File key:** `UklcflWFBHal5xPSrSQolq` (wired into pipeline as default)
 
 This document is the operating manual for the OpenClaw design token pipeline. It explains how code and Figma stay in sync.
+
+## ⚠️ Tier reality check (before you read further)
+
+The OpenClaw file lives on a **Figma Professional** plan. That means:
+
+| Operation | Professional tier | Enterprise tier |
+|-----------|-------------------|----------------|
+| Generate personal access token | ✅ Yes | ✅ Yes |
+| Read file content via REST | ✅ With `file_content:read` scope | ✅ |
+| **Push Variables via REST** (`--push` mode) | ❌ **Not available** | ✅ With `variables:write` scope |
+| Import tokens via Tokens Studio plugin | ✅ Yes (free plugin, JSON import) | ✅ Yes |
+
+**Practical consequence:** on Professional, you cannot `--push` the 42KB Variables payload directly. Use the **Tokens Studio plugin** instead (section 5). The payload and the script are still useful if/when the org upgrades to Enterprise.
 
 ---
 
@@ -104,16 +119,31 @@ Prints output sizes without writing anything. Useful for CI.
 
 ---
 
-## 5. Figma Tokens Studio plugin (for designers)
+## 5. Figma Tokens Studio plugin (RECOMMENDED for Professional tier)
 
-The designer workflow is:
+This is the preferred workflow — no REST API credentials needed, works on any Figma tier.
 
-1. Install **Tokens Studio for Figma** plugin (free)
-2. In plugin settings: **Sync → GitHub** → point at `docs/figma-tokens-studio.json` in this repo
-3. Changes in Figma → "Push to GitHub" → opens a PR
-4. Developers merge the PR → run `npx tsx scripts/extract-design-tokens.ts` → commit generated outputs
+### 5a. First-time import (blank Figma file)
 
-This is the preferred workflow — no REST API credentials needed.
+1. Open the [OpenClaw Design System](https://www.figma.com/design/UklcflWFBHal5xPSrSQolq/OpenClaw-Design-System) file.
+2. **Resources** menu (top left) → **Plugins & widgets** → search "**Tokens Studio for Figma**" → **Run**
+3. In the plugin panel: **Settings (gear)** → **Manage** → **Import** → **File**
+4. Select `docs/figma-tokens-studio.json` from this repo.
+5. Plugin will parse the 3 token sets (global / light / dark) and show them in its sidebar.
+6. Click **Apply to document** or **Create Figma Variables** — the plugin writes to the file's Variables panel using plugin privileges (no REST API needed).
+
+### 5b. Ongoing sync (after first import)
+
+1. In Tokens Studio: **Settings → Sync → GitHub** (use a PAT with `repo` scope)
+2. Point at `frehan83-collab/OpenClaw` → file path `docs/figma-tokens-studio.json`
+3. Changes in Figma → Tokens Studio "Push to GitHub" → opens a PR
+4. Developer merges PR → runs `npm run tokens` → commits regenerated outputs
+5. Changes in code → push `figma-tokens-studio.json` → designer pulls in Tokens Studio
+
+### 5c. Verifying the import
+
+After step 5a.6, open the Figma file's **Variables** panel (top-right, near the layers inspector).
+You should see a collection "OpenClaw / Session 39" (or similar) with 2 modes (Light/Dark) and ~120 variables.
 
 ---
 

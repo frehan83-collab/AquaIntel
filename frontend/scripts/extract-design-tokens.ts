@@ -26,7 +26,9 @@ import * as fs from "fs";
 import * as path from "path";
 
 const TOKEN = process.env.FIGMA_ACCESS_TOKEN || "";
-const FILE_KEY = process.env.FIGMA_FILE_KEY || "";
+// Default FILE_KEY = OpenClaw Design System (Laksekongen org, owned by frehan83@gmail.com)
+// Override with FIGMA_FILE_KEY env var if pointing at a different file.
+const FILE_KEY = process.env.FIGMA_FILE_KEY || "UklcflWFBHal5xPSrSQolq";
 const OUTPUT_DIR = path.resolve(__dirname, "../src/styles");
 const TOKENS_SOURCE = path.resolve(__dirname, "../../docs/figma-tokens.json");
 const TOKENS_STUDIO_SOURCE = path.resolve(__dirname, "../../docs/figma-tokens-studio.json");
