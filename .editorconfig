@@ -1,0 +1,111 @@
+# OpenClaw / FishIntel EditorConfig
+# https://editorconfig.org
+#
+# This file defines consistent coding style across editors, IDEs, and Claude Code
+# on macOS, Windows, and Linux.
+
+root = true
+
+# Default settings for all files
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Markdown - allow longer lines, keep trailing whitespace in some cases
+[*.md]
+trim_trailing_whitespace = false
+indent_size = 2
+
+[*.mdx]
+trim_trailing_whitespace = false
+indent_size = 2
+
+# Documentation and text
+[*.{txt,rst,adoc}]
+indent_size = 2
+
+# YAML (GitHub Actions, Docker Compose, configs)
+[*.{yml,yaml}]
+indent_size = 2
+
+# JSON (including package.json, tsconfig, figma tokens)
+[*.json]
+indent_size = 2
+
+[*.json5]
+indent_size = 2
+
+[*.jsonc]
+indent_size = 2
+
+# JavaScript / TypeScript / React (Next.js frontend convention)
+[*.{js,jsx,mjs,cjs}]
+indent_size = 2
+
+[*.{ts,tsx}]
+indent_size = 2
+
+# CSS / Tailwind / styles
+[*.{css,scss,less,sass}]
+indent_size = 2
+
+# HTML
+[*.html]
+indent_size = 2
+
+# Shell scripts
+[*.{sh,bash,zsh}]
+indent_size = 2
+end_of_line = lf
+
+# Python - 4 spaces (PEP 8)
+[*.py]
+indent_size = 4
+
+[*.{pyx,pyi}]
+indent_size = 4
+
+# TOML (pyproject.toml style if added later)
+[*.toml]
+indent_size = 2
+
+# SQL and database
+[*.sql]
+indent_size = 2
+
+# Dockerfiles
+[Dockerfile*]
+indent_size = 2
+
+# GitHub workflow files
+[.github/workflows/*.{yml,yaml}]
+indent_size = 2
+
+# Ignore build artifacts and generated files
+[__pycache__/**]
+indent_style = unset
+
+[*.{min.js,min.css}]
+indent_style = unset
+
+[dist/**]
+indent_style = unset
+
+[build/**]
+indent_style = unset
+
+[node_modules/**]
+indent_style = unset
+
+[.next/**]
+indent_style = unset
+
+[playwright-report/**]
+indent_style = unset
+
+[test-results/**]
+indent_style = unset

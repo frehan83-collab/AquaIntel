@@ -1,0 +1,134 @@
+# OpenClaw / FishIntel - Cross-platform line ending and file handling
+# This file ensures consistent behavior between macOS, Linux, and Windows developers.
+
+# Default: auto-detect text files and normalize line endings
+* text=auto
+
+# Force LF (Unix) line endings for all source code and config files
+# This prevents Windows CRLF from polluting the repository
+*.py text eol=lf
+*.pyx text eol=lf
+*.pyi text eol=lf
+
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+
+*.json text eol=lf
+*.json5 text eol=lf
+*.jsonc text eol=lf
+
+*.yml text eol=lf
+*.yaml text eol=lf
+
+*.toml text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+
+*.sh text eol=lf
+*.bash text eol=lf
+*.zsh text eol=lf
+
+*.md text eol=lf
+*.mdx text eol=lf
+*.rst text eol=lf
+
+*.txt text eol=lf
+*.env* text eol=lf
+
+*.html text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.less text eol=lf
+
+*.xml text eol=lf
+*.svg text eol=lf
+
+*.sql text eol=lf
+*.alembic text eol=lf
+
+# Docker and infrastructure
+Dockerfile* text eol=lf
+docker-compose*.yml text eol=lf
+nginx.conf text eol=lf
+
+# Git and CI
+.gitattributes text eol=lf
+.gitignore text eol=lf
+.gitmodules text eol=lf
+.github/**/* text eol=lf
+
+# Scripts directory
+scripts/**/* text eol=lf
+
+# Force LF for common data/config formats
+*.csv text eol=lf
+*.tsv text eol=lf
+
+# Explicitly mark binary files (prevents git from trying to "fix" them)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.bmp binary
+*.tiff binary
+
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.bz2 binary
+*.7z binary
+*.rar binary
+
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.otf binary
+
+*.mp3 binary
+*.wav binary
+*.ogg binary
+*.mp4 binary
+*.mov binary
+*.webm binary
+
+*.pyc binary
+__pycache__/ binary
+*.pyo binary
+*.pyd binary
+
+*.so binary
+*.dylib binary
+*.dll binary
+*.exe binary
+
+# Large data / model artifacts that should never have line ending changes
+*.pkl binary
+*.joblib binary
+*.h5 binary
+*.hdf5 binary
+*.pt binary
+*.pth binary
+*.onnx binary
+*.npz binary
+*.npy binary
+
+# Figma and design tokens (often contain special characters)
+*.json text eol=lf
+figma-*.json text eol=lf
+
+# Playwright / test artifacts
+*.trace binary
+playwright-report/ binary
+test-results/ binary
+
+# Explicitly keep Windows-style line endings only if truly needed (rare)
+# *.bat text eol=crlf
+# *.ps1 text eol=crlf
