@@ -54,6 +54,15 @@ DEFAULT_INGREDIENT_PRICES_USD = {
     "other":     2.00,   # ~$2000/tonne (astaxanthin is expensive)
 }
 
+# Ingredients with NO free public market feed (micro-ingredients, vitamins,
+# astaxanthin have no liquid exchange contract or commodity index).
+# Their default price is a STRUCTURAL PRIOR, not a fetch failure — they must
+# NOT count against data-quality flags (using_defaults / freshness "degraded").
+STRUCTURAL_DEFAULT_INGREDIENTS = {"other"}
+
+# Sources that represent genuinely live market data
+LIVE_SOURCES = {"fred", "yahoo_finance", "world_bank"}
+
 # ── LEARNED PRINCIPLES from PhD-level analysis of 2008-2024 official data ─────
 # These are STRUCTURAL RELATIONSHIPS, not hardcoded values.
 # The actual NOK values are computed at runtime using live feed prices
@@ -186,16 +195,20 @@ class FeedCostEngine:
                 ingredients[k] = v
 
         # 4. Fill missing with defaults
+        # Structural ingredients (e.g. "other" — no public market feed exists)
+        # get a distinct source tag and do NOT degrade data quality.
         using_defaults = []
         for name, default_usd_kg in DEFAULT_INGREDIENT_PRICES_USD.items():
             if name not in ingredients:
+                structural = name in STRUCTURAL_DEFAULT_INGREDIENTS
                 ingredients[name] = IngredientPrice(
                     name=name,
                     price_usd_per_tonne=default_usd_kg * 1000,
                     price_usd_per_kg=default_usd_kg,
-                    source="default_estimate",
+                    source="structural_default" if structural else "default_estimate",
                 )
-                using_defaults.append(name)
+                if not structural:
+                    using_defaults.append(name)
         self._using_defaults = using_defaults
 
         # 4. Get USD/NOK rate
@@ -293,7 +306,7 @@ class FeedCostEngine:
             prod_cost_nok=snapshot.production_cost_nok_per_kg_salmon,
             margin_pct=snapshot.margin_pct,
             trend=trend,
-            n_live=sum(1 for v in ingredients.values() if v.source != "default_estimate"),
+            n_live=sum(1 for v in ingredients.values() if v.source in LIVE_SOURCES),
         )
         return snapshot
 
