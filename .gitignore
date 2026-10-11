@@ -15,6 +15,7 @@ venv/
 .mypy_cache/
 .hypothesis/
 lightning_logs/
+.coverage
 
 # Frontend
 frontend/.next/
