@@ -37,5 +37,6 @@ Thumbs.db
 *.bin
 *.safetensors
 
-# Claude Code
-.claude/
+# Claude Code — ignore local session state/worktrees, but track shared skills
+.claude/*
+!.claude/skills/

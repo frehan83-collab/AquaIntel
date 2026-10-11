@@ -170,7 +170,8 @@ export interface PriceOutlook {
   model: {
     version: string;
     n_scenarios: number;
-    mape_backtest: number;
+    /** Measured MAPE only when a validated backtest artifact matched; null = none on record */
+    mape_backtest: number | null;
     accuracy_statement: string;
   };
   rationale: string;

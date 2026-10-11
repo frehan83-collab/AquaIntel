@@ -15,6 +15,24 @@ def client():
     return TestClient(app)
 
 
+@pytest.fixture()
+def admin_client(client, monkeypatch):
+    """Client authenticated as admin via the FISHINTEL_ADMIN_EMAILS allow-list.
+
+    Admin access is intentionally not self-service (registration cannot grant
+    role=admin); tests bootstrap through the env allow-list instead.
+    """
+    from core.auth import create_token
+
+    admin_email = "admin-test@fishintel.local"
+    monkeypatch.setenv("FISHINTEL_ADMIN_EMAILS", admin_email)
+    token = create_token(user_id=99999, email=admin_email, tier="investor")
+    client.headers["Authorization"] = f"Bearer {token}"
+    yield client
+    # pop (not del) so teardown is safe even if a test replaced the header
+    client.headers.pop("Authorization", None)
+
+
 class TestHealthEndpoint:
     def test_health_returns_ok(self, client):
         r = client.get("/api/health")
@@ -493,15 +511,27 @@ class TestNotificationHistory:
 # Admin Endpoints (Session 16)
 # ---------------------------------------------------------------------------
 class TestAdminEndpoints:
-    def test_admin_status(self, client):
+    def test_admin_status_requires_auth(self, client):
+        """Admin endpoints must reject unauthenticated requests (Session 38 CRIT #2)."""
         r = client.get("/api/admin/status")
+        assert r.status_code == 401
+
+    def test_admin_status(self, admin_client):
+        r = admin_client.get("/api/admin/status")
         assert r.status_code == 200
         data = r.json()
         assert "engine_count" in data or "uptime" in data or isinstance(data, dict)
 
-    def test_admin_data_quality(self, client):
-        r = client.get("/api/admin/data-quality")
+    def test_admin_data_quality(self, admin_client):
+        r = admin_client.get("/api/admin/data-quality")
         assert r.status_code == 200
+
+    def test_admin_requires_admin_role(self, client):
+        """A valid non-admin token must get 403, not data."""
+        from core.auth import create_token
+        token = create_token(user_id=1, email="not-admin@fishintel.local", tier="free")
+        r = client.get("/api/admin/status", headers={"Authorization": f"Bearer {token}"})
+        assert r.status_code == 403
 
 
 # ---------------------------------------------------------------------------
@@ -600,27 +630,32 @@ class TestLeadersExtended:
 # ---------------------------------------------------------------------------
 class TestAdminExport:
     @pytest.mark.xfail(reason="Dev SQLite may lack admin export table or endpoint wiring")
-    def test_export_summary(self, client):
+    def test_export_summary(self, admin_client):
         """Export summary should list available datasets."""
-        r = client.get("/api/admin/export-summary")
+        r = admin_client.get("/api/admin/export-summary")
         assert r.status_code == 200
         data = r.json()
         assert "datasets" in data or isinstance(data, list)
 
-    def test_export_lice_json(self, client):
+    def test_export_lice_json(self, admin_client):
         """Export lice data as JSON."""
-        r = client.get("/api/admin/export/lice?format=json")
+        r = admin_client.get("/api/admin/export/lice?format=json")
         assert r.status_code == 200
 
-    def test_export_lice_csv(self, client):
+    def test_export_lice_csv(self, admin_client):
         """Export lice data as CSV."""
-        r = client.get("/api/admin/export/lice?format=csv")
+        r = admin_client.get("/api/admin/export/lice?format=csv")
         assert r.status_code == 200
 
-    def test_export_invalid_dataset(self, client):
+    def test_export_invalid_dataset(self, admin_client):
         """Invalid dataset name should return error."""
-        r = client.get("/api/admin/export/invalid_dataset_xyz")
+        r = admin_client.get("/api/admin/export/invalid_dataset_xyz")
         assert r.status_code in (400, 404, 422)
+
+    def test_export_requires_auth(self, client):
+        """Unauthenticated export access is rejected."""
+        r = client.get("/api/admin/export/lice?format=json")
+        assert r.status_code == 401
 
 
 # ---------------------------------------------------------------------------
@@ -692,9 +727,9 @@ class TestSession19Misc:
         r = client.get("/api/health")
         assert r.status_code == 200
 
-    def test_admin_export_lice_json_has_content(self, client):
+    def test_admin_export_lice_json_has_content(self, admin_client):
         """Exported JSON should contain records or an empty list."""
-        r = client.get("/api/admin/export/lice?format=json")
+        r = admin_client.get("/api/admin/export/lice?format=json")
         assert r.status_code == 200
         data = r.json()
         assert isinstance(data, (dict, list))
@@ -1121,9 +1156,9 @@ class TestASCCompliance:
 # CSRD Export Endpoint
 # ---------------------------------------------------------------------------
 class TestCSRDExport:
-    def test_csrd_export_returns_structured_data(self, client):
+    def test_csrd_export_returns_structured_data(self, admin_client):
         """CSRD export returns ESG-aligned sustainability data."""
-        r = client.get("/api/admin/export/csrd?year=2025")
+        r = admin_client.get("/api/admin/export/csrd?year=2025")
         assert r.status_code == 200
         data = r.json()
         assert data["report_type"] == "CSRD Sustainability Data Package"
@@ -1321,9 +1356,9 @@ class TestCacheStats:
         assert stats["ttl_categories"]["realtime"] == 60
         assert stats["ttl_categories"]["static"] == 86400
 
-    def test_admin_cache_stats_endpoint(self, client):
-        """GET /api/admin/cache-stats returns per-engine cache stats."""
-        r = client.get("/api/admin/cache-stats")
+    def test_admin_cache_stats_endpoint(self, admin_client):
+        """GET /api/admin/cache-stats returns per-engine cache stats (admin only)."""
+        r = admin_client.get("/api/admin/cache-stats")
         assert r.status_code == 200
         data = r.json()
         assert "total_entries" in data
@@ -1333,6 +1368,11 @@ class TestCacheStats:
         assert "ttl_categories" in data
         assert "engines" in data
         assert isinstance(data["engines"], dict)
+
+    def test_admin_cache_stats_requires_auth(self, client):
+        """Unauthenticated cache stats access is rejected."""
+        r = client.get("/api/admin/cache-stats")
+        assert r.status_code == 401
 
     def test_health_includes_cache_manager(self, client):
         """GET /api/health now includes cache_manager stats."""

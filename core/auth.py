@@ -35,11 +35,37 @@ import structlog
 log = structlog.get_logger(__name__)
 
 # ── Config ────────────────────────────────────────────────────────────────────
-_env_secret = os.environ.get("FISHINTEL_JWT_SECRET", "")
-if not _env_secret:
+_raw_secret = os.environ.get("FISHINTEL_JWT_SECRET", "").strip()
+_ENV_NAME = os.environ.get("FISHINTEL_ENV", "development").strip().lower()
+# Common spellings that must all trigger production hardening.
+_PRODUCTION_ENVS = {"production", "prod", "prd"}
+# Known-weak secrets that must never be used in any environment.
+_WEAK_SECRETS = {"", "change-me-in-production", "change-me", "changeme", "secret"}
+_MIN_PROD_SECRET_LEN = 32
+
+if _raw_secret in _WEAK_SECRETS - {""}:
+    # Reject known-weak values even outside production — they are the exact
+    # defaults shipped in docker-compose/DEPLOYMENT docs.
+    raise RuntimeError(
+        f"FISHINTEL_JWT_SECRET is set to the known-weak value '{_raw_secret}'. "
+        "Refusing to start. Generate one with:\n"
+        '  python -c "import secrets; print(secrets.token_urlsafe(64))"'
+    )
+if _ENV_NAME in _PRODUCTION_ENVS:
+    # Fail fast: an unset JWT secret in production means every token ever
+    # issued is forgeable (Session 38 CRITICAL #3).
+    if not _raw_secret or len(_raw_secret) < _MIN_PROD_SECRET_LEN:
+        raise RuntimeError(
+            "FISHINTEL_JWT_SECRET is missing or too short while "
+            f"FISHINTEL_ENV={_ENV_NAME}. Refusing to start. Generate one with:\n"
+            '  python -c "import secrets; print(secrets.token_urlsafe(64))"'
+        )
+    SECRET_KEY = _raw_secret
+elif not _raw_secret:
     log.warning("FISHINTEL_JWT_SECRET not set — generating ephemeral secret (tokens won't survive restarts)")
-    _env_secret = secrets.token_urlsafe(64)
-SECRET_KEY = _env_secret
+    SECRET_KEY = secrets.token_urlsafe(64)
+else:
+    SECRET_KEY = _raw_secret
 ALGORITHM = "HS256"
 TOKEN_EXPIRY_HOURS = 24
 security = HTTPBearer(auto_error=False)
@@ -305,3 +331,42 @@ def require_tier(minimum_tier: str):
         return payload
 
     return _check
+
+
+# ── Admin access ───────────────────────────────────────────────────────────────
+# Admin is granted by either:
+#   1. User.role == "admin" in the database, or
+#   2. The user's email appearing in the FISHINTEL_ADMIN_EMAILS env var
+#      (comma-separated) — the bootstrap path for first admin without SQL.
+def admin_emails() -> set[str]:
+    """Lower-cased set of emails granted admin via environment."""
+    raw = os.environ.get("FISHINTEL_ADMIN_EMAILS", "")
+    return {e.strip().lower() for e in raw.split(",") if e.strip()}
+
+
+async def is_admin(payload: TokenPayload) -> bool:
+    """True if the authenticated user has admin rights."""
+    if payload.email and payload.email.lower() in admin_emails():
+        return True
+    from core.async_db import get_async_session
+    from core.models import User
+
+    async with get_async_session() as s:
+        user = (await s.execute(select(User).where(User.id == payload.user_id))).scalar()
+    return bool(user and getattr(user, "is_active", True) and user.role == "admin")
+
+
+async def require_admin(
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+) -> TokenPayload:
+    """
+    FastAPI dependency: authenticated admin only (401 without credentials,
+    403 for authenticated non-admins). Applies to ops/admin routers and
+    cache invalidation endpoints (Session 38 CRITICAL #2).
+    """
+    if not credentials:
+        raise HTTPException(401, "Authentication required")
+    payload = decode_token(credentials.credentials)
+    if not await is_admin(payload):
+        raise HTTPException(403, "Admin access required")
+    return payload

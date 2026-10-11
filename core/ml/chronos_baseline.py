@@ -1,17 +1,24 @@
 """
-Chronos-2 Zero-Shot Forecasting Baselines
-============================================
-Uses Amazon's Chronos-2 foundation model for zero-shot time series forecasting.
-No training required — instant baselines for any time series.
+Chronos Zero-Shot Forecasting Baseline
+========================================
+Uses Amazon's Chronos foundation model for zero-shot time series forecasting.
+No training required — instant probabilistic baselines for any time series.
 
-Model: amazon/chronos-t5-small (~250MB, downloads on first use)
-Capabilities: probabilistic forecasts with quantile intervals
+Model: configurable via FISHINTEL_CHRONOS_MODEL (default: amazon/chronos-2,
+requires chronos-forecasting>=2.0; set to amazon/chronos-t5-small for the
+v1 model on chronos-forecasting 1.x). Downloads on first use.
+Capability: probabilistic forecasts with quantile intervals.
+If torch/chronos is not installed, every forecast falls back to a
+seasonal-naive method and the result is tagged model="...-fallback" —
+callers must propagate that as degraded provenance, never as live.
 
-Comparison framework: benchmarks Chronos-2 vs TFT vs XGBoost on holdout windows.
+Comparison framework: benchmarks the loaded Chronos model vs TFT vs XGBoost
+on holdout windows.
 """
 from __future__ import annotations
 
 import datetime as dt
+import os
 from typing import Any
 
 import numpy as np
@@ -19,32 +26,40 @@ import structlog
 
 log = structlog.get_logger(__name__)
 
+DEFAULT_CHRONOS_MODEL = "amazon/chronos-2"
+
 
 class ChronosBaselineEngine:
-    """Singleton for Chronos-2 zero-shot forecasting."""
+    """Singleton for Chronos zero-shot forecasting."""
 
     def __init__(self) -> None:
         self._pipeline: Any = None
-        self._model_name = "amazon/chronos-t5-small"
+        self._model_name = os.environ.get("FISHINTEL_CHRONOS_MODEL", DEFAULT_CHRONOS_MODEL).strip() or DEFAULT_CHRONOS_MODEL
+
+    @property
+    def is_loaded(self) -> bool:
+        """True only when the real Chronos model is in memory."""
+        return self._pipeline is not None
 
     def _get_pipeline(self) -> Any:
         """Lazy-load Chronos pipeline (downloads model on first use)."""
         if self._pipeline is None:
             try:
-                import torch
+                import torch  # noqa: F401
                 from chronos import ChronosPipeline
-
+            except ImportError as e:
+                log.warning("chronos_not_installed", hint="pip install chronos-forecasting", error=str(e))
+                return None
+            try:
                 self._pipeline = ChronosPipeline.from_pretrained(
                     self._model_name,
                     device_map="cpu",
-                    torch_dtype=torch.float32,
+                    torch_dtype=__import__("torch").float32,
                 )
                 log.info("chronos_model_loaded", model=self._model_name)
-            except ImportError:
-                log.warning("chronos_not_installed", hint="pip install chronos-forecasting")
-                return None
             except Exception as e:
-                log.error("chronos_load_error", error=str(e))
+                log.error("chronos_load_error", model=self._model_name, error=str(e))
+                self._pipeline = None
                 return None
         return self._pipeline
 
@@ -54,12 +69,17 @@ class ChronosBaselineEngine:
         horizon: int = 8,
         num_samples: int = 20,
     ) -> dict:
-        """Zero-shot forecast for any float array."""
-        import torch
+        """Zero-shot forecast for any float array.
 
+        Returns a dict whose "model" field names what ACTUALLY produced the
+        forecast: the model id on success, "<name>-fallback" otherwise.
+        Never requires torch — the fallback path is import-safe.
+        """
         pipeline = self._get_pipeline()
         if pipeline is None:
             return self._fallback_forecast(values, horizon)
+
+        import torch
 
         context = torch.tensor(values, dtype=torch.float32).unsqueeze(0)
         forecast = pipeline.predict(context, prediction_length=horizon, num_samples=num_samples)
@@ -72,7 +92,7 @@ class ChronosBaselineEngine:
         hi95 = np.percentile(samples, 97.5, axis=0).tolist()
 
         return {
-            "model": "chronos-t5-small",
+            "model": self._model_name,
             "horizon": horizon,
             "median": median,
             "lo80": lo80,
@@ -257,22 +277,30 @@ class ChronosBaselineEngine:
 
         # Chronos-2 forecast
         chronos_fc = await self.forecast_series(train, horizon=horizon)
+        fallback_members = ["chronos"] if "fallback" in str(chronos_fc.get("model", "")) else []
 
         # Naive baseline (seasonal repeat)
         naive_fc = self._fallback_forecast(train, horizon)
 
-        # TFT comparison (if available)
-        tft_fc = None
-        try:
-            from core.market.price_ml import price_engine
-            if series == "price" and hasattr(price_engine, "forecast"):
-                tft_result = await price_engine.forecast(horizon_weeks=horizon)
-                if tft_result and "predictions" in tft_result:
-                    tft_fc = {
-                        "median": [p.get("predicted_nok", 0) for p in tft_result["predictions"][:horizon]],
-                    }
-        except Exception:
-            pass
+        # Price-ensemble comparison (honest label: this is the
+        # TFT/XGBoost/rule cascade in PriceEnsemble.predict, NOT a pure TFT)
+        ensemble_fc = None
+        if series == "price":
+            try:
+                from core.market.price_ml import price_ensemble
+                preds: list[float] = []
+                variant = None
+                for h in range(1, horizon + 1):
+                    fc_h = price_ensemble.predict(current_spot=values[-1], horizon_weeks=h)
+                    if fc_h is None:
+                        preds = []
+                        break
+                    preds.append(float(fc_h.predicted_nok))
+                    variant = fc_h.model_version
+                if len(preds) == horizon:
+                    ensemble_fc = {"median": preds, "variant": variant}
+            except Exception:
+                ensemble_fc = None
 
         def _mape(actual_vals: list, pred_vals: list) -> float:
             pairs = [(a, p) for a, p in zip(actual_vals, pred_vals) if a != 0]
@@ -313,12 +341,17 @@ class ChronosBaselineEngine:
         }
 
         # TFT metrics (if available)
-        if tft_fc and len(tft_fc["median"]) == horizon:
-            results["models"]["tft"] = {
-                "median": tft_fc["median"],
-                "mape": round(_mape(actual, tft_fc["median"]), 2),
-                "rmse": round(_rmse(actual, tft_fc["median"]), 2),
+        if ensemble_fc:
+            results["models"]["price_ensemble"] = {
+                "median": ensemble_fc["median"],
+                "variant": ensemble_fc["variant"],
+                "mape": round(_mape(actual, ensemble_fc["median"]), 2),
+                "rmse": round(_rmse(actual, ensemble_fc["median"]), 2),
             }
+
+        # Members computed from seasonal-naive fallbacks are tagged so the
+        # honesty layer can degrade provenance (AGENTS.md rule 1).
+        results["fallback_members"] = fallback_members
 
         results["generated_at"] = dt.datetime.now(dt.UTC).isoformat()
         return results

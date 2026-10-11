@@ -23,19 +23,25 @@ router = APIRouter(prefix="/api", tags=["ml"])
 @router.get("/gnn/status")
 async def gnn_status():
     """Check Lice GNN availability and training state."""
-    from core.market.lice_gnn import lice_gnn_trainer
+    try:
+        from core.market.lice_gnn import lice_gnn_trainer
+    except ImportError as _e:
+        raise HTTPException(503, f"Lice GNN dependencies not installed: {_e}")
     result = lice_gnn_trainer.status()
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("Amazon Chronos-2 / TFT / XGBoost ensemble", confidence=0.70).to_dict()
+        result["data_provenance"] = DataProvenance.from_model_result(result, "Lice GNN (PyTorch Geometric)", confidence=0.70).to_dict()
     return result
 
 
 @router.post("/gnn/build-training-data")
 async def gnn_build_training_data():
-    from core.market.lice_gnn import lice_gnn_trainer
+    try:
+        from core.market.lice_gnn import lice_gnn_trainer
+    except ImportError as _e:
+        raise HTTPException(503, f"Lice GNN dependencies not installed: {_e}")
     result = lice_gnn_trainer.build_training_data_from_db()
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("Amazon Chronos-2 / TFT / XGBoost ensemble", confidence=0.70).to_dict()
+        result["data_provenance"] = DataProvenance.from_model_result(result, "Lice GNN (PyTorch Geometric)", confidence=0.70).to_dict()
     return result
 
 
@@ -45,7 +51,10 @@ async def gnn_train(epochs: int = 50):
     Train the Lice GNN on historical BarentsWatch data.
     Runs asynchronously — heavy operation (minutes on CPU).
     """
-    from core.market.lice_gnn import lice_gnn_trainer
+    try:
+        from core.market.lice_gnn import lice_gnn_trainer
+    except ImportError as _e:
+        raise HTTPException(503, f"Lice GNN dependencies not installed: {_e}")
     if not lice_gnn_trainer.is_available():
         raise HTTPException(503, "torch_geometric not installed. Run: pip install torch_geometric")
 
@@ -96,19 +105,22 @@ async def gnn_train(epochs: int = 50):
 
     lice_gnn_trainer.prepare_data(farm_records)
     result = lice_gnn_trainer.train(epochs=epochs)
-    return {"status": "trained", **result, "data_provenance": DataProvenance.live("Amazon Chronos-2 / TFT / XGBoost ensemble", confidence=0.70).to_dict()}
+    return {"status": "trained", **result, "data_provenance": DataProvenance.live("Lice GNN (PyTorch Geometric)", confidence=0.70).to_dict()}
 
 
 @router.get("/gnn/predict/{locality_no}")
 async def gnn_predict(locality_no: int):
     """Predict next-week lice count + exceedance probability for a farm."""
-    from core.market.lice_gnn import lice_gnn_trainer
+    try:
+        from core.market.lice_gnn import lice_gnn_trainer
+    except ImportError as _e:
+        raise HTTPException(503, f"Lice GNN dependencies not installed: {_e}")
     if not lice_gnn_trainer.is_available():
         raise HTTPException(503, "torch_geometric not installed")
     try:
         result = lice_gnn_trainer.predict(farm_id=locality_no)
         if isinstance(result, dict):
-            result["data_provenance"] = DataProvenance.live("Amazon Chronos-2 / TFT / XGBoost ensemble", confidence=0.70).to_dict()
+            result["data_provenance"] = DataProvenance.from_model_result(result, "Lice GNN (PyTorch Geometric)", confidence=0.70).to_dict()
         return result
     except RuntimeError as e:
         raise HTTPException(400, str(e))
@@ -119,7 +131,10 @@ async def gnn_predict(locality_no: int):
 @router.get("/gnn/predict-all")
 async def gnn_predict_all():
     """Predict lice levels for all farms — returns list sorted by risk."""
-    from core.market.lice_gnn import lice_gnn_trainer
+    try:
+        from core.market.lice_gnn import lice_gnn_trainer
+    except ImportError as _e:
+        raise HTTPException(503, f"Lice GNN dependencies not installed: {_e}")
     if not lice_gnn_trainer.is_available():
         raise HTTPException(503, "torch_geometric not installed")
     try:
@@ -131,7 +146,7 @@ async def gnn_predict_all():
             "n_high_risk": len(high_risk),
             "high_risk_farms": high_risk[:20],
             "all_predictions": predictions[:100],
-            "data_provenance": DataProvenance.live("Amazon Chronos-2 / TFT / XGBoost ensemble", confidence=0.70).to_dict(),
+            "data_provenance": DataProvenance.live("Lice GNN (PyTorch Geometric)", confidence=0.70).to_dict(),
         }
     except RuntimeError as e:
         raise HTTPException(400, str(e))
@@ -145,7 +160,7 @@ async def chronos_price_forecast(horizon: int = 4):
     from core.ml.chronos_baseline import chronos_baseline
     result = await chronos_baseline.forecast_salmon_prices(horizon)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("Amazon Chronos-2 / TFT / XGBoost ensemble", confidence=0.70).to_dict()
+        result["data_provenance"] = DataProvenance.from_model_result(result, "Amazon Chronos zero-shot", confidence=0.70).to_dict()
     return result
 
 
@@ -155,7 +170,7 @@ async def chronos_lice_forecast(locality_no: int, horizon: int = 8):
     from core.ml.chronos_baseline import chronos_baseline
     result = await chronos_baseline.forecast_lice_counts(locality_no, horizon)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("Amazon Chronos-2 / TFT / XGBoost ensemble", confidence=0.70).to_dict()
+        result["data_provenance"] = DataProvenance.from_model_result(result, "Amazon Chronos zero-shot", confidence=0.70).to_dict()
     return result
 
 
@@ -165,7 +180,7 @@ async def chronos_temperature_forecast(locality_no: int, horizon: int = 8):
     from core.ml.chronos_baseline import chronos_baseline
     result = await chronos_baseline.forecast_temperatures(locality_no, horizon)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("Amazon Chronos-2 / TFT / XGBoost ensemble", confidence=0.70).to_dict()
+        result["data_provenance"] = DataProvenance.from_model_result(result, "Amazon Chronos zero-shot", confidence=0.70).to_dict()
     return result
 
 
@@ -175,7 +190,7 @@ async def chronos_supply_forecast(horizon: int = 6):
     from core.ml.chronos_baseline import chronos_baseline
     result = await chronos_baseline.forecast_supply_volumes(horizon)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("Amazon Chronos-2 / TFT / XGBoost ensemble", confidence=0.70).to_dict()
+        result["data_provenance"] = DataProvenance.from_model_result(result, "Amazon Chronos zero-shot", confidence=0.70).to_dict()
     return result
 
 
@@ -185,7 +200,7 @@ async def chronos_model_comparison(series: str = "price", horizon: int = 4):
     from core.ml.chronos_baseline import chronos_baseline
     result = await chronos_baseline.compare_models(series, horizon)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("Amazon Chronos-2 / TFT / XGBoost ensemble", confidence=0.70).to_dict()
+        result["data_provenance"] = DataProvenance.from_model_result(result, "Amazon Chronos zero-shot", confidence=0.70).to_dict()
     return result
 
 
@@ -200,13 +215,13 @@ async def chronos_custom_forecast(request: Request):
         raise HTTPException(400, "Need at least 3 data points")
     result = await chronos_baseline.forecast_series(values, horizon=horizon)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("Amazon Chronos-2 / TFT / XGBoost ensemble", confidence=0.70).to_dict()
+        result["data_provenance"] = DataProvenance.from_model_result(result, "Amazon Chronos zero-shot", confidence=0.70).to_dict()
     return result
 
 
 # ── TimesFM 2.5 Zero-Shot Forecasting ────────────────────────────────
 
-_TIMESFM_PROVENANCE = "Google TimesFM 2.5 / Chronos-2 / TFT ensemble"
+_TIMESFM_PROVENANCE = "Google TimesFM 2.5 zero-shot"
 _TIMESFM_CONFIDENCE = 0.75
 
 
@@ -220,7 +235,7 @@ async def timesfm_price_forecast(horizon: int = 4):
     from core.ml.timesfm_engine import timesfm_engine
     result = await timesfm_engine.forecast_salmon_prices(horizon)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live(
+        result["data_provenance"] = DataProvenance.from_model_result(result, 
             _TIMESFM_PROVENANCE, confidence=_TIMESFM_CONFIDENCE
         ).to_dict()
     return result
@@ -236,7 +251,7 @@ async def timesfm_lice_forecast(locality_no: int, horizon: int = 8):
     from core.ml.timesfm_engine import timesfm_engine
     result = await timesfm_engine.forecast_lice_counts(locality_no, horizon)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live(
+        result["data_provenance"] = DataProvenance.from_model_result(result, 
             _TIMESFM_PROVENANCE, confidence=_TIMESFM_CONFIDENCE
         ).to_dict()
     return result
@@ -248,7 +263,7 @@ async def timesfm_temperature_forecast(locality_no: int, horizon: int = 8):
     from core.ml.timesfm_engine import timesfm_engine
     result = await timesfm_engine.forecast_temperatures(locality_no, horizon)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live(
+        result["data_provenance"] = DataProvenance.from_model_result(result, 
             _TIMESFM_PROVENANCE, confidence=_TIMESFM_CONFIDENCE
         ).to_dict()
     return result
@@ -260,7 +275,7 @@ async def timesfm_supply_forecast(horizon: int = 6):
     from core.ml.timesfm_engine import timesfm_engine
     result = await timesfm_engine.forecast_supply_volumes(horizon)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live(
+        result["data_provenance"] = DataProvenance.from_model_result(result, 
             _TIMESFM_PROVENANCE, confidence=_TIMESFM_CONFIDENCE
         ).to_dict()
     return result
@@ -276,7 +291,7 @@ async def timesfm_model_comparison(series: str = "price", horizon: int = 4):
     from core.ml.timesfm_engine import timesfm_engine
     result = await timesfm_engine.compare_models(series, horizon)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live(
+        result["data_provenance"] = DataProvenance.from_model_result(result, 
             _TIMESFM_PROVENANCE, confidence=_TIMESFM_CONFIDENCE
         ).to_dict()
     return result
@@ -304,7 +319,7 @@ async def timesfm_custom_forecast(request: Request):
         values, horizon=horizon, xreg=xreg
     )
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live(
+        result["data_provenance"] = DataProvenance.from_model_result(result, 
             _TIMESFM_PROVENANCE, confidence=_TIMESFM_CONFIDENCE
         ).to_dict()
     return result
@@ -312,7 +327,7 @@ async def timesfm_custom_forecast(request: Request):
 
 # ── MOIRAI-2 Zero-Shot Forecasting (Low-Latency) ───────────────────
 
-_MOIRAI_PROVENANCE = "Salesforce MOIRAI-2 / Chronos-2 / TimesFM 2.5 ensemble"
+_MOIRAI_PROVENANCE = "Salesforce MOIRAI-2 zero-shot"
 _MOIRAI_CONFIDENCE = 0.72
 
 
@@ -326,7 +341,7 @@ async def moirai_price_forecast(horizon: int = 4):
     from core.ml.moirai_engine import moirai_engine
     result = await moirai_engine.forecast_salmon_prices(horizon)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live(
+        result["data_provenance"] = DataProvenance.from_model_result(result, 
             _MOIRAI_PROVENANCE, confidence=_MOIRAI_CONFIDENCE
         ).to_dict()
     return result
@@ -338,7 +353,7 @@ async def moirai_lice_forecast(locality_no: int, horizon: int = 8):
     from core.ml.moirai_engine import moirai_engine
     result = await moirai_engine.forecast_lice_counts(locality_no, horizon)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live(
+        result["data_provenance"] = DataProvenance.from_model_result(result, 
             _MOIRAI_PROVENANCE, confidence=_MOIRAI_CONFIDENCE
         ).to_dict()
     return result
@@ -350,7 +365,7 @@ async def moirai_supply_forecast(horizon: int = 6):
     from core.ml.moirai_engine import moirai_engine
     result = await moirai_engine.forecast_supply_volumes(horizon)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live(
+        result["data_provenance"] = DataProvenance.from_model_result(result, 
             _MOIRAI_PROVENANCE, confidence=_MOIRAI_CONFIDENCE
         ).to_dict()
     return result
@@ -367,7 +382,7 @@ async def moirai_model_comparison(series: str = "price", horizon: int = 4):
     from core.ml.moirai_engine import moirai_engine
     result = await moirai_engine.compare_models(series, horizon)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live(
+        result["data_provenance"] = DataProvenance.from_model_result(result, 
             _MOIRAI_PROVENANCE, confidence=_MOIRAI_CONFIDENCE
         ).to_dict()
     return result
@@ -391,7 +406,7 @@ async def moirai_custom_forecast(request: Request):
         raise HTTPException(400, "MOIRAI-2 max horizon is 128")
     result = await moirai_engine.forecast_series(values, horizon=horizon)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live(
+        result["data_provenance"] = DataProvenance.from_model_result(result, 
             _MOIRAI_PROVENANCE, confidence=_MOIRAI_CONFIDENCE
         ).to_dict()
     return result
@@ -405,48 +420,80 @@ async def moirai_custom_forecast(request: Request):
 
 @router.get("/ml/ensemble/price-forecast")
 async def ensemble_price_forecast(horizon: int = 4):
-    """Ensemble salmon price forecast combining 3 foundation models.
+    """Ensemble salmon price forecast combining available foundation models.
 
-    Aggregates predictions from TimesFM 2.5, Chronos-2, and MOIRAI-2 using
+    Aggregates predictions from TimesFM 2.5, Chronos, and MOIRAI-2 using
     median-of-medians for point estimate and union of quantile bands for
     uncertainty. Model diversity = decorrelated errors = more robust predictions.
+
+    Honesty contract: a model only counts as "used" if it produced real model
+    output (engines tag their seasonal-naive fallbacks with model="...-fallback").
+    The response reports models_used (real), models_fallback (degraded), and a
+    data_provenance that is live only when >= 1 real model ran.
     """
     import numpy as np
     results = {}
     models_available = []
+    models_fallback = []
 
-    # Run all 3 models, gracefully handle any that fail
-    try:
-        from core.ml.timesfm_engine import timesfm_engine
-        r = await timesfm_engine.forecast_salmon_prices(horizon)
-        if r and "median" in r:
-            results["timesfm"] = r
-            models_available.append("TimesFM 2.5")
-    except Exception:
-        pass
+    async def _run(label: str, coro) -> None:
+        nonlocal first_fallback
+        try:
+            r = await coro
+        except Exception:
+            r = None
+        if not r or "median" not in r:
+            return
+        model_tag = str(r.get("model", "")).lower()
+        if "fallback" in model_tag or r.get("fallback") is True or r.get("error"):
+            models_fallback.append(label)
+            if first_fallback is None:
+                first_fallback = r
+            return
+        results[label] = r
+        models_available.append(label)
 
-    try:
-        from core.ml.chronos_baseline import chronos_baseline
-        r = await chronos_baseline.forecast_salmon_prices(horizon)
-        if r and "median" in r:
-            results["chronos"] = r
-            models_available.append("Chronos-2")
-    except Exception:
-        pass
+    first_fallback: dict | None = None
 
-    try:
-        from core.ml.moirai_engine import moirai_engine
-        r = await moirai_engine.forecast_salmon_prices(horizon)
-        if r and "median" in r:
-            results["moirai"] = r
-            models_available.append("MOIRAI-2")
-    except Exception:
-        pass
+    # Run all 3 models, gracefully handle any that fail or fall back
+    from core.ml.timesfm_engine import timesfm_engine
+    from core.ml.chronos_baseline import chronos_baseline
+    from core.ml.moirai_engine import moirai_engine
+    await _run("TimesFM 2.5", timesfm_engine.forecast_salmon_prices(horizon))
+    await _run("Chronos", chronos_baseline.forecast_salmon_prices(horizon))
+    await _run("MOIRAI-2", moirai_engine.forecast_salmon_prices(horizon))
 
-    if not results:
+    if not results and first_fallback is None:
         return {"error": "No foundation models available", "models_tried": 3}
 
-    # Ensemble: median of medians, widest quantile bands
+    if not results:
+        # Every model fell back — do NOT fabricate an "ensemble of 3".
+        # Return the first fallback forecast, clearly marked as degraded.
+        r = first_fallback or {}
+        if not r or "median" not in r:
+            return {"error": "No foundation models available", "models_tried": 3}
+        return {
+            "model": f"fallback ({r.get('model', 'naive')})",
+            "models_used": [],
+            "models_fallback": models_fallback,
+            "horizon": horizon,
+            "median": [round(v, 2) for v in r["median"]],
+            "lo80": [round(v, 2) for v in r.get("lo80", r["median"])],
+            "hi80": [round(v, 2) for v in r.get("hi80", r["median"])],
+            "lo95": [round(v, 2) for v in r.get("lo95", r["median"])],
+            "hi95": [round(v, 2) for v in r.get("hi95", r["median"])],
+            "individual_forecasts": {
+                "fallback": {"median": r.get("median"), "model": r.get("model", "naive")},
+            },
+            "generated_at": dt.datetime.now(dt.UTC).isoformat(),
+            "data_provenance": DataProvenance.degraded(
+                "Foundation-model ensemble",
+                reason="all 3 foundation models unavailable — seasonal-naive fallback used",
+                confidence=0.3,
+            ).to_dict(),
+        }
+
+    # Ensemble: median of medians, widest quantile bands (real models only)
     all_medians = [np.array(r["median"]) for r in results.values()]
     ensemble_median = np.median(np.stack(all_medians), axis=0).tolist()
 
@@ -461,9 +508,20 @@ async def ensemble_price_forecast(horizon: int = 4):
     ensemble_lo95 = np.min(np.stack(all_lo95), axis=0).tolist()
     ensemble_hi95 = np.max(np.stack(all_hi95), axis=0).tolist()
 
+    provenance = DataProvenance.live(
+        f"Ensemble: {' + '.join(models_available)}",
+        confidence=min(0.95, 0.70 + 0.05 * len(results)),
+    )
+    if models_fallback:
+        # Still live (>=1 real model ran) but record the degraded members.
+        provenance.fallback_reason = (
+            f"excluded fallback members: {', '.join(models_fallback)}"
+        )
+
     return {
         "model": f"ensemble ({len(results)} models)",
         "models_used": models_available,
+        "models_fallback": models_fallback,
         "horizon": horizon,
         "median": [round(v, 2) for v in ensemble_median],
         "lo80": [round(v, 2) for v in ensemble_lo80],
@@ -478,8 +536,5 @@ async def ensemble_price_forecast(horizon: int = 4):
             for name, r in results.items()
         },
         "generated_at": dt.datetime.now(dt.UTC).isoformat(),
-        "data_provenance": DataProvenance.live(
-            f"Ensemble: {' + '.join(models_available)}",
-            confidence=min(0.95, 0.70 + 0.05 * len(results)),
-        ).to_dict(),
+        "data_provenance": provenance.to_dict(),
     }

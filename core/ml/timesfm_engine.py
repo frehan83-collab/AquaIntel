@@ -501,6 +501,7 @@ class TimesFMEngine:
 
         # TimesFM 2.5 forecast
         timesfm_fc = await self.forecast_series(train, horizon=horizon)
+        fallback_members = ["timesfm"] if "fallback" in str(timesfm_fc.get("model", "")) else []
 
         # Chronos-2 forecast (if available)
         chronos_fc = None
@@ -516,24 +517,25 @@ class TimesFMEngine:
         # Naive baseline (seasonal repeat)
         naive_fc = self._fallback_forecast(train, horizon)
 
-        # TFT comparison (if available)
-        tft_fc = None
-        try:
-            from core.market.price_ml import price_engine
-
-            if series == "price" and hasattr(price_engine, "forecast"):
-                tft_result = await price_engine.forecast(
-                    horizon_weeks=horizon
-                )
-                if tft_result and "predictions" in tft_result:
-                    tft_fc = {
-                        "median": [
-                            p.get("predicted_nok", 0)
-                            for p in tft_result["predictions"][:horizon]
-                        ],
-                    }
-        except Exception:
-            pass
+        # Price-ensemble comparison (honest label: this is the
+        # TFT/XGBoost/rule cascade in PriceEnsemble.predict, NOT a pure TFT)
+        ensemble_fc = None
+        if series == "price":
+            try:
+                from core.market.price_ml import price_ensemble
+                preds: list[float] = []
+                variant = None
+                for h in range(1, horizon + 1):
+                    fc_h = price_ensemble.predict(current_spot=values[-1], horizon_weeks=h)
+                    if fc_h is None:
+                        preds = []
+                        break
+                    preds.append(float(fc_h.predicted_nok))
+                    variant = fc_h.model_version
+                if len(preds) == horizon:
+                    ensemble_fc = {"median": preds, "variant": variant}
+            except Exception:
+                ensemble_fc = None
 
         def _mape(actual_vals: list, pred_vals: list) -> float:
             pairs = [
@@ -612,12 +614,17 @@ class TimesFMEngine:
         }
 
         # TFT metrics (if available)
-        if tft_fc and len(tft_fc["median"]) == horizon:
-            results["models"]["tft"] = {
-                "median": tft_fc["median"],
-                "mape": round(_mape(actual, tft_fc["median"]), 2),
-                "rmse": round(_rmse(actual, tft_fc["median"]), 2),
+        if ensemble_fc:
+            results["models"]["price_ensemble"] = {
+                "median": ensemble_fc["median"],
+                "variant": ensemble_fc["variant"],
+                "mape": round(_mape(actual, ensemble_fc["median"]), 2),
+                "rmse": round(_rmse(actual, ensemble_fc["median"]), 2),
             }
+
+        # Members computed from seasonal-naive fallbacks are tagged so the
+        # honesty layer can degrade provenance (AGENTS.md rule 1).
+        results["fallback_members"] = fallback_members
 
         results["generated_at"] = dt.datetime.now(dt.UTC).isoformat()
         return results

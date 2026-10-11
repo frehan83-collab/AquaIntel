@@ -157,11 +157,13 @@ class TestFiskeridirData:
 
 class TestLiceGNN:
     def test_import(self):
+        pytest.importorskip("torch", reason="torch not installed — GNN is an optional dependency")
         from core.market.lice_gnn import lice_gnn_trainer
         assert lice_gnn_trainer is not None
 
     def test_predict_all_farms(self):
         """GNN predict should return list or raise RuntimeError if untrained."""
+        pytest.importorskip("torch", reason="torch not installed — GNN is an optional dependency")
         from core.market.lice_gnn import lice_gnn_trainer
         try:
             result = lice_gnn_trainer.predict_all_farms()

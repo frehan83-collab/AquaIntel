@@ -51,7 +51,7 @@ services:
     environment:
       - DATABASE_URL=postgresql+psycopg2://openclaw:${POSTGRES_PASSWORD:-openclaw-dev-password}@db:5432/openclaw
       - PYTENSOR_FLAGS=device=cpu,floatX=float64,optimizer=fast_compile,cxx=
-      - FISHINTEL_JWT_SECRET=${FISHINTEL_JWT_SECRET:-change-me-in-production}
+      - FISHINTEL_JWT_SECRET=${FISHINTEL_JWT_SECRET:?FISHINTEL_JWT_SECRET is required - generate with: python -c "import secrets; print(secrets.token_urlsafe(64))"}
       - FISHINTEL_ENV=production
       - FISKERIDIR_BIOSTAT_JSON=/app/data/biostat-total-flk.json
 

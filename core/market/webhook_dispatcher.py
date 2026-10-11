@@ -125,6 +125,14 @@ class WebhookDispatcher:
 
     async def send_to_webhook(self, hook: Any, payload: dict[str, Any]) -> tuple[bool, str]:
         """Send a formatted payload to a single webhook. Returns (success, detail)."""
+        # SSRF re-validation at dispatch time: DNS records may have changed
+        # since the webhook was created (rebinding). Fail closed.
+        from core.security import validate_public_url
+        try:
+            await validate_public_url(hook.url)
+        except ValueError as exc:
+            log.warning("webhook_ssrf_blocked", webhook_id=getattr(hook, "id", None), reason=str(exc))
+            return False, f"blocked by SSRF guard: {exc}"
         try:
             if hook.webhook_type == "slack":
                 body = self._format_slack(payload)

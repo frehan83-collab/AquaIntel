@@ -187,7 +187,23 @@ class TFTPredictor:
 
     @property
     def is_available(self) -> bool:
-        return self._loaded or (CHECKPOINT_PATH.exists() and PARAMS_PATH.exists())
+        """True only when the TFT can actually produce predictions.
+
+        A checkpoint on disk is not enough — pytorch_forecasting + torch must
+        be importable, otherwise predict() always returns None and callers
+        that trust this flag would silently take the rule fallback while
+        reporting "TFT active".
+        """
+        if self._loaded:
+            return True
+        if not (CHECKPOINT_PATH.exists() and PARAMS_PATH.exists()):
+            return False
+        import importlib.util
+
+        return (
+            importlib.util.find_spec("pytorch_forecasting") is not None
+            and importlib.util.find_spec("torch") is not None
+        )
 
 
 # Singleton

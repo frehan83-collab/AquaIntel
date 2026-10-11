@@ -12,7 +12,7 @@ import os
 
 import structlog
 
-from fastapi import APIRouter, Query, HTTPException, Request
+from fastapi import APIRouter, Query, HTTPException, Request, Depends
 from fastapi.responses import StreamingResponse, JSONResponse
 from sqlalchemy import select, func, text, case
 
@@ -20,8 +20,15 @@ log = structlog.get_logger("admin_routes")
 
 from core.models import TreatmentOutcome, LiceRecord, Locality, User, WebhookConfig, Signal, AuditLog
 from core.async_db import get_async_session
+from core.auth import require_admin
 
-router = APIRouter(prefix="/api/admin", tags=["admin"])
+# Every endpoint on this router exposes ops data (health, exports incl. user
+# records, audit logs) — admin authentication is mandatory (Session 38 CRIT #2).
+router = APIRouter(
+    prefix="/api/admin",
+    tags=["admin"],
+    dependencies=[Depends(require_admin)],
+)
 
 _start_time = _time.time()
 

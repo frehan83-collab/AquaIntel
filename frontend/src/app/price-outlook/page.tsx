@@ -225,8 +225,8 @@ export default function PriceOutlookPage() {
           <KPICard
             label="Backtest MAPE"
             value={outlook.model?.mape_backtest != null ? `${formatNumber(outlook.model.mape_backtest, locale, 1)}%` : "\u2014"}
-            delta={outlook.model?.mape_backtest < 10 ? "Good" : "Moderate"}
-            deltaType={outlook.model?.mape_backtest < 10 ? "positive" : "neutral"}
+            delta={outlook.model?.mape_backtest != null ? (outlook.model.mape_backtest < 10 ? "Good" : "Moderate") : "No validated backtest"}
+            deltaType={outlook.model?.mape_backtest != null && outlook.model.mape_backtest < 10 ? "positive" : "neutral"}
             icon={BarChart3}
             delay={0.12}
           />

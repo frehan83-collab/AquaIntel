@@ -74,7 +74,9 @@ class EnsemblePriceForecast:
     # Model metadata
     model_version: str = "ensemble_v1"
     n_scenarios: int = 0
-    mape_backtest: float = 0.0
+    # Measured MAPE ONLY when a validated backtest artifact matched this
+    # model_version; None means "no validated backtest on record".
+    mape_backtest: Optional[float] = None
     rationale: str = ""
 
     # Scenario distribution
@@ -113,11 +115,21 @@ LICE_PRICE_ELASTICITY = {
     14: 0.5, 16: 0.3, 18: 0.2, 20: 0.1,
 }
 
-# ── Historical MAPE by horizon (from backtesting 2020-2025) ──
-HORIZON_MAPE = {
+# ── Backtest artifact (optional) ──────────────────────────────────────────────
+# HORIZON_MAPE below is a REFERENCE table from an offline rule-tier analysis —
+# it is NOT a validated backtest of the model that runs in production, so it
+# must never be surfaced to users as "Backtested MAPE". Accuracy claims are
+# only allowed when a real artifact written by scripts/backtest_price_ml.py
+# exists (data/models/price_backtest.json) and matches the running
+# model_version.
+REFERENCE_HORIZON_MAPE = {
     2: 3.8, 4: 5.2, 6: 7.1, 8: 9.4, 10: 11.6,
     12: 13.5, 14: 15.2, 16: 16.8, 18: 18.1, 20: 19.3,
 }
+# Backwards-compatible alias (internal tuning only — never shown to users)
+HORIZON_MAPE = REFERENCE_HORIZON_MAPE
+
+BACKTEST_ARTIFACT = MODEL_DIR / "price_backtest.json"
 
 
 class PriceEnsemble:
@@ -187,6 +199,39 @@ class PriceEnsemble:
                 )
         except Exception:
             pass
+
+    def _load_backtest(self) -> dict | None:
+        """Load the validated backtest artifact, if present and well-formed.
+
+        The artifact must be produced by scripts/backtest_price_ml.py for the
+        exact model_version being served. Absence (or malformed structure)
+        means: no accuracy claim may be made (see honesty contract in
+        forecast()). A malformed artifact must never fabricate "0.0% MAPE"
+        or crash the forecast path.
+        """
+        try:
+            if not BACKTEST_ARTIFACT.exists():
+                return None
+            data = json.loads(BACKTEST_ARTIFACT.read_text())
+        except Exception as e:
+            log.warning("price_ml.backtest_artifact_unreadable", error=str(e)[:100])
+            return None
+
+        # Structural validation: non-empty mape map, int-coercible horizon
+        # keys, numeric values. Anything else = no artifact.
+        if not isinstance(data, dict):
+            return None
+        mape_map = data.get("mape")
+        if not isinstance(mape_map, dict) or not mape_map:
+            log.warning("price_ml.backtest_artifact_invalid", reason="mape missing or empty")
+            return None
+        try:
+            validated = {int(k): float(v) for k, v in mape_map.items()}
+        except (TypeError, ValueError):
+            log.warning("price_ml.backtest_artifact_invalid", reason="non-numeric mape entries")
+            return None
+        data["mape"] = {str(k): v for k, v in validated.items()}
+        return data
 
     def _build_features(
         self,
@@ -349,18 +394,41 @@ class PriceEnsemble:
             export_volume_trend, futures_premium_pct, horizon_weeks,
         )
 
-        # ── Accuracy statement ─────────────────────────────────
-        mape = self._backtest_mape.get(
-            min(self._backtest_mape.keys(),
-                key=lambda k: abs(k - horizon_weeks)),
-            15.0,
+        # ── Accuracy statement (honesty contract) ────────────────
+        # Only claim measured accuracy when a real backtest artifact exists
+        # AND it was produced for this exact model version. Otherwise state
+        # plainly that no validated backtest is on record — never fabricate
+        # MAPE or coverage numbers.
+        expected_version = (
+            f"ensemble_v2_{model_tag}" if model_tag == "tft"
+            else f"ensemble_v1_{model_tag}"
         )
+        backtest = self._load_backtest()
+        mape_value: float | None = None
 
-        accuracy_stmt = (
-            f"Backtested {horizon_weeks}-week MAPE: {mape:.1f}% "
-            f"(2020-2025 data, {model_tag} model). "
-            f"80% of actual prices fell within the indicated band."
-        )
+        if backtest and backtest.get("model_version") == expected_version:
+            mape_map = backtest.get("mape", {})
+            nearest = min(mape_map.keys(), key=lambda k: abs(int(k) - horizon_weeks))
+            mape_value = float(mape_map[nearest])
+            coverage = backtest.get("coverage_80")
+            accuracy_stmt = (
+                f"Backtested {horizon_weeks}-week MAPE: {mape_value:.1f}% "
+                f"on {backtest.get('window', 'held-out data')} "
+                f"(run {backtest.get('generated_at', 'unknown date')}, {model_tag} model)."
+            )
+            if coverage is not None:
+                accuracy_stmt += f" {float(coverage):.0f}% of actual prices fell within the indicated band."
+        elif model_tag == "rule":
+            accuracy_stmt = (
+                "Rule-based forecast (TFT and XGBoost models unavailable in this "
+                "deployment) — no validated backtest on record for this tier; "
+                "uncertainty bands are heuristically widened, not calibrated."
+            )
+        else:
+            accuracy_stmt = (
+                f"{model_tag} model active, but no validated backtest artifact is "
+                "on record for this model version — treat accuracy as unverified."
+            )
 
         model_quality = "rule_based_fallback" if model_tag == "rule" else "ml_model"
 
@@ -384,7 +452,7 @@ class PriceEnsemble:
             combined_signal=signals["combined"],
             model_version=f"ensemble_v2_{model_tag}" if model_tag == "tft" else f"ensemble_v1_{model_tag}",
             n_scenarios=n_scenarios,
-            mape_backtest=mape,
+            mape_backtest=mape_value,
             rationale=signals["rationale"],
             scenarios_p10=round(bands["p10"], 1),
             scenarios_p25=round(bands["p25"], 1),

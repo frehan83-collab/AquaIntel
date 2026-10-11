@@ -50,3 +50,38 @@ class DataProvenance:
             confidence=0.0,
             fallback_reason=reason,
         )
+
+    @staticmethod
+    def from_model_result(result: dict, source: str, confidence: float = 0.7) -> "DataProvenance":
+        """
+        Derive honest provenance from an ML engine result dict.
+
+        Engines tag fallback output with a "model" value containing
+        "fallback" (e.g. "naive-fallback", "seasonal-naive-fallback") or
+        an explicit "fallback": True. Such results are NOT live model
+        output and must never be reported as live.
+        """
+        if not isinstance(result, dict):
+            return DataProvenance.degraded(source, "unrecognised engine result", confidence=0.3)
+        # Comparison results: members computed from fallbacks degrade the whole
+        # result (e.g. "chronos vs naive" where chronos itself fell back).
+        fb_members = result.get("fallback_members")
+        if isinstance(fb_members, list) and fb_members:
+            return DataProvenance.degraded(
+                source,
+                f"members computed from seasonal-naive fallback: {', '.join(str(m) for m in fb_members)}",
+                confidence=0.4,
+            )
+        model = str(result.get("model", "")).lower()
+        is_fallback = (
+            result.get("fallback") is True
+            or "fallback" in model
+            or bool(result.get("error"))
+        )
+        if is_fallback:
+            return DataProvenance.degraded(
+                source,
+                f"model unavailable — seasonal-naive fallback used (requested: {source})",
+                confidence=0.3,
+            )
+        return DataProvenance.live(source, confidence=confidence)

@@ -28,6 +28,12 @@ class RegisterRequest(BaseModel):
     role: str = "farmer"
 
 
+# Roles a client may self-select at registration. "admin" is deliberately
+# excluded — admin is granted only via DB role or FISHINTEL_ADMIN_EMAILS
+# (prevents trivial privilege escalation through the public register endpoint).
+_ALLOWED_SELF_SERVE_ROLES = {"farmer", "buyer", "processor", "investor", "trader", "analyst"}
+
+
 class LoginRequest(BaseModel):
     email: str
     password: str
@@ -50,7 +56,7 @@ async def register(request: Request, req: RegisterRequest):
             email=req.email,
             hashed_password=hash_password(req.password),
             company=req.company,
-            role=req.role,
+            role=req.role if req.role in _ALLOWED_SELF_SERVE_ROLES else "farmer",
             tier="free",
         )
         s.add(user)

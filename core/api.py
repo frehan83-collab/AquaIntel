@@ -241,6 +241,7 @@ from core.routers.webhook_routes import router as webhook_router
 from core.routers.apikey_routes import router as apikey_router
 from core.routers.integration_routes import router as integration_router
 from core.routers.supply_chain_routes import router as supply_chain_router
+from core.auth import require_admin
 app.include_router(auth_router)
 app.include_router(billing_router)
 app.include_router(disease_router)
@@ -363,16 +364,16 @@ async def metrics():
     }
 
 
-@app.get("/api/cache/stats")
+@app.get("/api/cache/stats", dependencies=[Depends(require_admin)])
 async def cache_stats():
-    """Cache performance statistics."""
+    """Cache performance statistics (admin only)."""
     from core.cache import engine_cache
     return engine_cache.stats()
 
 
-@app.post("/api/cache/invalidate")
+@app.post("/api/cache/invalidate", dependencies=[Depends(require_admin)])
 async def cache_invalidate(request: Request):
-    """Invalidate cache entries. POST body: {"pattern": "yoy"} or {} for all."""
+    """Invalidate cache entries (admin only). POST body: {"pattern": "yoy"} or {} for all."""
     try:
         body = await request.json()
     except Exception:
@@ -1023,6 +1024,10 @@ async def _rule_based_chat_response(message: str) -> dict:
                 n_scenarios=500,
             )
             direction_emoji = "📈" if fc.direction == "up" else "📉" if fc.direction == "down" else "➡️"
+            if fc.mape_backtest is not None:
+                mape_sentence = f" MAPE on validated backtest: ~{fc.mape_backtest:.1f}%."
+            else:
+                mape_sentence = " No validated backtest is on record for this model version."
             answer_parts.append(
                 f"**8-Week Price Forecast**\n\n"
                 f"- Current spot: **{spot:.1f} NOK/kg**\n"
@@ -1030,7 +1035,7 @@ async def _rule_based_chat_response(message: str) -> dict:
                 f"- 80% confidence interval: **{fc.price_lo80:.1f} – {fc.price_hi80:.1f} NOK/kg**\n"
                 f"- Model signal: **{fc.combined_signal.upper()}**\n\n"
                 f"Forecast uses an ensemble of lice-adjusted mean reversion, seasonal decomposition, "
-                f"and causal lag models. MAPE on backtested data: ~{fc.mape_backtest:.1f}%."
+                f"and causal lag models.{mape_sentence}"
             )
             confidence = "high"
         except Exception:
