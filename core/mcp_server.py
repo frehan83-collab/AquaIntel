@@ -55,3 +55,14 @@ async def get_regulatory_traffic_light() -> dict:
     """Get the current Norwegian traffic light system status (green/yellow/red) per Production Area."""
     from core.routers.misc_routes import traffic_light_current
     return await traffic_light_current()
+
+@mcp.tool()
+async def get_wave_risk(production_area: int) -> dict:
+    """
+    Get live wave conditions (significant wave height, risk band, operational note)
+    for a Norwegian Production Area (1-13), from CMEMS WAM 1/12°.
+    Use for vessel-operation safety (net cleaning, de-licing, wellboats) and
+    storm-damage risk assessment.
+    """
+    from core.routers.ocean_routes import waves_pa
+    return await waves_pa(production_area)

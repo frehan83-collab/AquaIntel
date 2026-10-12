@@ -51,8 +51,9 @@ No competitor exposes their aquaculture intelligence as MCP. A thin server wrapp
 
 **Implemented (Session 40)**: `core/mcp_server.py` using the official `mcp`
 package (`mcp.server.mcpserver.MCPServer` — FastMCP is renamed to MCPServer in
-mcp 2.x). Six tools: morning brief, price outlook, national lice summary,
-causal insights, feed cost index, regulatory traffic light.
+mcp 2.x). Seven tools: morning brief, price outlook, national lice summary,
+causal insights, feed cost index, regulatory traffic light, and wave risk
+(CMEMS WAM, per Production Area).
 
 ```bash
 # Smoke (import + tool registration, exits)

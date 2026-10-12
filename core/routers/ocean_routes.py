@@ -158,3 +158,39 @@ async def pace_hab_risk(lat: float, lon: float, date: str = ""):
         "NASA PACE OCI L3m NRT + HAB species heuristics", confidence=0.75,
     ).to_dict()
     return result
+
+
+# ── CMEMS Wave Field (Session 41) ────────────────────────────────────
+
+@router.get("/api/ocean/waves/status")
+async def waves_status():
+    """Wave client status: product, dataset, cache freshness, last error."""
+    from core.market.wave_client import wave_client
+    return wave_client.get_status()
+
+
+@router.get("/api/ocean/waves/pa/{pa}")
+async def waves_pa(pa: int):
+    """Significant wave height + operational risk band for a Production Area.
+
+    Source: CMEMS GLOBAL_ANALYSISFORECAST_WAV_001_027 (WAM 1/12 deg), free tier.
+    Falls back to a deterministic simulated field with is_live=false when
+    credentials/data are unavailable (data-honesty contract).
+    """
+    from core.market.wave_client import wave_client
+    from core.market.data_provenance import DataProvenance
+    if not 1 <= pa <= 13:
+        raise HTTPException(status_code=400, detail="Production area must be 1-13")
+    await wave_client.fetch_waves()  # no-op when cache is fresh
+    result = wave_client.get_pa_wave(pa)
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+    if result.get("is_live"):
+        result["data_provenance"] = DataProvenance.live(
+            "CMEMS WAV (WAM 1/12°, VHM0)", confidence=0.85
+        ).to_dict()
+    else:
+        result["data_provenance"] = DataProvenance.simulated(
+            result.get("fallback_reason", "CMEMS WAV unavailable")
+        ).to_dict()
+    return result

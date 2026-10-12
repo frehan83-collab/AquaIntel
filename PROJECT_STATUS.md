@@ -10,7 +10,7 @@ Last updated: 2026-10-12 (Session 40)
 
 | Metric | Count |
 |--------|-------|
-| API routes | 324 (unique path+method, 0 duplicates, 12 with response_model) |
+| API routes | 326 (unique path+method, 0 duplicates, 12+ with response_model) |
 | Router modules | 30 |
 | Market/data engines | ~75 (incl. 3 ML foundation models) |
 | Frontend pages | 63 (68 compiled routes) |
