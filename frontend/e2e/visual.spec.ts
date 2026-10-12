@@ -67,6 +67,9 @@ for (const [route, name] of ROUTES) {
       fullPage: false,
       maxDiffPixelRatio: 0.01,
       animations: "disabled",
+      // next/font assets can lag on dev-server cold compiles; give fonts
+      // time to settle before timing out the screenshot.
+      timeout: 30_000,
     });
   });
 }
