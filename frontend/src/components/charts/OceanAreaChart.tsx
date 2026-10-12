@@ -1,20 +1,15 @@
 "use client";
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, ReferenceLine, Legend,
-} from "recharts";
-import OceanTooltip from "./OceanTooltip";
+import { useMemo } from "react";
+import type { EChartsCoreOption } from "echarts/core";
+import EChart from "./EChart";
 import { chartPalette, colors } from "@/lib/design-tokens";
 
 /* ─────────────────────────────────────────────────────────────────
- * Premium Multi-Series Area Chart
+ * Premium Multi-Series Area Chart — ECharts 6 edition (Session 41)
  * ─────────────────────────────────────────────────────────────────
- * Drop-in replacement for raw Recharts AreaChart with:
- *  - Auto-gradient fills per series
- *  - Glow filter on lines
- *  - Ocean-themed color palette
- *  - Custom glass tooltip
- *  - Optional threshold reference line
+ * Same props contract as the previous Recharts implementation
+ * (drop-in): gradient area fills, threshold mark-line, unit-aware
+ * tooltip, legend, animation. Canvas rendering + built-in resize.
  * ───────────────────────────────────────────────────────────────── */
 
 interface Series {
@@ -28,7 +23,6 @@ interface Series {
   strokeWidth?: number;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface OceanAreaChartProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any[];
@@ -56,115 +50,110 @@ export default function OceanAreaChart({
   showLegend = true,
   animated = true,
 }: OceanAreaChartProps) {
-  return (
-    <ResponsiveContainer width="100%" height={height}>
-      <AreaChart data={data} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
-        <defs>
-          {series.map((s, i) => {
-            const color = s.color || OCEAN_PALETTE[i % OCEAN_PALETTE.length];
-            return (
-              <linearGradient key={`grad-${s.key}`} id={`grad-${s.key}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={color} stopOpacity={0.25} />
-                <stop offset="50%" stopColor={color} stopOpacity={0.08} />
-                <stop offset="95%" stopColor={color} stopOpacity={0} />
-              </linearGradient>
-            );
-          })}
-          {/* Subtle line glow — reduced blur for performance */}
-          <filter id="lineGlow" x="-5%" y="-5%" width="110%" height="110%">
-            <feGaussianBlur stdDeviation="1" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
+  const option = useMemo<EChartsCoreOption>(() => {
+    const categories = (data || []).map((row) => String(row?.[xKey] ?? ""));
 
-        <CartesianGrid
-          strokeDasharray="3 6"
-          stroke="rgba(255,255,255,0.04)"
-          vertical={false}
-        />
+    const eSeries = series.map((s, i) => {
+      const color = s.color || OCEAN_PALETTE[i % OCEAN_PALETTE.length];
+      return {
+        name: s.name || s.key,
+        type: "line" as const,
+        smooth: 0.35,
+        symbol: "none",
+        data: (data || []).map((row) => {
+          const v = row?.[s.key];
+          return typeof v === "number" ? v : null;
+        }),
+        lineStyle: {
+          color,
+          width: s.strokeWidth || 2,
+          type: s.dashed ? ("dashed" as const) : ("solid" as const),
+        },
+        itemStyle: { color },
+        areaStyle:
+          s.filled !== false
+            ? {
+                color: {
+                  type: "linear" as const,
+                  x: 0, y: 0, x2: 0, y2: 1,
+                  colorStops: [
+                    { offset: 0.05, color: `${color}40` }, // 25% alpha
+                    { offset: 0.5, color: `${color}14` },  // 8%
+                    { offset: 0.95, color: `${color}00` }, // 0%
+                  ],
+                },
+              }
+            : undefined,
+        emphasis: { focus: "series" as const },
+      };
+    });
 
-        <XAxis
-          dataKey={xKey}
-          stroke="rgba(136,153,170,0.6)"
-          fontSize={11}
-          tickLine={false}
-          axisLine={{ stroke: "rgba(255,255,255,0.06)" }}
-          dy={8}
-        />
-        <YAxis
-          stroke="rgba(136,153,170,0.6)"
-          fontSize={11}
-          tickLine={false}
-          axisLine={false}
-          tickFormatter={(v) => `${v}${unit}`}
-        />
+    return {
+      animation: animated,
+      animationDuration: 800,
+      animationEasing: "cubicOut",
+      grid: { top: 8, right: 12, left: -6, bottom: showLegend ? 34 : 4, containLabel: true },
+      tooltip: {
+        trigger: "axis",
+        backgroundColor: "rgba(6,15,28,0.92)",
+        borderColor: "rgba(255,255,255,0.08)",
+        textStyle: { color: "#E2E8F0", fontSize: 12 },
+        valueFormatter: (v: unknown) =>
+          typeof v === "number" ? `${v}${unit}` : "—",
+        axisPointer: {
+          lineStyle: { color: "rgba(0,212,200,0.25)", type: "dashed" as const },
+        },
+      },
+      legend: showLegend
+        ? {
+            bottom: 0,
+            icon: "circle",
+            itemWidth: 8,
+            itemHeight: 8,
+            textStyle: { color: "rgba(136,153,170,0.85)", fontSize: 11 },
+          }
+        : undefined,
+      xAxis: {
+        type: "category" as const,
+        boundaryGap: false,
+        data: categories,
+        axisLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } },
+        axisTick: { show: false },
+        axisLabel: { color: "rgba(136,153,170,0.75)", fontSize: 11 },
+      },
+      yAxis: {
+        type: "value" as const,
+        scale: true,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        splitLine: { lineStyle: { color: "rgba(255,255,255,0.04)", type: "dashed" as const } },
+        axisLabel: {
+          color: "rgba(136,153,170,0.75)",
+          fontSize: 11,
+          formatter: (v: number) => `${v}${unit}`,
+        },
+      },
+      series: eSeries.map((s, i) =>
+        i === 0 && threshold !== undefined
+          ? {
+              ...s,
+              markLine: {
+                silent: true,
+                symbol: "none",
+                lineStyle: { color: colors.danger, type: "dashed" as const, width: 1.5 },
+                label: {
+                  formatter: thresholdLabel || `Limit: ${threshold}`,
+                  color: "rgba(244,63,94,0.85)",
+                  fontSize: 10,
+                  position: "insideEndTop" as const,
+                },
+                data: [{ yAxis: threshold }],
+              },
+            }
+          : s
+      ),
+    };
+  }, [data, xKey, series, threshold, thresholdLabel, unit, showLegend, animated]);
 
-        <Tooltip
-          content={<OceanTooltip unit={unit} />}
-          cursor={{
-            stroke: "rgba(0,212,200,0.15)",
-            strokeWidth: 1,
-            strokeDasharray: "4 4",
-          }}
-        />
-
-        {threshold !== undefined && (
-          <ReferenceLine
-            y={threshold}
-            stroke={colors.danger}
-            strokeDasharray="6 4"
-            strokeWidth={1.5}
-            label={{
-              value: thresholdLabel || `Limit: ${threshold}`,
-              fill: "rgba(244,63,94,0.8)",
-              fontSize: 10,
-              position: "right",
-            }}
-          />
-        )}
-
-        {series.map((s, i) => {
-          const color = s.color || OCEAN_PALETTE[i % OCEAN_PALETTE.length];
-          return (
-            <Area
-              key={s.key}
-              type="monotone"
-              dataKey={s.key}
-              name={s.name || s.key}
-              stroke={color}
-              fill={s.filled !== false ? `url(#grad-${s.key})` : "none"}
-              strokeWidth={s.strokeWidth || 2}
-              strokeDasharray={s.dashed ? "6 4" : undefined}
-              dot={false}
-              activeDot={{
-                r: 4,
-                fill: color,
-                stroke: "#060F1C",
-                strokeWidth: 2,
-              }}
-              isAnimationActive={animated}
-              animationDuration={800 + i * 150}
-              animationEasing="ease-out"
-              filter={!s.dashed ? "url(#lineGlow)" : undefined}
-            />
-          );
-        })}
-
-        {showLegend && (
-          <Legend
-            wrapperStyle={{
-              paddingTop: 16,
-              fontSize: 11,
-              color: "var(--text-secondary)",
-            }}
-            iconType="circle"
-            iconSize={8}
-          />
-        )}
-      </AreaChart>
-    </ResponsiveContainer>
-  );
+  return <EChart option={option} height={height} />;
 }
