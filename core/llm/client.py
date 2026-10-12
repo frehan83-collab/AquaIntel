@@ -281,8 +281,10 @@ class LLMClient:
           - tool_calls: list[dict] — tool_use blocks (name, id, input), empty if none
           - input_tokens / output_tokens: int
           - stop_reason: str
-        Only the Anthropic provider supports native tool-use.
-        OpenAI/OpenRouter will raise NotImplementedError.
+        Supported by Anthropic (native messages API) and by OpenAI/OpenRouter
+        (OpenAI-style function tools — OpenRouter proxies Claude tool-use too).
+        Messages may be in Anthropic block format (the agentic loop's native
+        format); they are converted internally for the OpenAI-style providers.
         """
         model = model or self.model
         max_tokens = max_tokens or settings.llm_max_tokens
@@ -292,12 +294,19 @@ class LLMClient:
             log.warning("llm.budget_exceeded", spent=self.usage.total_cost_usd)
             return {"text": "[LLM budget limit reached for this month.]", "tool_calls": [], "input_tokens": 0, "output_tokens": 0, "stop_reason": "budget"}
 
-        if self.provider != "anthropic":
-            raise NotImplementedError(
-                f"complete_with_tools not supported for provider '{self.provider}'. "
-                "Use the keyword-based tool enrichment fallback instead."
-            )
+        if self.provider == "anthropic":
+            return await self._tool_call_anthropic(messages, tools, system, model, max_tokens, temperature, user_id)
+        if self.provider in ("openai", "openrouter"):
+            return await self._tool_call_openai_style(messages, tools, system, model, max_tokens, temperature, user_id)
+        raise NotImplementedError(
+            f"complete_with_tools not supported for provider '{self.provider}'."
+        )
 
+    async def _tool_call_anthropic(
+        self, messages: list[dict], tools: list[dict], system: str,
+        model: str, max_tokens: int, temperature: float, user_id: str = "system",
+    ) -> dict:
+        """Anthropic-native tool-use call."""
         import asyncio
 
         client = self._get_anthropic()
@@ -377,14 +386,171 @@ class LLMClient:
             "stop_reason": result.stop_reason,
         }
 
+    async def _tool_call_openai_style(
+        self, messages: list[dict], tools: list[dict], system: str,
+        model: str, max_tokens: int, temperature: float, user_id: str = "system",
+    ) -> dict:
+        """OpenAI/OpenRouter tool-use call (OpenAI function-tool format).
+
+        Accepts the agentic loop's Anthropic block-format messages and converts
+        them: assistant tool_use blocks -> tool_calls, user tool_result blocks
+        -> per-call role:"tool" messages. Response is normalised to the same
+        shape as the Anthropic path.
+        """
+        import asyncio
+
+        client = self._get_openrouter() if self.provider == "openrouter" else self._get_openai()
+
+        api_tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": t["name"],
+                    "description": t["description"],
+                    "parameters": t.get("parameters", {"type": "object", "properties": {}}),
+                },
+            }
+            for t in tools
+        ]
+        api_messages = self._to_openai_messages(messages, system)
+
+        start = dt.datetime.now(dt.UTC)
+
+        def _sync_call():
+            kwargs = {
+                "model": model,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+                "messages": api_messages,
+                "tools": api_tools,
+                "tool_choice": "auto",
+            }
+            if self.provider == "openrouter":
+                kwargs["extra_headers"] = {
+                    "HTTP-Referer": "https://openclaw.no",
+                    "X-Title": "OpenClaw Aquaculture Platform",
+                }
+            return client.chat.completions.create(**kwargs)
+
+        result = await asyncio.get_event_loop().run_in_executor(None, _sync_call)
+
+        elapsed = (dt.datetime.now(dt.UTC) - start).total_seconds() * 1000
+        choice = result.choices[0]
+        message = choice.message
+
+        text_parts = [message.content] if message.content else []
+        tool_calls = []
+        for tc in (getattr(message, "tool_calls", None) or []):
+            try:
+                import json as _json
+                tool_input = _json.loads(tc.function.arguments or "{}")
+            except Exception:
+                tool_input = {}
+            tool_calls.append({
+                "id": tc.id,
+                "name": tc.function.name,
+                "input": tool_input,
+            })
+
+        resp = LLMResponse(
+            content="".join(text_parts),
+            model=model,
+            input_tokens=getattr(result.usage, "prompt_tokens", 0) or 0,
+            output_tokens=getattr(result.usage, "completion_tokens", 0) or 0,
+            latency_ms=elapsed,
+        )
+        costs = COST_TABLE.get(model, {"input": 5.0, "output": 15.0})
+        resp.cost_usd = (
+            resp.input_tokens * costs["input"] / 1_000_000 +
+            resp.output_tokens * costs["output"] / 1_000_000
+        )
+        self.usage.add(resp)
+        await self._log_call(user_id, model, resp)
+
+        log.info(
+            "llm.complete_with_tools",
+            provider=self.provider,
+            model=model,
+            tool_calls=len(tool_calls),
+            stop_reason=choice.finish_reason,
+        )
+
+        return {
+            "text": "".join(text_parts),
+            "tool_calls": tool_calls,
+            "input_tokens": resp.input_tokens,
+            "output_tokens": resp.output_tokens,
+            "stop_reason": choice.finish_reason,
+        }
+
+    @staticmethod
+    def _to_openai_messages(messages: list[dict], system: str) -> list[dict]:
+        """Convert Anthropic block-format messages to OpenAI chat format."""
+        out: list[dict] = []
+        if system:
+            out.append({"role": "system", "content": system})
+        for msg in messages:
+            content = msg.get("content")
+            if not isinstance(content, list):
+                out.append({"role": msg["role"], "content": content})
+                continue
+            # Anthropic block content — split into OpenAI message semantics
+            text = "".join(b.get("text", "") for b in content if b.get("type") == "text")
+            tool_uses = [b for b in content if b.get("type") == "tool_use"]
+            tool_results = [b for b in content if b.get("type") == "tool_result"]
+            if tool_uses:
+                out.append({
+                    "role": "assistant",
+                    "content": text or None,
+                    "tool_calls": [
+                        {
+                            "id": b["id"],
+                            "type": "function",
+                            "function": {
+                                "name": b["name"],
+                                "arguments": __import__("json").dumps(b.get("input", {})),
+                            },
+                        }
+                        for b in tool_uses
+                    ],
+                })
+            elif tool_results:
+                # Tool results must directly follow their assistant tool_calls
+                # message; any accompanying text is preserved as an assistant
+                # message first (W1).
+                if text:
+                    out.append({"role": "assistant", "content": text})
+                for b in tool_results:
+                    content = b.get("content", "")
+                    if not isinstance(content, str):
+                        import json as _json
+                        content = _json.dumps(content, default=str)  # W2
+                    out.append({
+                        "role": "tool",
+                        "tool_call_id": b.get("tool_use_id", ""),
+                        "content": content,
+                    })
+            else:
+                out.append({"role": msg["role"], "content": text})
+        return out
+
     @staticmethod
     async def _log_call(user_id: str, model: str, resp: LLMResponse) -> None:
+        # AuditLog.user_id is an Integer column, but chat callers pass free-form
+        # actor strings ("system", session ids) — store numeric ids when
+        # parseable, otherwise keep the actor string in details.
+        try:
+            uid = int(user_id)
+        except (TypeError, ValueError):
+            uid = None
         async with get_async_session() as s:
             s.add(AuditLog(
-                event_type="llm_call",
-                actor=user_id,
-                detail=(
-                    f"model={model} in={resp.input_tokens} out={resp.output_tokens} "
+                action="llm_call",
+                user_id=uid,
+                resource=f"model:{model}",
+                details=(
+                    f"actor={user_id} model={model} "
+                    f"in={resp.input_tokens} out={resp.output_tokens} "
                     f"cost=${resp.cost_usd:.4f} latency={resp.latency_ms:.0f}ms"
                 ),
             ))

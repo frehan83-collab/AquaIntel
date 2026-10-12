@@ -40,17 +40,33 @@ async def get_lice_data(pa: int | None = None, company: str | None = None) -> di
 
 
 async def get_price_outlook(horizon: int = 4) -> dict:
-    """Fetch price forecast from ML ensemble."""
+    """Fetch price forecast from the ML price ensemble."""
     try:
-        from core.market.price_ml import price_predictor
-        outlook = price_predictor.predict(horizon_weeks=horizon)
+        from core.market.ssb_price_client import ssb_price_client
+        from core.market.price_ml import price_ensemble
+
+        spot = await ssb_price_client.get_current_spot()
+        if spot <= 0:
+            spot = 75.0  # same neutral default as /api/market/price-outlook
+        # price_ensemble.predict is synchronous; returns EnsemblePriceForecast
+        fc = price_ensemble.predict(current_spot=spot, horizon_weeks=horizon)
         return {
-            "current_spot_nok": outlook.get("current_spot_nok", 0),
-            "predicted_nok": outlook.get("predicted_nok", 0),
-            "direction": outlook.get("direction", "neutral"),
-            "confidence": outlook.get("confidence", 0),
-            "signals": outlook.get("signals", {}),
-            "bands": outlook.get("bands", {}),
+            "current_spot_nok": fc.current_spot_nok,
+            "predicted_nok": fc.predicted_nok,
+            "direction": fc.direction,
+            "confidence": fc.confidence,
+            "signals": {
+                "lice": fc.lice_signal,
+                "supply": fc.supply_signal,
+                "seasonal": fc.seasonal_signal,
+                "combined": fc.combined_signal,
+            },
+            "bands": {
+                "lo95": fc.price_lo95, "hi95": fc.price_hi95,
+                "lo80": fc.price_lo80, "hi80": fc.price_hi80,
+            },
+            "model_version": fc.model_version,
+            "accuracy_statement": fc.accuracy_statement,
         }
     except Exception as e:
         return {"error": str(e)[:100]}
@@ -108,10 +124,11 @@ async def get_supply_forecast(months: int = 6) -> dict:
 async def search_knowledge_base(query: str) -> dict:
     """Search the internal knowledge base using RAG retrieval."""
     try:
-        from core.llm.rag import rag_retriever
-        results = rag_retriever.search(query, top_k=3)
+        from core.llm.rag import rag_layer
+        # rag_layer.query returns a context string (docs + optional DB context)
+        context = await rag_layer.query(query, include_db=True)
         return {
-            "results": [{"title": r.get("title", ""), "content": r.get("content", "")[:300]} for r in results] if isinstance(results, list) else [{"content": str(results)[:500]}],
+            "context": (context or "")[:1500],
         }
     except Exception as e:
         return {"error": str(e)[:100]}

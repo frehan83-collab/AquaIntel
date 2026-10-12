@@ -172,6 +172,13 @@ export interface PriceOutlook {
     n_scenarios: number;
     /** Measured MAPE only when a validated backtest artifact matched; null = none on record */
     mape_backtest: number | null;
+    /** Empirical band calibration from the validated backtest (per-horizon coverage + sample size) */
+    band_trust?: {
+      horizon_weeks: number;
+      measured_coverage_80: number | null;
+      n_eval_points: number | null;
+      backtest_run?: string;
+    } | null;
     accuracy_statement: string;
   };
   rationale: string;

@@ -63,17 +63,18 @@ class ChatAgent:
             uncertainty_multiplier=f"{uncertainty_scale(horizon):.1f}",
         )
 
-        # Try native multi-turn tool-use first (Anthropic only)
-        if llm_client.provider == "anthropic":
-            try:
-                answer = await self._agentic_ask(
-                    question, context, horizon_context, user_id,
-                )
-                return answer
-            except NotImplementedError:
-                log.info("chat.tool_use_not_supported, falling back to enrichment")
-            except Exception as exc:
-                log.warning("chat.agentic_ask_failed", error=str(exc)[:120])
+        # Try native multi-turn tool-use first (all providers — OpenAI and
+        # OpenRouter support function tools; OpenRouter proxies Claude
+        # tool-use). Falls back to keyword enrichment on any failure.
+        try:
+            answer = await self._agentic_ask(
+                question, context, horizon_context, user_id,
+            )
+            return answer
+        except NotImplementedError:
+            log.info("chat.tool_use_not_supported, falling back to enrichment")
+        except Exception as exc:
+            log.warning("chat.agentic_ask_failed", error=str(exc)[:120])
 
         # Fallback: enrich context with keyword-matched tool calls, then
         # do a single-turn completion.

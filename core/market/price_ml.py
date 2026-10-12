@@ -77,6 +77,9 @@ class EnsemblePriceForecast:
     # Measured MAPE ONLY when a validated backtest artifact matched this
     # model_version; None means "no validated backtest on record".
     mape_backtest: Optional[float] = None
+    # Empirical band calibration from the validated backtest — the "trust"
+    # field (QUANT #2): per-horizon measured coverage_80 + sample size.
+    band_trust: Optional[dict] = None
     rationale: str = ""
 
     # Scenario distribution
@@ -147,7 +150,8 @@ class PriceEnsemble:
 
     def __init__(self) -> None:
         self._xgb_model = None
-        self._conformal_residuals: list[float] = []
+        self._conformal_residuals: list[float] = []          # legacy flat list
+        self._conformal_residuals_by_h: dict[int, list[float]] = {}  # horizon-keyed
         self._model_version = "ensemble_v1_rule"
         self._last_retrain: Optional[dt.datetime] = None
         self._backtest_mape: dict[int, float] = dict(HORIZON_MAPE)
@@ -190,13 +194,47 @@ class PriceEnsemble:
 
         try:
             if residuals_path.exists():
-                self._conformal_residuals = json.loads(
-                    residuals_path.read_text()
-                )
-                log.info(
-                    "price_ml.conformal_loaded",
-                    n_residuals=len(self._conformal_residuals),
-                )
+                data = json.loads(residuals_path.read_text())
+                if isinstance(data, dict) and "horizon_residuals" in data:
+                    # Structured calibration (scripts/backtest_price_ml.py):
+                    # per-horizon residuals, horizon-specific quantiles (MSCP).
+                    if data.get("model_version") == self._model_version:
+                        self._conformal_residuals_by_h = {
+                            int(h): [float(v) for v in vals]
+                            for h, vals in data["horizon_residuals"].items()
+                            if vals
+                        }
+                        log.info(
+                            "price_ml.conformal_loaded",
+                            model_version=data.get("model_version"),
+                            horizons=sorted(self._conformal_residuals_by_h),
+                        )
+                    else:
+                        log.warning(
+                            "price_ml.conformal_version_mismatch",
+                            artifact=data.get("model_version"),
+                            current=self._model_version,
+                        )
+                elif isinstance(data, dict) and "residuals_flat" in data:
+                    # Version-gated flat calibration (PriceEnsemble.retrain)
+                    if data.get("model_version") == self._model_version:
+                        self._conformal_residuals = [float(v) for v in data["residuals_flat"]]
+                        log.info(
+                            "price_ml.conformal_loaded",
+                            n_residuals=len(self._conformal_residuals),
+                            format="flat_versioned",
+                        )
+                    else:
+                        log.warning(
+                            "price_ml.conformal_version_mismatch",
+                            artifact=data.get("model_version"),
+                            current=self._model_version,
+                        )
+                else:
+                    # Legacy bare-list artifacts have an unknown sign
+                    # convention and no version — refuse to load rather than
+                    # risk sign-inverted bands.
+                    log.warning("price_ml.conformal_legacy_format_refused")
         except Exception:
             pass
 
@@ -416,12 +454,22 @@ class PriceEnsemble:
         )
         backtest = self._load_backtest()
         mape_value: float | None = None
+        band_trust: Optional[dict] = None
 
         if backtest and backtest.get("model_version") == expected_version:
             mape_map = backtest.get("mape", {})
             nearest = min(mape_map.keys(), key=lambda k: abs(int(k) - horizon_weeks))
             mape_value = float(mape_map[nearest])
             coverage = backtest.get("coverage_80")
+            # Trust: empirical calibration of the uncertainty bands, per horizon
+            per_h = backtest.get("per_horizon", {})
+            if nearest in per_h:
+                band_trust = {
+                    "horizon_weeks": int(nearest),
+                    "measured_coverage_80": per_h[nearest].get("coverage_80"),
+                    "n_eval_points": per_h[nearest].get("n"),
+                    "backtest_run": backtest.get("generated_at"),
+                }
             accuracy_stmt = (
                 f"Backtested {horizon_weeks}-week MAPE: {mape_value:.1f}% "
                 f"on {backtest.get('window', 'held-out data')} "
@@ -464,6 +512,7 @@ class PriceEnsemble:
             model_version=f"ensemble_v2_{model_tag}" if model_tag == "tft" else f"ensemble_v1_{model_tag}",
             n_scenarios=n_scenarios,
             mape_backtest=mape_value,
+            band_trust=band_trust,
             rationale=signals["rationale"],
             scenarios_p10=round(bands["p10"], 1),
             scenarios_p25=round(bands["p25"], 1),
@@ -559,7 +608,22 @@ class PriceEnsemble:
         weekly_vol = current_spot * 0.04
         horizon_vol = weekly_vol * np.sqrt(horizon_weeks)
 
-        if self._conformal_residuals and len(self._conformal_residuals) > 30:
+        if self._conformal_residuals_by_h:
+            # Horizon-specific split-conformal residuals from the walk-forward
+            # backtest (MSCP-style): quantiles come from the residual
+            # distribution of THIS horizon — no sqrt-scaling heuristic.
+            nearest_h = min(
+                self._conformal_residuals_by_h,
+                key=lambda k: abs(k - horizon_weeks),
+            )
+            residuals = np.array(self._conformal_residuals_by_h[nearest_h])
+            lo95 = predicted + np.percentile(residuals, 2.5)
+            hi95 = predicted + np.percentile(residuals, 97.5)
+            lo80 = predicted + np.percentile(residuals, 10)
+            hi80 = predicted + np.percentile(residuals, 90)
+            lo50 = predicted + np.percentile(residuals, 25)
+            hi50 = predicted + np.percentile(residuals, 75)
+        elif self._conformal_residuals and len(self._conformal_residuals) > 30:
             # Non-parametric: scale stored residuals to horizon
             residuals = np.array(self._conformal_residuals)
             scale = np.sqrt(horizon_weeks)
@@ -759,7 +823,9 @@ class PriceEnsemble:
                 )
                 model.fit(X[train_idx], y[train_idx])
                 preds = model.predict(X[val_idx])
-                fold_residuals = (preds - y[val_idx]).tolist()
+                # Sign convention: residual = actual − predicted (matches
+                # _conformal_bands: band = predicted + quantile(residual))
+                fold_residuals = (y[val_idx] - preds).tolist()
                 residuals.extend(fold_residuals)
                 fold_mape = float(np.mean(np.abs(
                     (y[val_idx] - preds) / np.maximum(y[val_idx], 1)
@@ -785,10 +851,19 @@ class PriceEnsemble:
             self._xgb_model = final_model
             self._model_version = "ensemble_v1_xgb"
 
-            # Save conformal residuals
+            # Save conformal residuals — sign convention is (actual − predicted)
+            # everywhere (band = predicted + quantile(residual)); the legacy
+            # bare-list writer used the inverted sign and no version gating.
             self._conformal_residuals = residuals
+            self._conformal_residuals_by_h = {}
             residuals_path = MODEL_DIR / "conformal_residuals.json"
-            residuals_path.write_text(json.dumps(residuals))
+            residuals_path.write_text(json.dumps({
+                "model_version": self._model_version,
+                "generated_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
+                "residual_definition": "actual - predicted (NOK/kg), TimeSeriesSplit CV",
+                "residuals_flat": [round(r, 3) for r in residuals],
+                "script": "PriceEnsemble.retrain",
+            }))
 
             avg_mape = float(np.mean(mapes))
             self._last_retrain = dt.datetime.now(dt.UTC)

@@ -310,12 +310,24 @@ async def price_outlook(horizon: int = 4, scenarios: int = 1000):
             "version": fc.model_version,
             "n_scenarios": fc.n_scenarios,
             "mape_backtest": fc.mape_backtest,
+            "band_trust": fc.band_trust,
             "accuracy_statement": fc.accuracy_statement,
         },
         "rationale": fc.rationale,
         "disclaimer": fc.disclaimer,
         "data_provenance": (
-            DataProvenance.live("SSB Table 03024 + XGBoost Ensemble", confidence=0.85)
+            (
+                DataProvenance.degraded(
+                    f"SSB Table 03024 + price ensemble ({fc.model_version})",
+                    "ML tiers unavailable — rule-based forecast",
+                    confidence=0.4,
+                )
+                if fc.model_quality == "rule_based_fallback"
+                else DataProvenance.live(
+                    f"SSB Table 03024 + price ensemble ({fc.model_version})",
+                    confidence=0.85,
+                )
+            )
             if _ssb_live
             else DataProvenance.degraded("SSB Table 03024", "SSB unreachable — using NOK 75.0 fallback", confidence=0.3)
         ).to_dict(),

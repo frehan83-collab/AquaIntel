@@ -153,10 +153,12 @@ def main() -> int:
         )
 
     per_h: dict[str, dict] = {}
+    horizon_res: dict[str, list[float]] = {}
     pooled_in = pooled_total = 0
     skipped_gaps = 0
     for h in horizons:
         errs, inside, n = [], 0, 0
+        res: list[float] = []
         for i in range(0, len(series) - h, args.stride):
             stamp = as_of(i)
             if stamp is None or ordinals[i] is None or ordinals[i + h] is None:
@@ -170,6 +172,9 @@ def main() -> int:
             )
             actual = prices[i + h]
             errs.append(abs(actual - fc.predicted_nok) / abs(actual))
+            # Conformal calibration residual (actual − predicted), same sign
+            # convention as PriceEnsemble._conformal_bands
+            res.append(round(actual - fc.predicted_nok, 3))
             inside += 1 if fc.price_lo80 <= actual <= fc.price_hi80 else 0
             n += 1
         if n < MIN_EVAL_POINTS:
@@ -180,6 +185,7 @@ def main() -> int:
             "coverage_80": round(inside / n * 100, 1),
             "n": n,
         }
+        horizon_res[str(h)] = res
         pooled_in += inside
         pooled_total += n
         print(f"  horizon {h:2d}w: MAPE {per_h[str(h)]['mape']:5.2f}%  "
@@ -207,6 +213,19 @@ def main() -> int:
     }
     BACKTEST_ARTIFACT.write_text(json.dumps(artifact, indent=2))
     print(f"\nwrote {BACKTEST_ARTIFACT}")
+
+    # Conformal calibration residuals (QUANT #2) — consumed by
+    # PriceEnsemble._conformal_bands for horizon-specific calibrated bands.
+    calib_path = BACKTEST_ARTIFACT.parent / "conformal_residuals.json"
+    calib_path.write_text(json.dumps({
+        "model_version": model_version,
+        "generated_at": artifact["generated_at"],
+        "residual_definition": "actual - predicted (NOK/kg), walk-forward",
+        "horizon_residuals": horizon_res,
+        "script": "scripts/backtest_price_ml.py",
+    }))
+    print(f"wrote {calib_path}")
+
     print(f"model_version={model_version}  pooled coverage_80={artifact['coverage_80']}%")
     return 0
 
