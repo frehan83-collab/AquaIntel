@@ -13,10 +13,10 @@ Plan: `docs/NEXT_STEPS_PLAN.md` · Rules: `AGENTS.md` (authoritative)
 
 | ID | Workstream | Status | Notes |
 |----|-----------|--------|-------|
-| P0-1 | Backend-backed e2e in CI | IN PROGRESS | Specs fixed to real contracts; new `e2e-backend` job in `frontend.yml`; local verification done; awaiting CI proof on push |
+| P0-1 | Backend-backed e2e in CI | IN PROGRESS | Local: all green (39 api + 49 app on fresh DB); pushed 8fca76b; CI: Backend Tests ✅, Docker ✅, Frontend Build in flight (e2e-backend job queued behind build). Watch the run before calling it done |
 | P0-2 | DuckDB read path (lice analytics) | BLOCKED (evidence) | sqlite_scanner extension blocked by Windows app-control policy locally; extension-free variant measured ~5× slower than the existing path (220 ms vs 47 ms). Details in plan doc P0-2. Revisit on Linux env / parquet pipeline |
-| P0-3 | Cache Components `use cache` scoping | TODO | |
-| P0-4 | uv adoption (pin Python 3.12) | TODO | Decision pre-recorded: CI `test.yml` already pins Python 3.12; Docker + uv must match. Local box has 3.14 only — uv must manage 3.12 itself |
+| P0-3 | Cache Components `use cache` scoping | DONE (audit) | Skill-guided audit: no server-renderable data routes exist (all pages client components). Deliverable shipped: instant() lock extended 3 → 11 routes, rig wired into CI `e2e-backend` (11/11 green locally on prod rig) |
+| P0-4 | uv adoption (pin Python 3.12) | IN VERIFICATION | pyproject.toml + .python-version (3.12 pin) + requirements.lock (248 pins, linux target); CI test.yml + e2e-backend + Dockerfile switched to uv; Docker build verifying locally; CI proof pending push |
 | P1-5 | Local env verification & test hygiene | PARTIAL | Backend smoke green (37 passed/1 xfailed/8 xpassed); full suite + xfail triage pending |
 | P1-6 | Production parity (agents service; create_all vs Alembic) | TODO | |
 | P1-7 | Tier-1 roadmap audit | TODO | |
@@ -92,9 +92,25 @@ added `tests/test_migrations.py`.
 
 ## Session log
 
-- 2026-10-12/13 · P0-1 start: environment setup (clone verified at 0ba29e3, deps OK),
-  backend booted, all 39 api specs green after contract fixes, CI bootstrap script +
-  `e2e-backend` job added, tsc clean, backend smoke green.
+- 2026-10-12/13 · P0-1: complete locally (see P0-1 detail above). Pushed 8fca76b.
+  CI: Backend Tests ✅ (incl. new migration + cache-window tests), Docker Build ✅;
+  Frontend Build still running at handoff (build job's tolerant e2e step is slow —
+  removed in the P0-3/4 push; the blocking e2e-backend job proves the real gate).
+- 2026-10-13 · P0-2: Blocked with measurements (see table + plan doc). No code shipped.
+- 2026-10-13 · P0-3: `next-cache-components-optimizer` invoked; audit found no
+  server-renderable data routes (all pages client components; shells only in
+  layout/loading/not-found). Shipped the productive subset: instant() lock 3 → 11
+  routes (11/11 green on prod rig locally; order validated: dev-server specs →
+  teardown → prod build → instant) + rig wired into CI `e2e-backend`. Committed 0dfea97.
+- 2026-10-13 · P0-4: pyproject.toml (3.12 pin per the explicit decision rule) +
+  .python-version + requirements.lock via uv pip compile (interpreter-free —
+  uv's managed 3.12 is blocked by the same Windows app-control policy as the
+  duckdb extension; used `--python-version 3.12 --python-platform linux`).
+  One honest caveat: sdist metadata for the lock was built under 3.14 (uv's
+  warning), so the platform proof is the Docker build (local, in progress) and
+  the CI installs. test.yml + e2e-backend + Dockerfile switched to uv;
+  requirements.txt kept for Windows-without-uv.
+
 - 2026-10-13 · P0-1 app-spec triage complete (8 initial failures → all root-caused):
   - Stale selectors fixed: `.first()` svg matched the hidden hamburger; invalid
     CSS+text mixed click selector; strict-mode `text=Disease`; PDF button now via

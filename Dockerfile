@@ -7,9 +7,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc g++ libpq-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# Python deps (cached layer)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# uv — deterministic, locked dependency installs (P0-4)
+COPY --from=ghcr.io/astral-sh/uv:0.10 /uv /uvx /bin/
+
+# Python deps (cached layer) — locked by requirements.lock (regenerate from
+# pyproject.toml with: uv pip compile pyproject.toml --python-version 3.12
+# --python-platform linux -o requirements.lock)
+COPY pyproject.toml requirements.lock ./
+RUN uv pip install --system --no-cache -r requirements.lock
 
 # App code
 COPY . .

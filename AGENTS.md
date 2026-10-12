@@ -25,6 +25,12 @@ python main.py                          # API + agents
 python main.py --api-only               # API only
 python -m uvicorn core.api:app --port 8000
 
+# Environment / dependencies (P0-4): uv-managed, Python pinned to 3.12
+# (.python-version + pyproject.toml). requirements.lock is a linux-target lock.
+uv pip install --system -r requirements.lock   # locked install (CI/Docker use this)
+uv pip compile pyproject.toml --python-version 3.12 --python-platform linux -o requirements.lock  # regenerate after dep changes
+# Windows dev without uv still: python -m pip install -r requirements.txt
+
 # Frontend (port 3000/3001/3002 — check package.json + .env.local)
 cd frontend && npm install && npm run dev
 cd frontend && npx tsc --noEmit         # type check (must be 0 errors)

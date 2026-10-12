@@ -9,9 +9,9 @@ The world's most advanced salmon aquaculture intelligence platform. Built for No
 ## Quick Start
 
 ```bash
-# Backend (port 8001)
-cd OpenClaw
-pip install -r requirements.txt
+# Backend (port 8001) — locked install (uv, Python 3.12; see pyproject.toml)
+uv pip install --system -r requirements.lock   # Linux/macOS/CI target lock
+# (Windows dev without uv: python -m pip install -r requirements.txt)
 python -m uvicorn core.api:app --host 0.0.0.0 --port 8001
 
 # Frontend (port 3002)

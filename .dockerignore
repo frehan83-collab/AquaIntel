@@ -3,12 +3,30 @@ __pycache__
 .git
 .env
 .env.local
+.env.*
 node_modules
 frontend/node_modules
 frontend/.next
 *.sqlite
 *.db
-logs/*.log
+# Recursive forms: plain `*.db` only matches the context root, so a local
+# `data/openclaw.db` dev database (and its WAL files) leaked into the image
+# built from a dev box. Anchor them everywhere.
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/*.sqlite
+data/
+logs/
+*.log
+frontend/*.log
+.pytest_cache
+.ruff_cache
+.hypothesis
+venv
+.venv
+frontend/test-results
+frontend/playwright-report
 .claude
 .vscode
 *.md

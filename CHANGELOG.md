@@ -3,6 +3,36 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
+## [Unreleased] — P0-3 + P0-4: instant lock extension & uv adoption (2026-10-13)
+
+### Added (P0-4 — uv adoption, Python pinned to 3.12)
+- **`pyproject.toml`** — single dependency manifest (mirrors requirements.txt;
+  optional `models` extra mirrors requirements-models.txt) with the explicit
+  **Python 3.12 pin** decision (`requires-python = ">=3.12,<3.13"`,
+  `.python-version`), honoring the plan's rule: local 3.14 must not silently
+  become the torch-stack target (CI and Docker already ran 3.12).
+- **`requirements.lock`** — generated via
+  `uv pip compile pyproject.toml --python-version 3.12 --python-platform linux`
+  (248 pins; fastapi locked to the verified 0.135.x line). Regeneration is
+  interpreter-free and documented in AGENTS.md.
+- CI (`test.yml` + the `e2e-backend` job) and the Dockerfile now install from
+  the lock via `uv` (`astral-sh/setup-uv@v5` / `ghcr.io/astral-sh/uv:0.10`);
+  `requirements.txt` remains for Windows dev without uv.
+
+### Changed (P0-3 — instant-navigation lock extended, wired into CI)
+- `e2e/instant.spec.ts` now locks **11 routes** (added /brief, /farmer-daily,
+  /disease, /leaders, /futures, /feed-cost, /global-supply, /notifications) —
+  11/11 green on the prod rig; the rig runs blocking in the `e2e-backend` job.
+- `frontend.yml`: removed the redundant tolerant backend-free e2e step from the
+  build job (superseded by the blocking backend-backed job; it cost ~15+ min
+  per run in expected connection-retry stalls with no added signal).
+
+### Note (P0-2 — DuckDB)
+- DuckDB read path deferred with evidence: the sqlite_scanner extension is
+  blocked by a Windows application-control policy on the dev box, and the
+  extension-free variant measured ~5× slower (220 ms vs 47 ms) than the
+  current query path. See docs/NEXT_STEPS_PLAN.md P0-2.
+
 ## [Unreleased] — P0-1 backend-backed e2e (2026-10-13)
 
 ### Added

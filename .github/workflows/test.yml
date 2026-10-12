@@ -25,13 +25,17 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"  # caches pip dependencies based on requirements.txt
 
-      # 3. Install Python dependencies
+      # 2b. Set up uv (fast, deterministic installs from requirements.lock)
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      # 3. Install Python dependencies (locked via uv; see pyproject.toml P0-4)
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          uv pip install --system -r requirements.lock
 
       # 4. Run the full test suite with coverage
       - name: Run pytest
