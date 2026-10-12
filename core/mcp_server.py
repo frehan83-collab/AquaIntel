@@ -7,7 +7,6 @@ Exposes the core aquaculture intelligence capabilities to external AI agents
 Usage:
     mcp dev core/mcp_server.py
 """
-import asyncio
 from mcp.server.mcpserver import MCPServer
 
 # Create the MCP server

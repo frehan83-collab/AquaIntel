@@ -8,10 +8,10 @@ from __future__ import annotations
 
 import datetime as dt
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException
 from sqlalchemy import select, func
 
-from core.models import LiceRecord, Locality, PricePrediction, Signal
+from core.models import LiceRecord, PricePrediction, Signal
 from core.async_db import get_async_session
 from core.cache import cached
 from core.schemas import PriceOutlookResponse

@@ -20,7 +20,7 @@ import logging
 from dataclasses import dataclass, field, asdict
 from typing import Optional
 
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, desc
 
 logger = logging.getLogger(__name__)
 

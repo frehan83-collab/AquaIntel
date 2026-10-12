@@ -12,7 +12,6 @@ from __future__ import annotations
 import datetime as dt
 from dataclasses import dataclass, field
 
-import numpy as np
 import httpx
 import structlog
 

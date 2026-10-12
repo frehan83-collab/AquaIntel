@@ -389,7 +389,7 @@ class PairsEngine:
         supports or contradicts the spread trade.
         """
         try:
-            from core.models import LiceRecord, Locality, CompanyExposure
+            from core.models import LiceRecord, Locality
             from core.async_db import get_async_session
             from sqlalchemy import select, func
 

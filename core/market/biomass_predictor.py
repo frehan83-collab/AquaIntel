@@ -299,7 +299,7 @@ class BiomassPredictionEngine:
     async def _load_current_state(self) -> dict:
         """Load current biomass state from database."""
         from sqlalchemy import select, func
-        from core.models import Locality, LiceRecord
+        from core.models import LiceRecord
         from core.async_db import get_async_session
 
         async with get_async_session() as s:

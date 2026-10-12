@@ -14,7 +14,6 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 
-import numpy as np
 from sqlalchemy import select, func
 
 from core.llm.client import llm_client

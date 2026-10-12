@@ -13,7 +13,6 @@ Reference: ASC Farm Standard v1.0 (2025), Indicators 1-7.
 from __future__ import annotations
 
 import datetime as dt
-from dataclasses import dataclass, field, asdict
 
 import structlog
 from sqlalchemy import select, func

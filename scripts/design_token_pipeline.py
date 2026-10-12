@@ -17,7 +17,6 @@ Source of truth: docs/figma-tokens.json
 """
 
 import json
-import re
 import argparse
 from pathlib import Path
 from datetime import datetime, timezone

@@ -10,7 +10,6 @@ Usage:
 """
 from __future__ import annotations
 
-import datetime as dt
 import sys
 from pathlib import Path
 

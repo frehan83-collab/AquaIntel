@@ -43,7 +43,7 @@ os.environ.setdefault("PYTENSOR_FLAGS", "device=cpu,floatX=float64,optimizer=fas
 
 import datetime as dt
 import warnings
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
@@ -142,14 +142,14 @@ class StigePredictor:
 
     def _check_backends(self) -> None:
         try:
-            import pymc as pm
+            import pymc as pm  # noqa: F401
             self._use_pymc = True
             log.info("stige.backend", backend="pymc")
         except ImportError:
             log.info("stige.pymc_unavailable")
 
         try:
-            import statsmodels.api as sm
+            import statsmodels.api as sm  # noqa: F401
             self._use_statsmodels = True
             if not self._use_pymc:
                 log.info("stige.backend", backend="statsmodels_glm")

@@ -15,11 +15,10 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
-import json
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 import httpx
 import structlog

@@ -17,7 +17,7 @@ from typing import Optional
 log = structlog.get_logger("notification_routes")
 
 from fastapi import APIRouter, HTTPException, Query, Request
-from sqlalchemy import select, update, delete
+from sqlalchemy import select
 
 from core.schemas import (
     AlertsListResponse,
@@ -26,7 +26,6 @@ from core.schemas import (
     CustomAlertRuleUpdate,
     CustomAlertRuleResponse,
     CustomAlertRulesEvaluateResponse,
-    CustomAlertRuleEvaluation,
 )
 
 router = APIRouter(prefix="/api/notifications", tags=["notifications"])

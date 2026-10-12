@@ -22,7 +22,6 @@ from __future__ import annotations
 import datetime as dt
 from dataclasses import dataclass, field
 
-import numpy as np
 import structlog
 
 from core.predictors.short_term import StageForcast

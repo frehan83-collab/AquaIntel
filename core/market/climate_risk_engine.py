@@ -24,7 +24,6 @@ names) are static.
 from __future__ import annotations
 
 import datetime as dt
-from typing import Optional
 
 import numpy as np
 import structlog

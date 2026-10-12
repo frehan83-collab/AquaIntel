@@ -23,7 +23,6 @@ import argparse
 import csv
 import datetime as dt
 import logging
-import os
 import sys
 import time
 from pathlib import Path

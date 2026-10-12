@@ -14,16 +14,13 @@ Singleton: efficacy_marketplace = EfficacyMarketplace()
 from __future__ import annotations
 
 import datetime as dt
-import math
 import random
 from typing import Optional
 
 import structlog
-from sqlalchemy import select, func, case, text, and_, extract
+from sqlalchemy import text
 
-from core.models import TreatmentOutcome, Locality
 from core.market.data_provenance import DataProvenance
-from core.schemas import ALLOWED_TREATMENT_METHODS
 
 log = structlog.get_logger()
 

@@ -16,7 +16,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from sqlalchemy import text
 
-from config.settings import settings
 from core.models import engine, _is_sqlite
 
 import structlog

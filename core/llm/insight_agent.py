@@ -18,7 +18,7 @@ from sqlalchemy import select, func
 from agents.base import BaseAgent
 from core.llm.client import llm_client
 from core.llm.prompts import SYSTEM_AQUACULTURE_EXPERT, INSIGHT_ALERT_PROMPT
-from core.models import LiceRecord, Locality, CompanyExposure, AuditLog
+from core.models import LiceRecord, Locality, CompanyExposure
 from core.async_db import get_async_session
 
 import structlog

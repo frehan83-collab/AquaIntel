@@ -19,7 +19,7 @@ import json
 import datetime as dt
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import select, delete
+from sqlalchemy import select
 
 from core.auth import get_current_user, is_admin, TokenPayload
 from core.security import validate_public_url

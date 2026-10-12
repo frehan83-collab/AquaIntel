@@ -19,11 +19,10 @@ License: Public Norwegian government data (NLOD 2.0)
 """
 from __future__ import annotations
 
-import datetime as dt
 import json
 import os
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 import structlog

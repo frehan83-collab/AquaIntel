@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import structlog
 
@@ -106,7 +106,6 @@ class LLMClient:
             return settings.gemini_api_key
         import os
         from pathlib import Path
-        import json
         if os.getenv("GEMINI_API_KEY"):
             return os.getenv("GEMINI_API_KEY")
         providers_file = Path.home() / ".cline" / "data" / "settings" / "providers.json"

@@ -16,7 +16,7 @@ from core.async_db import get_async_session
 from core.auth import (
     get_current_user, TokenPayload, generate_api_key, hash_api_key,
 )
-from core.models import APIKey, User
+from core.models import APIKey
 
 router = APIRouter(prefix="/api/keys", tags=["api-keys"])
 

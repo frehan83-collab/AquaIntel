@@ -31,7 +31,6 @@ from typing import Optional
 import httpx
 import structlog
 
-from config.settings import settings
 
 log = structlog.get_logger(__name__)
 

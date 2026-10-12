@@ -17,9 +17,8 @@ Data sources: BarentsWatch, CMEMS, Mattilsynet, MET.no, Anomaly Engine
 from __future__ import annotations
 
 import datetime as dt
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-import numpy as np
 import structlog
 
 log = structlog.get_logger(__name__)

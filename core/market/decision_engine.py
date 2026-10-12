@@ -13,11 +13,10 @@ Singleton: decision_engine = DecisionEngine()
 from __future__ import annotations
 
 import datetime as dt
-import math
 from typing import Optional
 
 import structlog
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, desc
 
 from core.models import LiceRecord, Locality, CompanyExposure
 from core.async_db import get_async_session
@@ -30,8 +29,7 @@ log = structlog.get_logger()
 # See core/market/treatment_constants.py for full citations
 from core.market.treatment_constants import (
     TREATMENT_PROFILES as _SHARED_PROFILES,
-    REGULATORY_LIMIT, TREATMENT_TRIGGER, DAILY_MORTALITY_RATE,
-    FISH_PER_CAGE, GROWTH_REDUCTION_PER_LICE, MORTALITY_PER_LICE_WEEK,
+    REGULATORY_LIMIT, TREATMENT_TRIGGER,
 )
 
 # Convert shared TreatmentProfile dataclasses to the dict format this engine expects

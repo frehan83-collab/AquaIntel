@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import logging
 import warnings
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 try:
     from statsmodels.tsa.stattools import grangercausalitytests, adfuller
-    from statsmodels.tsa.vector_ar.var_model import VAR
+    from statsmodels.tsa.vector_ar.var_model import VAR  # noqa: F401
     _HAS_STATSMODELS = True
 except ImportError:  # pragma: no cover
     _HAS_STATSMODELS = False

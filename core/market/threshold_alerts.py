@@ -11,7 +11,6 @@ from typing import Optional
 import structlog
 from sqlalchemy import select, func
 from core.models import LiceRecord, Locality
-from core.market.data_provenance import DataProvenance
 
 log = structlog.get_logger(__name__)
 

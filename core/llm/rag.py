@@ -11,15 +11,12 @@ LLM for synthesis.
 """
 from __future__ import annotations
 
-import datetime as dt
-from dataclasses import dataclass
 
-import numpy as np
 from sqlalchemy import select
 
 from core.llm.client import llm_client
 from core.llm.prompts import SYSTEM_AQUACULTURE_EXPERT, RAG_CONTEXT_PROMPT
-from core.models import LiceRecord, Locality, CompanyExposure
+from core.models import LiceRecord
 from core.async_db import get_async_session
 
 import structlog

@@ -139,7 +139,7 @@ class DigitalTwinEngine:
 
     async def sync_from_db(self) -> int:
         """Sync twin state from the database (called every 15 min)."""
-        from sqlalchemy import select, func
+        from sqlalchemy import select
         from core.models import (
             Locality, LiceRecord, CompanyExposure,
         )

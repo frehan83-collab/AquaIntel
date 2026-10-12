@@ -4,14 +4,13 @@ Extracted from core/api.py (Session 10 — Router Wave 4).
 """
 from __future__ import annotations
 
-import datetime as dt
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import select, func
+from sqlalchemy import select
 
 from core.async_db import get_async_session
-from core.models import Signal, Order, AuditLog
+from core.models import Signal, Order
 
 router = APIRouter(tags=["signals"])
 

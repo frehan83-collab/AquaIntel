@@ -105,13 +105,13 @@ class ProphetLSTMPredictor:
 
     def _check_dependencies(self) -> None:
         try:
-            from prophet import Prophet
+            from prophet import Prophet  # noqa: F401
             self._prophet_available = True
         except ImportError:
             log.info("medium_term.prophet_not_available")
 
         try:
-            import torch
+            import torch  # noqa: F401
             self._torch_available = True
         except ImportError:
             log.info("medium_term.torch_not_available")

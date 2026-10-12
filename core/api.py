@@ -5,14 +5,13 @@ Provides endpoints for programmatic access, webhooks, and the premium signal ser
 from __future__ import annotations
 
 import datetime as dt
-from typing import Any
 
 import asyncio
 import json
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, Request
+from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -24,12 +23,8 @@ from sqlalchemy import select, func
 from config.settings import settings
 from core.version import PLATFORM_VERSION
 from core.models import (
-    Session, Signal, Order, AuditLog, LiceRecord, Locality, init_db,
-    PricePrediction, FuturesSnapshot, ExportVolume, User,
+    Signal, LiceRecord, Locality, init_db,
 )
-from core.bloom.models import BloomRiskAssessment, BloomAlert, ChlorophyllReading
-from execution.execution_agent import ExecutionAgent
-from compliance.compliance_agent import ComplianceAgent
 
 import structlog
 
@@ -64,7 +59,6 @@ async def lifespan(app: FastAPI):
         log.info("startup.migrations", status="managed_by_entrypoint")
 
     # Log startup config summary
-    from config.settings import settings
     log.info("startup.config",
         env=settings.fishintel_env,
         db=settings.database_url.split("@")[-1] if "@" in settings.database_url else "sqlite",
@@ -330,7 +324,6 @@ app.include_router(causal_router)
 app.include_router(ras_router)
 
 # ── Models ────────────────────────────────────────────────────────────
-from core.schemas import HealthResponse
 
 
 # ── Dependency ────────────────────────────────────────────────────────
@@ -466,8 +459,6 @@ class ChatRequest(BaseModel):
 async def chat_endpoint(req: ChatRequest):
     """AI chat with full platform context via OpenRouter/Anthropic."""
     import httpx as hx
-    from config.settings import settings
-
     # Build platform context from live data
     from core.async_db import get_async_session
     async with get_async_session() as s:
@@ -960,6 +951,8 @@ async def _rule_based_chat_response(message: str) -> dict:
     Used when no LLM API key is configured, or as fallback on LLM errors.
     Returns a structured response compatible with the /api/chat contract.
     """
+    from core.async_db import get_async_session
+
     msg = message.lower()
 
     # ── Intent detection ──────────────────────────────────────────────

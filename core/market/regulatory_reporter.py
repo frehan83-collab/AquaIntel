@@ -18,7 +18,7 @@ from dataclasses import dataclass, field, asdict
 from typing import Optional
 
 import structlog
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func
 
 from core.async_db import get_async_session
 from core.market.data_provenance import DataProvenance

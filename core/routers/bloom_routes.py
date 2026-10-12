@@ -214,7 +214,6 @@ async def bio_risk_snapshot(
 
 async def _snapshot_live(week_label: str) -> dict:
     """Build snapshot from live engine calls (current week)."""
-    import math
 
     # Lice summary (inline query — same as lice_routes but lighter)
     lice_data = {"avg": 0, "high_count": 0, "total_farms": 0}

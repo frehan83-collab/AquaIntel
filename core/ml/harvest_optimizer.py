@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import datetime as dt
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import IntEnum
 
 import numpy as np
@@ -27,9 +27,6 @@ import structlog
 
 # Growth model constants from biomass_predictor.py (structural, not dynamic)
 from core.market.biomass_predictor import (
-    OPTIMAL_TEMP_C,
-    THERMAL_TOLERANCE,
-    MAX_SGR_PCT,
     SMOLT_WEIGHT_KG,
     HARVEST_WEIGHT_KG,
     MORTALITY_RATE_DAILY,

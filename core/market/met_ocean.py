@@ -11,7 +11,7 @@ Docs: https://frost.met.no/api.html
 from __future__ import annotations
 
 import datetime as dt
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 
-from core.llm.client import llm_client, LLMResponse
+from core.llm.client import llm_client
 from core.llm.prompts import (
     SYSTEM_AQUACULTURE_EXPERT,
     NARRATIVE_FARMER_TEMPLATE,

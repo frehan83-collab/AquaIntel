@@ -6,7 +6,7 @@ Chile, Iceland, Canada, Scotland, Faroe Islands, China demand indicators.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter
 
 from core.market.data_provenance import DataProvenance
 from core.cache import cached

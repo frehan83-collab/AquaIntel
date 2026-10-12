@@ -10,7 +10,6 @@ Ready for Fish Pool / LFEX / Euronext when commercial agreements are in place.
 from __future__ import annotations
 
 import datetime as dt
-import math
 
 import numpy as np
 import structlog

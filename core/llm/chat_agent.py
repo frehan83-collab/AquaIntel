@@ -19,10 +19,9 @@ from __future__ import annotations
 import datetime as dt
 import json
 
-import numpy as np
 from sqlalchemy import select, func
 
-from core.llm.client import llm_client, LLMResponse
+from core.llm.client import llm_client
 from core.llm.prompts import (
     SYSTEM_AQUACULTURE_EXPERT,
     DECISION_INTELLIGENCE_PROMPT,

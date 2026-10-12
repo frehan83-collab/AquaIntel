@@ -25,7 +25,7 @@ from __future__ import annotations
 import datetime as dt
 import math
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
@@ -150,7 +150,7 @@ class FarmNetworkGraph:
         try:
             from core.models import Locality, LiceRecord
             from core.async_db import get_async_session
-            from sqlalchemy import select, func
+            from sqlalchemy import select
 
             async with get_async_session() as s:
                 # Load all farms with coordinates

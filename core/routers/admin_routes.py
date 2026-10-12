@@ -4,6 +4,8 @@ Provides system status, data freshness, treatment outcome metrics, and batch dat
 """
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+
 import csv
 import datetime as dt
 import io
@@ -14,7 +16,7 @@ import os
 import structlog
 
 from fastapi import APIRouter, Query, HTTPException, Request, Depends
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select, func, text, case
 
 log = structlog.get_logger("admin_routes")

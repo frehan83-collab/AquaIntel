@@ -8,7 +8,7 @@ from __future__ import annotations
 import datetime as dt
 
 from fastapi import APIRouter, HTTPException, Query
-from sqlalchemy import select, func, or_, desc
+from sqlalchemy import select, func, or_
 
 from core.models import LiceRecord, Locality
 from core.async_db import get_async_session

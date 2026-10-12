@@ -27,7 +27,6 @@ Anomaly detection approach validated by 2025 aquaculture research:
 from __future__ import annotations
 
 import datetime as dt
-import math
 from dataclasses import dataclass, field
 
 import structlog

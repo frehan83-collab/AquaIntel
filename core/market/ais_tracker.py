@@ -16,9 +16,7 @@ public data, enabling trading signals ahead of SSB/company reports.
 """
 from __future__ import annotations
 
-import asyncio
 import datetime as dt
-import json
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -28,7 +26,6 @@ import httpx
 import numpy as np
 import structlog
 
-from config.settings import settings
 from core.barentswatch import get_barentswatch_token
 
 log = structlog.get_logger(__name__)

@@ -6,7 +6,6 @@ Extracted from core/api.py (Session 8).
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query, Request
-from fastapi.responses import JSONResponse
 
 from core.schemas import TreatmentOutcomeRequest, TreatmentOutcomeResponse
 
@@ -72,7 +71,6 @@ async def treatment_cost_comparison(
     import datetime as dt
     from core.market.treatment_constants import (
         TREATMENT_PROFILES as _PROFILES,
-        REGULATORY_LIMIT,
     )
     from core.market.data_provenance import DataProvenance
 

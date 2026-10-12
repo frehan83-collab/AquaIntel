@@ -76,7 +76,6 @@ class TFTPredictor:
 
         try:
             import torch
-            import pandas as pd
             from pytorch_forecasting import TimeSeriesDataSet
             from core.market.tft_data import build_weekly_dataframe, get_dataset_config
 

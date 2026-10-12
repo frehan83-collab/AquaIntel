@@ -16,12 +16,12 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 import structlog
 
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, desc
 
 from core.models import LiceRecord, Locality
 # Lazy-import farmer_advisory to avoid circular/broken import chains.
@@ -524,7 +524,6 @@ class TreatmentOptimizer:
             # Step 2: fetch lice records for ALL farms in one query
             async with get_async_session() as s:
                 # Use a window function to rank rows per locality and pick top N
-                from sqlalchemy import and_
 
                 result = await s.execute(
                     select(LiceRecord)

@@ -12,7 +12,7 @@ Background agent that:
 from __future__ import annotations
 
 import datetime as dt
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 from sqlalchemy import select, func

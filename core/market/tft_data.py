@@ -65,7 +65,7 @@ async def build_weekly_dataframe(start_year: int = 2012) -> pd.DataFrame:
     df_price = df_price.drop_duplicates(subset=["year", "week"], keep="last")
 
     # ── 2. Aggregate national lice data ───────────────────────────────
-    from sqlalchemy import case, Integer
+    from sqlalchemy import case
     from core.async_db import get_async_session
     async with get_async_session() as s:
         rows = (await s.execute(

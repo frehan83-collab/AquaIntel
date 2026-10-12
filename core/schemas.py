@@ -7,7 +7,7 @@ Used as response_model on endpoints for validation and OpenAPI docs.
 from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from typing import Any, Optional, Literal
+from typing import Any, Optional
 
 from core.version import API_SCHEMA_VERSION, PLATFORM_VERSION
 

@@ -53,7 +53,7 @@ from __future__ import annotations
 import datetime as dt
 import math
 import threading
-from typing import Optional, TYPE_CHECKING
+from typing import Optional
 
 import numpy as np
 import structlog

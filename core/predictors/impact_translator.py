@@ -24,7 +24,6 @@ from __future__ import annotations
 import datetime as dt
 from dataclasses import dataclass, field
 
-import numpy as np
 import structlog
 
 log = structlog.get_logger(__name__)

@@ -44,10 +44,69 @@ from typing import Optional
 
 import numpy as np
 import structlog
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch import Tensor
+
+# ── torch (optional — ships in requirements-models.txt) ──────────────
+# Stand-ins keep this module importable AND the trainer constructible when
+# torch is absent (CI installs the light requirements only). Every real use
+# raises a clear RuntimeError; routes gate on is_available() before that.
+_TORCH_AVAILABLE = False
+try:
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    from torch import Tensor
+    _TORCH_AVAILABLE = True
+except ImportError:
+    _TORCH_MSG = "torch is not installed — pip install -r requirements-models.txt"
+
+    class _StubRaiser:
+        def __init__(self, name: str):
+            self._name = name
+
+        def __call__(self, *a, **k):
+            raise RuntimeError(_TORCH_MSG)
+
+        def __getattr__(self, name):
+            return _StubRaiser(f"{self._name}.{name}")
+
+    class _CudaStub:
+        @staticmethod
+        def is_available() -> bool:
+            return False
+
+    class _TorchMeta(type):
+        def __getattr__(cls, name):
+            if name == "device":
+                return lambda arg=None: (arg or "cpu")
+            if name == "cuda":
+                return _CudaStub
+            if name == "is_available":
+                return lambda: False
+            return _StubRaiser(name)
+
+    class _TorchStub(metaclass=_TorchMeta):
+        pass
+
+    class _StubModule:
+        def __init__(self, *a, **k):
+            raise RuntimeError(_TORCH_MSG)
+
+    class _NNMeta(type):
+        def __getattr__(cls, name):
+            if name == "Module":
+                return _StubModule
+            return _StubRaiser(name)
+
+    class _NNStub(metaclass=_NNMeta):
+        pass
+
+    class _StubTensor:
+        pass
+
+    torch = _TorchStub
+    nn = _NNStub
+    F = _NNStub
+    Tensor = _StubTensor
 
 # Lazy import — torch_geometric is optional (large dependency)
 # Add to requirements.txt: torch_geometric>=2.5.0
@@ -464,7 +523,7 @@ class LiceGNNTrainer:
         try:
             from core.models import LiceRecord, Locality
             from core.async_db import get_async_session
-            from sqlalchemy import select, func
+            from sqlalchemy import select, func  # noqa: F401
         except ImportError:
             log.warning("gnn.db_import_failed", msg="Cannot import core.models")
             return {"status": "error", "message": "Database models not available"}

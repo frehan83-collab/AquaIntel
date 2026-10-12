@@ -23,10 +23,8 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import httpx
-import numpy as np
 import structlog
 
-from config.settings import settings
 
 log = structlog.get_logger(__name__)
 
