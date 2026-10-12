@@ -50,16 +50,15 @@ jobs:
         run: python ../scripts/design_token_pipeline.py --verify
         continue-on-error: true
 
-      # 7. Build the Next.js application (Turbopack default in Next 16)
-      - name: Build frontend
-        run: npm run build
-
-      # 5. Install Playwright browsers for E2E tests
+      # 7. Install Playwright browsers for E2E tests
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
         working-directory: frontend/
 
-      # 8. Visual regression (Linux baselines committed; deterministic stubs) — BLOCKING
+      # 8. Visual regression (Linux baselines committed; deterministic stubs) — BLOCKING.
+      #    MUST run before `npm run build`: a prod build writing .next while the
+      #    dev server starts corrupts dev assets (Turbopack churn — see the
+      #    visual-regression skill war stories) and renders pages unstyled.
       - name: Run visual regression tests
         run: npx playwright test e2e/visual.spec.ts --reporter=github
         working-directory: frontend/
@@ -69,6 +68,10 @@ jobs:
         run: npx playwright test --reporter=github --grep-invert "visual baseline"
         working-directory: frontend/
         continue-on-error: true
+
+      # 10. Build the Next.js application (Turbopack default in Next 16)
+      - name: Build frontend
+        run: npm run build
 
       - name: Security audit (npm)
         run: npm audit --audit-level=high || true
