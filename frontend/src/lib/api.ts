@@ -17,6 +17,7 @@ import type {
   AlertsResponse, OceanForecast, ClimateRiskScores, HeatwaveRisk,
   SentimentSummary, AISHarvestIntel, CausalSummary, GlobalSupply,
   WaveRisk,
+  WaveForecast,
   SmoltForecast, LoginResponse, SubscriptionStatus, EfficacyBenchmarks,
   TrafficLightCurrent, TrafficLightSimulation, TreatmentCostComparison,
   YoYComparison, ProvenanceWrapped,
@@ -242,6 +243,8 @@ export const api = {
 
   // Waves (CMEMS WAM 1/12°) — per Production Area
   waveRiskPa: (pa: number) => fetchAPI<WaveRisk>(`/api/ocean/waves/pa/${pa}`),
+  waveForecastPa: (pa: number, days = 5) =>
+    fetchAPI<WaveForecast>(`/api/ocean/waves/pa/${pa}/forecast?days=${days}`),
   wavesStatus: () => fetchAPI<Record<string, unknown>>("/api/ocean/waves/status"),
 
   // AIS Harvest Intelligence

@@ -564,6 +564,33 @@ export interface WaveRisk {
   };
 }
 
+/** Daily-mean wave timeline — /api/ocean/waves/pa/{pa}/forecast */
+export interface WaveForecastDay {
+  date: string;
+  hs_m: number;
+  risk: "low" | "moderate" | "high" | "severe";
+  operational_note: string;
+}
+
+export interface WaveForecast {
+  production_area: number;
+  lat: number;
+  lon: number;
+  days: WaveForecastDay[];
+  is_live: boolean;
+  source: string;
+  fallback_reason?: string;
+  fetched_at?: string;
+  data_provenance?: {
+    source: string;
+    is_live: boolean;
+    freshness: string;
+    confidence: number;
+    fallback_reason?: string | null;
+    schema_version?: string;
+  };
+}
+
 /** /api/climate/risk-scores */
 export interface ClimateRiskScores {
   scores: Array<{

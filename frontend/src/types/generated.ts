@@ -5504,6 +5504,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ocean/waves/pa/{pa}/forecast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Waves Pa Forecast
+         * @description Daily-mean significant wave height + risk timeline for a Production Area.
+         *
+         *     Source: CMEMS GLOBAL_ANALYSISFORECAST_WAV_001_027 (WAM 1/12 deg) daily
+         *     means, up to 5 days ahead. Simulated fallback with is_live=false when
+         *     credentials/data are unavailable (data-honesty contract).
+         */
+        get: operations["waves_pa_forecast_api_ocean_waves_pa__pa__forecast_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ocean/waves/status": {
         parameters: {
             query?: never;
@@ -14003,6 +14027,39 @@ export interface operations {
             };
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    waves_pa_forecast_api_ocean_waves_pa__pa__forecast_get: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: never;
+            path: {
+                pa: number;
+            };
             cookie?: never;
         };
         requestBody?: never;

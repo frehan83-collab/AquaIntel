@@ -57,12 +57,21 @@ async def get_regulatory_traffic_light() -> dict:
     return await traffic_light_current()
 
 @mcp.tool()
-async def get_wave_risk(production_area: int) -> dict:
+async def get_wave_risk(production_area: int, forecast_days: int = 0) -> dict:
     """
     Get live wave conditions (significant wave height, risk band, operational note)
     for a Norwegian Production Area (1-13), from CMEMS WAM 1/12°.
     Use for vessel-operation safety (net cleaning, de-licing, wellboats) and
     storm-damage risk assessment.
+
+    Set forecast_days (1-5) to also receive a daily-mean timeline for
+    planning future work windows.
     """
-    from core.routers.ocean_routes import waves_pa
-    return await waves_pa(production_area)
+    from core.routers.ocean_routes import waves_pa, waves_pa_forecast
+    current = await waves_pa(production_area)
+    if forecast_days > 0:
+        return {
+            "current": current,
+            "forecast": await waves_pa_forecast(production_area, days=forecast_days),
+        }
+    return current

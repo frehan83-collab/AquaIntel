@@ -58,6 +58,50 @@ class TestSimulatedFallback:
         assert "error" in result
 
 
+class TestWaveForecast:
+    def test_forecast_simulated_deterministic(self, monkeypatch):
+        from config.settings import settings as _settings
+        monkeypatch.setattr(_settings, "cmems_username", "")
+        monkeypatch.setattr(_settings, "cmems_password", "")
+        victim = CMEMSWaveClient()
+        assert victim._fetch_forecast_sync() is False
+        a = victim.get_pa_wave_forecast(4)
+        b = victim.get_pa_wave_forecast(4)
+        assert a["is_live"] is False
+        assert a["source"].startswith("simulated")
+        assert [d["hs_m"] for d in a["days"]] == [d["hs_m"] for d in b["days"]]
+        assert len(a["days"]) == 5
+
+    def test_forecast_days_sliced_and_dates_ordered(self, monkeypatch):
+        from config.settings import settings as _settings
+        monkeypatch.setattr(_settings, "cmems_username", "")
+        monkeypatch.setattr(_settings, "cmems_password", "")
+        victim = CMEMSWaveClient()
+        result = victim.get_pa_wave_forecast(7, days=3)
+        days = result["days"]
+        assert len(days) == 3
+        assert days == sorted(days, key=lambda d: d["date"])
+        for d in days:
+            assert d["risk"] in ("low", "moderate", "high", "severe")
+            assert d["operational_note"]
+            assert d["hs_m"] >= 0
+
+    def test_forecast_invalid_pa(self):
+        assert "error" in CMEMSWaveClient().get_pa_wave_forecast(99)
+
+    def test_forecast_endpoint_shape(self, client):
+        r = client.get("/api/ocean/waves/pa/4/forecast?days=3")
+        assert r.status_code == 200
+        data = r.json()
+        assert data["production_area"] == 4
+        assert len(data["days"]) == 3
+        assert data["data_provenance"]["source"]
+
+    def test_forecast_endpoint_bounds(self, client):
+        assert client.get("/api/ocean/waves/pa/0/forecast").status_code == 400
+        assert client.get("/api/ocean/waves/pa/14/forecast").status_code == 400
+
+
 class TestWaveEndpoints:
     def test_status_endpoint(self, client):
         r = client.get("/api/ocean/waves/status")

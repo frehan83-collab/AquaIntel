@@ -37,6 +37,7 @@ LAT_MIN, LAT_MAX = 57.0, 71.5
 LON_MIN, LON_MAX = 4.0, 31.0
 
 FETCH_DAYS = 2          # recent window averaged for a stable field
+FORECAST_DAYS = 5       # daily-mean timeline horizon (WAM has ~10d forecast)
 CACHE_TTL_HOURS = 6
 
 # Wave risk bands on significant wave height (Hs, metres).
@@ -64,6 +65,8 @@ class CMEMSWaveClient:
         self._lock = threading.Lock()
         self._cache: Optional[dict] = None
         self._cache_time: Optional[dt.datetime] = None
+        self._forecast_cache: Optional[dict] = None
+        self._forecast_time: Optional[dt.datetime] = None
         self._last_error: Optional[str] = None
 
     # ── Public API ────────────────────────────────────────────────────
@@ -198,6 +201,159 @@ class CMEMSWaveClient:
             "fallback_reason": self._last_error or "credentials or data unavailable",
         }
 
+    # ── Forecast (5-day daily-mean timeline) ──────────────────────────
+
+    async def fetch_forecast(self) -> bool:
+        """Fetch the daily-mean wave timeline for the next FORECAST_DAYS."""
+        return await asyncio.to_thread(self._fetch_forecast_sync)
+
+    def _fetch_forecast_sync(self) -> bool:
+        try:
+            import copernicusmarine  # noqa: F401
+        except ImportError:
+            self._last_error = "copernicusmarine not installed"
+            return False
+
+        try:
+            from config.settings import settings
+            username = settings.cmems_username
+            password = settings.cmems_password
+        except Exception:
+            username = password = ""
+
+        if not username or not password:
+            self._last_error = "no CMEMS credentials"
+            return False
+
+        import copernicusmarine
+        import numpy as np
+
+        now = dt.datetime.now(dt.UTC)
+        start = now - dt.timedelta(hours=6)
+        end = now + dt.timedelta(days=FORECAST_DAYS)
+        try:
+            ds = copernicusmarine.open_dataset(
+                dataset_id=WAV_DATASET_ID,
+                username=username,
+                password=password,
+                minimum_longitude=LON_MIN,
+                maximum_longitude=LON_MAX,
+                minimum_latitude=LAT_MIN,
+                maximum_latitude=LAT_MAX,
+                start_datetime=start.strftime("%Y-%m-%dT%H:%M:%S"),
+                end_datetime=end.strftime("%Y-%m-%dT%H:%M:%S"),
+            )
+        except Exception as exc:
+            self._last_error = str(exc)[:200]
+            log.warning("wave.forecast_fetch_failed", error=self._last_error)
+            return False
+
+        try:
+            hs_name = next(
+                (n for n in ("VHM0", "swh", "significant_wave_height") if n in ds.data_vars),
+                None,
+            )
+            if hs_name is None:
+                self._last_error = f"no Hs variable in {list(ds.data_vars)}"
+                return False
+
+            hs_ts = ds[hs_name].values.astype(float)          # (time, lat, lon)
+            times = np.asarray(ds["time"].values)
+            day_ids = times.astype("datetime64[D]")
+
+            days: list[dict] = []
+            for day in np.unique(day_ids):
+                mask = day_ids == day
+                days.append({"date": str(day), "hs": hs_ts[mask].mean(axis=0)})
+
+            with self._lock:
+                self._forecast_cache = {
+                    "days": days,
+                    "lat": ds["latitude"].values if "latitude" in ds.coords else ds["lat"].values,
+                    "lon": ds["longitude"].values if "longitude" in ds.coords else ds["lon"].values,
+                    "fetched_at": now.isoformat(),
+                }
+                self._forecast_time = dt.datetime.now(dt.UTC)
+            self._last_error = None
+            log.info("wave.forecast_fetched", n_days=len(days))
+            return True
+        except Exception as exc:
+            self._last_error = str(exc)[:200]
+            log.warning("wave.forecast_parse_failed", error=self._last_error)
+            return False
+
+    def get_pa_wave_forecast(self, pa: int, days: int = FORECAST_DAYS) -> dict:
+        """Daily-mean Hs + risk band timeline for a PA, simulated fallback."""
+        from core.market.norkyst_client import PA_CENTROIDS
+
+        if pa not in PA_CENTROIDS:
+            return {"error": f"PA {pa} not in 1-13"}
+        days = max(1, min(int(days), FORECAST_DAYS))
+        lat, lon = PA_CENTROIDS[pa]
+
+        field = self._fresh_forecast()
+        if field is not None:
+            try:
+                import numpy as np
+                i = int(np.argmin(np.abs(field["lat"] - lat)))
+                j = int(np.argmin(np.abs(field["lon"] - lon)))
+                timeline = []
+                for d in field["days"][:days]:
+                    hs = float(d["hs"][i, j])
+                    band = wave_risk_band(hs)
+                    timeline.append({
+                        "date": d["date"],
+                        "hs_m": round(hs, 2),
+                        "risk": band["level"],
+                        "operational_note": band["note"],
+                    })
+                return {
+                    "production_area": pa,
+                    "lat": lat, "lon": lon,
+                    "days": timeline,
+                    "is_live": True,
+                    "source": "CMEMS GLOBAL_ANALYSISFORECAST_WAV_001_027 daily means",
+                    "fetched_at": field["fetched_at"],
+                }
+            except Exception as exc:
+                log.warning("wave.forecast_lookup_failed", error=str(exc)[:120])
+
+        # Simulated fallback — deterministic per PA
+        import random
+        rng = random.Random(pa * 7919)
+        base = 0.4 + rng.random() * 2.6
+        drift = random.Random(pa * 104729)
+        today = dt.date.today()
+        timeline = []
+        for k in range(days):
+            hs = max(0.05, base + (drift.random() - 0.5) * 0.8)
+            band = wave_risk_band(hs)
+            timeline.append({
+                "date": (today + dt.timedelta(days=k)).isoformat(),
+                "hs_m": round(hs, 2),
+                "risk": band["level"],
+                "operational_note": band["note"],
+            })
+        return {
+            "production_area": pa,
+            "lat": lat, "lon": lon,
+            "days": timeline,
+            "is_live": False,
+            "source": "simulated (CMEMS WAV unavailable)",
+            "fallback_reason": self._last_error or "credentials or data unavailable",
+        }
+
+    def _fresh_forecast(self) -> Optional[dict]:
+        ttl = dt.timedelta(hours=CACHE_TTL_HOURS)
+        with self._lock:
+            if (
+                self._forecast_cache
+                and self._forecast_time
+                and (dt.datetime.now(dt.UTC) - self._forecast_time) < ttl
+            ):
+                return self._forecast_cache
+        return None
+
     # ── Internals ─────────────────────────────────────────────────────
 
     def _fresh_field(self) -> Optional[dict]:
@@ -211,6 +367,8 @@ class CMEMSWaveClient:
         with self._lock:
             self._cache = None
             self._cache_time = None
+            self._forecast_cache = None
+            self._forecast_time = None
 
     def get_status(self) -> dict:
         fresh = self._fresh_field() is not None
@@ -221,6 +379,8 @@ class CMEMSWaveClient:
             "cache_ttl_hours": CACHE_TTL_HOURS,
             "cached": fresh,
             "cached_at": self._cache_time.isoformat() if self._cache_time else None,
+            "forecast_cached": self._fresh_forecast() is not None,
+            "forecast_days": FORECAST_DAYS,
             "last_error": self._last_error,
         }
 

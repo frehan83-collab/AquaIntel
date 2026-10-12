@@ -160,6 +160,33 @@ async def pace_hab_risk(lat: float, lon: float, date: str = ""):
     return result
 
 
+@router.get("/api/ocean/waves/pa/{pa}/forecast")
+async def waves_pa_forecast(pa: int, days: int = 5):
+    """Daily-mean significant wave height + risk timeline for a Production Area.
+
+    Source: CMEMS GLOBAL_ANALYSISFORECAST_WAV_001_027 (WAM 1/12 deg) daily
+    means, up to 5 days ahead. Simulated fallback with is_live=false when
+    credentials/data are unavailable (data-honesty contract).
+    """
+    from core.market.wave_client import wave_client
+    from core.market.data_provenance import DataProvenance
+    if not 1 <= pa <= 13:
+        raise HTTPException(status_code=400, detail="Production area must be 1-13")
+    await wave_client.fetch_forecast()  # no-op when cache is fresh
+    result = wave_client.get_pa_wave_forecast(pa, days=days)
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+    if result.get("is_live"):
+        result["data_provenance"] = DataProvenance.live(
+            "CMEMS WAV (WAM 1/12°, daily means)", confidence=0.8
+        ).to_dict()
+    else:
+        result["data_provenance"] = DataProvenance.simulated(
+            result.get("fallback_reason", "CMEMS WAV unavailable")
+        ).to_dict()
+    return result
+
+
 # ── CMEMS Wave Field (Session 41) ────────────────────────────────────
 
 @router.get("/api/ocean/waves/status")

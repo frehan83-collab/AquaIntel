@@ -9084,6 +9084,58 @@
         ]
       }
     },
+    "/api/ocean/waves/pa/{pa}/forecast": {
+      "get": {
+        "description": "Daily-mean significant wave height + risk timeline for a Production Area.\n\nSource: CMEMS GLOBAL_ANALYSISFORECAST_WAV_001_027 (WAM 1/12 deg) daily\nmeans, up to 5 days ahead. Simulated fallback with is_live=false when\ncredentials/data are unavailable (data-honesty contract).",
+        "operationId": "waves_pa_forecast_api_ocean_waves_pa__pa__forecast_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pa",
+            "required": true,
+            "schema": {
+              "title": "Pa",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 5,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Waves Pa Forecast",
+        "tags": [
+          "ocean",
+          "satellite"
+        ]
+      }
+    },
     "/api/ocean/waves/status": {
       "get": {
         "description": "Wave client status: product, dataset, cache freshness, last error.",
