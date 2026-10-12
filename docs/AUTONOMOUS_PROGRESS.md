@@ -112,3 +112,33 @@ None material. Two soft items:
 3. DuckDB read path for the 186k-row lice analytics (REPORT_STACK top-10 #10).
 4. OTel + Sentry free tier wiring (needs outbound accounts only).
 5. Wave client wave 2: 5-day forecast timeline endpoint + dashboard tile.
+
+## Session 41b (continuation) — Tailwind 4 + Cache Components
+
+| # | Item | Status |
+|---|---|---|
+| 4 | Tailwind 4 migration | ✅ **DONE** (`f6abbcc`) — see section 4 above; full war stories in the `visual-regression` skill |
+| 2' | Next 16 **Cache Components** adoption | ✅ **DONE** (`bd910e7`) — `cacheComponents: true`; prod build 68/68, zero dynamic-API bailouts, 4/4 visual baselines green against `next start` |
+| — | Visual baselines (real, committed) | ✅ `81d104b` — win32 chromium; CI stays `continue-on-error` for e2e until Linux baselines exist |
+
+### Cache Components details (`bd910e7`)
+- Single-flag adoption: the app is overwhelmingly client-fetch driven, so no
+  Suspense wrapping was required and the build passed 68/68 unchanged.
+- Verified on a **production** rig (`next build && next start` on :3001) with
+  the same committed baselines — this is also the rig the
+  `next-cache-components-optimizer` skill needs for its `instant()` loop.
+
+### Next-session handoff (Cache Components loop, from the skill)
+1. Per-route, test-driven: encode the target as a failing
+   `@next/playwright` `instant()` e2e, work to green, ship as regression guard.
+2. Start with `/` (dashboard) initial load; rig = `next build && next start`
+   (config the Playwright webServer to prod for these specs).
+3. Then consider `partialPrefetching` adoption per the skill's
+   post-optimization check.
+
+### Environment notes observed during 41b
+- Playwright chromium had to be upgraded to build 1217 (bundled browser
+  version must match the installed `@playwright/test`).
+- Dev-server port for local e2e: `set PORT=3001 && npm run dev`
+  (Playwright reuses it via `reuseExistingServer`).
+- `npm run build` must not run while the dev server is watching `.next`.
