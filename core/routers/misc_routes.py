@@ -160,9 +160,10 @@ async def ocean_forecast_pa(pa: int):
 
 # ── Causal ───────────────────────────────────────────────────────────
 
-@router.get("/api/causal/summary")
-async def causal_summary(max_lag: int = 16):
+async def _ensure_causal_data():
     from core.market.causal_engine import causal_engine
+    if causal_engine._lice is not None and len(causal_engine._lice) >= 30:
+        return
     from core.market.ssb_price_client import ssb_price_client
 
     async with get_async_session() as s:
@@ -192,13 +193,18 @@ async def causal_summary(max_lag: int = 16):
     n = min(len(lice_series), len(price_series), len(pct_above_series))
     causal_engine.load_data(lice_series=lice_series[-n:], price_series=price_series[-n:],
                             pct_above_series=pct_above_series[-n:])
+
+
+@router.get("/api/causal/summary")
+async def causal_summary(max_lag: int = 16):
+    from core.market.causal_engine import causal_engine
+    await _ensure_causal_data()
     return causal_engine.get_causal_summary(max_lag=max_lag)
 
 @router.get("/api/causal/granger")
 async def causal_granger(max_lag: int = 16):
     from core.market.causal_engine import causal_engine
-    if causal_engine._lice is None:
-        raise HTTPException(400, "No data loaded. Call /api/causal/summary first.")
+    await _ensure_causal_data()
     results_dict = causal_engine.run_granger(max_lag=max_lag)
     results_list = [{"lag": lag, **vals} for lag, vals in sorted(results_dict.items())] if results_dict else []
     return {"results": results_list, "dominant_lag": causal_engine.find_dominant_lag(max_lag=max_lag)}

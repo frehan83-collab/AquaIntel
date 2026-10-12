@@ -120,12 +120,14 @@ class AnomalyEngine:
 
         # ── 1. Lice Z-score per Production Area ──────────────────────
         try:
-            from core.models import LiceRecord
+            from core.models import LiceRecord, Locality
             from core.async_db import get_async_session
             from sqlalchemy import select, func
+            import numpy as np
+            from collections import defaultdict
 
             async with get_async_session() as s:
-                # Get latest 12 weeks of national lice data
+                # Get latest national lice data week
                 latest = (await s.execute(
                     select(LiceRecord.year, LiceRecord.week)
                     .order_by(LiceRecord.year.desc(), LiceRecord.week.desc())
@@ -133,61 +135,72 @@ class AnomalyEngine:
                 )).first()
 
                 if latest:
-                    # Get last 12 weeks of PA-level averages
+                    latest_year, latest_week = latest[0], latest[1]
+
+                    # Fetch weekly PA averages over recent history (joined through Locality)
                     rows = (await s.execute(
                         select(
-                            LiceRecord.production_area,
-                            func.avg(LiceRecord.avg_adult_female_lice),
-                            func.count(LiceRecord.id),
-                        )
-                        .where(LiceRecord.avg_adult_female_lice.isnot(None))
-                        .group_by(LiceRecord.production_area)
-                    )).all()
-
-                    # Current week per PA
-                    current_rows = (await s.execute(
-                        select(
-                            LiceRecord.production_area,
+                            Locality.production_area,
+                            LiceRecord.year,
+                            LiceRecord.week,
                             func.avg(LiceRecord.avg_adult_female_lice),
                         )
+                        .join(Locality, LiceRecord.locality_no == Locality.locality_no)
                         .where(
-                            LiceRecord.year == latest[0],
-                            LiceRecord.week == latest[1],
                             LiceRecord.avg_adult_female_lice.isnot(None),
+                            Locality.production_area.isnot(None),
                         )
-                        .group_by(LiceRecord.production_area)
+                        .group_by(Locality.production_area, LiceRecord.year, LiceRecord.week)
+                        .order_by(LiceRecord.year.desc(), LiceRecord.week.desc())
                     )).all()
 
-                    # Build baseline stats
-                    baseline = {r[0]: r[1] for r in rows if r[0] and r[1]}
-                    current = {r[0]: r[1] for r in current_rows if r[0] and r[1]}
+                    pa_hist = defaultdict(list)
+                    for pa, y, w, avg_val in rows:
+                        if pa and avg_val is not None:
+                            pa_hist[int(pa)].append((y, w, float(avg_val)))
 
-                    # Compute per-PA z-scores (approximate — using mean as baseline, std estimated)
-                    for pa, cur_val in current.items():
-                        base_val = baseline.get(pa, cur_val)
-                        if base_val and base_val > 0:
-                            # Approximate std as 30% of mean (typical for lice distributions)
-                            std_est = base_val * 0.3
-                            z = _z_score(cur_val, base_val, std_est)
-                            if abs(z) >= 1.5:
-                                anomalies.append(AnomalySignal(
-                                    category="lice",
-                                    source=f"PA-{pa}",
-                                    severity=_severity_from_z(z),
-                                    z_score=round(z, 2),
-                                    value=round(cur_val, 3),
-                                    baseline=round(base_val, 3),
-                                    message=f"PA-{pa} lice {cur_val:.3f} is {z:.1f}σ above baseline {base_val:.3f}",
-                                    timestamp=f"W{latest[1]} {latest[0]}",
-                                ))
+                    # Compute empirical rolling z-scores per PA
+                    for pa, series in pa_hist.items():
+                        if not series:
+                            continue
+                        # Current week observation
+                        cur_y, cur_w, cur_val = series[0]
+                        if cur_y != latest_year or cur_w != latest_week:
+                            continue  # No observation for latest week in this PA
 
-                    # Lice component score: max z-score across PAs, scaled to 0-100
-                    if anomalies:
-                        max_z = max(a.z_score for a in anomalies if a.category == "lice")
-                        component_scores["lice"] = min(100, max(0, max_z * 25))
+                        # Rolling 11 preceding weeks as empirical baseline
+                        hist_vals = [v for _, _, v in series[1:12]]
+                        if not hist_vals:
+                            continue
+
+                        base_mean = float(np.mean(hist_vals))
+                        # Empirical standard deviation with robust floor for measurement precision
+                        empirical_std = float(np.std(hist_vals, ddof=1)) if len(hist_vals) > 1 else 0.0
+                        std_est = max(empirical_std, 0.015)
+
+                        z = _z_score(cur_val, base_mean, std_est)
+                        if abs(z) >= 1.5:
+                            anomalies.append(AnomalySignal(
+                                category="lice",
+                                source=f"PA-{pa}",
+                                severity=_severity_from_z(z),
+                                z_score=round(z, 2),
+                                value=round(cur_val, 3),
+                                baseline=round(base_mean, 3),
+                                message=(
+                                    f"PA-{pa} lice {cur_val:.3f} is {z:+.1f}sigma vs 12-wk baseline "
+                                    f"{base_mean:.3f} (empirical sigma={std_est:.3f})"
+                                ),
+                                timestamp=f"W{latest_week} {latest_year}",
+                            ))
+
+                    # Lice component score: max positive z-score across PAs, scaled to 0-100
+                    pos_lice_zs = [a.z_score for a in anomalies if a.category == "lice" and a.z_score > 0]
+                    if pos_lice_zs:
+                        component_scores["lice"] = min(100, max(0, max(pos_lice_zs) * 25))
 
         except Exception as exc:
-            log.debug("anomaly.lice_failed", error=str(exc)[:80])
+            log.warning("anomaly.lice_failed", error=str(exc)[:100])
 
         # ── 2. Disease outbreak detection ────────────────────────────
         try:
@@ -263,7 +276,7 @@ class AnomalyEngine:
         # Reference: Liu et al. (2008) "Isolation Forest" + PyOD v2 (2025)
         try:
             from pyod.models.iforest import IForest
-            from core.models import LiceRecord
+            from core.models import LiceRecord, Locality
             from core.async_db import get_async_session
             from sqlalchemy import select
 
@@ -273,13 +286,15 @@ class AnomalyEngine:
                     select(
                         LiceRecord.avg_adult_female_lice,
                         LiceRecord.sea_temp_c,
-                        LiceRecord.production_area,
+                        Locality.production_area,
                         LiceRecord.year,
                         LiceRecord.week,
                     )
+                    .join(Locality, LiceRecord.locality_no == Locality.locality_no)
                     .where(
                         LiceRecord.avg_adult_female_lice.isnot(None),
                         LiceRecord.sea_temp_c.isnot(None),
+                        Locality.production_area.isnot(None),
                     )
                     .order_by(LiceRecord.year.desc(), LiceRecord.week.desc())
                     .limit(5000)

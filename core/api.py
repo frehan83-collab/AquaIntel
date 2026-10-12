@@ -30,6 +30,11 @@ from core.bloom.models import BloomRiskAssessment, BloomAlert, ChlorophyllReadin
 from execution.execution_agent import ExecutionAgent
 from compliance.compliance_agent import ComplianceAgent
 
+import structlog
+
+log = structlog.get_logger(__name__)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """FastAPI lifespan event handler — replaces deprecated @app.on_event('startup').
@@ -201,6 +206,38 @@ limiter = Limiter(
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# ── Standardized Domain Error Handlers ─────────────────────────────────────────
+from core.errors import FishIntelError, UpstreamUnavailable, ErrorBody
+
+@app.exception_handler(UpstreamUnavailable)
+async def upstream_unavailable_handler(request: Request, exc: UpstreamUnavailable):
+    request_id = request.headers.get("x-request-id")
+    log.warning("api.upstream_unavailable", service=exc.service, path=request.url.path, request_id=request_id)
+    return JSONResponse(
+        status_code=503,
+        content=ErrorBody(
+            error=exc.error_code,
+            detail=exc.detail,
+            request_id=request_id,
+            context=exc.context,
+        ).model_dump(),
+        headers={"Retry-After": str(exc.retry_after)},
+    )
+
+@app.exception_handler(FishIntelError)
+async def fishintel_error_handler(request: Request, exc: FishIntelError):
+    request_id = request.headers.get("x-request-id")
+    log.warning("api.domain_error", error=exc.error_code, detail=exc.detail, path=request.url.path, request_id=request_id)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=ErrorBody(
+            error=exc.error_code,
+            detail=exc.detail,
+            request_id=request_id,
+            context=exc.context,
+        ).model_dump(),
+    )
 
 # ── Prometheus Metrics ──────────────────────────────────────────────
 # Must be added before routers, at module level (not in lifespan)

@@ -45,13 +45,15 @@ if _is_sqlite:
         cursor.close()
 else:
     # PostgreSQL/TimescaleDB: production pool tuning
-    # pool_size=20 per worker, max_overflow=40 for burst, recycle every hour
-    # pool_pre_ping catches stale connections after DB restart
+    # With 4 gunicorn workers, pool_size=5 + max_overflow=10 caps peak pool at 4 x 15 = 60 connections,
+    # safely within TimescaleDB's default max_connections=100 (Architecture Report 3.1).
+    # pool_timeout=10 surfaces pool exhaustion quickly rather than hanging requests.
     async_engine = create_async_engine(
         _async_url,
         echo=False,
-        pool_size=20,
-        max_overflow=40,
+        pool_size=5,
+        max_overflow=10,
+        pool_timeout=10,
         pool_recycle=3600,
         pool_pre_ping=True,
         connect_args={"server_settings": {"statement_timeout": "30000"}},  # 30s query timeout
