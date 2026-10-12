@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "firecrawl": {
+      "command": "npx",
+      "args": ["-y", "firecrawl-mcp"],
+      "env": { "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}" }
+    },
+    "playwright": { "command": "npx", "args": ["@playwright/mcp@latest"] },
+    "context7": { "command": "npx", "args": ["-y", "@upstash/context7-mcp"] },
+    "planet-docs": { "type": "http", "url": "https://planet.mcp.kapa.ai" }
+  }
+}
