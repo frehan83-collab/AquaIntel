@@ -14,7 +14,7 @@ Plan: `docs/NEXT_STEPS_PLAN.md` · Rules: `AGENTS.md` (authoritative)
 | ID | Workstream | Status | Notes |
 |----|-----------|--------|-------|
 | P0-1 | Backend-backed e2e in CI | IN PROGRESS | Specs fixed to real contracts; new `e2e-backend` job in `frontend.yml`; local verification done; awaiting CI proof on push |
-| P0-2 | DuckDB read path (lice analytics) | TODO | |
+| P0-2 | DuckDB read path (lice analytics) | BLOCKED (evidence) | sqlite_scanner extension blocked by Windows app-control policy locally; extension-free variant measured ~5× slower than the existing path (220 ms vs 47 ms). Details in plan doc P0-2. Revisit on Linux env / parquet pipeline |
 | P0-3 | Cache Components `use cache` scoping | TODO | |
 | P0-4 | uv adoption (pin Python 3.12) | TODO | Decision pre-recorded: CI `test.yml` already pins Python 3.12; Docker + uv must match. Local box has 3.14 only — uv must manage 3.12 itself |
 | P1-5 | Local env verification & test hygiene | PARTIAL | Backend smoke green (37 passed/1 xfailed/8 xpassed); full suite + xfail triage pending |

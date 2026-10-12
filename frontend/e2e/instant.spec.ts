@@ -26,6 +26,14 @@ const ROUTES: Array<[path: string, name: string]> = [
   ["/", "dashboard"],
   ["/market", "market"],
   ["/traffic-light", "traffic-light"],
+  ["/brief", "brief"],
+  ["/farmer-daily", "farmer-daily"],
+  ["/disease", "disease"],
+  ["/leaders", "leaders"],
+  ["/futures", "futures"],
+  ["/feed-cost", "feed-cost"],
+  ["/global-supply", "global-supply"],
+  ["/notifications", "notifications"],
 ];
 
 for (const [path, name] of ROUTES) {

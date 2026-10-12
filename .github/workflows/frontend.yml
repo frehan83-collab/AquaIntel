@@ -165,6 +165,14 @@ jobs:
           --reporter=github,html
         working-directory: frontend/
 
+      # Instant-navigation lock (next-cache-components-optimizer): builds the
+      # PROD bundle itself (playwright.instant.config webServer) and verifies the
+      # static shell commits instantly on 11 key routes. Runs after the dev
+      # server is torn down — safe order for the .next collision.
+      - name: Instant-navigation rig (prod build, 11 routes)
+        run: npx playwright test --config playwright.instant.config.ts --reporter=github
+        working-directory: frontend/
+
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v4

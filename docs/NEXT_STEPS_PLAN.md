@@ -84,18 +84,49 @@ security contract; 2 real bugs fixed (price_feed_hub dead import; /market ssb bi
 **Remaining:** push + confirm the CI run itself goes green; keep the whole-file suite
 stable for 3 runs before any further promotion/cleanup.
 
-### P0-2 · DuckDB read path for lice analytics
+### P0-2 · DuckDB read path for lice analytics — ⛔ BLOCKED / deferred with evidence (2026-10-13)
 **Why:** 189k-row lice aggregate; TTL cache gives 70 ms → 2 ms warm, but analytics are
 still SQLite/PG. DuckDB is the project's stated next step for this path.
 - Add `duckdb` (or `duckdb-engine`) behind the existing lice analytics queries; keep the
   current code path as fallback.
 - Gate: keep `test_lice_*`/`test_api_routes.py` green; add provenance to the new path.
 
-### P0-3 · Cache Components `use cache` scoping
+**Findings (measured on the real 189k-row dev DB, duckdb 1.5.6, Python 3.14):**
+1. The only DuckDB setup that could beat SQL here is the **sqlite_scanner extension**
+   (ATTACH the SQLite file). It is **blocked on this Windows box by an application-control
+   policy** ("Extension ... could not be loaded: En programkontrollpolicy har blokkert
+   denne filen") — locally unverifiable.
+2. The extension-free alternative (fetch rows → load into DuckDB → aggregate) measured
+   **~220 ms vs 47 ms** for the current 4-query SQLAlchemy path on the latest-week
+   aggregate (row-load dominates). Implementing it would be a slowdown with no user value.
+3. `duckdb` 1.5.6 has cp314 wheels (installs fine), so the blocker is the extension policy,
+   not the package.
+
+**Resolution:** do not ship a DuckDB path until it can be validated end-to-end (Linux dev
+env or CI) against a real workload. Revisit with either (a) sqlite_scanner verified on
+Linux, or (b) a parquet materialization of lice history once an export pipeline exists.
+No requirements/code changes made (no fake value, per AGENTS.md honesty rule).
+
+### P0-3 · Cache Components `use cache` scoping — ✅ DONE (audit + extended guard, 2026-10-13)
 **Why:** Next.js 16 supports `use cache`; project wants it where server-renderable data
 appears (skill: `next-cache-components-optimizer` is available).
 - Identify server-renderable data routes; add `use cache`/Suspense scoping per route.
 - Verify with the instant-navigation guard (`npm run test:instant`) and visual baselines.
+
+**Findings & outcome (via the `next-cache-components-optimizer` skill):**
+1. `cacheComponents: true` + `partialPrefetching: true` are already adopted (Session 41),
+   and the three existing `instant()` locks (/, /market, /traffic-light) were green.
+2. Audit result: there are **no server-renderable data routes** — every page is a
+   `"use client"` component fetching via TanStack Query; the only server components
+   (layout/loading/not-found) are pure static shells with no data fetching. Adding
+   `use cache` scopes would require converting client pages to server components — an
+   architecture change out of scope; correctness/no-fake-value rules apply.
+3. Correct deliverable per the skill (grow the static-shell guarantee, one verified
+   route at a time): **extend the instant-navigation lock** to 8 more key routes
+   (/brief, /farmer-daily, /disease, /leaders, /futures, /feed-cost, /global-supply,
+   /notifications). Verified locally on the prod rig: **11/11 instant tests green**;
+   the rig now runs as a blocking CI step in the `e2e-backend` job.
+**Deferred:** per-route `use cache` conversion (needs a server-data architecture first).
 
 ### P0-4 · uv adoption
 **Why:** REPORT_STACK #7 remainder; Python 3.14 locally vs the heavy ML stack.
