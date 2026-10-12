@@ -60,7 +60,7 @@ and **data-path discipline** (generated API types, query caching, big-series cha
 | 4 | ECharts 6 for the 2-3 heavy charts | 4 h | Dashboards stay interactive at 10k+ points |
 | 5 | MapLibre 6 + deck.gl 9.4 bump | 4 h | Globe view + particles on live currents |
 | 6 | Tailwind 4 migration (post visual-baseline) | 1 d | ✅ DONE Session 41 (`f6abbcc`) — OC engine, 4/4 visual baselines green |
-| 7 | ruff + uv in CI | 4 h | Faster, stricter, reproducible |
+| 7 | ruff + uv in CI | 4 h | ✅ ruff DONE Session 41c (E9/F821/F811/F401 gate; sweep found dead chat branches + 2 dead engines). uv still open |
 | 8 | OpenTelemetry + Sentry free tier | 4 h | Production traceability |
 | 9 | Bundle size budget in CI | 3 h | Prevents frontend bloat regressions |
 | 10 | DuckDB read path for lice analytics | 4 h | Removes 186k-row aggregate pressure |

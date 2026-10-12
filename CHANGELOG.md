@@ -3,6 +3,34 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
+## [Unreleased] — Session 41c (2026-10-12, autonomous run, continued)
+
+### Added
+- **Instant-navigation regression guard** (`e2e/instant.spec.ts` +
+  `playwright.instant.config.ts`; `@next/playwright@16.4.0`): prod-rig
+  `instant()` lock around initial loads of `/`, `/market`, `/traffic-light`;
+  testing API env-gated (`FISHINTEL_E2E=1`) so it never ships to deployments.
+  Differential: GREEN 3/3 on the prod build; RED probe with an empty document
+  (non-vacuity proven).
+- **5-day wave forecast** (`/api/ocean/waves/pa/{pa}/forecast`): CMEMS WAM
+  daily means, separate 6h cache, deterministic simulated fallback; MCP
+  `get_wave_risk(..., forecast_days)` now returns `{current, forecast}`.
+  LIVE verified: PA-4 0.17/0.20/0.45/0.49/0.41 m over 5 days.
+- **ruff CI gate** (`ruff.toml`: E9/F821/F811/F401) + `tests/test_module_imports.py`
+  ratchet (every `core/` module must import; empty allowlist).
+
+### Fixed
+- `_rule_based_chat_response` NameError — the LICE and SIGNAL chat answer
+  branches called an unimported `get_async_session()` (found by ruff F821).
+- `core/models.py` missing `asyncio` import; `admin_routes` missing
+  `AsyncIterator` import (annotation defects).
+- **Two engines broken since creation** (found by the new import ratchet):
+  `core/ml/harvest_optimizer` (5 nonexistent names -> `THERMAL_TOLERANCE`,
+  `MAX_SGR_PCT`, `_temperature_growth_factor` Q10 helper added to
+  biomass_predictor) and `core/valuechain/farmer_advisory` (nonexistent
+  `ShortTermForecast` -> real `StageForcast`).
+- 128 unused imports removed (F401), 6 availability probes annotated.
+
 ## [Unreleased] — Session 41b (2026-10-12, autonomous run, continued)
 
 ### Added

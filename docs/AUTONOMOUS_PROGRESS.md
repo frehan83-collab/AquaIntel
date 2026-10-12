@@ -142,3 +142,32 @@ None material. Two soft items:
 - Dev-server port for local e2e: `set PORT=3001 && npm run dev`
   (Playwright reuses it via `reuseExistingServer`).
 - `npm run build` must not run while the dev server is watching `.next`.
+
+## Session 41c (continuation) — instant guard, wave forecast, ruff sweep
+
+| # | Item | Status |
+|---|---|---|
+| skill | Cache Components **verification loop** (phases 0/C) | ✅ `a02cab8` — prod rig + `instant()` guard for 3 routes; non-vacuity proven (RED probe); `test:instant` script |
+| wave 2 | 5-day wave forecast timeline | ✅ `68d285d` — daily means, MCP `forecast_days`, LIVE verified PA-4 |
+| 7 | ruff CI gate | ✅ `ad25b2d` — E9/F821/F811/F401 (+128 F401 fixes); found dead chat branches (F821) and, via the NEW module-import ratchet, **two engines broken since creation** (harvest_optimizer, farmer_advisory) — both repaired |
+| hygiene | partialPrefetching pinned `false` (Next 16.4 pairing warning) | ✅ `68d285d` |
+
+### Notable discoveries this stretch
+- `_rule_based_chat_response` had **dead lice/signal answer branches** (NameError
+  on unimported `get_async_session`) — same species as the await burn-down;
+  the ruff F821 rule now guards this class in CI.
+- `core/ml/harvest_optimizer` imported 5 names that never existed; added
+  documented `THERMAL_TOLERANCE`, `MAX_SGR_PCT` and a Q10-based
+  `_temperature_growth_factor()` (normalised 10 °C = 1.0, clamped).
+- `core/valuechain/farmer_advisory` imported a nonexistent `ShortTermForecast`
+  type; corrected to `StageForcast`.
+- `tests/test_module_imports.py` now fails on ANY new import-breakage
+  (allowlist must stay empty; stale entries fail too).
+
+### Next-session priorities (updated)
+1. Cache Components loop phase A/D+: `use cache`/Suspense scoping per route,
+   then `partialPrefetching` adoption decision (skill-guided).
+2. F841 ratchet (36 dead locals — manual review, removals can drop effects).
+3. DuckDB read path for lice analytics; uv adoption (REPORT_STACK #7 remainder).
+4. Linux visual baselines for CI (font rendering parity) + wire visual/instant
+   suites into GitHub Actions once stable.
