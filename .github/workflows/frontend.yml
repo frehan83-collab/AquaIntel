@@ -63,9 +63,11 @@ jobs:
         run: npx playwright test e2e/visual.spec.ts --reporter=github
         working-directory: frontend/
 
-      # 9. Remaining E2E tests (some need the FastAPI backend on :8000)
+      # 9. Remaining E2E tests that do NOT need the FastAPI backend.
+      #    api-*.spec.ts require :8000 and belong in a backend-backed job
+      #    (future); running them here just stalls on connection retries.
       - name: Run remaining E2E tests
-        run: npx playwright test --reporter=github --grep-invert "visual baseline"
+        run: npx playwright test navigation.spec.ts golden-path.spec.ts interactions.spec.ts --reporter=github
         working-directory: frontend/
         continue-on-error: true
 
