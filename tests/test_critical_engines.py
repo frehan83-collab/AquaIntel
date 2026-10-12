@@ -195,10 +195,10 @@ class TestESGScorer:
         result = run_async(esg_scorer.compute_all())
         assert isinstance(result, list)
 
-    @pytest.mark.xfail(reason="get_all depends on compute_all having been awaited first")
+    @pytest.mark.xfail(reason="Requires database with company lice data")
     def test_get_all_returns_list(self):
         from core.market.esg_scorer import esg_scorer
-        result = esg_scorer.get_all()
+        result = run_async(esg_scorer.get_all())
         assert isinstance(result, list)
 
 

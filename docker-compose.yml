@@ -20,7 +20,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Backend: agents + API
+  # Backend: API (4 Gunicorn workers)
   fishintel:
     build: .
     container_name: fishintel-core

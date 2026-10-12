@@ -301,7 +301,7 @@ class MorningBriefEngine:
         # ── 9. ESG Movers ───────────────────────────────────────────
         try:
             from core.market.esg_scorer import esg_scorer
-            esg_all = esg_scorer.compute_all()
+            esg_all = await esg_scorer.compute_all()
             current_esg = {s.company_name: s.total for s in esg_all}
 
             if self._prev_esg_scores:

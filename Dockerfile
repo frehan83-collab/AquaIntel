@@ -14,8 +14,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # App code
 COPY . .
 
-# Create dirs + non-root user for security
+# Create dirs, make entrypoint executable + non-root user for security
 RUN mkdir -p data/models logs && \
+    chmod +x scripts/docker-entrypoint.sh && \
     useradd -m -u 1000 -s /bin/bash appuser && \
     chown -R appuser:appuser /app
 
@@ -27,9 +28,14 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"
 
+ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
+
+# Migrations run once in the entrypoint before workers spawn -> workers skip them
+ENV FISHINTEL_RUN_MIGRATIONS=0
+
 # Production: Gunicorn with Uvicorn workers (multi-process, crash recovery)
 # Workers = 2 * CPU cores + 1. Override with GUNICORN_WORKERS env var.
-# max-requests prevents memory leaks, preload shares engine singletons
+# max-requests prevents memory leaks; independent worker event loops (no preload)
 CMD ["gunicorn", "core.api:app", \
      "-k", "uvicorn.workers.UvicornWorker", \
      "-w", "4", \

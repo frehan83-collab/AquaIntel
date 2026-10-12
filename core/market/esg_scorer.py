@@ -250,14 +250,14 @@ class ESGScorer:
         log.info("esg.computed", n_companies=len(scores), top_grade=scores[0].grade if scores else "—")
         return scores
 
-    def get_all(self) -> list[dict]:
+    async def get_all(self) -> list[dict]:
         """Return all ESG scores as API-friendly dicts."""
-        scores = self.compute_all()
+        scores = await self.compute_all()
         return [self._to_dict(s, rank=i + 1) for i, s in enumerate(scores)]
 
-    def get_company(self, name: str) -> dict | None:
+    async def get_company(self, name: str) -> dict | None:
         """Get ESG score for a specific company."""
-        scores = self.compute_all()
+        scores = await self.compute_all()
         for i, s in enumerate(scores):
             if s.company_name.lower() == name.lower() or (s.ticker and s.ticker.lower() == name.lower()):
                 return self._to_dict(s, rank=i + 1)

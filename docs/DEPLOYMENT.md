@@ -60,6 +60,19 @@ docker compose up -d
 #   - nginx (proxy):     localhost:80 / :443
 ```
 
+## Database Migrations (Multi-Worker Safety)
+
+The container image runs Alembic migrations **once** in
+`scripts/docker-entrypoint.sh` before Gunicorn spawns its 4 workers, avoiding
+concurrent-DDL races across workers. The image sets
+`FISHINTEL_RUN_MIGRATIONS=0`, which makes worker lifespans skip migrations
+(log: `startup.migrations status=managed_by_entrypoint`).
+
+- **Bare-metal / local dev** (`python main.py`, `uvicorn`): the lifespan still
+  runs `alembic upgrade head` by default (`FISHINTEL_RUN_MIGRATIONS` unset = `1`).
+- **Override**: set `FISHINTEL_RUN_MIGRATIONS=0` to skip in-process migrations
+  entirely (e.g. when migrations run in a separate release step).
+
 The `docker-compose.yml` includes:
 - **db** -- TimescaleDB (PostgreSQL 16 with time-series extensions)
 - **fishintel** -- Python/FastAPI backend (API only)

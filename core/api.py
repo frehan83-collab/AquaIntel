@@ -46,16 +46,21 @@ async def lifespan(app: FastAPI):
     # Initialize database tables
     init_db()
 
-    # Run Alembic migrations (safe — stamps if already at head)
-    try:
-        from alembic.config import Config as AlembicConfig
-        from alembic import command as alembic_command
-        alembic_cfg = AlembicConfig("alembic.ini")
-        alembic_cfg.set_main_option("script_location", "alembic")
-        alembic_command.upgrade(alembic_cfg, "head")
-        log.info("startup.migrations", status="complete")
-    except Exception as exc:
-        log.warning("startup.migrations_skipped", error=str(exc)[:120])
+    # Run Alembic migrations (safe — stamps if already at head).
+    # In container deployment, entrypoint executes migrations once before workers spawn.
+    # Workers skip concurrent DDL execution if FISHINTEL_RUN_MIGRATIONS=0.
+    if os.getenv("FISHINTEL_RUN_MIGRATIONS", "1") == "1":
+        try:
+            from alembic.config import Config as AlembicConfig
+            from alembic import command as alembic_command
+            alembic_cfg = AlembicConfig("alembic.ini")
+            alembic_cfg.set_main_option("script_location", "alembic")
+            alembic_command.upgrade(alembic_cfg, "head")
+            log.info("startup.migrations", status="complete")
+        except Exception as exc:
+            log.warning("startup.migrations_skipped", error=str(exc)[:120])
+    else:
+        log.info("startup.migrations", status="managed_by_entrypoint")
 
     # Log startup config summary
     from config.settings import settings
@@ -280,6 +285,11 @@ from core.routers.webhook_routes import router as webhook_router
 from core.routers.apikey_routes import router as apikey_router
 from core.routers.integration_routes import router as integration_router
 from core.routers.supply_chain_routes import router as supply_chain_router
+from core.routers.feed_cost_routes import router as feed_cost_router
+from core.routers.ocean_routes import router as ocean_router
+from core.routers.macro_routes import router as macro_router
+from core.routers.causal_routes import router as causal_router
+from core.routers.ras_routes import router as ras_router
 from core.auth import require_admin
 app.include_router(auth_router)
 app.include_router(billing_router)
@@ -309,6 +319,11 @@ app.include_router(apikey_router)
 app.include_router(futures_router)
 app.include_router(integration_router)
 app.include_router(supply_chain_router)
+app.include_router(feed_cost_router)
+app.include_router(ocean_router)
+app.include_router(macro_router)
+app.include_router(causal_router)
+app.include_router(ras_router)
 
 # ── Models ────────────────────────────────────────────────────────────
 from core.schemas import HealthResponse
