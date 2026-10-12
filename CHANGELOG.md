@@ -3,6 +3,23 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
+## [Unreleased] — Session 41d (2026-10-12, autonomous run, continued)
+
+### Added
+- **Linux visual baselines** (CI-generated + committed): `visual-baselines.yml`
+  workflow_dispatch (update/verify modes, ubuntu + Node 22 + chromium);
+  artifact-downloaded `*-chromium-linux.png` snapshots committed; verify run
+  green. frontend.yml's e2e step now checks them on every frontend change.
+- **F841 in the ruff gate**: all 36 dead locals resolved (pure expressions
+  deleted; side-effecting awaits kept as bare statements; PyMC
+  `with pm.Model():`). ruff.toml now enforces E9/F821/F811/F401/F841.
+- `partialPrefetching: true` — App-Shell prefetch model enabled (skill's
+  post-adoption step), verified by instant guard 3/3 + visual baselines 4/4.
+
+### Fixed
+- Playwright webServer port: `env: { PORT: 3001 }` pins the dev server
+  cross-platform (CI previously timed out on :3000 vs :3001) + 120 s timeout.
+
 ## [Unreleased] — Session 41c (2026-10-12, autonomous run, continued)
 
 ### Added

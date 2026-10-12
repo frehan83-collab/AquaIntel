@@ -171,3 +171,29 @@ None material. Two soft items:
 3. DuckDB read path for lice analytics; uv adoption (REPORT_STACK #7 remainder).
 4. Linux visual baselines for CI (font rendering parity) + wire visual/instant
    suites into GitHub Actions once stable.
+
+## Session 41d (continuation) — prefetching flip, F841, Linux visual baselines
+
+| # | Item | Status |
+|---|---|---|
+| skill | `partialPrefetching: true` (App-Shell prefetch model) | ✅ `016587a` — verified: instant 3/3 + visual 4/4 on the prod build |
+| 7 | **F841 ratchet** (final ruff rule) | ✅ `72fe461` — all 36 resolved (drops + keep-call conversions); suite 635/0 |
+| 4 | **Linux visual baselines** | ✅ `3ec4aae` (workflow) + `d537a5a` (port fix) + `8d0c286` (baselines) — update run green, verify run green on CI |
+| — | Playwright webServer port pinned cross-platform | ✅ `d537a5a` |
+
+### Notes
+- F841 handling rules used: pure expressions deleted; side-effecting calls
+  kept (`await fetch_prices()` etc. — cache warmers must still run); PyMC
+  context manager reduced to `with pm.Model():`. Cascade F401 (sessionmaker)
+  auto-fixed.
+- The visual-baselines workflow doubles as the refresh path: run with
+  `update=true`, download `visual-snapshots-linux`, commit.
+- frontend.yml e2e step still `continue-on-error` — with Linux baselines in
+  place it should now pass; candidate to make blocking after a few green
+  weeks.
+
+### Remaining next-session priorities
+1. uv adoption (REPORT_STACK #7 remainder) — lockfile + CI `uv sync`.
+2. DuckDB read path for the 186k-row lice analytics.
+3. Cache Components `use cache` scoping where server-renderable data appears.
+4. Promote frontend e2e/visual steps to blocking once stability is proven.
