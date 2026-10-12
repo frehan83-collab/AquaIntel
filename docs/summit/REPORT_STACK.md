@@ -26,7 +26,7 @@ and **data-path discipline** (generated API types, query caching, big-series cha
 |---|---|---|---|
 | **Next.js** | 15.3 | **16.4** ([blog](https://nextjs.org/blog/next-16-4)) | Upgrade wave; 16.4 introduces **Cache Components** (default in 17). Our installed skill `next-cache-components-optimizer` (Vercel, 16.8K) guides this exactly. Also unlocks the official Next skills from the ecosystem install. |
 | **React** | 19.1 | 19.x (compatible) | Ship with Next 16 |
-| **Tailwind** | 3.4 | **4.x** ([upgrade guide](https://tailwindcss.com/docs/upgrade-guide)) | AFTER visual-regression baseline exists (v4 removes default styles/changes dark mode — community reports real breakage). Do the Figma token pipeline audit in the same wave. |
+| **Tailwind** | 3.4 | **4.3** ✅ migrated `f6abbcc` | DONE (visual-baseline gated): v4 + `@config` compat, class-token renames verified 4/4 vs baselines. Figma token pipeline audit still open. |
 | **MapLibre GL JS** | 5.21 | **6.14** ([docs](https://maplibre.org/maplibre-gl-js/docs/)) | Major bump: globe projection mature; pair with deck.gl MapboxOverlay |
 | **deck.gl** | 9.2 | **9.4** (Sep 2026, [whats-new](https://deck.gl/docs/whats-new)) | Low-risk minor; MapLibre interop documented |
 | **Recharts** | 3.8 | keep for simple charts | See §3 |
@@ -59,7 +59,7 @@ and **data-path discipline** (generated API types, query caching, big-series cha
 | 3 | TanStack Query v5 for the data hooks | 1 d | Fewer duplicate fetches, real caching UX |
 | 4 | ECharts 6 for the 2-3 heavy charts | 4 h | Dashboards stay interactive at 10k+ points |
 | 5 | MapLibre 6 + deck.gl 9.4 bump | 4 h | Globe view + particles on live currents |
-| 6 | Tailwind 4 migration (post visual-baseline) | 1 d | OC compiler, smaller CSS |
+| 6 | Tailwind 4 migration (post visual-baseline) | 1 d | ✅ DONE Session 41 (`f6abbcc`) — OC engine, 4/4 visual baselines green |
 | 7 | ruff + uv in CI | 4 h | Faster, stricter, reproducible |
 | 8 | OpenTelemetry + Sentry free tier | 4 h | Production traceability |
 | 9 | Bundle size budget in CI | 3 h | Prevents frontend bloat regressions |

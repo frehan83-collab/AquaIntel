@@ -47,3 +47,22 @@ npx playwright install chromium          # first time only
   in git (they are small PNGs).
 - CI: `frontend.yml` runs on ubuntu — add the visual job only after snapshots
   are proven stable on Linux (font rendering differs from Windows).
+
+## War stories (Session 41 — read before a migration)
+
+- **Baselines first, then migrate.** Generate + COMMIT baselines before any
+  CSS change; they catch catastrophic regressions instantly (a reverted
+  globals.css `@import` → unstyled pages → 0.89 pixel diff, caught in 3 s).
+- **Class-token-only renames.** A naive word-boundary regex over `src`
+  rewrote object keys (`ring: string`), breaking JSX. Require
+  quote/space/colon context on both sides of the token AND run a dry-run
+  listing every planned match before applying.
+- **Never run `npm run build` while `next dev` is watching `.next`** —
+  Turbopack churn corrupts the dev asset graph and pages render unstyled
+  (looks like a visual catastrophe but isn't). Stop the dev server first.
+- Dev server must bind the port in `playwright.config.ts` (`PORT=3001 npm
+  run dev`); Playwright reuses it locally (`reuseExistingServer`).
+- Commit baselines + the migration as SEPARATE commits so a needed
+  `git checkout` of source can never revert the migration entry point
+  (globals.css lives in `src/`!).
+

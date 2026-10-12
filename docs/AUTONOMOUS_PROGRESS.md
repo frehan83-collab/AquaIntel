@@ -10,7 +10,7 @@
 | 1 | Next.js 15.5 → **16.4** upgrade | ✅ done (`647ca27`) |
 | 2 | TanStack Query v5 on heavy dashboards | ✅ done (`d6813f9`) |
 | 3 | ECharts 6 for heavy charts | ✅ done (`a7f5ecd`) |
-| 4 | Tailwind 4 migration | ⏸ **gated** — baseline spec shipped (`95716ec`); migration intentionally deferred until snapshots are generated and reviewed |
+| 4 | Tailwind 4 migration | ✅ **DONE** (`f6abbcc`) — baselines generated (4 routes, `81d104b`), v4.3 + `@config` compat, class-token renames audited + applied, 4/4 visual green pre- and post-rename |
 | 5 | SAR/wave client (F2, CMEMS WAV) | ✅ done, **live-verified** (`50d3fd6`) |
 | 6 | Differentiator items (MCP tools etc.) | ✅ wave tool added to MCP (7 tools); generated TS types kept in sync |
 | 7 | CI hardening (OpenAPI drift) | ✅ done (`a7162d7`) |
@@ -48,12 +48,28 @@
   mark-line, glass tooltip, unit-aware labels. Recharts retained for
   ForecastCone/simple bars.
 
-### 4. Tailwind 4 — deferred with reason
-REPORT_STACK.md itself gates this on a visual baseline. Delivered instead:
-`e2e/visual.spec.ts` — fully deterministic snapshots (every `/api/**` stubbed,
-4 key routes, `maxDiffPixelRatio 0.01`, animations disabled). To proceed:
-`npx playwright install chromium` → `--update-snapshots` → review → migrate
-Tailwind (v4 `@config` compat path is the low-risk route).
+### 4. Tailwind 4 migration — DONE behind the visual gate (`81d104b`, `f6abbcc`)
+Sequence that worked:
+1. Installed Playwright chromium 1217 + started dev on :3001 → generated 4
+   deterministic baselines (`--update-snapshots`) → committed BEFORE touching CSS.
+2. `tailwindcss@4.3.3` + `@tailwindcss/postcss`; `@import "tailwindcss"` +
+   `@config "../../tailwind.config.ts"` (legacy JS config drives all tokens);
+   restored the v3 default border-color via a base layer.
+3. Dry-run audit of meaning-changed utilities, then class-token-only renames:
+   `outline-none`→`outline-hidden` ×62, `rounded-sm`→`rounded-xs` ×12,
+   `shadow-sm`→`shadow-xs` ×8, `backdrop-blur-sm`→`backdrop-blur-xs` ×7,
+   bare `shadow`→`shadow-sm` ×1 (no bare `ring` class tokens exist).
+4. Verification: 4/4 baselines pass both pre- and post-rename; prod build
+   68/68; tsc clean; eslint 0 errors.
+
+War stories (now encoded in the `visual-regression` skill):
+- A word-boundary rename script broke JSX in 2 files (matched object keys
+  like `ring:`) → v2 matcher requires class-token context + dry-run first.
+- `git checkout -- src` reverted globals.css too (v4 ignores legacy
+  `@tailwind` directives → unstyled pages, 0.89 pixel diff — the baseline
+  caught it instantly).
+- Never run `npm run build` while the dev server watches `.next` (Turbopack
+  churn corrupts dev asset state).
 
 ### 5. CMEMS wave client — F2 delivered, LIVE (`50d3fd6`)
 - `core/market/wave_client.py`: product `GLOBAL_ANALYSISFORECAST_WAV_001_027`,

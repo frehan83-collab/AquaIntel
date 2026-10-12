@@ -3,6 +3,23 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
+## [Unreleased] — Session 41b (2026-10-12, autonomous run, continued)
+
+### Added
+- **Tailwind 4.3 migration** (visually verified): `@tailwindcss/postcss`,
+  `@import "tailwindcss"` + `@config` compat, v3 border-color base layer,
+  class-token renames (outline-hidden ×62, rounded-xs ×12, shadow-xs ×8,
+  backdrop-blur-xs ×7, shadow-sm ×1). Gate: 4 committed visual baselines.
+- **Visual baselines** — `e2e/visual.spec.ts-snapshots/` (win32 chromium, 4
+  routes, deterministic fixtures) + Playwright chromium 1217 installed.
+- `.gitignore`: repaired corrupted UTF-16 tail; ignore frontend run artifacts;
+  untracked generated root `openapi.json`.
+
+### Changed
+- `visual-regression` skill: Session-41 war stories (baseline-first, dry-run
+  renames, dev-server/build collision, separate commits for baselines vs
+  migration).
+
 ## [Unreleased] — Session 41 (2026-10-12, autonomous run)
 
 ### Added
