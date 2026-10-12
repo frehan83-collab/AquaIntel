@@ -1,0 +1,30 @@
+# FishIntel optional foundation-model stack (heavy; ~2 GB with torch).
+# Install separately from requirements.txt:
+#     pip install -r requirements-models.txt
+#
+# NOTE: uni2ts (MOIRAI-2) pins scipy~=1.11.3 while the core file allows
+# scipy>=1.11 - installing both together resolves scipy to 1.11.3.
+# All engines degrade to documented fallbacks when these are absent
+# (see the data-honesty skill: fallback results must never be reported
+# as live model output).
+
+# Lice GNN (Graph Neural Network for lice spread prediction)
+# Install PyG separately after torch:
+#   pip install torch>=2.2.0
+#   pip install torch_geometric>=2.5.0
+#   pip install torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-2.2.0+cpu.html
+torch>=2.2.0
+torch_geometric>=2.5.0
+pytorch-forecasting>=1.1.0
+pytorch-lightning>=2.2.0
+
+# Chronos-2 zero-shot forecasting
+chronos-forecasting>=1.3
+
+# TimesFM 2.5 foundation model forecasting (Google Research)
+# Das et al. (2024): zero-shot with quantile head + XReg covariates
+timesfm>=2.0
+
+# MOIRAI-2 foundation model forecasting (Salesforce AI Research)
+# Liu et al. (2025): 30M params, 2x faster, #1 MASE on GIFT-Eval
+uni2ts>=1.0
