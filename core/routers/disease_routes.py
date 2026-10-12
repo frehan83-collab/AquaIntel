@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import datetime as dt
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from sqlalchemy import select
 
 from core.async_db import get_async_session
@@ -89,7 +89,7 @@ async def disease_norway_geo():
 
 
 @router.get("/treatments")
-async def disease_treatments(year: int = 2026, limit: int = 50):
+async def disease_treatments(year: int = 2026, limit: int = Query(50, ge=1, le=1000)):
     """Lice treatment reports with medicinal/non-medicinal details + resistance data.
     Unique data not available from BarentsWatch."""
     from core.market.mattilsynet_client import mattilsynet_client

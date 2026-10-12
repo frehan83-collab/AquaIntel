@@ -6,7 +6,7 @@ Catch certificates, lot tracing, IUU risk, EUDR compliance.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 
 from core.market.data_provenance import DataProvenance
 
@@ -47,7 +47,7 @@ async def traceability_get_certificate(cert_id: int):
 
 
 @router.get("/certificates")
-async def traceability_list_certificates(status: str | None = None, limit: int = 50):
+async def traceability_list_certificates(status: str | None = None, limit: int = Query(50, ge=1, le=1000)):
     """List catch certificates, optionally filtered by status."""
     from core.market.eu_traceability_engine import eu_traceability_engine
     result = await eu_traceability_engine.list_certificates(status=status, limit=limit)

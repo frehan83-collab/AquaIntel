@@ -25,7 +25,7 @@ bio_risk_router = APIRouter(prefix="/api/bio-risk", tags=["bio-risk"])
 
 
 @router.get("/risk")
-async def bloom_risk_map(limit: int = 1500):
+async def bloom_risk_map(limit: int = Query(1500, ge=1, le=10000)):
     """Latest bloom risk assessment per locality."""
     async with get_async_session() as s:
         # Get the most recent assessment per locality
@@ -134,7 +134,7 @@ async def bloom_risk_locality(locality_no: int, days: int = 30):
 @router.get("/alerts")
 async def bloom_alerts(
     risk_level: str | None = None,
-    limit: int = 100,
+    limit: int = Query(100, ge=1, le=1000),
 ):
     """Alert log for bloom notifications sent."""
     async with get_async_session() as s:
@@ -161,7 +161,7 @@ async def bloom_alerts(
 
 
 @router.get("/chlorophyll")
-async def chlorophyll_data(days: int = 7, limit: int = 5000):
+async def chlorophyll_data(days: int = 7, limit: int = Query(5000, ge=1, le=50000)):
     """Raw satellite chlorophyll-a readings for mapping."""
     cutoff = dt.datetime.now(dt.UTC) - dt.timedelta(days=days)
     async with get_async_session() as s:

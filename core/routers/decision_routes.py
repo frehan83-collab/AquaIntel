@@ -5,7 +5,7 @@ Extracted from core/api.py (Session 8).
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 
 from core.schemas import TreatmentOutcomeRequest, TreatmentOutcomeResponse
@@ -270,7 +270,7 @@ async def treatment_efficacy_by_method():
 # ══════════════════════════════════════════════════════════════════════
 
 @router.get("/treatment/history/{locality_no}")
-async def treatment_history(locality_no: int, limit: int = 20):
+async def treatment_history(locality_no: int, limit: int = Query(20, ge=1, le=1000)):
     """Get treatment history for a specific locality."""
     from core.async_db import get_async_session
     from sqlalchemy import text

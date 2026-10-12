@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import datetime as dt
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import select, func
 
 from core.async_db import get_async_session
@@ -140,7 +140,7 @@ async def yoy_comparison(metric: str = "lice", production_area: int = 0):
 # ── Peer Benchmarking ────────────────────────────────────────────────
 
 @router.get("/api/benchmark/leaderboard")
-async def benchmark_leaderboard(limit: int = 20):
+async def benchmark_leaderboard(limit: int = Query(20, ge=1, le=1000)):
     """Top performers by overall peer percentile."""
     from core.market.benchmarking import benchmarking_engine
     from core.market.data_provenance import DataProvenance

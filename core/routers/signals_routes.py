@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import datetime as dt
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import select, func
 
@@ -23,7 +23,7 @@ class SignalConfirmRequest(BaseModel):
 @router.get("/api/signals")
 async def list_signals(
     status: str | None = None,
-    limit: int = 50,
+    limit: int = Query(50, ge=1, le=1000),
 ):
     async with get_async_session() as s:
         q = select(Signal).order_by(Signal.created_at.desc()).limit(limit)
@@ -65,7 +65,7 @@ async def reject_signal(req: SignalConfirmRequest):
 
 
 @router.get("/api/orders")
-async def list_orders(limit: int = 50):
+async def list_orders(limit: int = Query(50, ge=1, le=1000)):
     async with get_async_session() as s:
         orders = (await s.execute(
             select(Order).order_by(Order.created_at.desc()).limit(limit)
@@ -88,7 +88,7 @@ async def list_orders(limit: int = 50):
 
 
 @router.get("/api/audit")
-async def audit_log(limit: int = 100):
+async def audit_log(limit: int = Query(100, ge=1, le=1000)):
     from compliance.compliance_agent import ComplianceAgent
     logs = await ComplianceAgent.export_audit_log()
     return logs[:limit]

@@ -4,13 +4,13 @@ Extracted from core/api.py (Session 10 — Router Wave 4).
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 
 router = APIRouter(tags=["alerts"])
 
 
 @router.get("/api/alerts")
-async def get_alerts(category: str = None, severity: str = None, unread_only: bool = False, limit: int = 50):
+async def get_alerts(category: str = None, severity: str = None, unread_only: bool = False, limit: int = Query(50, ge=1, le=1000)):
     """Get alerts with optional filters."""
     from core.market.alert_engine import alert_engine
     return alert_engine.get_alerts(category=category, severity=severity, unread_only=unread_only, limit=limit)
