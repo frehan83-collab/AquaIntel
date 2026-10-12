@@ -35,6 +35,10 @@ const nextConfig = {
   // Tree-shake large icon/chart libraries — saves 50-100KB
   experimental: {
     optimizePackageImports: ["lucide-react", "recharts", "framer-motion", "@deck.gl/core", "@deck.gl/layers", "maplibre-gl"],
+
+    // @next/playwright `instant()` lock — needed only in the e2e prod rig.
+    // Never enable on live deployments (per @next/playwright README).
+    exposeTestingApiInProductionBuild: process.env.FISHINTEL_E2E === "1",
   },
 };
 

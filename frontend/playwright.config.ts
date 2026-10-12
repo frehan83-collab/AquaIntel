@@ -10,6 +10,8 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e",
+  // instant.spec.ts belongs to the prod rig (playwright.instant.config.ts)
+  testIgnore: /instant\.spec\.ts/,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
