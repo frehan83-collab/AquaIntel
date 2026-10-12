@@ -33,6 +33,20 @@ def _diff_summary(live: dict, frozen: dict) -> str:
     return "; ".join(parts)
 
 
+def _comparable_paths(spec: dict) -> dict:
+    """Paths included in the drift contract.
+
+    Test-only routes registered by other test modules (e.g.
+    /api/test-not-found from test_error_envelope.py) live on the shared app
+    object and depend on test ordering — excluded by convention.
+    """
+    return {
+        path: ops
+        for path, ops in spec.get("paths", {}).items()
+        if not path.startswith("/api/test")
+    }
+
+
 def test_openapi_matches_frozen_contract():
     assert FROZEN.exists(), (
         "docs/openapi.frozen.json missing — run: python scripts/freeze_openapi.py"
@@ -44,6 +58,8 @@ def test_openapi_matches_frozen_contract():
     # schema shape is what this test protects.
     live.get("info", {}).pop("version", None)
     frozen.get("info", {}).pop("version", None)
+    live["paths"] = _comparable_paths(live)
+    frozen["paths"] = _comparable_paths(frozen)
 
     if live != frozen:
         raise AssertionError(
