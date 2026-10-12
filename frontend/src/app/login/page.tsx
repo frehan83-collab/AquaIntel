@@ -1,14 +1,12 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { LogIn, UserPlus, Mail, Lock, Building2, Briefcase } from "lucide-react";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export default function LoginPage() {
-  const { t } = useTranslation();
+  const router = useRouter();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,7 +38,7 @@ export default function LoginPage() {
 
       // Redirect to dashboard after brief delay
       setTimeout(() => {
-        window.location.href = "/";
+        router.push("/");
       }, 1000);
     } catch (err: any) {
       setError(err?.message || "Authentication failed");
