@@ -55,13 +55,20 @@ docker compose up -d
 # Services:
 #   - db (TimescaleDB):  localhost:5432
 #   - fishintel (API):   localhost:8000
+#   - fishintel-agents:  background agents (no ports)
 #   - frontend (Next.js): localhost:3000
 #   - nginx (proxy):     localhost:80 / :443
 ```
 
 The `docker-compose.yml` includes:
 - **db** -- TimescaleDB (PostgreSQL 16 with time-series extensions)
-- **fishintel** -- Python/FastAPI backend with all agents
+- **fishintel** -- Python/FastAPI backend (API only)
+- **fishintel-agents** -- the 12 background agents (data ingest every 15 min,
+  exposure mapping, correlation, signal generation, prediction, backfill,
+  execution, compliance, bloom, hedging, self-evolve, intelligence) plus
+  sentiment polling. Runs `python main.py --agents-only` with graceful
+  SIGTERM shutdown (`stop_grace_period: 60s`). Restarting the API does not
+  interrupt data ingest.
 - **frontend** -- Next.js production build
 - **nginx** -- Reverse proxy for TLS termination
 

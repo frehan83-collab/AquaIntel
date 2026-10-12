@@ -16,6 +16,7 @@ import datetime as dt
 from dataclasses import dataclass, field
 
 import httpx
+from tenacity import retry, stop_after_attempt, wait_exponential
 import structlog
 
 log = structlog.get_logger(__name__)
@@ -56,21 +57,13 @@ class SSBPriceClient:
         self._cache_time: dt.datetime | None = None
         self._cache_ttl = dt.timedelta(hours=6)  # SSB updates weekly
 
-    async def fetch_prices(self, n_weeks: int = 52) -> SSBPriceData:
-        """
-        Fetch the last n_weeks of salmon export prices from SSB.
-        Returns real NOK/kg prices.
-        """
-        now = dt.datetime.now(dt.UTC)
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=30), reraise=True)
+    async def _fetch_remote(self, n_weeks: int) -> list[SalmonPriceWeek]:
+        """Fetch + parse one SSB 03024 response.
 
-        # Use cache if fresh
-        if (
-            self._cache
-            and self._cache_time
-            and (now - self._cache_time) < self._cache_ttl
-        ):
-            return self._cache
-
+        Retries transient failures (network errors, 5xx) with exponential
+        backoff, matching the BarentsWatch client pattern.
+        """
         query = {
             "query": [
                 {
@@ -101,45 +94,65 @@ class SSBPriceClient:
             "response": {"format": "json-stat2"},
         }
 
+        resp = await self._client.post(
+            SSB_API_URL,
+            json=query,
+            headers={"Content-Type": "application/json"},
+        )
+        if resp.status_code != 200:
+            raise RuntimeError(f"ssb_http_{resp.status_code}")
+        return self._parse_response(resp.json())
+
+    async def fetch_prices(self, n_weeks: int = 52) -> SSBPriceData:
+        """
+        Fetch the last n_weeks of salmon export prices from SSB.
+        Returns real NOK/kg prices.
+        """
+        now = dt.datetime.now(dt.UTC)
+
+        # Use cache if fresh
+        if (
+            self._cache
+            and self._cache_time
+            and (now - self._cache_time) < self._cache_ttl
+        ):
+            return self._cache
+
         try:
-            resp = await self._client.post(
-                SSB_API_URL,
-                json=query,
-                headers={"Content-Type": "application/json"},
+            prices = await self._fetch_remote(n_weeks)
+
+            result = SSBPriceData(
+                prices=prices,
+                n_weeks=len(prices),
             )
 
-            if resp.status_code == 200:
-                data = resp.json()
-                prices = self._parse_response(data)
+            if prices:
+                result.latest_price = prices[-1].price_nok_kg
+                result.latest_week = f"{prices[-1].year}W{prices[-1].week:02d}"
 
-                result = SSBPriceData(
-                    prices=prices,
-                    n_weeks=len(prices),
-                )
+            self._cache = result
+            self._cache_time = now
 
-                if prices:
-                    result.latest_price = prices[-1].price_nok_kg
-                    result.latest_week = f"{prices[-1].year}W{prices[-1].week:02d}"
-
-                self._cache = result
-                self._cache_time = now
-
-                log.info(
-                    "ssb_price.fetched",
-                    n_weeks=len(prices),
-                    latest=result.latest_price,
-                    latest_week=result.latest_week,
-                )
-                return result
-
-            else:
-                log.warning("ssb_price.fetch_failed", status=resp.status_code)
+            log.info(
+                "ssb_price.fetched",
+                n_weeks=len(prices),
+                latest=result.latest_price,
+                latest_week=result.latest_week,
+            )
+            return result
 
         except Exception as e:
-            log.warning("ssb_price.error", error=str(e)[:100])
+            log.warning("ssb_price.fetch_failed", error=str(e)[:100])
 
-        # Return cached or empty
-        return self._cache or SSBPriceData()
+        # Serve-stale: an old real price beats an empty one.
+        if self._cache is not None:
+            log.warning(
+                "ssb_price.serving_stale",
+                age_hours=round((now - (self._cache_time or now)).total_seconds() / 3600, 1),
+                latest=self._cache.latest_price,
+            )
+            return self._cache
+        return SSBPriceData()
 
     async def get_current_spot(self) -> float:
         """Get the latest weekly salmon price (NOK/kg)."""
@@ -258,10 +271,36 @@ class SSBPriceClient:
 
     # ── Bulk historical fetch (6+ years) ────────────────────────
 
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=30), reraise=True)
+    async def _fetch_all_history(self, start_year: int) -> list[SalmonPriceWeek]:
+        """Fetch the full 03024 series in ONE request, filter client-side.
+
+        The SSB ``fromTo`` time filter is unreliable for this table (returns
+        1-2 rows per request — it silently starved bulk history to 14 weeks
+        instead of ~350 before2026-10). ``filter:all`` returns the complete
+        series and is the validated path since
+        scripts/fetch_historical_ssb_prices.py and the price backtest.
+        """
+        query = {
+            "query": [
+                {"code": "VareGrupper2", "selection": {"filter": "item", "values": ["01"]}},
+                {"code": "ContentsCode", "selection": {"filter": "item", "values": ["Kilopris", "Vekt"]}},
+                {"code": "Tid", "selection": {"filter": "all", "values": ["*"]}},
+            ],
+            "response": {"format": "json-stat2"},
+        }
+        resp = await self._client.post(
+            SSB_API_URL, json=query,
+            headers={"Content-Type": "application/json"},
+        )
+        if resp.status_code != 200:
+            raise RuntimeError(f"ssb_http_{resp.status_code}")
+        return [p for p in self._parse_response(resp.json()) if p.year >= start_year]
+
     async def fetch_bulk_history(self, start_year: int = 2020) -> SSBPriceData:
         """
         Fetch multi-year weekly price history from SSB.
-        Batches by year to avoid API limits.
+        Single filter:all request (see _fetch_all_history).
         Caches for 24 hours (data only updates weekly).
         """
         now = dt.datetime.now(dt.UTC)
@@ -275,37 +314,24 @@ class SSBPriceClient:
         all_prices: list[SalmonPriceWeek] = []
         current_year = now.year
 
-        for year in range(start_year, current_year + 1):
-            # Use "fromTo" range filter to avoid requesting weeks SSB hasn't
-            # published yet (1-2 week reporting lag causes HTTP 400).
-            from_code = f"{year}U01"
-            # For current year cap at week 1 to avoid overshoot; "top" used
-            # for recent data so this just needs to cover full past years.
-            to_code = f"{year}U52" if year < current_year else f"{year}U{max(1, now.isocalendar()[1] - 2):02d}"
-
-            query = {
-                "query": [
-                    {"code": "VareGrupper2", "selection": {"filter": "item", "values": ["01"]}},
-                    {"code": "ContentsCode", "selection": {"filter": "item", "values": ["Kilopris", "Vekt"]}},
-                    {"code": "Tid", "selection": {"filter": "fromTo", "values": [from_code, to_code]}},
-                ],
-                "response": {"format": "json-stat2"},
-            }
-
-            try:
-                resp = await self._client.post(
-                    SSB_API_URL, json=query,
-                    headers={"Content-Type": "application/json"},
+        try:
+            all_prices = await self._fetch_all_history(start_year)
+        except Exception as e:
+            log.warning("ssb_price.bulk_fetch_failed", error=str(e)[:100])
+            if self._bulk_cache is not None:
+                log.warning(
+                    "ssb_price.bulk_serving_stale",
+                    n_weeks=self._bulk_cache.n_weeks,
+                    age_hours=round((now - (self._bulk_cache_time or now)).total_seconds() / 3600, 1),
                 )
-                if resp.status_code == 200:
-                    prices = self._parse_response(resp.json())
-                    all_prices.extend(prices)
-                    log.info("ssb_price.bulk_year", year=year, n_weeks=len(prices))
-            except Exception as e:
-                log.warning("ssb_price.bulk_year_error", year=year, error=str(e)[:80])
+                return self._bulk_cache
+            return SSBPriceData()
 
         # Sort chronologically
         all_prices.sort(key=lambda p: (p.year, p.week))
+
+        if not all_prices:
+            log.warning("ssb_price.bulk_empty", start_year=start_year)
 
         result = SSBPriceData(
             prices=all_prices,

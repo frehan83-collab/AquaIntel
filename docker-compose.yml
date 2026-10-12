@@ -55,6 +55,40 @@ services:
       - FISHINTEL_ENV=production
       - FISKERIDIR_BIOSTAT_JSON=/app/data/biostat-total-flk.json
 
+  # Background agents (12 + sentiment polling) as their own service.
+  # Previously agents were absent from the production deployment entirely —
+  # the 15-min data-ingest loop, signal generation, prediction and hedging
+  # never ran in production. Separate service also means an API restart no
+  # longer takes data ingest down with it. SIGTERM is handled gracefully
+  # (stop_grace_period lets the httpx-client + DB cleanup finish).
+  fishintel-agents:
+    build: .
+    container_name: fishintel-agents
+    command: python main.py --agents-only
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    stop_grace_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          memory: 512M
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://openclaw:${POSTGRES_PASSWORD:-openclaw-dev-password}@db:5432/openclaw
+      - PYTENSOR_FLAGS=device=cpu,floatX=float64,optimizer=fast_compile,cxx=
+      - FISHINTEL_JWT_SECRET=${FISHINTEL_JWT_SECRET:?FISHINTEL_JWT_SECRET is required - generate with: python -c "import secrets; print(secrets.token_urlsafe(64))"}
+      - FISHINTEL_ENV=production
+      - FISKERIDIR_BIOSTAT_JSON=/app/data/biostat-total-flk.json
+
   # Frontend: Next.js
   frontend:
     build:

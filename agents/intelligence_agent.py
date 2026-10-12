@@ -146,12 +146,15 @@ class IntelligenceAgent(BaseAgent):
 
     async def _run_farm_graph(self) -> None:
         try:
-            # Farm graph builds from DB — no external HTTP
-            summary = self._farm_graph.get_graph_summary()
+            # Farm graph builds from DB — no external HTTP.
+            # build_graph()/get_graph_summary() are async — must be awaited
+            # (they silently returned coroutines before2026-10, so the farm
+            # graph never actually built).
+            summary = await self._farm_graph.get_graph_summary()
             if summary.get("n_farms", 0) == 0:
                 # build_graph() reads directly from DB — no args needed
-                self._farm_graph.build_graph()
-                summary = self._farm_graph.get_graph_summary()
+                await self._farm_graph.build_graph()
+                summary = await self._farm_graph.get_graph_summary()
             self._last["farm_graph"] = dt.datetime.now(dt.UTC)
             self.log.info(
                 "intelligence.farm_graph_updated",

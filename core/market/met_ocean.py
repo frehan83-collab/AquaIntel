@@ -14,6 +14,7 @@ import datetime as dt
 from dataclasses import dataclass, field
 
 import httpx
+from tenacity import retry, stop_after_attempt, wait_exponential
 import numpy as np
 import structlog
 
@@ -66,6 +67,28 @@ class METOceanClient:
         self._client = httpx.AsyncClient(timeout=30.0)
 
     # ── Frost API (historical observations) ──────────────────────────
+
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=30), reraise=True)
+    async def _frost_request(self, chunk: list[str], ref_time: str, now_str: str) -> list[dict]:
+        """One Frost observations request. Retries transient failures
+        (network errors, 5xx) with exponential backoff, matching the
+        BarentsWatch/SSB client pattern. 412 = no data, not an error."""
+        resp = await self._client.get(
+            "https://frost.met.no/observations/v0.jsonld",
+            params={
+                "sources": ",".join(chunk),
+                "elements": "sea_water_temperature",
+                "referencetime": f"{ref_time}/{now_str}",
+                "timeresolutions": "PT1H",
+            },
+            auth=(self._frost_id, ""),
+        )
+        if resp.status_code == 200:
+            return resp.json().get("data", [])
+        if resp.status_code == 412:
+            return []  # no data for these stations
+        raise RuntimeError(f"frost_http_{resp.status_code}")
+
     async def get_sea_temperatures(
         self,
         station_ids: list[str] | None = None,
@@ -82,6 +105,7 @@ class METOceanClient:
         stations = station_ids or [s for slist in COASTAL_STATIONS.values() for s in slist]
         now = dt.datetime.now(dt.UTC)
         ref_time = (now - dt.timedelta(hours=hours_back)).strftime("%Y-%m-%dT%H:%M:%S")
+        now_str = now.strftime("%Y-%m-%dT%H:%M:%S")
 
         # Frost API limits sources to 50 per request
         observations = []
@@ -89,35 +113,18 @@ class METOceanClient:
             chunk = stations[chunk_start:chunk_start + 20]
 
             try:
-                resp = await self._client.get(
-                    "https://frost.met.no/observations/v0.jsonld",
-                    params={
-                        "sources": ",".join(chunk),
-                        "elements": "sea_water_temperature",
-                        "referencetime": f"{ref_time}/{now.strftime('%Y-%m-%dT%H:%M:%S')}",
-                        "timeresolutions": "PT1H",
-                    },
-                    auth=(self._frost_id, ""),
-                )
-
-                if resp.status_code == 200:
-                    data = resp.json()
-                    for item in data.get("data", []):
-                        station = item.get("sourceId", "").split(":")[0]
-                        ref = item.get("referenceTime", "")
-                        for obs in item.get("observations", []):
-                            if obs.get("elementId") == "sea_water_temperature":
-                                pa = self._station_to_pa(station)
-                                observations.append(SeaTempObservation(
-                                    station_id=station,
-                                    production_area=pa,
-                                    timestamp=dt.datetime.fromisoformat(ref.replace("Z", "+00:00")),
-                                    temperature_c=float(obs["value"]),
-                                ))
-                elif resp.status_code == 412:
-                    pass  # no data for these stations
-                else:
-                    log.warning("frost.request_fail", status=resp.status_code)
+                for item in await self._frost_request(chunk, ref_time, now_str):
+                    station = item.get("sourceId", "").split(":")[0]
+                    ref = item.get("referenceTime", "")
+                    for obs in item.get("observations", []):
+                        if obs.get("elementId") == "sea_water_temperature":
+                            pa = self._station_to_pa(station)
+                            observations.append(SeaTempObservation(
+                                station_id=station,
+                                production_area=pa,
+                                timestamp=dt.datetime.fromisoformat(ref.replace("Z", "+00:00")),
+                                temperature_c=float(obs["value"]),
+                            ))
 
             except Exception as exc:
                 log.warning("frost.error", error=str(exc)[:100])
@@ -126,6 +133,19 @@ class METOceanClient:
         return observations
 
     # ── OceanForecast API (predictions) ──────────────────────────────
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=30), reraise=True)
+    async def _ocean_forecast_request(self, lat: float, lon: float) -> list[dict]:
+        """One OceanForecast request. Retries transient failures (network
+        errors, 5xx) with exponential backoff, matching the other clients."""
+        resp = await self._client.get(
+            "https://api.met.no/weatherapi/oceanforecast/2.0/complete",
+            params={"lat": round(lat, 4), "lon": round(lon, 4)},
+            headers={"User-Agent": "OpenClaw/1.0 github.com/openclaw"},
+        )
+        if resp.status_code != 200:
+            raise RuntimeError(f"oceanforecast_http_{resp.status_code}")
+        return resp.json().get("properties", {}).get("timeseries", [])
+
     async def get_ocean_forecast(
         self,
         lat: float,
@@ -137,32 +157,21 @@ class METOceanClient:
         """
         forecasts = []
         try:
-            resp = await self._client.get(
-                "https://api.met.no/weatherapi/oceanforecast/2.0/complete",
-                params={"lat": round(lat, 4), "lon": round(lon, 4)},
-                headers={"User-Agent": "OpenClaw/1.0 github.com/openclaw"},
-            )
+            timeseries = await self._ocean_forecast_request(lat, lon)
 
-            if resp.status_code == 200:
-                data = resp.json()
-                timeseries = data.get("properties", {}).get("timeseries", [])
-                base_time = dt.datetime.now(dt.UTC)
+            for i, ts in enumerate(timeseries):
+                time_str = ts.get("time", "")
+                details = ts.get("data", {}).get("instant", {}).get("details", {})
+                temp = details.get("sea_water_temperature")
 
-                for i, ts in enumerate(timeseries):
-                    time_str = ts.get("time", "")
-                    details = ts.get("data", {}).get("instant", {}).get("details", {})
-                    temp = details.get("sea_water_temperature")
-
-                    if temp is not None:
-                        forecasts.append(SeaTempForecast(
-                            latitude=lat,
-                            longitude=lon,
-                            forecast_time=dt.datetime.fromisoformat(time_str.replace("Z", "+00:00")),
-                            temperature_c=float(temp),
-                            hours_ahead=i,
-                        ))
-            else:
-                log.warning("ocean_forecast.fail", status=resp.status_code)
+                if temp is not None:
+                    forecasts.append(SeaTempForecast(
+                        latitude=lat,
+                        longitude=lon,
+                        forecast_time=dt.datetime.fromisoformat(time_str.replace("Z", "+00:00")),
+                        temperature_c=float(temp),
+                        hours_ahead=i,
+                    ))
 
         except Exception as exc:
             log.warning("ocean_forecast.error", error=str(exc)[:100])

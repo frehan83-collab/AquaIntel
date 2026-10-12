@@ -4,7 +4,7 @@ from __future__ import annotations
 import datetime as dt
 from sqlalchemy import (
     Column, Integer, Float, String, DateTime, Boolean, Text, ForeignKey,
-    UniqueConstraint, Index, create_engine, text, func,
+    UniqueConstraint, Index, create_engine, event, text, func,
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
@@ -481,6 +481,15 @@ if _is_sqlite:
         echo=False,
         connect_args={"timeout": 30},
     )
+
+    @event.listens_for(engine, "connect")
+    def _sqlite_connect_pragmas(dbapi_connection, connection_record):
+        """WAL + busy_timeout on EVERY connection (the init_db PRAGMAs only
+        affect one connection; busy_timeout is per-connection state)."""
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA busy_timeout=30000")
+        cursor.close()
 else:
     # PostgreSQL / TimescaleDB
     engine = create_engine(

@@ -15,6 +15,7 @@ import os
 os.environ["PYTENSOR_FLAGS"] = "device=cpu,floatX=float64,optimizer=fast_compile,cxx="
 
 import asyncio
+import signal
 import sys
 
 import click
@@ -85,10 +86,31 @@ async def run_agents() -> None:
     sentiment_task = asyncio.create_task(_sentiment_polling_loop())
     tasks.append(sentiment_task)
 
+    # Graceful shutdown: SIGTERM (docker stop / compose down) and SIGINT must
+    # run the cleanup below instead of the process dying mid-run (the arch
+    # report's lifespan finding: agents had no shutdown handler at all).
+    loop = asyncio.get_running_loop()
+    stop_requested = asyncio.Event()
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        try:
+            loop.add_signal_handler(sig, stop_requested.set)
+        except (NotImplementedError, RuntimeError):  # Windows ProactorEventLoop
+            signal.signal(sig, lambda *_: loop.call_soon_threadsafe(stop_requested.set))
+
+    gather_task = asyncio.ensure_future(asyncio.gather(*tasks))
+    stop_task = asyncio.ensure_future(stop_requested.wait())
     try:
-        await asyncio.gather(*tasks)
+        await asyncio.wait({gather_task, stop_task}, return_when=asyncio.FIRST_COMPLETED)
+        if stop_task.done() and not gather_task.done():
+            log.info("orchestrator.shutdown_signal")
+            for t in tasks:
+                t.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+        else:
+            gather_task.result()  # propagate agent failures
     except (KeyboardInterrupt, asyncio.CancelledError):
         log.info("orchestrator.stopping")
+    finally:
         for agent in agents:
             agent.stop()
         await ingest.shutdown()
@@ -100,6 +122,8 @@ async def run_agents() -> None:
             await sentiment_engine.shutdown()
         except Exception:
             pass
+        stop_task.cancel()
+        log.info("orchestrator.stopped")
 
 
 def run_api(host: str = "0.0.0.0", port: int = 8000) -> None:

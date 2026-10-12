@@ -26,7 +26,23 @@ _is_sqlite = "sqlite" in _async_url
 
 if _is_sqlite:
     # SQLite: limited concurrency, no pool needed
-    async_engine = create_async_engine(_async_url, echo=False)
+    async_engine = create_async_engine(
+        _async_url,
+        echo=False,
+        connect_args={"timeout": 30},
+    )
+
+    from sqlalchemy import event
+
+    @event.listens_for(async_engine.sync_engine, "connect")
+    def _sqlite_connect_pragmas(dbapi_connection, connection_record):
+        """WAL + busy_timeout on EVERY aiosqlite connection (busy_timeout is
+        per-connection state; the aiosqlite default is only 5s, which caused
+        recurring "database is locked" agent tick failures)."""
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA busy_timeout=30000")
+        cursor.close()
 else:
     # PostgreSQL/TimescaleDB: production pool tuning
     # pool_size=20 per worker, max_overflow=40 for burst, recycle every hour
