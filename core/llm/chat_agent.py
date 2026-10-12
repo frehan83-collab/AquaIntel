@@ -42,8 +42,22 @@ MAX_TOOL_ITERATIONS = 5
 class ChatAgent:
     """Conversational decision intelligence over platform data."""
 
+    # Bounded history (arch report §3.2/#10): prevents unbounded memory creep
+    # in long-lived worker processes. Multi-turn context only uses the last 6.
+    MAX_HISTORY_ENTRIES = 200
+
     def __init__(self) -> None:
         self.conversation_history: list[dict] = []
+
+    def _append_history(self, role: str, content: str, **extra) -> None:
+        self.conversation_history.append({
+            "role": role,
+            "content": content,
+            "timestamp": dt.datetime.now(dt.UTC).isoformat(),
+            **extra,
+        })
+        if len(self.conversation_history) > self.MAX_HISTORY_ENTRIES:
+            del self.conversation_history[:-self.MAX_HISTORY_ENTRIES]
 
     # ── public entry point ──────────────────────────────────────────
     async def ask(self, question: str, user_id: str = "user", horizon: int = 4) -> str:
@@ -187,17 +201,9 @@ class ChatAgent:
                     "Here is what I found so far based on the data retrieved."
                 )
 
-        # Persist to conversation history
-        self.conversation_history.append({
-            "role": "user",
-            "content": question,
-            "timestamp": dt.datetime.now(dt.UTC).isoformat(),
-        })
-        self.conversation_history.append({
-            "role": "assistant",
-            "content": final_text,
-            "timestamp": dt.datetime.now(dt.UTC).isoformat(),
-        })
+        # Persist to conversation history (bounded)
+        self._append_history("user", question)
+        self._append_history("assistant", final_text)
 
         return final_text
 
@@ -285,19 +291,13 @@ class ChatAgent:
             user_id=user_id,
         )
 
-        # Track conversation
-        self.conversation_history.append({
-            "role": "user",
-            "content": question,
-            "timestamp": dt.datetime.now(dt.UTC).isoformat(),
-        })
-        self.conversation_history.append({
-            "role": "assistant",
-            "content": resp.content,
-            "timestamp": dt.datetime.now(dt.UTC).isoformat(),
-            "tokens": resp.input_tokens + resp.output_tokens,
-            "cost": resp.cost_usd,
-        })
+        # Track conversation (bounded)
+        self._append_history("user", question)
+        self._append_history(
+            "assistant", resp.content,
+            tokens=resp.input_tokens + resp.output_tokens,
+            cost=resp.cost_usd,
+        )
 
         return resp.content
 

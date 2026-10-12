@@ -7,6 +7,7 @@ from __future__ import annotations
 import csv
 import datetime as dt
 import io
+import json
 import time as _time
 import os
 
@@ -349,8 +350,45 @@ def _row_to_dict(row, model_cls) -> dict:
     return d
 
 
+# ──────────────────────────────────────────────────────────────────────
+# Streaming export helpers (arch report §3.2/#10: 186k-row exports must
+# never materialize in memory — 12.9 MB strings per request before)
+# ──────────────────────────────────────────────────────────────────────
+
+_CSV_FLUSH_ROWS = 500
+
+
+async def _stream_csv_rows(row_iter) -> "AsyncIterator[bytes]":
+    """True streaming CSV: emits a header + flushes every 500 rows."""
+    buf = io.StringIO()
+    writer: csv.DictWriter | None = None
+    count = 0
+    async for row in row_iter:
+        if writer is None:
+            writer = csv.DictWriter(buf, fieldnames=list(row.keys()), quoting=csv.QUOTE_MINIMAL)
+            writer.writeheader()
+        writer.writerow(row)
+        count += 1
+        if count % _CSV_FLUSH_ROWS == 0:
+            yield buf.getvalue().encode("utf-8")
+            buf.seek(0)
+            buf.truncate(0)
+    yield buf.getvalue().encode("utf-8")
+
+
+async def _stream_json_rows(row_iter) -> "AsyncIterator[bytes]":
+    """Streaming JSON array: [ {row}, {row}, ... ] written incrementally."""
+    yield b"["
+    first = True
+    async for row in row_iter:
+        chunk = json.dumps(row, default=str)
+        yield (("" if first else ",") + "\n" + chunk).encode("utf-8")
+        first = False
+    yield b"\n]"
+
+
 def _build_csv(rows: list[dict]) -> str:
-    """Build RFC 4180 compliant CSV from list of dicts."""
+    """Build RFC 4180 compliant CSV from list of dicts (small in-memory sets)."""
     if not rows:
         return ""
     output = io.StringIO()
@@ -452,19 +490,20 @@ async def admin_export_dataset(
             except ValueError:
                 raise HTTPException(status_code=400, detail="Invalid to_date format. Use YYYY-MM-DD.")
 
-    # Execute
-    async with get_async_session() as s:
-        result = await s.execute(stmt)
-        rows_raw = result.scalars().all()
+    # Execute — stream rows from the DB so large exports (186k+ rows) never
+    # materialize in memory. The session stays open for the stream duration.
+    async def _row_iter():
+        async with get_async_session() as s:
+            stream = await s.stream(stmt)
+            async for row in stream:
+                yield _row_to_dict(row, model)
 
-    rows = [_row_to_dict(r, model) for r in rows_raw]
-
-    # Audit: data export
+    # Audit: data export (streamed — row count is not materialized)
     from core.audit import log_action, get_client_ip
     await log_action(
         None, "export",
         f"dataset:{dataset}",
-        details={"format": format, "row_count": len(rows), "from_date": from_date, "to_date": to_date},
+        details={"format": format, "streamed": True, "from_date": from_date, "to_date": to_date},
         ip=get_client_ip(request),
     )
 
@@ -473,23 +512,22 @@ async def admin_export_dataset(
     filename_base = f"openclaw_{dataset}_{ts}"
 
     if format == "csv":
-        csv_content = _build_csv(rows)
         return StreamingResponse(
-            iter([csv_content]),
+            _stream_csv_rows(_row_iter()),
             media_type="text/csv",
             headers={
                 "Content-Disposition": f'attachment; filename="{filename_base}.csv"',
+                "X-Accel-Buffering": "no",
             },
         )
     else:
-        # JSON format
-        import json
-        json_content = json.dumps(rows, indent=2, default=str)
+        # JSON format (streamed array)
         return StreamingResponse(
-            iter([json_content]),
+            _stream_json_rows(_row_iter()),
             media_type="application/json",
             headers={
                 "Content-Disposition": f'attachment; filename="{filename_base}.json"',
+                "X-Accel-Buffering": "no",
             },
         )
 

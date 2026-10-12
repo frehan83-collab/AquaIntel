@@ -243,14 +243,29 @@ def generate_api_key() -> str:
     return f"oc_live_{random_part}"
 
 
+_API_KEY_PREFIX = "oc_live_"
+_LAST_USED_THROTTLE = dt.timedelta(seconds=60)
+
+
 async def _authenticate_via_api_key(request: Request) -> TokenPayload | None:
     """
     Check for X-API-Key header or api_key query param.
     If found, validate and return a TokenPayload for the key's user.
+
+    Hardening (arch report §1.2.4):
+    - Fail fast on malformed keys (wrong prefix / bad length) BEFORE any DB or
+      bcrypt work, so junk-key floods cannot pin the event loop or force a
+      key-table scan per request.
+    - ``last_used`` is persisted at most once per 60 s per key (throttled
+      commit) instead of writing on every single request.
     """
     raw_key = request.headers.get("X-API-Key") or request.query_params.get("api_key")
     if not raw_key:
         return None
+
+    # Fail-fast: reject malformed keys before touching DB/bcrypt.
+    if not raw_key.startswith(_API_KEY_PREFIX) or not (20 <= len(raw_key) <= 200):
+        raise HTTPException(401, "Invalid API key format")
 
     # Lazy import to avoid circular dependency
     from core.async_db import get_async_session
@@ -274,9 +289,14 @@ async def _authenticate_via_api_key(request: Request) -> TokenPayload | None:
                 if api_key.expires_at and api_key.expires_at < dt.datetime.now(dt.UTC):
                     raise HTTPException(401, "API key expired")
 
-                # Update last_used
-                api_key.last_used = dt.datetime.now(dt.UTC)
-                await s.commit()
+                # Throttled last_used update: at most once per 60s per key.
+                now = dt.datetime.now(dt.UTC)
+                last = api_key.last_used
+                if last is not None and last.tzinfo is None:
+                    last = last.replace(tzinfo=dt.UTC)
+                if last is None or (now - last) > _LAST_USED_THROTTLE:
+                    api_key.last_used = now
+                    await s.commit()
 
                 # Get user
                 user_result = await s.execute(

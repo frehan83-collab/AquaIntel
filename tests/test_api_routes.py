@@ -657,6 +657,21 @@ class TestAdminExport:
         r = client.get("/api/admin/export/lice?format=json")
         assert r.status_code == 401
 
+    def test_export_users_json_wellformed(self, admin_client):
+        """Streaming JSON export must be a valid JSON array."""
+        r = admin_client.get("/api/admin/export/users?format=json")
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("application/json")
+        parsed = r.json()  # raises if the streamed array is malformed
+        assert isinstance(parsed, list)
+
+    def test_export_users_csv_has_header(self, admin_client):
+        """Streaming CSV export must start with a header row."""
+        r = admin_client.get("/api/admin/export/users?format=csv")
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("text/csv")
+        assert r.text.startswith("id") or "," in r.text.splitlines()[0]
+
 
 # ---------------------------------------------------------------------------
 # Custom Alert Rules (Session 19)
