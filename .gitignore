@@ -50,5 +50,6 @@ openapi.json
 frontend/test-results/
 frontend/playwright-report/
 frontend/dev.log
+frontend/prod.log
 frontend/pw_*.log
 frontend/_l*.txt
