@@ -41,9 +41,9 @@ jobs:
       - name: Run visual spec (update=${{ inputs.update }})
         run: |
           if [ "${{ inputs.update }}" = "true" ]; then
-            npx playwright test e2e/visual.spec.ts --project=chromium --update-snapshots
+            npx playwright test e2e/visual.spec.ts --update-snapshots
           else
-            npx playwright test e2e/visual.spec.ts --project=chromium
+            npx playwright test e2e/visual.spec.ts
           fi
 
       - name: Upload snapshots
