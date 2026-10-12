@@ -30,7 +30,10 @@ plotly>=5.18
 altair>=5.2
 
 # API Framework
-fastapi>=0.115
+# Pinned range: CI must install the SAME line the platform is verified on.
+# fastapi 0.143+ changed include_router to lazy _IncludedRouter entries, which
+# alters app.routes introspection (route-audit tests); re-audit before bumping.
+fastapi>=0.135.2,<0.136
 uvicorn[standard]>=0.29
 gunicorn>=22.0
 

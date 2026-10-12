@@ -62,9 +62,15 @@ log = structlog.get_logger(__name__)
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
-# CMEMS product and dataset identifiers (NorKyst800 operational)
-CMEMS_DATASET_ID = "cmems_mod_nok_phy_anfc_nordic_P1D-m"
-CMEMS_PRODUCT_ID = "NORSHELFS_ANALYSISFORECAST_PHY_003_058"
+# CMEMS product and dataset identifiers.
+# Session 40 (verified live against the CMEMS catalogue): there is NO Norwegian
+# coastal product in CMEMS - "NORSHELFS_ANALYSISFORECAST_PHY_003_058" /
+# "cmems_mod_nok_phy_anfc_nordic_P1D-m" do not exist (catalogue describe:
+# norkyst/norshelf -> NO MATCH). The 1/12° global physics analysis/forecast is
+# used for the coarse current boost; site-level detail is served by MET.no
+# NorKyst800 v3 via THREDDS (see core/market/norkyst_client.py).
+CMEMS_DATASET_ID = "cmems_mod_glo_phy_anfc_0.083deg_P1D-m"
+CMEMS_PRODUCT_ID = "GLOBAL_ANALYSISFORECAST_PHY_001_024"
 
 # Geographic bounding box — Norwegian salmon farming coast
 LAT_MIN, LAT_MAX = 56.0, 72.0

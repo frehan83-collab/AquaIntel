@@ -85,7 +85,10 @@ def client():
 
 class TestRouteSurface:
     def test_all_migrated_paths_registered(self):
-        registered = [r.path for r in app.routes]
+        # getattr guard: newer FastAPI lines expose lazy _IncludedRouter entries
+        # without .path in app.routes (seen with 0.143 on unpinned CI).
+        registered = [getattr(r, "path", None) for r in app.routes]
+        registered = [p for p in registered if p]
         for path in MIGRATED_PATHS:
             assert path in registered, f"Missing route after decomposition: {path}"
 
@@ -94,7 +97,7 @@ class TestRouteSurface:
             (r.path, m)
             for r in app.routes
             for m in getattr(r, "methods", None) or []
-            if r.path.startswith("/api/")
+            if getattr(r, "path", "").startswith("/api/")
         ]
         dupes = {p for p in pairs if pairs.count(p) > 1}
         assert not dupes, f"Duplicate (path, method) routes: {dupes}"
