@@ -57,7 +57,20 @@ try:
     from torch_geometric.nn import GATv2Conv, LayerNorm
     _TORCH_GEOMETRIC_AVAILABLE = True
 except ImportError:
-    pass
+    class _MissingPyG:
+        """Stand-in for torch_geometric symbols so the module stays importable.
+
+        Any construction attempt raises a clear RuntimeError — routes gate on
+        is_available()/503 before that point, but stray uses must not crash
+        the import itself (that broke 2 tests whenever torch was present and
+        torch_geometric was not).
+        """
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError(
+                "torch_geometric is not installed — pip install torch_geometric"
+            )
+
+    Data = DataLoader = GATv2Conv = LayerNorm = _MissingPyG
 
 log = structlog.get_logger(__name__)
 
@@ -235,19 +248,26 @@ class LiceGNNTrainer:
         self.lr = lr
         self.weight_decay = weight_decay
 
-        self.model = LiceGNN(
-            hidden_dim=hidden_dim,
-            heads=heads,
-            n_conv_layers=n_conv_layers,
-            dropout=dropout,
-        ).to(self.device)
+        if not _TORCH_GEOMETRIC_AVAILABLE:
+            # Keep construction import-safe; is_available() gates all use.
+            self.model = None
+            self.optimizer = None
+        else:
+            self.model = LiceGNN(
+                hidden_dim=hidden_dim,
+                heads=heads,
+                n_conv_layers=n_conv_layers,
+                dropout=dropout,
+            ).to(self.device)
 
-        self.optimizer = torch.optim.AdamW(
-            self.model.parameters(), lr=lr, weight_decay=weight_decay
-        )
-        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            self.optimizer, T_max=100, eta_min=1e-5
-        )
+            self.optimizer = torch.optim.AdamW(
+                self.model.parameters(), lr=lr, weight_decay=weight_decay
+            )
+            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                self.optimizer, T_max=100, eta_min=1e-5
+            )
+        if not _TORCH_GEOMETRIC_AVAILABLE:
+            self.scheduler = None
 
         # State populated by prepare_data
         self._graph_snapshots: list[Data] = []          # one per week
@@ -255,6 +275,21 @@ class LiceGNNTrainer:
         self._scaler_mean: Optional[np.ndarray] = None
         self._scaler_std: Optional[np.ndarray] = None
         self._trained = False
+
+    def is_available(self) -> bool:
+        """True when torch_geometric is installed — routes gate on this (503)."""
+        return _TORCH_GEOMETRIC_AVAILABLE
+
+    def status(self) -> dict:
+        """Operational status for /api/gnn/status (honest about availability)."""
+        return {
+            "available": _TORCH_GEOMETRIC_AVAILABLE,
+            "trained": bool(self._trained),
+            "model": "LiceGNN (Temporal GAT, 4-week window, dual-head)",
+            "n_snapshots": len(self._graph_snapshots),
+            "hint": None if _TORCH_GEOMETRIC_AVAILABLE
+                    else "pip install torch torch_geometric to enable the GNN",
+        }
 
     # ── Data preparation ──────────────────────────────────────────────────────
 

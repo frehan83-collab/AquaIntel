@@ -42,21 +42,41 @@ class ChronosBaselineEngine:
         return self._pipeline is not None
 
     def _get_pipeline(self) -> Any:
-        """Lazy-load Chronos pipeline (downloads model on first use)."""
+        """Lazy-load the Chronos pipeline (downloads model on first use).
+
+        amazon/chronos-2 requires the Chronos2Pipeline API (quantile outputs);
+        v1 models (chronos-t5-*) use ChronosPipeline (sample outputs). The
+        class is chosen from the model id so the response can honestly report
+        which model produced the numbers.
+        """
         if self._pipeline is None:
             try:
                 import torch  # noqa: F401
-                from chronos import ChronosPipeline
+                import chronos
             except ImportError as e:
                 log.warning("chronos_not_installed", hint="pip install chronos-forecasting", error=str(e))
                 return None
             try:
-                self._pipeline = ChronosPipeline.from_pretrained(
-                    self._model_name,
-                    device_map="cpu",
-                    torch_dtype=__import__("torch").float32,
+                import torch
+                use_v2 = "chronos-2" in self._model_name or "chronos2" in self._model_name
+                cls = getattr(chronos, "Chronos2Pipeline", None) if use_v2 else chronos.ChronosPipeline
+                if cls is None:
+                    cls = chronos.ChronosPipeline
+                try:
+                    self._pipeline = cls.from_pretrained(
+                        self._model_name,
+                        device_map="cpu",
+                        torch_dtype=torch.float32,
+                    )
+                except TypeError:
+                    # older/newer signature — load with defaults
+                    self._pipeline = cls.from_pretrained(self._model_name)
+                # Capture the model's own quantile levels for band mapping
+                self._quantile_levels = getattr(
+                    getattr(getattr(self._pipeline, "model", None), "chronos_config", None),
+                    "quantiles", None,
                 )
-                log.info("chronos_model_loaded", model=self._model_name)
+                log.info("chronos_model_loaded", model=self._model_name, pipeline=cls.__name__)
             except Exception as e:
                 log.error("chronos_load_error", model=self._model_name, error=str(e))
                 self._pipeline = None
@@ -74,6 +94,10 @@ class ChronosBaselineEngine:
         Returns a dict whose "model" field names what ACTUALLY produced the
         forecast: the model id on success, "<name>-fallback" otherwise.
         Never requires torch — the fallback path is import-safe.
+
+        Handles both output shapes:
+          v1 ChronosPipeline  -> samples (1, num_samples, horizon)
+          v2 Chronos2Pipeline -> list[(horizon, n_quantiles)] quantile tensors
         """
         pipeline = self._get_pipeline()
         if pipeline is None:
@@ -81,9 +105,18 @@ class ChronosBaselineEngine:
 
         import torch
 
-        context = torch.tensor(values, dtype=torch.float32).unsqueeze(0)
-        forecast = pipeline.predict(context, prediction_length=horizon, num_samples=num_samples)
-        samples = forecast.numpy()[0]  # (num_samples, horizon)
+        context = torch.tensor(values, dtype=torch.float32)
+        try:
+            if pipeline.__class__.__name__ == "Chronos2Pipeline":
+                # Chronos2 expects (n_series, n_variates, history_length)
+                out = pipeline.predict(context.reshape(1, 1, -1), prediction_length=horizon)
+                return self._quantile_result(out, horizon, values)
+            samples = pipeline.predict(
+                context.unsqueeze(0), prediction_length=horizon, num_samples=num_samples
+            ).numpy()[0]  # (num_samples, horizon)
+        except Exception as e:
+            log.warning("chronos_predict_failed", error=str(e)[:120])
+            return self._fallback_forecast(values, horizon)
 
         median = np.median(samples, axis=0).tolist()
         lo80 = np.percentile(samples, 10, axis=0).tolist()
@@ -99,6 +132,59 @@ class ChronosBaselineEngine:
             "hi80": hi80,
             "lo95": lo95,
             "hi95": hi95,
+            "context_length": len(values),
+        }
+
+    def _quantile_result(self, out: Any, horizon: int, values: list[float]) -> dict:
+        """Convert Chronos2 quantile output to the standard result dict.
+
+        Band honesty: Chronos-2 emits fixed quantile levels (see its HF
+        config); lo80/hi80 map to P10/P90 (exact 80% band) and lo95/hi95 map
+        to P5/P95 (a 90% band) — the mapping is reported in `band_levels`
+        rather than pretending the wider pair is a true 95% interval.
+        """
+        # Quantile levels published in amazon/chronos-2's HF config.json
+        # ("chronos_config.quantiles") — keep in sync when changing models.
+        DEFAULT_LEVELS = [0.01, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35,
+                          0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75,
+                          0.80, 0.85, 0.90, 0.95, 0.99]
+        # Prefer the loaded model's own quantile levels when exposed (W6):
+        # values/order verified at runtime instead of asserted by comment.
+        levels = getattr(self, "_quantile_levels", None) or DEFAULT_LEVELS
+        q = out[0]
+        q = q.numpy() if hasattr(q, "numpy") else np.asarray(q)
+        # Observed real shape: (n_variates=1, n_quantiles, horizon) — squeeze
+        # the variate dim first, then normalise orientation to (horizon, nq).
+        while q.ndim > 2 and q.shape[0] == 1:
+            q = q[0]
+        if q.ndim != 2:
+            raise ValueError(f"unexpected Chronos2 output ndim: {q.shape}")
+        # Orientation-robust: some versions return (horizon, n_quantiles),
+        # others (n_quantiles, horizon) — normalise to (horizon, n_quantiles).
+        if q.shape[0] != horizon and q.shape[1] == horizon:
+            q = q.T
+        if q.shape[0] < horizon:
+            raise ValueError(f"unexpected Chronos2 output shape: {q.shape}")
+        q = q[:horizon]
+        if q.shape[1] != len(levels):
+            raise ValueError(
+                f"quantile count mismatch: model returned {q.shape[1]}, "
+                f"expected {len(levels)} — update DEFAULT_LEVELS or model config"
+            )
+
+        def idx(level: float) -> int:
+            return min(range(len(levels)), key=lambda i: abs(levels[i] - level))
+
+        col = lambda level: q[:horizon, idx(level)].tolist()
+        return {
+            "model": self._model_name,
+            "horizon": horizon,
+            "median": col(0.50),
+            "lo80": col(0.10), "hi80": col(0.90),
+            "lo95": col(0.05), "hi95": col(0.95),
+            "band_levels": {"lo80/hi80": [0.10, 0.90], "lo95/hi95": [0.05, 0.95]},
+            "band_note": "chronos-2 native quantiles: P10/P90 = 80% band; "
+                         "P5/P95 = 90% band (not a true 95% interval)",
             "context_length": len(values),
         }
 

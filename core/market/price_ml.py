@@ -246,9 +246,15 @@ class PriceEnsemble:
         cleaner_fish_pct: float = 0.0,
         export_volume_trend: float = 0.0,
         futures_premium_pct: float = 0.0,
+        as_of: dt.datetime | None = None,
     ) -> np.ndarray:
-        """Build feature vector for the XGBoost model."""
-        now = dt.datetime.now(dt.UTC)
+        """Build feature vector for the XGBoost model.
+
+        as_of: evaluation timestamp (UTC) for seasonal features — used by the
+        walk-forward backtest so features reflect the historical week, not
+        today's. Defaults to now.
+        """
+        now = as_of or dt.datetime.now(dt.UTC)
         _, week, _ = now.isocalendar()
 
         # Seasonal harmonics (sin/cos encoding for circularity)
@@ -305,20 +311,25 @@ class PriceEnsemble:
         export_volume_trend: float = 0.0,
         futures_premium_pct: float = 0.0,
         n_scenarios: int = 1000,
+        as_of: dt.datetime | None = None,
     ) -> EnsemblePriceForecast:
         """
         Generate probabilistic price forecast.
 
         Uses XGBoost if available, otherwise falls back to rule-based
         with enhanced conformal prediction bands.
+
+        as_of: evaluation timestamp for seasonal features — used by the
+        walk-forward backtest (scripts/backtest_price_ml.py) so forecasts
+        issued for historical weeks use that week's seasonal phase.
         """
         if current_spot <= 0:
-            now = dt.datetime.now(dt.UTC)
+            now = as_of or dt.datetime.now(dt.UTC)
             _, week, _ = now.isocalendar()
             current_spot = SEASONAL_PATTERN.get(week, 75)
 
         # ── Layer 1: Seasonal + Momentum baseline ──────────────
-        seasonal_pred = self._seasonal_forecast(current_spot, horizon_weeks)
+        seasonal_pred = self._seasonal_forecast(current_spot, horizon_weeks, as_of=as_of)
 
         # ── Layer 2: TFT → XGBoost → Rule-based (3-tier cascade) ──
         model_tag = ""
@@ -358,7 +369,7 @@ class PriceEnsemble:
                 current_spot, horizon_weeks, national_avg_lice,
                 lice_trend, pct_above_threshold, biomass_vs_normal,
                 avg_mobile_lice, avg_sessile_lice, cleaner_fish_pct,
-                export_volume_trend, futures_premium_pct,
+                export_volume_trend, futures_premium_pct, as_of=as_of,
             )
             try:
                 ml_pred = float(self._xgb_model.predict(features)[0])
@@ -372,7 +383,7 @@ class PriceEnsemble:
             predicted = self._rule_based_forecast(
                 current_spot, horizon_weeks, national_avg_lice,
                 lice_trend, pct_above_threshold, biomass_vs_normal,
-                export_volume_trend, futures_premium_pct,
+                export_volume_trend, futures_premium_pct, as_of=as_of,
             )
             model_tag = "rule"
             log.info("price_ml.using_rule_based_fallback", reason="TFT and XGBoost unavailable")
@@ -464,10 +475,11 @@ class PriceEnsemble:
         )
 
     def _seasonal_forecast(
-        self, current_spot: float, horizon_weeks: int
+        self, current_spot: float, horizon_weeks: int,
+        as_of: dt.datetime | None = None,
     ) -> float:
-        """Pure seasonal baseline prediction."""
-        now = dt.datetime.now(dt.UTC)
+        """Pure seasonal baseline prediction (as_of = evaluation timestamp)."""
+        now = as_of or dt.datetime.now(dt.UTC)
         _, week, _ = now.isocalendar()
 
         future_week = (week + horizon_weeks - 1) % 52 + 1
@@ -487,9 +499,10 @@ class PriceEnsemble:
         biomass_vs_normal: float,
         export_volume_trend: float,
         futures_premium_pct: float,
+        as_of: dt.datetime | None = None,
     ) -> float:
         """Enhanced rule-based forecast with biological + market features."""
-        now = dt.datetime.now(dt.UTC)
+        now = as_of or dt.datetime.now(dt.UTC)
         _, week, _ = now.isocalendar()
 
         # Seasonal

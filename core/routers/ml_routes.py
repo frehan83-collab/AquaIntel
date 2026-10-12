@@ -39,7 +39,9 @@ async def gnn_build_training_data():
         from core.market.lice_gnn import lice_gnn_trainer
     except ImportError as _e:
         raise HTTPException(503, f"Lice GNN dependencies not installed: {_e}")
-    result = lice_gnn_trainer.build_training_data_from_db()
+    if not lice_gnn_trainer.is_available():
+        raise HTTPException(503, "torch_geometric not installed. Run: pip install torch_geometric")
+    result = await lice_gnn_trainer.build_training_data_from_db()
     if isinstance(result, dict):
         result["data_provenance"] = DataProvenance.from_model_result(result, "Lice GNN (PyTorch Geometric)", confidence=0.70).to_dict()
     return result

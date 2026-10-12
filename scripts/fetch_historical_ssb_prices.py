@@ -109,16 +109,14 @@ def parse_json_stat2(data: dict) -> list[dict]:
 
 
 def fetch_year_batch(client: httpx.Client, year: int, current_year: int) -> list[dict]:
-    """Fetch one year of SSB data using fromTo range filter."""
-    now = dt.datetime.now(dt.UTC)
-    from_code = f"{year}U01"
-    if year < current_year:
-        to_code = f"{year}U52"
-    else:
-        # For current year, cap at 2 weeks before now to avoid 400 errors
-        max_week = max(1, now.isocalendar()[1] - 2)
-        to_code = f"{year}U{max_week:02d}"
+    """Fetch SSB 03024 history in one request.
 
+    NOTE: SSB's API no longer honours `fromTo` as a range filter — it returns
+    only the two boundary weeks (verified 2026-10). `filter: all` returns the
+    complete weekly history (2000U01..present) in a single response, so the
+    per-year loop is gone; `year` is kept for CLI compatibility and filters
+    client-side below.
+    """
     query = {
         "query": [
             {
@@ -131,7 +129,7 @@ def fetch_year_batch(client: httpx.Client, year: int, current_year: int) -> list
             },
             {
                 "code": "Tid",
-                "selection": {"filter": "fromTo", "values": [from_code, to_code]},
+                "selection": {"filter": "all", "values": ["*"]},
             },
         ],
         "response": {"format": "json-stat2"},
@@ -147,7 +145,7 @@ def fetch_year_batch(client: httpx.Client, year: int, current_year: int) -> list
     if resp.status_code == 200:
         return parse_json_stat2(resp.json())
     elif resp.status_code == 400:
-        log.warning("Year %d: HTTP 400 — likely no data for requested range", year)
+        log.warning("Year %d: HTTP 400 — SSB rejected the query", year)
         return []
     else:
         log.warning("Year %d: HTTP %d", year, resp.status_code)
@@ -196,21 +194,17 @@ def main() -> int:
     client = httpx.Client()
 
     try:
-        for year in range(args.start_year, current_year + 1):
-            t0 = time.time()
-            records = fetch_year_batch(client, year, current_year)
-            elapsed = time.time() - t0
-
-            all_records.extend(records)
-            log.info(
-                "  %d: %d weeks fetched (%.1fs)",
-                year,
-                len(records),
-                elapsed,
-            )
-
-            # Be polite to SSB API — 0.5s between requests
-            time.sleep(0.5)
+        t0 = time.time()
+        records = fetch_year_batch(client, args.start_year, current_year)
+        # One request returns full history — filter client-side to --start-year
+        all_records.extend(r for r in records if r["year"] >= args.start_year)
+        log.info(
+            "  %d weeks fetched in one request (%.1fs), kept %d since %d",
+            len(records),
+            time.time() - t0,
+            len(all_records),
+            args.start_year,
+        )
     finally:
         client.close()
 
