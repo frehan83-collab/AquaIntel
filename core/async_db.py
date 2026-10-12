@@ -25,6 +25,11 @@ _async_url = _get_async_url(settings.database_url)
 _is_sqlite = "sqlite" in _async_url
 
 if _is_sqlite:
+    # Fresh clones and CI runners have no data/ directory yet.
+    _db_path = _async_url.split("///")[-1]
+    if _db_path and _db_path != ":memory:" and not _db_path.startswith("file:"):
+        from pathlib import Path as _Path
+        _Path(_db_path).parent.mkdir(parents=True, exist_ok=True)
     # SQLite: limited concurrency, no pool needed
     async_engine = create_async_engine(
         _async_url,

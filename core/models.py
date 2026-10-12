@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import datetime as dt
+from pathlib import Path
+
 from sqlalchemy import (
     Column, Integer, Float, String, DateTime, Boolean, Text, ForeignKey,
     UniqueConstraint, Index, create_engine, event, text, func,
@@ -9,6 +11,20 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 from config.settings import settings
+
+
+def ensure_sqlite_dir(url: str) -> None:
+    """Create the parent directory of a SQLite file URL if missing.
+
+    Fresh clones and CI runners have no data/ directory; sqlite otherwise
+    fails with 'unable to open database file'. No-op for postgres/memory.
+    """
+    if not url.startswith("sqlite"):
+        return
+    path = url.split("///")[-1]
+    if path and path != ":memory:" and not path.startswith("file:"):
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+
 
 Base = declarative_base()
 
@@ -474,8 +490,8 @@ from core.bloom.models import ChlorophyllReading, BloomRiskAssessment, BloomAler
 
 # ── Engine & session factory ─────────────────────────────────────────
 _is_sqlite = settings.database_url.startswith("sqlite")
-
 if _is_sqlite:
+    ensure_sqlite_dir(settings.database_url)
     engine = create_engine(
         settings.database_url,
         echo=False,
