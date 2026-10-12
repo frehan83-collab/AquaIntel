@@ -57,6 +57,12 @@ def call(version: str, endpoint: str, payload: dict) -> dict:
 
 
 def main() -> int:
+    # Windows consoles default to cp1252; research text contains unicode (CO₂, –, etc.)
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
     ap = argparse.ArgumentParser(description="Firecrawl research helper")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
