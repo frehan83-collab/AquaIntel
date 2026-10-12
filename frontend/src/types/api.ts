@@ -540,6 +540,30 @@ export interface OceanForecast {
   data_provenance?: DataProvenance;
 }
 
+/** Waves endpoint (CMEMS WAM 1/12°) — /api/ocean/waves/pa/{pa} */
+export interface WaveRisk {
+  production_area: number;
+  lat: number;
+  lon: number;
+  hs_m: number;
+  wave_direction_deg: number | null;
+  peak_period_s: number | null;
+  risk: "low" | "moderate" | "high" | "severe";
+  operational_note: string;
+  is_live: boolean;
+  source: string;
+  fallback_reason?: string;
+  fetched_at?: string;
+  data_provenance?: {
+    source: string;
+    is_live: boolean;
+    freshness: string;
+    confidence: number;
+    fallback_reason?: string | null;
+    schema_version?: string;
+  };
+}
+
 /** /api/climate/risk-scores */
 export interface ClimateRiskScores {
   scores: Array<{

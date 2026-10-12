@@ -16,6 +16,7 @@ import type {
   ResistanceMap, ASCReadiness, ForecastResponse, EnsembleForecast,
   AlertsResponse, OceanForecast, ClimateRiskScores, HeatwaveRisk,
   SentimentSummary, AISHarvestIntel, CausalSummary, GlobalSupply,
+  WaveRisk,
   SmoltForecast, LoginResponse, SubscriptionStatus, EfficacyBenchmarks,
   TrafficLightCurrent, TrafficLightSimulation, TreatmentCostComparison,
   YoYComparison, ProvenanceWrapped,
@@ -238,6 +239,10 @@ export const api = {
   // Ocean Forecast (MET.no)
   oceanForecast: (lat: number, lon: number) => fetchAPI(`/api/ocean/forecast?lat=${lat}&lon=${lon}`),
   oceanForecastPa: (pa: number) => fetchAPI<OceanForecast>(`/api/ocean/forecast/pa/${pa}`),
+
+  // Waves (CMEMS WAM 1/12°) — per Production Area
+  waveRiskPa: (pa: number) => fetchAPI<WaveRisk>(`/api/ocean/waves/pa/${pa}`),
+  wavesStatus: () => fetchAPI<Record<string, unknown>>("/api/ocean/waves/status"),
 
   // AIS Harvest Intelligence
   aisHarvestIntelligence: () => fetchAPI<AISHarvestIntel>("/api/ais/harvest-intelligence"),
