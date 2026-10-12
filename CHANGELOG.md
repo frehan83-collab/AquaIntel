@@ -3,6 +3,19 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
+## [Unreleased] — Session 41e (2026-10-12, autonomous run, continued)
+
+### Added
+- **Blocking visual regression in frontend.yml** with Linux baselines for
+  chromium AND mobile (Pixel 5); backend-free e2e scoped separately;
+  visual-baselines workflow generates/verifies all projects.
+
+### Fixed
+- CI step order: Playwright runs before 
+pm run build (the documented
+  .next collision corrupts dev assets); dev-server port pinned via
+  webServer env; workflow_dispatch added to both frontend workflows.
+
 ## [Unreleased] — Session 41d (2026-10-12, autonomous run, continued)
 
 ### Added

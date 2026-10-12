@@ -197,3 +197,29 @@ None material. Two soft items:
 2. DuckDB read path for the 186k-row lice analytics.
 3. Cache Components `use cache` scoping where server-renderable data appears.
 4. Promote frontend e2e/visual steps to blocking once stability is proven.
+
+## Session 41e (continuation) — visual regression enforced in CI
+
+| # | Item | Status |
+|---|---|---|
+| — | **Blocking visual regression in frontend.yml** | ✅ PERFECT RUN: browsers → visual (BLOCKING) → backend-free e2e → build → audit, all green (`38310459110`) |
+| — | Linux baselines: chromium **+ mobile** (Pixel 5) | ✅ `8d0c286`, `9eedb3c` (generated via the workflow, artifact-committed) |
+| — | CI fixes uncovered by the promotion | ✅ port pin `d537a5a`; Playwright-before-build ordering `65698c3` (the `.next` collision war story, again), `workflow_dispatch` `9899e43`; baseline workflow covers both projects `2bd9248`; non-blocking e2e scoped to backend-free specs `e37ac1a` |
+| — | partialPrefetching + F841 | ✅ `016587a`, `72fe461`/`3ec4aae` (see 41d notes above) |
+
+### Lessons encoded
+- The `.next` prod-build ↔ dev-server collision struck CI exactly as it will
+  strike anyone: the blocking visual step went from perfect to 90 %-pixel-red
+  solely because `npm run build` ran before it. Step order is now enforced by
+  an explanatory comment.
+- Missing mobile baselines: frontend.yml runs both projects; baseline
+  generation must too.
+- Workflow-file changes don't match `frontend/**` path filters — hence
+  `workflow_dispatch` on both frontend workflows.
+
+### Remaining next-session priorities
+1. Backend-backed e2e job: spin FastAPI (`uvicorn`) in frontend.yml so
+   api-*.spec.ts run for real, then un-tolerate navigation/navigation specs.
+2. uv adoption (REPORT_STACK #7 remainder).
+3. DuckDB read path for the 189k-row lice analytics.
+4. Cache Components `use cache` scoping where server-renderable data appears.
