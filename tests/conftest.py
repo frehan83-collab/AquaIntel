@@ -12,6 +12,43 @@ import pytest
 from fastapi.testclient import TestClient
 
 
+# ── Test-database bootstrap (CI runners & fresh clones) ─────────────────────
+# TestClient(app) does NOT run the FastAPI lifespan, so on a machine without
+# a populated data/openclaw.db (CI!) the schema was never created and every
+# DB-touching test failed with "no such table" / "unable to open database
+# file". Build the schema explicitly and seed the deterministic demo dataset
+# when the lice table is empty. No-op on a populated dev DB (this box: 186k rows).
+def _bootstrap_test_database() -> None:
+    try:
+        from core.models import engine, init_db
+
+        init_db()
+        try:
+            from alembic import command as _alembic_cmd
+            from alembic.config import Config as _AlembicConfig
+
+            _cfg = _AlembicConfig("alembic.ini")
+            _cfg.set_main_option("script_location", "alembic")
+            _alembic_cmd.upgrade(_cfg, "head")
+        except Exception:
+            pass  # ORM create_all already provided the schema
+
+        from sqlalchemy import text
+
+        with engine.connect() as conn:
+            empty = conn.execute(text("SELECT COUNT(*) FROM lice_records")).scalar() == 0
+        if empty:
+            from core.demo_seed import seed_demo_data
+
+            stats = seed_demo_data()
+            print(f"conftest: seeded demo dataset for tests: {stats}")
+    except Exception as exc:  # never block collection on bootstrap issues
+        print(f"conftest: test-db bootstrap skipped: {exc}")
+
+
+_bootstrap_test_database()
+
+
 @pytest.fixture(scope="session")
 def event_loop():
     """Session-scoped event loop for async tests."""
