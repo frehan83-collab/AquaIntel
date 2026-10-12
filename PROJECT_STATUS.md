@@ -2,7 +2,7 @@
 
 > **Repository:** [github.com/frehan83-collab/OpenClaw](https://github.com/frehan83-collab/OpenClaw) (private)
 
-Last updated: 2026-10-12 (Session 39)
+Last updated: 2026-10-12 (Session 40)
 
 ---
 
@@ -10,21 +10,21 @@ Last updated: 2026-10-12 (Session 39)
 
 | Metric | Count |
 |--------|-------|
-| API routes | 324 (unique path+method, 0 duplicates) |
+| API routes | 324 (unique path+method, 0 duplicates, 12 with response_model) |
 | Router modules | 30 |
 | Market/data engines | ~75 (incl. 3 ML foundation models) |
 | Frontend pages | 63 (68 compiled routes) |
 | Shared components | 43+ |
 | Database tables | 31 |
 | DB migrations | 14 |
-| Test functions | 638 collected (603 passing, 35 xfail/xpass) |
+| Test functions | 651 collected (616 passing, 35 xfail/xpass) |
 | i18n keys | ~600 (NO/EN) |
 | Design tokens | 86 (Figma pipeline active) |
 | Data source clients | 45+ |
 | Historical data | SSB 26yr, FRED 35yr, MUR SST 44yr |
 | Next.js | 15.5.14 |
 | React | 19.2.4 (with Compiler) |
-| FastAPI | 2.2.0 |
+| FastAPI | 2.2.0 (see core/version.py) |
 
 ---
 
