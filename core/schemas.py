@@ -6,8 +6,8 @@ Used as response_model on endpoints for validation and OpenAPI docs.
 """
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional, Literal
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from typing import Any, Optional, Literal
 
 from core.version import API_SCHEMA_VERSION, PLATFORM_VERSION
 
@@ -96,6 +96,70 @@ class PriceOutlookResponse(BaseModel):
     rationale: Optional[str] = None
     disclaimer: Optional[str] = None
     data_provenance: Optional[DataProvenanceSchema] = None
+
+
+class MorningBriefSectionSchema(BaseModel):
+    title: str
+    icon: str = ""
+    headline: str = ""
+    detail: str = ""
+    sentiment: str = "neutral"
+    value: str = ""
+
+
+class MorningBriefResponse(BaseModel):
+    """GET /api/brief (morning_brief_engine.to_dict + provenance)."""
+    model_config = ConfigDict(extra="allow")
+    generated_at: str
+    greeting: str = ""
+    market_mood: str = "neutral"
+    top_insight: str = ""
+    sections: list[MorningBriefSectionSchema] = []
+    data_provenance: Optional[DataProvenanceSchema] = None
+
+
+class BiomassOutlookResponse(BaseModel):
+    """GET /api/biomass/outlook (biomass_predictor.get_outlook_dict + provenance)."""
+    model_config = ConfigDict(extra="allow")
+    generated_at: str
+    current_biomass_tonnes: float
+    national_mab: float
+    utilization_pct: float
+    horizon_weeks: int
+    forecast_biomass: list[float] = []
+    forecast_harvest: list[float] = []
+    p10_biomass: list[float] = []
+    p50_biomass: list[float] = []
+    p90_biomass: list[float] = []
+    n_scenarios: int = 0
+    scenario_green_impact_pct: float = 0.0
+    scenario_red_impact_pct: float = 0.0
+    recommendations: list[str] = []
+    data_provenance: Optional[DataProvenanceSchema] = None
+
+
+class CausalTeResult(BaseModel):
+    lag: int
+    te_value: float
+    p_value: Optional[float] = None
+    z_score: Optional[float] = None
+    significant: Optional[bool] = None
+
+
+class CausalSummaryResponse(BaseModel):
+    """GET /api/causal/summary (causal_engine.get_causal_summary)."""
+    model_config = ConfigDict(extra="allow")
+    dominant_lag_weeks: Any = None
+    method_used: Optional[str] = None
+    confidence: Optional[str] = None
+    interpretation: Optional[str] = None
+    recommended_lag_range: Any = None
+    asymmetry_detected: Any = None
+    pcmci_available: Optional[bool] = None
+    granger_results: Any = None
+    te_results: list[CausalTeResult] = []
+    pcmci_results: Any = None
+    meta: Any = None
 
 
 class CompoundScenarioResponse(BaseModel):
@@ -357,6 +421,11 @@ __all__ = [
         AlertResponse,
         AlertsListResponse,
         PriceOutlookResponse,
+        MorningBriefSectionSchema,
+        MorningBriefResponse,
+        BiomassOutlookResponse,
+        CausalTeResult,
+        CausalSummaryResponse,
         CompoundScenarioResponse,
         SignalResponse,
         SignalsListResponse,

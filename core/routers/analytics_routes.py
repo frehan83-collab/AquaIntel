@@ -12,6 +12,7 @@ from sqlalchemy import select, func
 from core.async_db import get_async_session
 from core.models import LiceRecord, Locality, AuditLog
 from core.cache import cached
+from core.schemas import MorningBriefResponse
 
 router = APIRouter(tags=["analytics"])
 
@@ -295,7 +296,7 @@ async def anomaly_alerts():
 
 # ── Morning Brief ────────────────────────────────────────────────────
 
-@router.get("/api/brief")
+@router.get("/api/brief", response_model=MorningBriefResponse)
 async def morning_brief():
     """Daily market intelligence digest."""
     from core.market.morning_brief import morning_brief_engine

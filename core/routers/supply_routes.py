@@ -12,6 +12,7 @@ from sqlalchemy import select
 from core.models import LiceRecord, Locality
 from core.async_db import get_async_session
 from core.market.data_provenance import DataProvenance
+from core.schemas import BiomassOutlookResponse
 
 router = APIRouter(prefix="/api", tags=["supply"])
 
@@ -125,7 +126,7 @@ async def supply_summary():
     return result
 
 
-@router.get("/biomass/outlook")
+@router.get("/biomass/outlook", response_model=BiomassOutlookResponse)
 async def biomass_outlook(
     horizon: int = 20,
     scenarios: int = 1000,

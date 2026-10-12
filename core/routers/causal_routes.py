@@ -9,6 +9,7 @@ from sqlalchemy import select, func, case
 
 from core.models import LiceRecord
 from core.async_db import get_async_session
+from core.schemas import CausalSummaryResponse
 
 router = APIRouter(tags=["causal"])
 
@@ -49,7 +50,7 @@ async def _ensure_causal_data():
                             pct_above_series=pct_above_series[-n:])
 
 
-@router.get("/api/causal/summary")
+@router.get("/api/causal/summary", response_model=CausalSummaryResponse)
 async def causal_summary(max_lag: int = 16):
     from core.market.causal_engine import causal_engine
     await _ensure_causal_data()

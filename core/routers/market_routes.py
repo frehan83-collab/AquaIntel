@@ -14,6 +14,7 @@ from sqlalchemy import select, func
 from core.models import LiceRecord, Locality, PricePrediction, Signal
 from core.async_db import get_async_session
 from core.cache import cached
+from core.schemas import PriceOutlookResponse
 
 router = APIRouter(prefix="/api/market", tags=["market"])
 
@@ -125,7 +126,7 @@ async def export_data():
     return summary
 
 
-@router.get("/price-outlook")
+@router.get("/price-outlook", response_model=PriceOutlookResponse)
 async def price_outlook(horizon: int = 4, scenarios: int = 1000):
     """
     ML ensemble price prediction with conformal uncertainty bands.
