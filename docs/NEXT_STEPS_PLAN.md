@@ -193,17 +193,40 @@ head` as the canonical schema path.
    72h harvest & treatment signals, price signal + rationale; consumed by /market. ✅
 **No code gaps found in Tier-1 — audit closes without changes.**
 
-### P2-8 · Strategic roadmap Tier 2 (choose 1–2)
+### P2-8 · Strategic roadmap Tier 2 — ✅ DONE (verified shipped 2026-10-13)
 - Multi-country supply model (Norway+Chile+Scotland+Canada) with disruption alerts.
 - Contract risk analyzer for buyers (fixed-price contracts vs forward curve).
 - Treatment cost optimizer (mechanical vs thermal vs medicinal vs cleaner fish ROI).
 - Investor portfolio exposure dashboard (portfolio-weighted lice risk per MOWI/SALM/LSG).
+**Verification (engines + route exposure):** all four already exist end-to-end —
+contracts: `contract_risk_engine.py` (incl. `PortfolioRisk`) exposed via
+`POST /api/contracts/evaluate`, `POST /api/contracts/portfolio`,
+`GET /api/contracts/hedge-signals`, plus `/api/regime/company-risk`; treatment
+optimizer: `decision_routes.py` suite (`/api/treatment/optimize|compare|
+network-schedule|cost-benefit|cost-comparison|history|efficacy-by-method|
+log-outcome`); investor portfolio: `/api/decision/portfolio/{company}` +
+`investor_routes` event-impact/scenario endpoints; multi-country supply:
+per-country monitors (Chile/Canada/Iceland/Faroe/Scotland) with disruption levels
++ `/api/global-supply` (disruption_pct). No build work required.
 
-### P2-9 · Honesty & security audit
+### P2-9 · Honesty & security audit — ✅ DONE (clean, 2026-10-13)
 - Audit every ML endpoint for `DataProvenance.degraded` on `*-fallback` results and
   truthful `models_used`/`models_fallback` reporting.
 - Audit `core/security.py` webhook re-validation at dispatch time; IDOR checks on
   user-scoped resources.
+**Audit result (code inspection + live checks — no gaps found):**
+- SSRF: `core/security.py` blocks forbidden hosts/suffixes, literal + inet_aton
+  shorthand IPs, resolves DNS and requires EVERY address to be public (fail-closed);
+  `webhook_dispatcher.send_to_webhook` re-validates `validate_public_url` at dispatch
+  time (rebinding defense) and webhook routes re-validate on test-dispatch; ownership
+  is enforced from the token user (create/delete/test), IDOR-fixed.
+- IDOR spot-check: `apikey_routes` scopes list/create/revoke strictly by
+  `u.user_id`; admin contract 401/403/200 is CI-enforced by the new e2e admin block;
+  `scripts/smoke_security.py` (escalation/SSRF/admin) passes.
+- Honesty: every ML route result is tagged via
+  `DataProvenance.from_model_result` (fallback/`fallback_members` → degraded);
+  the ensemble endpoint reports `models_used` vs `models_fallback` truthfully and is
+  live only when ≥1 real model ran (verified at `ml_routes.py` ensemble).
 
 ## 5. Commands cheat sheet (for the agent)
 
@@ -246,11 +269,14 @@ git push origin master
 - Docs updated: `CHANGELOG.md`, `AGENTS.md`/`CLAUDE.md` if structural,
   `docs/AUTONOMOUS_PROGRESS.md` session entry.
 
-## 7. Suggested sequencing (3 sprints)
+## 7. Suggested sequencing (3 sprints) — ✅ COMPLETE (2026-10-13)
 
 1. **Sprint A (stabilize):** P0-4 (uv) → P1-5 (local env + test hygiene) → P0-1 (e2e in CI).
+   ✅ Done — CI-proven (runs 38317892995, 38319321808: build + e2e-backend + backend + docker all green).
 2. **Sprint B (performance + quality):** P0-2 (DuckDB) → P0-3 (use cache) → P1-6 (prod parity).
-3. **Sprint C (product):** P1-7 Tier-1 audit/gaps → P2-8 pick 1–2 → P2-9 audits.
+   P0-2 blocked-with-evidence; P0-3 done (instant lock ×11, CI-wired); P1-6 verified done-except-doc-nicety.
+3. **Sprint C (product):** P1-7 Tier-1 audit → P2-8 → P2-9.
+   ✅ Audits complete, all features verified shipped; no gaps to build.
 
 ## 8. Risks & gotchas
 

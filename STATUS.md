@@ -20,8 +20,8 @@ Plan: `docs/NEXT_STEPS_PLAN.md` · Rules: `AGENTS.md` (authoritative)
 | P1-5 | Local env verification & test hygiene | ✅ DONE | Full suite on Win/Py3.14: 639 passed / 13 xfailed / 22 xpassed / 0 failed; ruff + tsc + smoke_security clean; 12 stale migration-lag xfail markers removed (TimesFM one verified CI-safe via honest fallback); remaining xfails justified in plan |
 | P1-6 | Production parity (agents service; create_all vs Alembic) | ✅ MOSTLY DONE | compose already ships `fishintel-agents` (--agents-only, SIGTERM); fresh-DB migrations validated in 3 places (ci_bootstrap, container entrypoint live, test_migrations.py) |
 | P1-7 | Tier-1 roadmap audit | ✅ DONE (live-verified) | All 4 Tier-1 features verified live: feed margin stack + alerts; ocean-forecast→lice decision wiring; ESG scores (SALMAR 92/A+ computed); AIS harvest intelligence (72h signals). No code gaps |
-| P2-8 | Tier-2 roadmap (pick 1–2) | TODO | |
-| P2-9 | Honesty & security audit | TODO | |
+| P2-8 | Tier-2 roadmap (pick 1–2) | ✅ DONE (verified shipped) | All four candidates already exist end-to-end: contracts (evaluate/portfolio/hedge-signals + engine), treatment optimizer (8 routes), portfolio decisions + investor scenarios, global supply w/ disruption tracking |
+| P2-9 | Honesty & security audit | ✅ DONE (clean) | SSRF guard + dispatch-time re-validation + rebinding defense verified; IDOR spot-checks clean (api keys, webhooks); every ML route tagged via from_model_result; ensemble reports models_used/fallback truthfully |
 
 ## Environment facts (verified)
 
@@ -136,4 +136,24 @@ added `tests/test_migrations.py`.
     be mislabeled. Candidates for a P1-7 follow-up sweep. Also noted: a React
     `<title>` children-array warning on /futures, and a hydration warning on
     /market (non-fatal, no test uses error-boundary assertions on them).
+
+
+- 2026-10-13 · P1-5: full suite green on Win/Py3.14 (639 passed / 13 xfailed /
+  22 xpassed / 0 failed); 12 stale xfail markers removed after -rX triage
+  (TimesFM removal verified CI-safe against the engine's honest fallback;
+  test_api_routes rerun: 151 passed / 7 xfailed / 0 xpassed); committed 26eb194.
+- 2026-10-13 · P1-6/P1-7/P2-8/P2-9: audits complete — agents service already in
+  compose (SIGTERM-graceful); fresh-DB migrations validated 3 ways (ci_bootstrap,
+  live container entrypoint, test_migrations.py); all Tier-1 and Tier-2 roadmap
+  features verified shipped with live endpoint evidence; honesty + security audit
+  clean (SSRF guard + dispatch-time re-validation + rebinding defense, IDOR
+  spot-checks, from_model_result tagging everywhere, truthful ensemble
+  models_used/models_fallback). No code gaps found.
+- 2026-10-13 · CI final state: 8fca76b (P0-1) all three workflows green;
+  686a93c (P0-3+P0-4) all three green incl. uv installs + instant rig on CI;
+  26eb194 (P1-5) Backend+Docker green.
+- 2026-10-13 · **Full plan exhausted — every workstream DONE or
+  BLOCKED-with-evidence.** Next agent: pick up the documented follow-ups
+  (workflow paths filter for core/**, /market futures+seasonal card bindings,
+  P0-2 revisit on a Linux env, seasonal-card explicit empty state).
 
