@@ -25,6 +25,10 @@ const nextConfig = {
   // Strict mode for React 19 — catches bugs early
   reactStrictMode: true,
 
+  // Next 16 Cache Components (static shell + explicit `use cache` scopes).
+  // Probe: Session 41 spike; verified against visual baselines before keeping.
+  cacheComponents: true,
+
   // Reduce bundle size by excluding server-only packages from client bundles
   serverExternalPackages: ["sharp"],
 
