@@ -222,14 +222,6 @@ class EfficacyMarketplace:
                 method_name = r[0]
                 n = r[1]
 
-                # Get individual reductions for percentile calculation
-                detail_rows = s.execute(text("""
-                    SELECT (pre_lice_count - post_lice_count) / pre_lice_count * 100 as reduction
-                    FROM treatment_outcomes
-                    WHERE method = :m AND pre_lice_count > 0 AND pre_lice_count IS NOT NULL
-                    ORDER BY reduction
-                """), {"m": method_name}).fetchall() if False else []
-
                 # Calculate percentiles from the aggregation
                 avg_red = round(r[2] or 0, 1)
 

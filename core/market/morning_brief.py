@@ -258,26 +258,29 @@ class MorningBriefEngine:
         # ── 7. Bloom Risk ────────────────────────────────────────────
         try:
             from core.bloom.models import BloomRiskAssessment
-            from core.models import Session as S2
-            with S2() as s:
-                high_risk = s.query(BloomRiskAssessment).filter(
-                    BloomRiskAssessment.risk_level.in_(["HIGH", "CRITICAL"])
-                ).count()
-                if high_risk > 0:
-                    signals_bearish += 1
-                    sections.append(BriefSection(
-                        title="Bloom Risk",
-                        icon="leaf",
-                        headline=f"{high_risk} sites at HIGH/CRITICAL bloom risk",
-                        sentiment="alert",
-                    ))
-                else:
-                    sections.append(BriefSection(
-                        title="Bloom Status",
-                        icon="leaf",
-                        headline="All clear — no high-risk bloom events",
-                        sentiment="neutral",
-                    ))
+            from core.async_db import get_async_session
+            from sqlalchemy import select, func
+            async with get_async_session() as s:
+                high_risk = (await s.execute(
+                    select(func.count()).select_from(BloomRiskAssessment).where(
+                        BloomRiskAssessment.risk_level.in_(["HIGH", "CRITICAL"])
+                    )
+                )).scalar() or 0
+            if high_risk > 0:
+                signals_bearish += 1
+                sections.append(BriefSection(
+                    title="Bloom Risk",
+                    icon="leaf",
+                    headline=f"{high_risk} sites at HIGH/CRITICAL bloom risk",
+                    sentiment="alert",
+                ))
+            else:
+                sections.append(BriefSection(
+                    title="Bloom Status",
+                    icon="leaf",
+                    headline="All clear — no high-risk bloom events",
+                    sentiment="neutral",
+                ))
         except Exception as exc:
             log.debug("brief.bloom_failed", error=str(exc)[:60])
 
@@ -359,21 +362,25 @@ class MorningBriefEngine:
         # ── 11. Treatment Resistance Alert (Session 25) ────────────────
         try:
             from core.market.resistance_tracker import resistance_tracker
-            res_map = await resistance_tracker.get_resistance_map()
-            if isinstance(res_map, dict):
-                high_risk = [
-                    p for p in res_map.get("production_areas", [])
-                    if any(m.get("risk_level") == "HIGH" for m in p.get("methods", []))
-                ]
-                if high_risk:
-                    sections.append(BriefSection(
-                        title="Resistance Alert",
-                        icon="shield",
-                        headline=f"High treatment resistance in {len(high_risk)} PA(s)",
-                        detail=f"Consider rotating treatment methods. "
-                               f"Affected: {', '.join(f'PA-{p['pa']}' for p in high_risk[:3])}.",
-                        sentiment="bearish",
-                    ))
+            res_map = await resistance_tracker.build_resistance_matrix()
+            matrix = res_map.get("matrix", {}) if isinstance(res_map, dict) else {}
+            high_risk = [
+                entry for entry in matrix.values()
+                if any(
+                    (m.get("frequency_risk") == "HIGH")
+                    or (str(m.get("inherent_resistance_risk", "")).lower() == "high")
+                    for m in (entry.get("methods") or {}).values()
+                )
+            ]
+            if high_risk:
+                sections.append(BriefSection(
+                    title="Resistance Alert",
+                    icon="shield",
+                    headline=f"High treatment resistance in {len(high_risk)} PA(s)",
+                    detail=f"Consider rotating treatment methods. "
+                           f"Affected: {', '.join(f'PA-{p.get('pa')}' for p in high_risk[:3])}.",
+                    sentiment="bearish",
+                ))
         except Exception as exc:
             log.debug("brief.resistance_failed", error=str(exc)[:60])
 
