@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { suppressOnboarding } from "./utils";
 
 /**
  * Golden Demo Path E2E Tests
@@ -12,6 +13,10 @@ import { test, expect } from "@playwright/test";
 
 const TIMEOUT = 15_000;
 
+test.beforeEach(async ({ page }) => {
+  await suppressOnboarding(page);
+});
+
 test.describe("Demo Golden Path", () => {
   test("1. Dashboard renders all sections", async ({ page }) => {
     await page.goto("/");
@@ -23,8 +28,11 @@ test.describe("Demo Golden Path", () => {
     const kpiCards = page.locator('[class*="rounded-2xl"], [class*="GlassCard"]');
     await expect(kpiCards.first()).toBeVisible({ timeout: TIMEOUT });
 
-    // Lice chart or data section should render
-    await expect(page.locator("svg, canvas, [class*='chart'], [class*='Chart']").first()).toBeVisible({ timeout: TIMEOUT });
+    // Lice chart or data section should render (visible-only: the first
+    // svg in the DOM is the hidden mobile hamburger icon)
+    await expect(
+      page.locator("svg:visible, canvas:visible, [class*='chart']:visible, [class*='Chart']:visible").first(),
+    ).toBeVisible({ timeout: TIMEOUT });
 
     // No error boundaries triggered (no "Something went wrong" text)
     await expect(page.locator("text=Something went wrong")).not.toBeVisible();
@@ -34,12 +42,13 @@ test.describe("Demo Golden Path", () => {
     await page.goto("/");
     await expect(page.locator("h1").first()).toBeVisible({ timeout: TIMEOUT });
 
-    // Click on Morning Brief in sidebar
-    await page.click('a[href="/brief"], text=Morning Brief, text=Morgenrapport');
+    // Click on Morning Brief in sidebar (CSS+text engines cannot be mixed in
+    // one comma list — the leading a[href] makes Playwright parse it as CSS)
+    await page.locator('a[href="/brief"]').first().click();
 
     // Brief page loads with heading
     await expect(page.locator("h1, h2").first()).toBeVisible({ timeout: TIMEOUT });
-    await expect(page.url()).toContain("/brief");
+    await expect(page).toHaveURL(/\/brief/, { timeout: TIMEOUT });
   });
 
   test("3. Morning Brief shows structured sections", async ({ page }) => {
@@ -48,8 +57,8 @@ test.describe("Demo Golden Path", () => {
     // Title visible
     await expect(page.locator("h1, h2").first()).toBeVisible({ timeout: TIMEOUT });
 
-    // PDF export button exists
-    await expect(page.locator("text=PDF, button:has-text('PDF')").first()).toBeVisible({ timeout: TIMEOUT });
+    // PDF export button exists (i18n label: "Export PDF" / "Eksporter PDF")
+    await expect(page.getByRole("button", { name: /PDF/ }).first()).toBeVisible({ timeout: TIMEOUT });
 
     // At least some content sections should render
     const sections = page.locator('[class*="rounded-2xl"], [class*="GlassCard"]');
@@ -79,8 +88,12 @@ test.describe("Demo Golden Path", () => {
     // Title
     await expect(page.locator("h1, h2").first()).toBeVisible({ timeout: TIMEOUT });
 
-    // SVG chart should render (FishPoolChart)
-    await expect(page.locator("svg").first()).toBeVisible({ timeout: TIMEOUT });
+    // Price history chart renders real SSB data — InteractiveChart only
+    // renders its <svg role="img"> when it has ≥1 data point (empty state is
+    // a plain "No data available" div), so this also proves the data flow.
+    await expect(
+      page.getByRole("img", { name: /Interactive chart with \d+ data points/ }).first(),
+    ).toBeVisible({ timeout: TIMEOUT });
 
     // KPI cards with price data
     const cards = page.locator('[class*="rounded-2xl"]');
@@ -122,8 +135,9 @@ test.describe("Key Feature Pages", () => {
   test("Salmon Futures renders forward curve", async ({ page }) => {
     await page.goto("/futures");
     await expect(page.locator("h1").first()).toBeVisible({ timeout: TIMEOUT });
-    // Forward curve chart (SVG)
-    await expect(page.locator("svg").first()).toBeVisible({ timeout: TIMEOUT });
+    // Forward curve chart (SVG — 800x200 viewBox; svg-only .first() would
+    // match the hidden mobile hamburger icon instead)
+    await expect(page.locator('svg[viewBox="0 0 800 200"]').first()).toBeVisible({ timeout: TIMEOUT });
   });
 
   test("Global Supply shows country data", async ({ page }) => {

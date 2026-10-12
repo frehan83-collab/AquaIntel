@@ -290,7 +290,14 @@ export default function MarketTerminalPage() {
       ]);
       if (fpRes.status === "fulfilled") setFishPool((fpRes.value as any).data ?? []);
       if (eqRes.status === "fulfilled") setEquity(eqRes.value as EquityPrices);
-      if (ssbRes.status === "fulfilled") setSsbHistory((ssbRes.value as any).data ?? []);
+      // /api/market/ssb-price-history returns {spot_nok, history:[{week, price_nok,…}]}
+      // — map to the SsbPoint contract the price chart + sparkline consume.
+      if (ssbRes.status === "fulfilled") {
+        const hist = ((ssbRes.value as any).history ?? []) as Array<Record<string, unknown>>;
+        setSsbHistory(
+          hist.map((h) => ({ week: String(h.week ?? ""), price_nok_kg: Number(h.price_nok) })),
+        );
+      }
       if (seasonRes.status === "fulfilled") setSeasonal((seasonRes.value as any).data ?? []);
       if (expRes.status === "fulfilled") setExports((expRes.value as any).destinations ?? []);
       if (futRes.status === "fulfilled") setFutures((futRes.value as any).curve ?? []);
@@ -399,13 +406,13 @@ export default function MarketTerminalPage() {
               <p className="text-sm text-[var(--text-secondary)]">
                 Fish Pool · SSB · Futures · Equity
               </p>
-              <DataQualityBadge provenance={{
-                source: "SSB + Yahoo Finance + FRED",
-                is_live: ssbHistory.length > 0,
-                freshness: new Date().toISOString(),
-                confidence: ssbHistory.length > 0 ? 0.9 : 0.4,
-                fallback_reason: ssbHistory.length === 0 ? "SSB data unavailable" : null,
-              }} />
+              {/* No invented confidence numbers: endpoint provenance is not
+                  available here, so classify by whether SSB data arrived. */}
+              <DataQualityBadge
+                quality={ssbHistory.length > 0 ? "live" : "degraded"}
+                source="SSB 03024 + Yahoo Finance + FRED"
+                reason={ssbHistory.length === 0 ? "SSB data unavailable" : undefined}
+              />
               <FreshnessIndicator lastUpdated={lastUpdated} />
             </div>
           </div>

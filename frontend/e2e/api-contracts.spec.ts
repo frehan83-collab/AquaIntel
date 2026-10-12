@@ -20,11 +20,14 @@ test.describe("Health & System", () => {
     expect(body).toHaveProperty("database");
   });
 
-  test("GET /api/metrics returns prometheus format", async ({ request }) => {
+  test("GET /api/metrics returns JSON system metrics", async ({ request }) => {
     const res = await request.get(`${API}/api/metrics`);
     expect(res.ok()).toBeTruthy();
-    const text = await res.text();
-    expect(text).toContain("http_request");
+    const body = await res.json();
+    // /api/metrics is the hand-written JSON view (cache + process stats);
+    // Prometheus text lives at /api/metrics/prometheus (instrumentator).
+    expect(body).toHaveProperty("cache");
+    expect(body).toHaveProperty("process");
   });
 
   test("GET /api/rate-limit-info returns tier data", async ({ request }) => {
@@ -75,8 +78,8 @@ test.describe("Market & Price", () => {
     expect(body).toHaveProperty("data_provenance");
   });
 
-  test("GET /api/ssb/price-history returns prices", async ({ request }) => {
-    const res = await request.get(`${API}/api/ssb/price-history?weeks=4`);
+  test("GET /api/market/ssb-price-history returns prices", async ({ request }) => {
+    const res = await request.get(`${API}/api/market/ssb-price-history?weeks=4`);
     expect(res.ok()).toBeTruthy();
     const body = await res.json();
     expect(body).toHaveProperty("spot_nok");
@@ -115,8 +118,8 @@ test.describe("Decision Engine", () => {
 });
 
 test.describe("Analytics & Leaders", () => {
-  test("GET /api/analytics/leaders returns ranked companies", async ({ request }) => {
-    const res = await request.get(`${API}/api/analytics/leaders`);
+  test("GET /api/leaders/top30 returns ranked companies", async ({ request }) => {
+    const res = await request.get(`${API}/api/leaders/top30`);
     expect(res.ok()).toBeTruthy();
     const body = await res.json();
     const data = Array.isArray(body) ? body : body.data || body.companies || [];
@@ -204,8 +207,8 @@ test.describe("Notifications & Alerts", () => {
 });
 
 test.describe("Compliance", () => {
-  test("GET /api/traffic-light/current returns PA status", async ({ request }) => {
-    const res = await request.get(`${API}/api/traffic-light/current`);
+  test("GET /api/regulatory/traffic-light/current returns PA status", async ({ request }) => {
+    const res = await request.get(`${API}/api/regulatory/traffic-light/current`);
     expect(res.ok()).toBeTruthy();
   });
 
@@ -215,21 +218,73 @@ test.describe("Compliance", () => {
   });
 });
 
-test.describe("Admin", () => {
-  test("GET /api/admin/status returns platform health", async ({ request }) => {
-    const res = await request.get(`${API}/api/admin/status`);
-    expect(res.ok()).toBeTruthy();
+test.describe("Admin (auth-gated)", () => {
+  /**
+   * Session 38 CRIT #2 contract, mirrored from tests/test_api_routes.py:
+   *   anonymous -> 401, authenticated non-admin -> 403, admin -> 200.
+   * Admin is granted only via User.role or FISHINTEL_ADMIN_EMAILS on the
+   * server (bootstrap path) — self-serve registration cannot escalate.
+   * The CI job sets FISHINTEL_ADMIN_EMAILS=ci-admin@fishintel.test.
+   */
+  const ADMIN_EMAIL = "ci-admin@fishintel.test";
+  const ADMIN_PASSWORD = "ci-admin-password-123!";
+  const USER_EMAIL = "ci-user@fishintel.test";
+  const USER_PASSWORD = "ci-user-password-123!";
+  const ADMIN_PATHS = [
+    "/api/admin/status",
+    "/api/admin/export-summary",
+    "/api/cache/stats",
+  ];
+
+  async function registerOrLogin(
+    ctx: import("@playwright/test").APIRequestContext,
+    email: string,
+    password: string,
+    role: string,
+  ): Promise<string> {
+    const payload = { email, password, role };
+    let res = await ctx.post(`${API}/api/auth/register`, { data: payload });
+    if (!res.ok()) {
+      // 400 = already registered (re-runs); fall back to login.
+      res = await ctx.post(`${API}/api/auth/login`, { data: { email, password } });
+    }
+    expect(res.ok(), `register/login failed for ${email}`).toBeTruthy();
+    const { token } = await res.json();
+    expect(token).toBeTruthy();
+    return token;
+  }
+
+  test("admin endpoints reject unauthenticated requests (401)", async ({ request }) => {
+    for (const path of ADMIN_PATHS) {
+      const res = await request.get(`${API}${path}`);
+      expect(res.status(), `${path} must be 401 without credentials`).toBe(401);
+    }
   });
 
-  test("GET /api/admin/export-summary returns datasets", async ({ request }) => {
-    const res = await request.get(`${API}/api/admin/export-summary`);
-    expect(res.ok()).toBeTruthy();
-    const body = await res.json();
-    expect(body).toHaveProperty("datasets");
+  test("authenticated non-admin is forbidden (403)", async ({ playwright }) => {
+    const ctx = await playwright.request.newContext();
+    const token = await registerOrLogin(ctx, USER_EMAIL, USER_PASSWORD, "farmer");
+    const res = await ctx.get(`${API}/api/admin/status`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status()).toBe(403);
+    await ctx.dispose();
   });
 
-  test("GET /api/cache/stats returns cache metrics", async ({ request }) => {
-    const res = await request.get(`${API}/api/cache/stats`);
-    expect(res.ok()).toBeTruthy();
+  test("admin via FISHINTEL_ADMIN_EMAILS passes the gate (200)", async ({ playwright }) => {
+    const ctx = await playwright.request.newContext();
+    const token = await registerOrLogin(ctx, ADMIN_EMAIL, ADMIN_PASSWORD, "analyst");
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const status = await ctx.get(`${API}/api/admin/status`, { headers });
+    expect(status.ok()).toBeTruthy();
+
+    const exportSummary = await ctx.get(`${API}/api/admin/export-summary`, { headers });
+    expect(exportSummary.ok()).toBeTruthy();
+    expect(await exportSummary.json()).toHaveProperty("datasets");
+
+    const cacheStats = await ctx.get(`${API}/api/cache/stats`, { headers });
+    expect(cacheStats.ok()).toBeTruthy();
+    await ctx.dispose();
   });
 });

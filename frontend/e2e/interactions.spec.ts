@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { suppressOnboarding } from "./utils";
 
 /**
  * User Interaction E2E Tests
@@ -9,6 +10,10 @@ import { test, expect } from "@playwright/test";
 
 const TIMEOUT = 15_000;
 
+test.beforeEach(async ({ page }) => {
+  await suppressOnboarding(page);
+});
+
 test.describe("Sidebar interactions", () => {
   test("sidebar search filters navigation items", async ({ page }) => {
     await page.goto("/");
@@ -16,8 +21,9 @@ test.describe("Sidebar interactions", () => {
 
     if (await searchInput.isVisible({ timeout: 5000 }).catch(() => false)) {
       await searchInput.fill("disease");
-      // Should show Disease Intel link
-      await expect(page.locator("text=Disease")).toBeVisible({ timeout: 5000 });
+      // Should show Disease Intel link (link role avoids the "Disease
+      // Outbreaks" group heading — both match text=Disease, strict mode)
+      await expect(page.getByRole("link", { name: /Disease/i }).first()).toBeVisible({ timeout: 5000 });
       // Should hide unrelated items
       await searchInput.clear();
     }

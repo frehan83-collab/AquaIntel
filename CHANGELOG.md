@@ -3,6 +3,52 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
+## [Unreleased] — P0-1 backend-backed e2e (2026-10-13)
+
+### Added
+- **`e2e-backend` CI job** (`frontend.yml`): spins a fresh seeded SQLite DB
+  (`scripts/ci_bootstrap_db.py`) + uvicorn on :8000, then runs the API contract/
+  integration specs and the app specs (navigation, golden-path, interactions)
+  **blocking** on chromium, 1 worker, with a failure-report artifact.
+- `scripts/ci_bootstrap_db.py` — idempotent fresh-runner DB bootstrap (schema +
+  demo seed), mirrors the conftest pattern.
+- `frontend/e2e/utils.ts` — `suppressOnboarding()` (pre-marks `oc_onboarded` /
+  `openclaw_tour_completed`; the first-visit wizard otherwise intercepts pointer
+  events on every fresh browser profile). Visual baselines intentionally unaffected.
+
+### Fixed
+- **`price_feed_hub._get_ssb_prices`** called non-existent
+  `ssb_client.get_latest_prices` (import error) → `/api/futures/forward-curve`
+  returned an empty curve forever. Now uses
+  `ssb_price_client.get_price_history(n_weeks=260)` + `price_nok`→`price_nok_kg`
+  normalization. Verified: 12-point synthetic curve, honest degraded provenance.
+- **`ssb_price_client` week-count-agnostic cache** (found by fresh-DB e2e): an
+  8-week startup fetch answered the hub's 260-week request for the whole 6 h TTL
+  → "Insufficient price history" → empty curve (cached 600 s by the
+  `/api/futures/forward-curve` route). Both the fresh-cache and serve-stale
+  paths now require the cached request window to cover the incoming request
+  (`_cache_requested`); 3 regression tests added.
+- **`alembic upgrade head` aborted on fresh databases** (`013_performance_indexes`
+  re-created `ix_audit_logs_user_id`/`_action` already created by
+  `011_audit_logs`) — the production entrypoint migration step would have failed
+  on any brand-new deploy. 013's creates/drops are now index-existence-guarded;
+  verified `upgrade head` completes on an empty DB + subprocess regression test
+  (`tests/test_migrations.py`).
+- **`/market` page** read `.data` from `/api/market/ssb-price-history` (endpoint
+  returns `.history`, field `price_nok`) → price chart + spot KPI permanently
+  empty. Now mapped correctly; the header DataQualityBadge no longer fabricates
+  a 90% confidence figure (classifies live/degraded without invented numbers).
+- **`/trader` page** same bug class: spot KPI read `price_nok` (endpoint returns
+  `price_nok_kg`) and forward-curve rows read `price_nok`/`price` (hub returns
+  `projected_nok_kg`) → permanently "--". Now normalized via `priceOf()`.
+- e2e specs aligned with the real contracts: `/api/metrics` JSON shape,
+  `/api/market/ssb-price-history`, `/api/leaders/top30`,
+  `/api/regulatory/traffic-light/current`; admin block now tests the
+  anonymous-401 / non-admin-403 / admin-200 contract (mirrors
+  `tests/test_api_routes.py`); fragile selectors (hidden hamburger `.first()`,
+  mixed CSS+text click, strict-mode `text=Disease`, PDF-by-text) replaced with
+  role/a11y-contract locators; URL race → `toHaveURL()` auto-retry.
+
 ## [Unreleased] — Session 41e (2026-10-12, autonomous run, continued)
 
 ### Added

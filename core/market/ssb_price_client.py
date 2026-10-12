@@ -55,6 +55,11 @@ class SSBPriceClient:
         self._client = httpx.AsyncClient(timeout=30.0)
         self._cache: SSBPriceData | None = None
         self._cache_time: dt.datetime | None = None
+        # Number of weeks the cached result was fetched with. The cache must
+        # not answer requests for a LARGER window than it was built for —
+        # e.g. an 8-week startup fetch must not starve a 260-week request
+        # (price_feed_hub needs >=52 rows or the forward curve collapses).
+        self._cache_requested: int = 0
         self._cache_ttl = dt.timedelta(hours=6)  # SSB updates weekly
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=30), reraise=True)
@@ -110,11 +115,14 @@ class SSBPriceClient:
         """
         now = dt.datetime.now(dt.UTC)
 
-        # Use cache if fresh
+        # Use cache if fresh AND covering at least the requested window.
+        # (A smaller cached window is bypassed and replaced by a wider fetch;
+        # see _cache_requested for the starvation this prevents.)
         if (
             self._cache
             and self._cache_time
             and (now - self._cache_time) < self._cache_ttl
+            and self._cache_requested >= n_weeks
         ):
             return self._cache
 
@@ -132,6 +140,7 @@ class SSBPriceClient:
 
             self._cache = result
             self._cache_time = now
+            self._cache_requested = n_weeks
 
             log.info(
                 "ssb_price.fetched",
@@ -144,8 +153,11 @@ class SSBPriceClient:
         except Exception as e:
             log.warning("ssb_price.fetch_failed", error=str(e)[:100])
 
-        # Serve-stale: an old real price beats an empty one.
-        if self._cache is not None:
+        # Serve-stale: an old real price beats an empty one — but only when it
+        # actually covers the requested window. A stale 8-week cache must not
+        # answer a 260-week request (that starvation is what emptied the
+        # /api/futures/forward-curve chain; see _cache_requested).
+        if self._cache is not None and self._cache_requested >= n_weeks:
             log.warning(
                 "ssb_price.serving_stale",
                 age_hours=round((now - (self._cache_time or now)).total_seconds() / 3600, 1),

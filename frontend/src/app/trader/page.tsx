@@ -17,6 +17,11 @@ import { useTranslation, formatNumber, formatCurrency, formatDate } from "@/lib/
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+// Curve points arrive in different shapes across endpoints
+// (price_feed_hub: projected_nok_kg; others: price_nok_kg/price_nok/price).
+const priceOf = (pt: any): number | null =>
+  pt?.projected_nok_kg ?? pt?.price_nok_kg ?? pt?.price_nok ?? pt?.price ?? null;
+
 const TABS = ["ISA Outbreak", "Traffic Light", "Feed Shock"] as const;
 const TAB_KEYS: Record<Tab, string> = {
   "ISA Outbreak": "trader.isa_outbreak",
@@ -166,7 +171,7 @@ export default function TraderPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KPICard
           label="SSB Spot Price"
-          value={spotPrice?.price_nok != null ? formatCurrency(spotPrice.price_nok, locale) : "--"}
+          value={spotPrice?.price_nok_kg != null ? formatCurrency(spotPrice.price_nok_kg, locale) : "--"}
           delta={spotPrice?.week || "Latest"}
           icon={BarChart3}
         />
@@ -501,7 +506,7 @@ export default function TraderPage() {
                 <div key={i} className="flex justify-between text-sm py-1 border-b border-white/5">
                   <span className="text-white/60">{pt.month || pt.label || `M+${i + 1}`}</span>
                   <span className="text-white font-medium">
-                    {pt.price_nok != null ? formatCurrency(pt.price_nok, locale) : pt.price != null ? formatCurrency(pt.price, locale) : "--"}
+                    {priceOf(pt) != null ? formatCurrency(priceOf(pt)!, locale) : "--"}
                   </span>
                 </div>
               ))}
@@ -512,7 +517,7 @@ export default function TraderPage() {
                 <div key={i} className="flex justify-between text-sm py-1 border-b border-white/5">
                   <span className="text-white/60">{pt.month || pt.label || `M+${i + 1}`}</span>
                   <span className="text-white font-medium">
-                    {pt.price_nok != null ? formatCurrency(pt.price_nok, locale) : pt.price != null ? formatCurrency(pt.price, locale) : "--"}
+                    {priceOf(pt) != null ? formatCurrency(priceOf(pt)!, locale) : "--"}
                   </span>
                 </div>
               ))}
@@ -561,7 +566,7 @@ export default function TraderPage() {
             if (pts.length >= 2) {
               const curveData = pts.map((pt: any, i: number) => ({
                 x: i + 1,
-                y: pt.price_nok ?? pt.price ?? 0,
+                y: priceOf(pt) ?? 0,
               }));
               return (
                 <div className="mt-3 pt-3 border-t border-white/5">

@@ -32,9 +32,22 @@ class PriceFeedHub:
             return self._ssb_cache
 
         try:
-            from core.market.ssb_price_client import ssb_client
-            data = await ssb_client.get_latest_prices(weeks=260)  # ~5 years
-            self._ssb_cache = data if isinstance(data, list) else []
+            from core.market.ssb_price_client import ssb_price_client
+            data = await ssb_price_client.get_price_history(n_weeks=260)  # ~5 years
+            # Normalize to this hub's field contract: get_price_history()
+            # exposes `price_nok`; the hub (get_spot_price / get_forward_curve)
+            # reads `price_nok_kg` (the contract of the removed
+            # get_latest_prices() this call replaced).
+            self._ssb_cache = [
+                {
+                    "week": p.get("week"),
+                    "year": p.get("year"),
+                    "price_nok_kg": p.get("price_nok"),
+                    "volume_tonnes": p.get("volume_tonnes"),
+                }
+                for p in (data or [])
+                if isinstance(p, dict) and p.get("price_nok") is not None
+            ]
             self._cache_ts = now
         except Exception as e:
             log.warning("ssb_price_fetch_error", error=str(e))

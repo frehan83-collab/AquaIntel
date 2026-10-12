@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { suppressOnboarding } from "./utils";
 
 /**
  * E2E Navigation Tests
@@ -6,6 +7,10 @@ import { test, expect } from "@playwright/test";
  * Verify that all major pages load without errors and display expected content.
  * These are smoke tests — they ensure nothing is fundamentally broken.
  */
+
+test.beforeEach(async ({ page }) => {
+  await suppressOnboarding(page);
+});
 
 test.describe("Core navigation", () => {
   test("dashboard loads and shows KPI cards", async ({ page }) => {
@@ -67,8 +72,9 @@ test.describe("Sidebar navigation", () => {
     // Search input may or may not be visible depending on viewport
     if (await searchInput.isVisible()) {
       await searchInput.fill("disease");
-      // Should filter sidebar items
-      await expect(page.locator("text=Disease")).toBeVisible();
+      // Should filter sidebar items (link role avoids the "Disease Outbreaks"
+      // group heading, which also matches text=Disease and trips strict mode)
+      await expect(page.getByRole("link", { name: /Disease/i }).first()).toBeVisible();
     }
   });
 });

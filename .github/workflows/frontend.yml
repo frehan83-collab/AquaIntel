@@ -64,8 +64,9 @@ jobs:
         working-directory: frontend/
 
       # 9. Remaining E2E tests that do NOT need the FastAPI backend.
-      #    api-*.spec.ts require :8000 and belong in a backend-backed job
-      #    (future); running them here just stalls on connection retries.
+      #    The backend-backed `e2e-backend` job below runs these blocking
+      #    against a live seeded API; this tolerant run stays as a
+      #    backend-free sanity net.
       - name: Run remaining E2E tests
         run: npx playwright test navigation.spec.ts golden-path.spec.ts interactions.spec.ts --reporter=github
         working-directory: frontend/
@@ -79,3 +80,95 @@ jobs:
         run: npm audit --audit-level=high || true
         continue-on-error: true
         working-directory: frontend/
+
+  # Backend-backed E2E — starts FastAPI (fresh seeded SQLite) so api-*.spec.ts
+  # and the live-integration specs (golden-path et al.) run for real, blocking.
+  # Gated on `build` so a red build/visual run never burns a full e2e cycle.
+  # Playwright's webServer boots the Next dev server (:3001) itself — do NOT
+  # run `npm run build` here (.next collision corrupts dev assets; see 41e).
+  e2e-backend:
+    needs: build
+    runs-on: ubuntu-latest
+
+    env:
+      # Required by the auth layer during fresh-DB provisioning and tests
+      FISHINTEL_JWT_SECRET: ci-test-secret-do-not-use-in-production
+      # Grants admin to this email via the FISHINTEL_ADMIN_EMAILS bootstrap
+      # path in core/auth.py — the api-contracts admin flow registers it.
+      FISHINTEL_ADMIN_EMAILS: ci-admin@fishintel.test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # --- Backend ---------------------------------------------------------
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Bootstrap fresh CI database (schema + demo seed)
+        run: python scripts/ci_bootstrap_db.py
+
+      - name: Start FastAPI backend (:8000)
+        run: |
+          nohup python -m uvicorn core.api:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:8000/api/health > /dev/null; then
+              echo "backend healthy after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "backend failed to become healthy — last log lines:"
+          tail -50 uvicorn.log
+          exit 1
+
+      # --- Frontend + Playwright -------------------------------------------
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: frontend/
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend/
+
+      # 120 s per test: several endpoints hit live external sources uncached
+      # on a fresh DB (e.g. scotland/snapshot ~25 s); 1 worker keeps the
+      # auth rate limits (5/min register) safe.
+      - name: API contract + integration specs (backend-backed)
+        run: >
+          npx playwright test api-contracts.spec.ts api-integration.spec.ts
+          --project=chromium --workers=1 --timeout=120000
+          --reporter=github,html
+        working-directory: frontend/
+
+      # App flows against the same live backend (golden-path.spec.ts is
+      # explicitly "fails if the backend is down (correctly)").
+      - name: App specs (backend-backed)
+        run: >
+          npx playwright test navigation.spec.ts golden-path.spec.ts interactions.spec.ts
+          --project=chromium --workers=1 --timeout=60000
+          --reporter=github,html
+        working-directory: frontend/
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-backend-e2e
+          path: frontend/playwright-report/
+          retention-days: 7

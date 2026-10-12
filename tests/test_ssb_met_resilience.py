@@ -22,6 +22,7 @@ def _fresh_client() -> SSBPriceClient:
     c = SSBPriceClient.__new__(SSBPriceClient)  # skip httpx client in __init__
     c._cache = None
     c._cache_time = None
+    c._cache_requested = 0
     c._cache_ttl = dt.timedelta(hours=6)
     c._bulk_cache = None
     c._bulk_cache_time = None
@@ -133,6 +134,7 @@ class TestSSBServeStale:
             prices=[SalmonPriceWeek(2026, 40, 73.8)], latest_price=73.8, n_weeks=1
         )
         c._cache_time = dt.datetime.now(dt.UTC) - dt.timedelta(hours=10)  # expired
+        c._cache_requested = 260  # stale cache covers the (default) request
 
         async def boom(n_weeks):
             raise RuntimeError("down")
@@ -150,6 +152,73 @@ class TestSSBServeStale:
         monkeypatch.setattr(c, "_fetch_remote", boom)
         result = asyncio.run(c.fetch_prices())
         assert result.n_weeks == 0
+
+
+class TestSSBCacheWindow:
+    """Regression: the week-count-agnostic cache starved wider requests.
+
+    A small cached window (e.g. an 8-week startup fetch) answered every later
+    request for the whole 6h TTL — including price_feed_hub's 260-week request,
+    whose <52 rows silently collapsed /api/futures/forward-curve to an empty
+    curve (cached 600s by that route's ``@cached`` decorator and fed on by the
+    hub's own 1h cache). Both the fresh-cache path and the serve-stale path
+    are gated on the cached request window covering the incoming request.
+    """
+
+    def test_small_cache_does_not_satisfy_larger_request(self, monkeypatch):
+        import datetime as dt
+
+        c = _fresh_client()
+        c._cache = SSBPriceData(
+            prices=[SalmonPriceWeek(2026, 40, 73.8)], latest_price=73.8, n_weeks=1
+        )
+        c._cache_time = dt.datetime.now(dt.UTC)  # fresh, within TTL
+        c._cache_requested = 8
+        calls = []
+
+        async def fake_fetch(n_weeks):
+            calls.append(n_weeks)
+            return [SalmonPriceWeek(2026, w, 70.0) for w in range(1, 261)]
+
+        monkeypatch.setattr(c, "_fetch_remote", fake_fetch)
+        result = asyncio.run(c.fetch_prices(n_weeks=260))
+        assert calls == [260]  # smaller cache bypassed, wider window fetched
+        assert result.n_weeks == 260
+        assert c._cache_requested == 260  # cache replaced by the wider window
+
+    def test_large_cache_serves_smaller_request(self, monkeypatch):
+        import datetime as dt
+
+        c = _fresh_client()
+        c._cache = SSBPriceData(
+            prices=[SalmonPriceWeek(2026, 40, 73.8)], latest_price=73.8, n_weeks=260
+        )
+        c._cache_time = dt.datetime.now(dt.UTC)
+        c._cache_requested = 260
+
+        async def boom(n_weeks):
+            raise AssertionError("cache should have been reused")
+
+        monkeypatch.setattr(c, "_fetch_remote", boom)
+        result = asyncio.run(c.fetch_prices(n_weeks=52))
+        assert result is c._cache  # superset cache satisfies the request
+
+    def test_stale_small_cache_not_served_for_larger_request(self, monkeypatch):
+        import datetime as dt
+
+        c = _fresh_client()
+        c._cache = SSBPriceData(
+            prices=[SalmonPriceWeek(2026, 40, 73.8)], latest_price=73.8, n_weeks=1
+        )
+        c._cache_time = dt.datetime.now(dt.UTC) - dt.timedelta(hours=10)  # expired
+        c._cache_requested = 8  # does NOT cover the request below
+
+        async def boom(n_weeks):
+            raise RuntimeError("down")
+
+        monkeypatch.setattr(c, "_fetch_remote", boom)
+        result = asyncio.run(c.fetch_prices(n_weeks=260))
+        assert result.n_weeks == 0  # empty beats an inadequate stale window
 
 
 class TestMETRequests:
