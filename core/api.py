@@ -249,11 +249,14 @@ async def fishintel_error_handler(request: Request, exc: FishIntelError):
 # Must be added before routers, at module level (not in lifespan)
 try:
     from prometheus_fastapi_instrumentator import Instrumentator
+    # Path is /api/metrics/prometheus — /api/metrics itself is the hand-written
+    # JSON stats endpoint (single owner per path; the instrumentator previously
+    # registered a duplicate /api/metrics on any runner with this dependency).
     Instrumentator(
         should_group_status_codes=True,
         should_ignore_untemplated=True,
         excluded_handlers=["/api/docs", "/api/redoc", "/openapi.json"],
-    ).instrument(app).expose(app, endpoint="/api/metrics", include_in_schema=False)
+    ).instrument(app).expose(app, endpoint="/api/metrics/prometheus", include_in_schema=False)
 except ImportError:
     pass
 

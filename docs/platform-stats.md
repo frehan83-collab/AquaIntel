@@ -33,7 +33,7 @@
 | **ORM** | SQLAlchemy (fully async) | 2.0+ |
 | **ML** | PyTorch + TimesFM + Chronos-2 | 2.2 / 2.5 / 1.3 |
 | **GNN** | PyTorch Geometric | 2.5 |
-| **Monitoring** | Prometheus | /api/metrics |
+| **Monitoring** | Prometheus | /api/metrics/prometheus (text) + /api/metrics (JSON) |
 | **Auth** | JWT + bcrypt | OWASP compliant |
 | **Deployment** | Docker + Gunicorn 4-worker | Production-ready |
 
@@ -126,7 +126,7 @@ Farmer decision engine (TREAT/MONITOR/NO_ACTION), treatment ROI calculator, scen
 - **Docker**: Multi-stage build, health checks, graceful shutdown
 - **Workers**: Gunicorn 4-worker with Uvicorn async
 - **Database**: PostgreSQL 16+ with TimescaleDB extension
-- **Monitoring**: Prometheus /api/metrics endpoint
+- **Monitoring**: Prometheus scrape endpoint /api/metrics/prometheus (text format); JSON stats at /api/metrics
 - **Caching**: In-memory with configurable TTLs
 - **WebSockets**: 2 real-time channels (alerts, command centre)
 - **API Docs**: Auto-generated OpenAPI at /api/docs
