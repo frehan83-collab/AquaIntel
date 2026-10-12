@@ -1,0 +1,25 @@
+# Ruff configuration — ratchet policy (Session 41, REPORT_STACK top-10 #7)
+#
+# ENFORCED in CI (must pass): the high-signal error classes only.
+#   E9   — runtime/syntax errors (e.g. E999 SyntaxError)
+#   F821 — undefined name            (caught two dead chat-answer branches!)
+#   F811 — redefinition while unused
+#   F401 — unused import             (probes annotated with `# noqa: F401`)
+#
+# NEXT RATCHET STEP (documented, not yet enforced):
+#   F841 — 36 dead locals live in core/; they are NOT auto-fixed because
+#          removing `x = await call()` can silently drop side effects.
+#
+# Everything below is intentionally absent until the next wave: E501 line
+# length, import sorting (I), docstring rules, blind-except (BLE), etc.
+target-version = "py312"
+
+[lint]
+select = ["E9", "F821", "F811", "F401"]
+
+exclude = [
+    ".venv",
+    "node_modules",
+    "frontend",
+    "models",
+]

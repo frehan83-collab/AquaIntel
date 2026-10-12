@@ -62,6 +62,13 @@ TGC_COEFFICIENT = 2.4       # Thermal Growth Coefficient (mid-range for Norwegia
 OPTIMAL_TEMP_C = 12.0       # Optimal growth temperature
 TEMP_LOWER_LIMIT = 3.0      # Below this, growth effectively stops
 TEMP_UPPER_STRESS = 18.0    # Above this, growth declines sharply
+# Growth degradation half-window around OPTIMAL_TEMP_C (Session 41: imported by
+# core/ml/harvest_optimizer; documented as the ±6 °C band where growth is near
+# maximal — consistent with the 3/18 °C hard limits above).
+THERMAL_TOLERANCE = 6.0
+# Maximum specific growth rate (% body weight/day) at optimal temperature for
+# seawater-phase Atlantic salmon (small fish ~2-3% SGR; 2.5 is the mid figure).
+MAX_SGR_PCT = 2.5
 SMOLT_WEIGHT_KG = 0.10      # Average smolt weight at sea transfer
 HARVEST_WEIGHT_KG = 5.0     # Target harvest weight
 # Source: Mowi Industry Handbook 2024 — ~85% seawater survival over ~18 months
@@ -165,6 +172,23 @@ def _sgr(temp_c: float, weight_kg: float) -> float:
     if weight_kg <= 0:
         return 0.0
     return (daily_gain / weight_kg) * 100.0
+
+
+# Q10 for sea-lice (L. salmonis) development scaling. Literature puts Q10 for
+# egg/development rates in the 2.5-4 range; 3.0 is the mid estimate. The factor
+# is normalised so that 10 °C == 1.0 and clamped to a sane band.
+LICE_Q10 = 3.0
+
+
+def _temperature_growth_factor(temp_c: float) -> float:
+    """Temperature multiplier for sea-lice growth, normalised at 10 °C.
+
+    Q10-style scaling reconstructed for the harvest optimiser (Session 41):
+    factor = Q10 ** ((T - 10) / 10), clamped to [0.5, 2.0]. Callers multiply a
+    base weekly growth rate by this factor (e.g. 1.05 * factor).
+    """
+    factor = LICE_Q10 ** ((temp_c - 10.0) / 10.0)
+    return max(0.5, min(2.0, factor))
 
 
 class BiomassPredictionEngine:

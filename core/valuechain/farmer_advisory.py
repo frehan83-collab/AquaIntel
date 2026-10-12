@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import structlog
 
-from core.predictors.short_term import ShortTermForecast
+from core.predictors.short_term import StageForcast
 
 log = structlog.get_logger(__name__)
 
@@ -111,8 +111,8 @@ def generate_farm_advisory(
     locality_no: int,
     current_lice: float,
     sea_temp: float,
-    forecasts_1w: list[ShortTermForecast],
-    forecasts_2w: list[ShortTermForecast],
+    forecasts_1w: list[StageForcast],
+    forecasts_2w: list[StageForcast],
     pressure_index: float = 0.0,
     has_cleaner_fish: bool = False,
     fish_weight_kg: float = 3.5,
