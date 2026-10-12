@@ -334,7 +334,6 @@ class FarmNetworkGraph:
             lice_values = [n.current_lice for n in nodes]
             above = sum(1 for n in nodes if n.above_threshold)
             companies = list({n.company for n in nodes})
-            tickers = list({n.ticker for n in nodes if n.ticker})
             pas = list({n.production_area for n in nodes})
 
             # Cascade probability: based on number of farms with high lice

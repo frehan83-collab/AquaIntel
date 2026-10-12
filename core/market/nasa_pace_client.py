@@ -311,7 +311,6 @@ class NASAPACEClient:
         no authentication.
         """
         # Check for data granule attributes
-        attrs = granule.get("data_granule", {})
         # Some L3 products include spatial statistics
         # This is a best-effort extraction
         return None

@@ -1525,7 +1525,6 @@ async def global_disease_geo():
     try:
         from core.market.scotland_monitor import scotland_monitor, SCOTLAND_REGIONS
         s = scotland_monitor._cache
-        disease_n = s.disease_events if s else 0
         for name, info in SCOTLAND_REGIONS.items():
             features.append({
                 "type": "Feature",

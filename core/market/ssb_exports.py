@@ -279,8 +279,6 @@ class SSBClient:
                 return []
 
             # Extract dimension keys
-            hs_keys = list(dims.get("Varekoder", {}).get("category", {}).get("label", {}).keys())
-            ie_keys = list(dims.get("ImpEks", {}).get("category", {}).get("label", {}).keys())
             land_keys = list(dims.get("Land", {}).get("category", {}).get("label", {}).keys())
             land_labels = dims.get("Land", {}).get("category", {}).get("label", {})
             content_keys = list(dims.get("ContentsCode", {}).get("category", {}).get("label", {}).keys())

@@ -385,7 +385,6 @@ class EuronextFuturesEngine:
 
         if raw_forwards:
             curve = []
-            now = dt.datetime.now(dt.UTC)
             for i, fwd in enumerate(raw_forwards[:months]):
                 curve.append({
                     "month": fwd["month"],

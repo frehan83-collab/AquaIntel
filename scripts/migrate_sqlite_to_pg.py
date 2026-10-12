@@ -16,7 +16,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from sqlalchemy import create_engine, text, inspect, MetaData
-from sqlalchemy.orm import sessionmaker
 
 from config.settings import settings, ROOT_DIR
 
@@ -43,8 +42,6 @@ def migrate() -> None:
     dst_inspector = inspect(dst_engine)
     dst_tables = set(dst_inspector.get_table_names())
 
-    SrcSession = sessionmaker(bind=src_engine)
-    DstSession = sessionmaker(bind=dst_engine)
 
     total_rows = 0
 

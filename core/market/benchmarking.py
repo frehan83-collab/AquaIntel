@@ -120,11 +120,9 @@ class BenchmarkingEngine:
 
         # Extract all values for percentile computation
         all_lice = [c.avg_lice for c in companies if c.avg_lice is not None and c.avg_lice > 0]
-        all_max_lice = [c.max_lice for c in companies if c.max_lice is not None]
         all_pct_above = [c.pct_above_threshold for c in companies if c.pct_above_threshold is not None]
         all_scores = [c.performance_score for c in companies if c.performance_score is not None]
         all_esg = [s.total for s in esg_scores.values() if s.total > 0]
-        all_n_locs = [c.n_localities for c in companies if c.n_localities > 0]
 
         # Disease resilience: 0 outbreaks = 100, each outbreak -20, ISA = -40
         all_disease_resilience: list[float] = []

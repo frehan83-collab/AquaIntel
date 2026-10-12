@@ -94,7 +94,6 @@ class MorningBriefEngine:
             prices = await get_latest_prices()
             equities = {k: v for k, v in prices.items() if k.endswith(".OL") and v}
             if equities:
-                top = max(equities.items(), key=lambda x: x[1])
                 sections.append(BriefSection(
                     title="Oslo Equities",
                     icon="chart",
@@ -220,7 +219,7 @@ class MorningBriefEngine:
         # ── 5. Feed Cost ─────────────────────────────────────────────
         try:
             from core.market.feed_cost_engine import feed_cost_engine
-            feed = await feed_cost_engine.fetch_prices()
+            await feed_cost_engine.fetch_prices()
             latest_feed = feed_cost_engine.get_latest()
             if latest_feed:
                 margin = latest_feed["margin_pct"]

@@ -183,7 +183,6 @@ class MacroIntelligenceEngine:
 
         # Currency Exposure (NOK weakness relative to USD)
         nok_usd = latest.get("nok_usd", 10.0)
-        usd_eur = latest.get("usd_eur", 1.1)
         # Higher NOK/USD = weaker NOK = good for exporters, bad for feed imports
         currency_exp = round(min(100, (nok_usd / 12) * 100), 1)
 

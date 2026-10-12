@@ -74,8 +74,6 @@ def generate_figma_plugin_script(tokens: dict) -> str:
     colors = flatten_colors(tokens.get("global", {}).get("colors", {}))
     typo = tokens.get("global", {}).get("typography", {})
     spacing = tokens.get("global", {}).get("spacing", {})
-    radii = tokens.get("global", {}).get("borderRadius", {})
-    effects = tokens.get("global", {}).get("effects", {})
 
     script_lines = [
         "// ═══════════════════════════════════════════════════════════════",

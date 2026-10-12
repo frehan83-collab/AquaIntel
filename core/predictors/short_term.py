@@ -293,7 +293,7 @@ class StigePredictor:
 
         n_features = X_std.shape[1]
 
-        with pm.Model() as model:
+        with pm.Model():
             # Priors
             alpha = pm.Normal("intercept", mu=0, sigma=2)
             betas = pm.Normal("betas", mu=0, sigma=1, shape=n_features)

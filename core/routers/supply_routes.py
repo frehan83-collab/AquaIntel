@@ -139,7 +139,7 @@ async def biomass_outlook(
     from core.market.biomass_predictor import biomass_predictor
     horizon = max(2, min(52, horizon))
     scenarios = max(100, min(5000, scenarios))
-    outlook = await biomass_predictor.compute_outlook(horizon, scenarios, regulatory)
+    await biomass_predictor.compute_outlook(horizon, scenarios, regulatory)
     result = biomass_predictor.get_outlook_dict()
     if not result:
         raise HTTPException(status_code=503, detail="Biomass outlook computation failed")
@@ -152,7 +152,7 @@ async def biomass_scenarios():
     """Compare regulatory scenarios (current vs all-green vs all-red)."""
     from core.market.biomass_predictor import biomass_predictor
     # Cache keys include the scenario, so each call computes fresh results.
-    current = await biomass_predictor.compute_outlook(20, 500, "current")
+    await biomass_predictor.compute_outlook(20, 500, "current")
     current_dict = biomass_predictor.get_outlook_dict()
     green = await biomass_predictor.compute_outlook(20, 500, "all_green")
     red = await biomass_predictor.compute_outlook(20, 500, "all_red")

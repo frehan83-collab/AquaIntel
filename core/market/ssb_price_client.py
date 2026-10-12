@@ -214,8 +214,6 @@ class SSBPriceClient:
             if not values or not time_labels:
                 return []
 
-            n_commodities = sizes[0] if len(sizes) > 0 else 1
-            n_contents = sizes[1] if len(sizes) > 1 else 1
             n_times = sizes[2] if len(sizes) > 2 else len(time_labels)
 
             # Layout: values[commodity_idx * n_contents * n_times + content_idx * n_times + time_idx]

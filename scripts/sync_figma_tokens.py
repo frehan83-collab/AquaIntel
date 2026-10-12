@@ -71,7 +71,6 @@ def _map_figma_variables_to_tokens(variables_data: dict) -> dict:
     if not variables_data or "meta" not in variables_data:
         return tokens
 
-    collections = variables_data["meta"].get("variableCollections", {})
     variables = variables_data["meta"].get("variables", {})
 
     for var_id, var_data in variables.items():

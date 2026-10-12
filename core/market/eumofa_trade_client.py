@@ -247,8 +247,8 @@ class EUMOFATradeClient:
         Combines import market data with origin export data to provide
         a comprehensive picture of EU salmon trade.
         """
-        imports = await self.fetch_salmon_imports_by_country()
-        exports = await self.fetch_salmon_exports_by_origin()
+        await self.fetch_salmon_imports_by_country()
+        await self.fetch_salmon_exports_by_origin()
 
         total_eu_import_t = sum(m.annual_import_tonnes for m in (self._import_cache or {}).values())
         total_eu_import_eur_m = sum(m.estimated_value_eur_m for m in (self._import_cache or {}).values())

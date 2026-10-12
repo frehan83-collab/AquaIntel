@@ -365,7 +365,6 @@ async def _snapshot_historical(target_year: int, target_week: int, week_label: s
         norway = mattilsynet_client.get_active_outbreaks()
         # Filter active outbreaks to those that were active during target week
         active = norway.get("active_outbreaks", [])
-        week_start_str = week_start.strftime("%Y-%m-%d")
         week_end_str = week_end.strftime("%Y-%m-%d")
         filtered = [
             o for o in active

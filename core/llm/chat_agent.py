@@ -144,7 +144,6 @@ class ChatAgent:
 
             tool_calls = response.get("tool_calls", [])
             text = response.get("text", "")
-            stop_reason = response.get("stop_reason", "")
 
             if not tool_calls:
                 # No more tool calls — this is the final answer

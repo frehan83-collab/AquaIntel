@@ -74,7 +74,6 @@ def parse_json_stat2(data: dict) -> list[dict]:
     if not values or not time_labels:
         return []
 
-    n_contents = sizes[1] if len(sizes) > 1 else 1
     n_times = sizes[2] if len(sizes) > 2 else len(time_labels)
 
     for t_idx, t_code in enumerate(time_labels):

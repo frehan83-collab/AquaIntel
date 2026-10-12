@@ -205,9 +205,7 @@ class EventImpactModel:
         national_prod = 1_400_000  # approximate total Norway tonnes
 
         # ISA typically affects a few sites in a PA
-        affected_biomass_tonnes_low = national_prod * pa_share * ISA_BIOMASS_LOSS_PCT_LOW
         affected_biomass_tonnes_mid = national_prod * pa_share * ISA_BIOMASS_LOSS_PCT_MID
-        affected_biomass_tonnes_high = national_prod * pa_share * ISA_BIOMASS_LOSS_PCT_HIGH
 
         avg_price_nok = 85.0  # approximate current spot
 
@@ -384,7 +382,6 @@ class EventImpactModel:
 
             margin = self._company_margin_per_kg(ticker)
             new_margin = margin - cost_increase_per_kg
-            margin_erosion_pct = (cost_increase_per_kg / margin * 100) if margin > 0 else 0.0
 
             annual_ebit = self._company_annual_ebit_mnok(ticker)
             ebit_impact_mnok = -total_cost_increase_mnok

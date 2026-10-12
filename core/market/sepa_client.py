@@ -174,7 +174,6 @@ class SEPAClient:
 
             if data and isinstance(data, list) and len(data) > 1:
                 # First row is header, subsequent rows are data
-                headers = data[0] if isinstance(data[0], list) else []
                 for row in data[1:]:
                     if not isinstance(row, list) or len(row) < 4:
                         continue

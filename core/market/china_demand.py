@@ -434,7 +434,6 @@ class ChinaDemandEngine:
         # Simple correlation: when China volumes rise, does price follow?
         correlation = 0.0
         if series and price_data:
-            vol_values = [p["tonnes"] for p in series[-12:]]
             # Match price months to volume months
             price_months = {p["month"]: p["price"] for p in price_data}
             matched_prices = []

@@ -343,7 +343,6 @@ class CompetitivenessEngine:
                 new_tariff = tariff_overrides[origin_name] / 100.0  # Convert pct input to decimal
                 # Adjust delivered cost: remove old tariff, add new
                 base_cost = o.get("production_cost_usd", o.get("cost_usd", 0))
-                old_delivered = o.get("total_delivered_usd", o.get("delivered_cost_usd", base_cost * (1 + old_tariff)))
                 freight = o.get("freight_usd", 0)
                 # Recalculate: production_cost + new tariff + freight
                 new_tariff_cost = base_cost * new_tariff

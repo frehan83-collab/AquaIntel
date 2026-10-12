@@ -16,7 +16,7 @@ router = APIRouter(tags=["feed-cost"])
 @router.get("/api/feed-cost/latest")
 async def feed_cost_latest():
     from core.market.feed_cost_engine import feed_cost_engine
-    snapshot = await feed_cost_engine.fetch_prices()
+    await feed_cost_engine.fetch_prices()
     latest = feed_cost_engine.get_latest()
     if not latest:
         raise HTTPException(status_code=404, detail="Feed cost data not available")

@@ -306,7 +306,7 @@ class TreatmentOptimizer:
         from core.market.farm_graph import farm_graph
 
         # Get all farms in this PA from LIVE farm_graph
-        graph_summary = await farm_graph.get_graph_summary()
+        await farm_graph.get_graph_summary()
         clusters = await farm_graph.get_clusters()
 
         # Get all farms for this PA from DB

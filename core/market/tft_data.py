@@ -101,7 +101,6 @@ async def build_weekly_dataframe(start_year: int = 2012) -> pd.DataFrame:
 
     # Also compute pct_above_05
     if not df_lice.empty:
-        above_rows = []
         async with get_async_session() as s:
             above_data = (await s.execute(
                 select(

@@ -357,7 +357,6 @@ def verify_sync() -> list[str]:
     # Check globals.css
     if GLOBALS_CSS.exists():
         css_content = GLOBALS_CSS.read_text()
-        dark_section = css_content.split(".dark {")[-1].split("}")[0] if ".dark {" in css_content else ""
 
         for path, token in colors.items():
             # Only check a few key tokens to avoid false positives
