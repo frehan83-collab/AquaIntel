@@ -75,14 +75,16 @@ no FastAPI is running. The project's own #1 remaining priority (41e).
 - Un-tolerate (`continue-on-error` → blocking) navigation specs once green for ≥3 CI runs.
 - Acceptance: full e2e suite (incl. api-*) green on CI; no `.next` build-order regression.
 
-**Status (2026-10-13):** new `e2e-backend` job added to `frontend.yml` (needs: build;
-Python 3.12 + `scripts/ci_bootstrap_db.py` + uvicorn health-wait; api specs 120s/1 worker,
-app specs 60s/1 worker, both BLOCKING, html report artifact on failure).
-All 39 api specs + all 49 app specs green locally (incl. fresh-seeded-DB run); 8 stale
+**Status (2026-10-13): ✅ COMPLETE — CI-PROVEN.**
+New `e2e-backend` job in `frontend.yml` (needs: build; Python 3.12 + `scripts/ci_bootstrap_db.py`
++ uvicorn health-wait; api specs 120s/1 worker, app specs 60s/1 worker, both BLOCKING,
+html report artifact on failure; instant-rig step added in P0-3).
+Local: all 39 api specs + all 49 app specs green (incl. fresh-seeded-DB run).
+CI (commit 8fca76b, Frontend Build run 38317892995): build job ✅ (incl. blocking visual
+baselines), **e2e-backend job ✅ — API specs step ✅, app specs step ✅** on a fresh
+ubuntu runner. Backend Tests run ✅ and Docker Build ✅ on the same commit. 8 stale
 specs fixed to the real contracts; admin block rewritten to the pytest 401/403/200
 security contract; 2 real bugs fixed (price_feed_hub dead import; /market ssb binding).
-**Remaining:** push + confirm the CI run itself goes green; keep the whole-file suite
-stable for 3 runs before any further promotion/cleanup.
 
 ### P0-2 · DuckDB read path for lice analytics — ⛔ BLOCKED / deferred with evidence (2026-10-13)
 **Why:** 189k-row lice aggregate; TTL cache gives 70 ms → 2 ms warm, but analytics are
@@ -135,19 +137,41 @@ appears (skill: `next-cache-components-optimizer` is available).
 - CI: `uv sync` in `test.yml` + Docker build; keep `requirements.txt` in sync or retire it.
 - Acceptance: CI green under uv; dev setup documented in README/AGENTS.md.
 
-### P1-5 · Local environment verification & test hygiene
+### P1-5 · Local environment verification & test hygiene — ✅ DONE (2026-10-13)
 - Run the full suite on Windows/Python 3.14: `python -m pytest tests/ -q`.
   (Execution policy note: use `python -m pytest`, not bare `pytest`.)
 - Investigate the 35 xfail/xpass: convert to real passes (bugfix + test) or justify.
 - Run `python scripts/smoke_security.py` and `python scripts/preflight_audit.py`.
+**Outcome:**
+- Full suite on Windows/Py3.14: **639 passed, 13 xfailed, 22 xpassed, 0 failed**
+  (4:11); `ruff` clean on all touched modules; `tsc --noEmit` clean;
+  `scripts/smoke_security.py` all checks pass.
+- xfail/xpass triage (`-rX` listing): the 12 XPASSes in `test_api_routes.py` were
+  **stale migration-lag guards** (dev-SQLite schema drift — solved platform-wide by
+  the migrations-first bootstrap + `tests/test_migrations.py`) plus the TimesFM
+  "may not be installed" marker (the endpoint's honest seasonal-naive fallback
+  satisfies the test regardless). **12 markers removed** (exactly those; verified by
+  diff). Kept + justified: genuine external-data guards
+  (DFO/Sernapesca/Scotland/Hagstova/Iceland/FRED-live fetches in
+  `test_all_engines.py`/`test_critical_engines.py`) and async-design quirks
+  (benchmark/ESG `compute_all` calling async internals — `test_engines.py`,
+  `test_all_engines.py`); the 7 remaining `test_api_routes.py` xfails are the
+  audit_logs/resistance-column/insurance/contracts env-dependent set.
 
-### P1-6 · Production parity gaps
+### P1-6 · Production parity gaps — ✅ MOSTLY DONE (verified 2026-10-13)
 - Add an agents service to docker-compose/prod deployment (`python main.py --agents-only`)
   so the 12 agents run in prod, not just the API.
 - Reconcile `create_all` vs Alembic for local dev (or document `alembic upgrade head` as
   the only path) to kill the `no such column` class of bugs.
+**Verified/outcome:** `docker-compose.yml` already ships `fishintel-agents`
+(`command: python main.py --agents-only`, graceful SIGTERM, own resource limits) — the
+"agents absent from prod" gap was already closed in-repo. Fresh-DB `alembic upgrade head`
+is now validated in three places: `scripts/ci_bootstrap_db.py` (migrations-first), the
+Docker entrypoint (verified live during P0-4: migrations OK → gunicorn → healthy), and
+`tests/test_migrations.py`. Remaining nicety: point local-dev docs at `alembic upgrade
+head` as the canonical schema path.
 
-### P1-7 · Strategic roadmap verification (Tier 1)
+### P1-7 · Strategic roadmap verification (Tier 1) — ✅ DONE (audited + live-verified 2026-10-13)
 `ADVANCED_ROADMAP.md` Tier-1 features are mostly reported "Shipped" in PROJECT_STATUS.md.
 **Audit each against reality**, then close the gaps:
 1. Feed Cost Index — margin-squeeze alert (feed up + salmon price down) — verify live.
@@ -156,6 +180,18 @@ appears (skill: `next-cache-components-optimizer` is available).
 3. ESG/sustainability score per company (lice perf, treatment frequency, mortality, cleaner
    fish) with peer benchmark + trend.
 4. Harvest intelligence (AIS wellboat → treatment/harvest inference, 48–72h supply warning).
+**Audit result (code inspection + live endpoint evidence):**
+1. Live: `/api/feed-cost/latest` computes the full margin stack (feed cost/kg salmon,
+   production cost, salmon spot, `margin_pct`, `margin_trend` incl. "squeezing"
+   detection); `/api/feed-cost/alerts` present. ✅
+2. `decision_engine.get_decision()` pulls `met_ocean.get_ocean_forecast` and overrides
+   stale DB sea-temp before the lice action + SHAP-style importance; forecast also feeds
+   contract-risk, welfare scorer, ocean routes. ✅
+3. Live: `/api/esg/scores` returns genuinely computed scores with full component
+   breakdown; sample: SALMAR rank 1, 92.0 (A+), 41 localities / 7 PAs. ✅
+4. Live: `/api/ais/harvest-intelligence` returns vessels, supply/treatment pressure,
+   72h harvest & treatment signals, price signal + rationale; consumed by /market. ✅
+**No code gaps found in Tier-1 — audit closes without changes.**
 
 ### P2-8 · Strategic roadmap Tier 2 (choose 1–2)
 - Multi-country supply model (Norway+Chile+Scotland+Canada) with disruption alerts.

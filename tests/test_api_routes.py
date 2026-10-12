@@ -146,7 +146,6 @@ class TestAuthEndpoints:
         r = client.post("/api/auth/register", json={})
         assert r.status_code == 422  # Pydantic validation
 
-    @pytest.mark.xfail(reason="Dev SQLite may lack Alembic migration 002 (stripe columns)")
     def test_login_wrong_credentials(self, client):
         r = client.post("/api/auth/login", json={"email": "nonexistent@test.com", "password": "wrong"})
         assert r.status_code == 401
@@ -205,7 +204,6 @@ class TestBillingEndpoints:
 
 
 class TestRateLimiting:
-    @pytest.mark.xfail(reason="Rate limiter state may be affected by prior tests or missing DB migration")
     def test_login_rate_limited(self, client):
         """After 10 rapid login attempts, should get 429."""
         last_status = 200
@@ -259,7 +257,6 @@ class TestEfficacyMarketplace:
         r = client.get("/api/efficacy/by-season")
         assert r.status_code == 200
 
-    @pytest.mark.xfail(reason="Dev SQLite may lack Alembic migration 004 (treatment_outcomes table)")
     def test_log_outcome_valid(self, client):
         payload = {
             "locality_no": 10001,
@@ -557,7 +554,6 @@ class TestWebhookEndpoints:
         r = client.get("/api/webhooks/events")
         assert r.status_code == 200
 
-    @pytest.mark.xfail(reason="Dev SQLite may lack webhook_configs table migration")
     def test_webhook_list(self, client):
         r = client.get("/api/webhooks")
         assert r.status_code in (200, 401)
@@ -629,7 +625,6 @@ class TestLeadersExtended:
 # Admin Export Endpoints (Session 19)
 # ---------------------------------------------------------------------------
 class TestAdminExport:
-    @pytest.mark.xfail(reason="Dev SQLite may lack admin export table or endpoint wiring")
     def test_export_summary(self, admin_client):
         """Export summary should list available datasets."""
         r = admin_client.get("/api/admin/export-summary")
@@ -679,13 +674,11 @@ class TestAdminExport:
 # Custom Alert Rules (Session 19)
 # ---------------------------------------------------------------------------
 class TestCustomAlertRules:
-    @pytest.mark.xfail(reason="Dev SQLite may lack Alembic migration 010 (custom_alert_rules table)")
     def test_list_rules(self, client):
         """List alert rules returns 200."""
         r = client.get("/api/notifications/alerts/rules")
         assert r.status_code == 200
 
-    @pytest.mark.xfail(reason="Dev SQLite may lack Alembic migration 010 (custom_alert_rules table)")
     def test_create_rule(self, client):
         """Create a valid alert rule."""
         payload = {
@@ -697,13 +690,11 @@ class TestCustomAlertRules:
         r = client.post("/api/notifications/alerts/rules", json=payload)
         assert r.status_code in (200, 201, 422)
 
-    @pytest.mark.xfail(reason="Dev SQLite may lack Alembic migration 010 (custom_alert_rules table)")
     def test_evaluate_rules(self, client):
         """Evaluate all alert rules against live data."""
         r = client.get("/api/notifications/alerts/rules/evaluate")
         assert r.status_code == 200
 
-    @pytest.mark.xfail(reason="Dev SQLite may lack Alembic migration 010 (custom_alert_rules table)")
     def test_create_rule_invalid_metric(self, client):
         """Invalid metric should be rejected with 422."""
         payload = {
@@ -800,7 +791,6 @@ class TestAdminExportExtended:
 # Alert Rules Extended (Session 20-21)
 # ---------------------------------------------------------------------------
 class TestAlertRulesExtended:
-    @pytest.mark.xfail(reason="Dev SQLite may lack Alembic migration 010 (custom_alert_rules table)")
     def test_evaluate_returns_results(self, client):
         """Evaluate alert rules returns dict with results."""
         r = client.get("/api/notifications/alerts/rules/evaluate")
@@ -808,7 +798,6 @@ class TestAlertRulesExtended:
         data = r.json()
         assert isinstance(data, dict)
 
-    @pytest.mark.xfail(reason="Dev SQLite may lack Alembic migration 010 (custom_alert_rules table)")
     def test_list_rules_returns_list_or_dict(self, client):
         """List alert rules returns structured data."""
         r = client.get("/api/notifications/alerts/rules")
@@ -862,7 +851,6 @@ class TestTimesFMEndpoints:
         data = r.json()
         assert isinstance(data, dict)
 
-    @pytest.mark.xfail(reason="TimesFM may not be installed in test env")
     def test_timesfm_custom_forecast(self, client):
         """TimesFM custom forecast with user-provided data."""
         r = client.post("/api/ml/timesfm/custom-forecast", json={

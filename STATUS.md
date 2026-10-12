@@ -13,13 +13,13 @@ Plan: `docs/NEXT_STEPS_PLAN.md` · Rules: `AGENTS.md` (authoritative)
 
 | ID | Workstream | Status | Notes |
 |----|-----------|--------|-------|
-| P0-1 | Backend-backed e2e in CI | IN PROGRESS | Local: all green (39 api + 49 app on fresh DB); pushed 8fca76b; CI: Backend Tests ✅, Docker ✅, Frontend Build in flight (e2e-backend job queued behind build). Watch the run before calling it done |
+| P0-1 | Backend-backed e2e in CI | ✅ DONE (CI-PROVEN) | Commit 8fca76b: Frontend Build run 38317892995 — build ✅ + **e2e-backend ✅** (api specs step ✅, app specs step ✅ on fresh ubuntu runner); Backend Tests ✅; Docker ✅ |
 | P0-2 | DuckDB read path (lice analytics) | BLOCKED (evidence) | sqlite_scanner extension blocked by Windows app-control policy locally; extension-free variant measured ~5× slower than the existing path (220 ms vs 47 ms). Details in plan doc P0-2. Revisit on Linux env / parquet pipeline |
 | P0-3 | Cache Components `use cache` scoping | DONE (audit) | Skill-guided audit: no server-renderable data routes exist (all pages client components). Deliverable shipped: instant() lock extended 3 → 11 routes, rig wired into CI `e2e-backend` (11/11 green locally on prod rig) |
 | P0-4 | uv adoption (pin Python 3.12) | IN VERIFICATION | pyproject.toml + .python-version (3.12 pin) + requirements.lock (248 pins, linux target); CI test.yml + e2e-backend + Dockerfile switched to uv; Docker build verifying locally; CI proof pending push |
-| P1-5 | Local env verification & test hygiene | PARTIAL | Backend smoke green (37 passed/1 xfailed/8 xpassed); full suite + xfail triage pending |
-| P1-6 | Production parity (agents service; create_all vs Alembic) | TODO | |
-| P1-7 | Tier-1 roadmap audit | TODO | |
+| P1-5 | Local env verification & test hygiene | ✅ DONE | Full suite on Win/Py3.14: 639 passed / 13 xfailed / 22 xpassed / 0 failed; ruff + tsc + smoke_security clean; 12 stale migration-lag xfail markers removed (TimesFM one verified CI-safe via honest fallback); remaining xfails justified in plan |
+| P1-6 | Production parity (agents service; create_all vs Alembic) | ✅ MOSTLY DONE | compose already ships `fishintel-agents` (--agents-only, SIGTERM); fresh-DB migrations validated in 3 places (ci_bootstrap, container entrypoint live, test_migrations.py) |
+| P1-7 | Tier-1 roadmap audit | ✅ DONE (live-verified) | All 4 Tier-1 features verified live: feed margin stack + alerts; ocean-forecast→lice decision wiring; ESG scores (SALMAR 92/A+ computed); AIS harvest intelligence (72h signals). No code gaps |
 | P2-8 | Tier-2 roadmap (pick 1–2) | TODO | |
 | P2-9 | Honesty & security audit | TODO | |
 

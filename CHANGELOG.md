@@ -3,6 +3,29 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
+## [Unreleased] — P1-5/P1-6/P1-7 audits (2026-10-13, continued)
+
+### Changed (P1-5 — test hygiene)
+- **Removed 12 stale `xfail` markers** from `tests/test_api_routes.py`: the 11
+  "Dev SQLite may lack Alembic migration 00X…" schema-lag guards (obsolete since
+  the migrations-first bootstrap everywhere — they XPASS on both dev and
+  fresh-seeded CI databases) and the TimesFM "may not be installed" marker (the
+  engine's honest seasonal-naive fallback returns `model` + `median`, so the
+  contract holds without the model stack).
+- Remaining xfails kept + justified in the plan: genuine external-data guards
+  (DFO/Sernapesca/Scotland/Hagstova/Iceland/FRED-live) and async-design quirks.
+- Full suite evidence: **639 passed, 13 xfailed, 22 xpassed, 0 failed** on
+  Windows/Python 3.14.
+
+### Verified (P1-6 / P1-7 — audits, no code changes)
+- P1-6: `docker-compose.yml` already ships the `fishintel-agents` service
+  (`--agents-only`, SIGTERM-graceful); fresh-DB `alembic upgrade head` validated
+  in three places (ci_bootstrap, container entrypoint — verified live — and
+  `tests/test_migrations.py`).
+- P1-7: all four Tier-1 features live-verified (feed margin stack + alerts;
+  ocean-forecast→lice decision wiring; computed ESG scores; AIS harvest
+  intelligence with 72h signals).
+
 ## [Unreleased] — P0-3 + P0-4: instant lock extension & uv adoption (2026-10-13)
 
 ### Added (P0-4 — uv adoption, Python pinned to 3.12)
