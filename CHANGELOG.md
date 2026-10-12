@@ -3,6 +3,30 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
+## [Unreleased] — Session 41 (2026-10-12, autonomous run)
+
+### Added
+- **Next.js 16.4 upgrade** (Turbopack builds, 68/68 routes) + ESLint 9 flat
+  config (eslint-config-next@16 native arrays); CI frontend job now runs
+  `tsc --noEmit` + `lint` on Node 22.
+- **TanStack Query v5** — dashboard data layer (14 `useQuery` resources,
+  dedupe/stale-while-revalidate/retry, same return contract).
+- **ECharts 6** — `OceanAreaChart` rebuilt on echarts 6.1 with lean module
+  registration and an identical props contract (dashboard + twin unchanged).
+- **CMEMS wave client** (`core/market/wave_client.py`, F2) — WAM
+  GLOBAL_ANALYSISFORECAST_WAV_001_027 live per-PA significant wave height +
+  operational risk bands; routes `/api/ocean/waves/{status,pa/{pa}}`; MCP
+  `get_wave_risk` (7 tools). Deterministic simulated fallback w/ `is_live=false`.
+- **OpenAPI drift guard** — `docs/openapi.frozen.json` (314 paths) +
+  `tests/test_openapi_contract.py` + `scripts/freeze_openapi.py`.
+- **Deterministic visual-regression spec** `frontend/e2e/visual.spec.ts`
+  (all `/api/**` stubbed) — the gate for the Tailwind 4 migration.
+- `docs/AUTONOMOUS_PROGRESS.md` — full session log and next priorities.
+
+### Changed
+- CI: Frontend Build added type-check + lint steps; Node 20 → 22 LTS.
+- Generated TS client regenerated for 326 routes; eslint baseline 0 errors.
+
 ## [Unreleased] — Session 40 (2026-10-12)
 
 ### Added
