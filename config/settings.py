@@ -97,11 +97,13 @@ class Settings(BaseSettings):
     price_backtest_start_year: int = 2020
 
     # LLM
-    llm_provider: str = "openrouter"  # anthropic | openai | openrouter
+    llm_provider: str = "openrouter"  # anthropic | openai | openrouter | gemini
     anthropic_api_key: str = ""
     openai_api_key: str = ""
     openrouter_api_key: str = ""
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    gemini_api_key: str = ""
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai"
     llm_model: str = "anthropic/claude-sonnet-4-20250514"
     llm_max_tokens: int = 4096
     llm_temperature: float = 0.3

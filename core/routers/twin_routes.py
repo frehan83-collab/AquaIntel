@@ -98,7 +98,15 @@ async def twin_simulate(req: SimulationRequest):
     import numpy as np
 
     if not digital_twin.localities:
-        return {"error": "Twin not synced. Call POST /api/twin/sync first."}
+        await digital_twin.sync_from_db()
+
+    if not digital_twin.localities:
+        return {
+            "status": "uninitialized",
+            "message": "Twin has no localities in database. Seed or ingest data first.",
+            "weeks_simulated": 0,
+            "trajectory": [],
+        }
 
     state = digital_twin.fork()
 

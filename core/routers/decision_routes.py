@@ -5,7 +5,7 @@ Extracted from core/api.py (Session 8).
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from core.schemas import TreatmentOutcomeRequest, TreatmentOutcomeResponse
@@ -24,7 +24,7 @@ async def treatment_optimize(locality_no: int, budget: float = None):
         from core.market.treatment_optimizer import treatment_optimizer
         return treatment_optimizer.optimize_timing(locality_no, budget_nok=budget)
     except Exception as e:
-        return {"error": str(e), "locality_no": locality_no, "hint": "Check if lice data exists for this locality"}
+        raise HTTPException(status_code=404, detail=f"Treatment optimization failed for locality {locality_no}: {e}")
 
 
 @router.get("/treatment/compare/{locality_no}")
@@ -34,7 +34,7 @@ async def treatment_compare(locality_no: int):
         from core.market.treatment_optimizer import treatment_optimizer
         return treatment_optimizer.compare_treatments(locality_no)
     except Exception as e:
-        return {"error": str(e), "locality_no": locality_no}
+        raise HTTPException(status_code=404, detail=f"Treatment comparison failed for locality {locality_no}: {e}")
 
 
 @router.get("/treatment/network-schedule/{pa}")
@@ -44,7 +44,7 @@ async def treatment_network_schedule(pa: int):
         from core.market.treatment_optimizer import treatment_optimizer
         return treatment_optimizer.network_schedule(pa)
     except Exception as e:
-        return {"error": str(e), "production_area": pa}
+        raise HTTPException(status_code=404, detail=f"Network schedule failed for PA {pa}: {e}")
 
 
 @router.get("/treatment/cost-benefit/{locality_no}")
@@ -54,7 +54,7 @@ async def treatment_cost_benefit(locality_no: int, treatment_type: str = "mechan
         from core.market.treatment_optimizer import treatment_optimizer
         return treatment_optimizer.cost_benefit_analysis(locality_no, treatment_type)
     except Exception as e:
-        return {"error": str(e), "locality_no": locality_no, "treatment_type": treatment_type}
+        raise HTTPException(status_code=404, detail=f"Cost benefit analysis failed for locality {locality_no}: {e}")
 
 
 @router.get("/treatment/cost-comparison")

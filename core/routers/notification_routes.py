@@ -424,18 +424,21 @@ async def _fetch_current_metric(metric: str, production_area: Optional[int] = No
     """
     Fetch the current value for a given metric from existing engines.
     Returns None if the metric cannot be fetched.
+    Fully async to avoid blocking the event loop during alert rule evaluation.
     """
     try:
         if metric == "lice_avg":
-            from core.models import LiceRecord, Locality, Session as SyncSession
+            from core.async_db import get_async_session
+            from core.models import LiceRecord, Locality
             from sqlalchemy import func
-            with SyncSession() as s:
+            async with get_async_session() as s:
                 q_latest = (
                     select(LiceRecord.year, LiceRecord.week)
                     .order_by(LiceRecord.year.desc(), LiceRecord.week.desc())
                     .limit(1)
                 )
-                latest = s.execute(q_latest).first()
+                latest_res = await s.execute(q_latest)
+                latest = latest_res.first()
                 if not latest:
                     return None
                 q = select(func.avg(LiceRecord.avg_adult_female_lice)).where(
@@ -447,7 +450,8 @@ async def _fetch_current_metric(metric: str, production_area: Optional[int] = No
                     q = q.join(Locality, Locality.locality_no == LiceRecord.locality_no).where(
                         Locality.production_area == production_area
                     )
-                val = s.execute(q).scalar()
+                val_res = await s.execute(q)
+                val = val_res.scalar()
                 return float(val) if val is not None else None
 
         elif metric == "spot_price":
@@ -459,15 +463,17 @@ async def _fetch_current_metric(metric: str, production_area: Optional[int] = No
             return None
 
         elif metric == "sst":
-            from core.models import LiceRecord, Locality, Session as SyncSession
+            from core.async_db import get_async_session
+            from core.models import LiceRecord, Locality
             from sqlalchemy import func
-            with SyncSession() as s:
+            async with get_async_session() as s:
                 q_latest = (
                     select(LiceRecord.year, LiceRecord.week)
                     .order_by(LiceRecord.year.desc(), LiceRecord.week.desc())
                     .limit(1)
                 )
-                latest = s.execute(q_latest).first()
+                latest_res = await s.execute(q_latest)
+                latest = latest_res.first()
                 if not latest:
                     return None
                 q = select(func.avg(LiceRecord.sea_temp_c)).where(
@@ -479,7 +485,8 @@ async def _fetch_current_metric(metric: str, production_area: Optional[int] = No
                     q = q.join(Locality, Locality.locality_no == LiceRecord.locality_no).where(
                         Locality.production_area == production_area
                     )
-                val = s.execute(q).scalar()
+                val_res = await s.execute(q)
+                val = val_res.scalar()
                 return float(val) if val is not None else None
 
         elif metric == "disease_count":
@@ -496,14 +503,15 @@ async def _fetch_current_metric(metric: str, production_area: Optional[int] = No
 
         elif metric == "bloom_risk":
             try:
+                from core.async_db import get_async_session
                 from core.bloom.models import BloomRiskAssessment
-                from core.models import Session as SyncSession
                 from sqlalchemy import func
-                with SyncSession() as s:
+                async with get_async_session() as s:
                     q = select(func.avg(BloomRiskAssessment.risk_score)).where(
                         BloomRiskAssessment.risk_score.isnot(None)
                     )
-                    val = s.execute(q).scalar()
+                    val_res = await s.execute(q)
+                    val = val_res.scalar()
                     return float(val) if val is not None else None
             except Exception:
                 return None

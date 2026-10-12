@@ -49,7 +49,10 @@ async def list_tiers():
 async def feed_cost_latest():
     from core.market.feed_cost_engine import feed_cost_engine
     snapshot = await feed_cost_engine.fetch_prices()
-    return feed_cost_engine.get_latest() or {"error": "No data available"}
+    latest = feed_cost_engine.get_latest()
+    if not latest:
+        raise HTTPException(status_code=404, detail="Feed cost data not available")
+    return latest
 
 @router.get("/api/feed-cost/history")
 async def feed_cost_history(n: int = 50):
@@ -137,7 +140,7 @@ async def ocean_forecast(lat: float = 65.0, lon: float = 12.0):
     from core.market.met_ocean import met_ocean_client
     forecast = await met_ocean_client.get_ocean_forecast(lat, lon)
     if not forecast:
-        return {"error": "Forecast unavailable", "lat": lat, "lon": lon}
+        raise HTTPException(status_code=503, detail=f"Ocean forecast unavailable for lat={lat}, lon={lon}")
     return {"lat": lat, "lon": lon, "forecasts": [
         {"time": f.forecast_time.isoformat(), "temperature_c": f.temperature_c, "hours_ahead": f.hours_ahead}
         for f in forecast
@@ -331,7 +334,10 @@ async def esg_company(company_name: str):
 async def macro_snapshot():
     from core.market.macro_intelligence import macro_intelligence
     await macro_intelligence.fetch()
-    return macro_intelligence.get_snapshot_dict() or {"error": "No data"}
+    snapshot = macro_intelligence.get_snapshot_dict()
+    if not snapshot:
+        raise HTTPException(status_code=404, detail="Macro intelligence data not available")
+    return snapshot
 
 @router.get("/api/macro/series/{name}")
 async def macro_series(name: str, months: int = 60):
@@ -354,7 +360,10 @@ async def climate_risk_scores():
 async def climate_pa(pa: int):
     from core.market.climate_risk_engine import climate_risk_engine
     scores = await climate_risk_engine.compute_pa_scores()
-    return next((s for s in scores if s.get("pa") == pa), {"error": f"PA {pa} not found"})
+    match = next((s for s in scores if s.get("pa") == pa), None)
+    if not match:
+        raise HTTPException(status_code=404, detail=f"Production area {pa} not found")
+    return match
 
 @router.get("/api/climate/projections")
 async def climate_projections(pa: int = 3, years: int = 5):

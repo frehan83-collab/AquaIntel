@@ -6,7 +6,7 @@ Supply forecasts, smolt pipeline, biomass outlook and scenarios.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
 
 from core.models import LiceRecord, Locality
@@ -30,7 +30,7 @@ async def supply_forecast():
         )).first()
 
         if not latest:
-            return {"error": "No data available"}
+            raise HTTPException(status_code=404, detail="No supply data available")
 
         year, week = latest
         records = (await s.execute(

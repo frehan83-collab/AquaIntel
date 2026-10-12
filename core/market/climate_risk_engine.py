@@ -96,11 +96,12 @@ class ClimateRiskEngine:
         """Fetch latest bloom risk per PA from BloomRiskAssessment DB table."""
         pa_bloom: dict[int, float] = {pa: 0.0 for pa in range(1, 14)}
         try:
-            from core.models import Session as DBSession, Locality
+            from core.async_db import get_async_session
+            from core.models import Locality
             from core.bloom.models import BloomRiskAssessment
             from sqlalchemy import select, func
 
-            with DBSession() as s:
+            async with get_async_session() as s:
                 # Get latest bloom risk per PA (aggregated from per-locality assessments)
                 subq = (
                     select(
@@ -110,7 +111,7 @@ class ClimateRiskEngine:
                     .subquery()
                 )
 
-                results = s.execute(
+                q = (
                     select(
                         Locality.production_area,
                         func.avg(BloomRiskAssessment.risk_score),
@@ -122,7 +123,9 @@ class ClimateRiskEngine:
                         Locality.production_area.isnot(None),
                     )
                     .group_by(Locality.production_area)
-                ).all()
+                )
+                res = await s.execute(q)
+                results = res.all()
 
                 for pa, avg_score, count in results:
                     if pa and 1 <= pa <= 13 and avg_score is not None:
@@ -406,12 +409,13 @@ class ClimateRiskEngine:
 
         # Source 2: BloomRiskAssessment SST values from DB
         try:
-            from core.models import Session as DBSession, Locality
+            from core.async_db import get_async_session
+            from core.models import Locality
             from core.bloom.models import BloomRiskAssessment
-            from sqlalchemy import select, func, extract
+            from sqlalchemy import select, func
 
-            with DBSession() as s:
-                results = s.execute(
+            async with get_async_session() as s:
+                q = (
                     select(
                         func.strftime("%Y-%m", BloomRiskAssessment.assessed_at).label("period"),
                         func.avg(BloomRiskAssessment.sst),
@@ -424,7 +428,9 @@ class ClimateRiskEngine:
                     )
                     .group_by("period")
                     .order_by("period")
-                ).all()
+                )
+                res = await s.execute(q)
+                results = res.all()
 
                 for period, avg_temp, count in results:
                     if avg_temp is not None and period:

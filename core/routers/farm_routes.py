@@ -57,7 +57,7 @@ async def farmer_advisory(locality_no: int):
         )).scalar_one_or_none()
 
     if not latest:
-        return {"error": f"No data for locality {locality_no}"}
+        raise HTTPException(status_code=404, detail=f"No data for locality {locality_no}")
 
     advisory = generate_farm_advisory(
         locality_no=locality_no,

@@ -583,6 +583,9 @@ class NotificationPreference(Base):
     updated_at = Column(DateTime, onupdate=func.now())
 
 
+_background_tasks: set[asyncio.Task] = set()
+
+
 def init_db() -> None:
     Base.metadata.create_all(engine)
     if _is_sqlite:
@@ -595,10 +598,11 @@ def init_db() -> None:
     try:
         import asyncio
         from core.market.efficacy_marketplace import seed_demo_outcomes
-        # seed_demo_outcomes is async — run it properly
         try:
             loop = asyncio.get_running_loop()
-            loop.create_task(seed_demo_outcomes())
+            task = loop.create_task(seed_demo_outcomes())
+            _background_tasks.add(task)
+            task.add_done_callback(_background_tasks.discard)
         except RuntimeError:
             asyncio.run(seed_demo_outcomes())
     except Exception:

@@ -25,6 +25,9 @@ COST_TABLE = {
     "claude-opus-4-6": {"input": 15.0, "output": 75.0},
     "gpt-4o": {"input": 2.50, "output": 10.0},
     "gpt-4o-mini": {"input": 0.15, "output": 0.60},
+    "gemini-3.8-flash": {"input": 0.10, "output": 0.40},
+    "gemini-3.1-pro-preview": {"input": 1.25, "output": 5.00},
+    "gemini-flash-latest": {"input": 0.10, "output": 0.40},
 }
 
 
@@ -98,6 +101,35 @@ class LLMClient:
             )
         return self._openrouter
 
+    def _get_gemini_key(self) -> str:
+        if getattr(settings, "gemini_api_key", ""):
+            return settings.gemini_api_key
+        import os
+        from pathlib import Path
+        import json
+        if os.getenv("GEMINI_API_KEY"):
+            return os.getenv("GEMINI_API_KEY")
+        providers_file = Path.home() / ".cline" / "data" / "settings" / "providers.json"
+        if providers_file.exists():
+            try:
+                with open(providers_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    return data.get("providers", {}).get("gemini", {}).get("settings", {}).get("apiKey", "")
+            except Exception:
+                pass
+        return ""
+
+    def _get_gemini(self):
+        if not hasattr(self, "_gemini") or self._gemini is None:
+            import openai
+            key = self._get_gemini_key()
+            base_url = getattr(settings, "gemini_base_url", "https://generativelanguage.googleapis.com/v1beta/openai")
+            self._gemini = openai.OpenAI(
+                api_key=key,
+                base_url=base_url,
+            )
+        return self._gemini
+
     async def complete(
         self,
         prompt: str,
@@ -127,6 +159,8 @@ class LLMClient:
                 resp = await self._call_anthropic(prompt, system, model, max_tokens, temperature)
             elif self.provider == "openai":
                 resp = await self._call_openai(prompt, system, model, max_tokens, temperature)
+            elif self.provider == "gemini":
+                resp = await self._call_gemini(prompt, system, model, max_tokens, temperature)
             elif self.provider == "openrouter":
                 resp = await self._call_openrouter(prompt, system, model, max_tokens, temperature)
             else:
@@ -264,6 +298,39 @@ class LLMClient:
             output_tokens=getattr(result.usage, "completion_tokens", 0) or 0,
         )
 
+    async def _call_gemini(
+        self, prompt: str, system: str, model: str,
+        max_tokens: int, temperature: float,
+    ) -> LLMResponse:
+        """Call Google Gemini API via OpenAI-compatible endpoint."""
+        import asyncio
+
+        client = self._get_gemini()
+        if not model or "gemini" not in model.lower():
+            model = "gemini-3.8-flash"
+
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+
+        def _sync_call():
+            return client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+
+        result = await asyncio.get_event_loop().run_in_executor(None, _sync_call)
+
+        return LLMResponse(
+            content=result.choices[0].message.content or "",
+            model=model,
+            input_tokens=getattr(result.usage, "prompt_tokens", 0) or 0,
+            output_tokens=getattr(result.usage, "completion_tokens", 0) or 0,
+        )
+
     async def complete_with_tools(
         self,
         messages: list[dict],
@@ -296,7 +363,7 @@ class LLMClient:
 
         if self.provider == "anthropic":
             return await self._tool_call_anthropic(messages, tools, system, model, max_tokens, temperature, user_id)
-        if self.provider in ("openai", "openrouter"):
+        if self.provider in ("openai", "openrouter", "gemini"):
             return await self._tool_call_openai_style(messages, tools, system, model, max_tokens, temperature, user_id)
         raise NotImplementedError(
             f"complete_with_tools not supported for provider '{self.provider}'."
@@ -399,7 +466,14 @@ class LLMClient:
         """
         import asyncio
 
-        client = self._get_openrouter() if self.provider == "openrouter" else self._get_openai()
+        if self.provider == "gemini":
+            client = self._get_gemini()
+            if not model or "gemini" not in model.lower():
+                model = "gemini-3.8-flash"
+        elif self.provider == "openrouter":
+            client = self._get_openrouter()
+        else:
+            client = self._get_openai()
 
         api_tools = [
             {
@@ -467,12 +541,13 @@ class LLMClient:
         self.usage.add(resp)
         await self._log_call(user_id, model, resp)
 
+        stop_reason = getattr(choice, "finish_reason", None) or getattr(result, "stop_reason", "stop")
         log.info(
             "llm.complete_with_tools",
             provider=self.provider,
             model=model,
             tool_calls=len(tool_calls),
-            stop_reason=choice.finish_reason,
+            stop_reason=stop_reason,
         )
 
         return {
@@ -480,7 +555,7 @@ class LLMClient:
             "tool_calls": tool_calls,
             "input_tokens": resp.input_tokens,
             "output_tokens": resp.output_tokens,
-            "stop_reason": choice.finish_reason,
+            "stop_reason": stop_reason,
         }
 
     @staticmethod

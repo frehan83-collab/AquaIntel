@@ -466,14 +466,14 @@ async def ensemble_price_forecast(horizon: int = 4):
     await _run("MOIRAI-2", moirai_engine.forecast_salmon_prices(horizon))
 
     if not results and first_fallback is None:
-        return {"error": "No foundation models available", "models_tried": 3}
+        raise HTTPException(status_code=503, detail="No foundation models or historical data available")
 
     if not results:
         # Every model fell back — do NOT fabricate an "ensemble of 3".
         # Return the first fallback forecast, clearly marked as degraded.
         r = first_fallback or {}
         if not r or "median" not in r:
-            return {"error": "No foundation models available", "models_tried": 3}
+            raise HTTPException(status_code=503, detail="No foundation models or historical data available")
         return {
             "model": f"fallback ({r.get('model', 'naive')})",
             "models_used": [],

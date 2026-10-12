@@ -278,10 +278,7 @@ from core.schemas import HealthResponse
 
 
 # ── Dependency ────────────────────────────────────────────────────────
-# In production, replace with JWT auth
-def verify_api_key():
-    # Simplified — add real auth in production
-    return True
+# Real auth is managed in core/auth.py
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────
@@ -362,7 +359,7 @@ async def metrics():
         "cache": cache,
         "process": process_info,
         "routes": len([r for r in app.routes if hasattr(r, 'path')]),
-        "version": "2.1.0",
+        "version": "2.2.0",
     }
 
 

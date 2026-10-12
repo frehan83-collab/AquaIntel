@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import time
 import asyncio
+from collections import OrderedDict
 from typing import Any, Optional, Callable
 from functools import wraps
 
@@ -33,13 +34,27 @@ TTL_CATEGORIES = {
 }
 
 
-class EngineCache:
-    """Simple TTL cache for engine outputs. Thread-safe via asyncio."""
+DEFAULT_MAX_ENTRIES = 2000
 
-    def __init__(self):
-        self._store: dict[str, tuple[Any, float]] = {}  # key -> (value, expire_time)
+
+class EngineCache:
+    """Bounded LRU TTL cache for engine outputs. Thread-safe via asyncio."""
+
+    def __init__(self, max_entries: int = DEFAULT_MAX_ENTRIES):
+        self.max_entries = max_entries
+        self._store: OrderedDict[str, tuple[Any, float]] = OrderedDict()  # key -> (value, expire_time)
         self._hits = 0
         self._misses = 0
+
+    def _evict_if_needed(self) -> None:
+        if len(self._store) < self.max_entries:
+            return
+        now = time.time()
+        expired = [k for k, (_, exp) in self._store.items() if now > exp]
+        for k in expired:
+            del self._store[k]
+        while len(self._store) >= self.max_entries:
+            self._store.popitem(last=False)
 
     def get(self, key: str) -> Optional[Any]:
         entry = self._store.get(key)
@@ -51,11 +66,14 @@ class EngineCache:
             del self._store[key]
             self._misses += 1
             return None
+        self._store.move_to_end(key)
         self._hits += 1
         return value
 
     def set(self, key: str, value: Any, ttl_seconds: int = 300):
+        self._evict_if_needed()
         self._store[key] = (value, time.time() + ttl_seconds)
+        self._store.move_to_end(key)
 
     def invalidate(self, pattern: str = ""):
         """Clear cache entries matching pattern (or all if empty)."""
@@ -129,10 +147,21 @@ class CacheManager:
         stats = cache_manager.get_stats()
     """
 
-    def __init__(self):
-        self._store: dict[str, tuple[Any, float]] = {}  # namespaced_key -> (value, expire_time)
+    def __init__(self, max_entries: int = DEFAULT_MAX_ENTRIES):
+        self.max_entries = max_entries
+        self._store: OrderedDict[str, tuple[Any, float]] = OrderedDict()  # namespaced_key -> (value, expire_time)
         self._engine_hits: dict[str, int] = {}
         self._engine_misses: dict[str, int] = {}
+
+    def _evict_if_needed(self) -> None:
+        if len(self._store) < self.max_entries:
+            return
+        now = time.time()
+        expired = [k for k, (_, exp) in self._store.items() if now > exp]
+        for k in expired:
+            del self._store[k]
+        while len(self._store) >= self.max_entries:
+            self._store.popitem(last=False)
 
     def _make_key(self, engine_name: str, key: str) -> str:
         """Build namespaced cache key: engine_name::key."""
@@ -150,6 +179,7 @@ class CacheManager:
             del self._store[ns_key]
             self._engine_misses[engine_name] = self._engine_misses.get(engine_name, 0) + 1
             return None
+        self._store.move_to_end(ns_key)
         self._engine_hits[engine_name] = self._engine_hits.get(engine_name, 0) + 1
         return value
 
@@ -162,9 +192,11 @@ class CacheManager:
         ttl_override: Optional[int] = None,
     ):
         """Store a value with TTL from category or explicit override."""
+        self._evict_if_needed()
         ttl = ttl_override if ttl_override is not None else TTL_CATEGORIES.get(category, 1800)
         ns_key = self._make_key(engine_name, key)
         self._store[ns_key] = (value, time.time() + ttl)
+        self._store.move_to_end(ns_key)
 
     def clear(self, engine_name: Optional[str] = None):
         """Clear cache entries for a specific engine, or all entries if engine_name is None."""
@@ -213,6 +245,7 @@ class CacheManager:
 
         return {
             "total_entries": len(self._store),
+            "max_entries": self.max_entries,
             "total_hits": total_hits,
             "total_misses": total_misses,
             "global_hit_rate": round(total_hits / max(grand_total, 1) * 100, 1),

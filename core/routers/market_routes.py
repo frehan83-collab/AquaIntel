@@ -339,12 +339,17 @@ async def price_outlook_explain(horizon: int = 4):
     """TFT model interpretability — feature importance + temporal attention weights."""
     from core.market.tft_predictor import tft_predictor
     if not tft_predictor.is_available:
-        return {"error": "TFT model not trained. Run: python scripts/train_tft.py",
-                "model": "xgb_fallback", "attention": None}
+        raise HTTPException(
+            status_code=503,
+            detail="TFT model not available. Model weights not trained or PyTorch Forecasting missing.",
+        )
 
     result = await tft_predictor.predict(horizon)
     if not result:
-        return {"error": "TFT prediction failed", "attention": None}
+        raise HTTPException(
+            status_code=502,
+            detail="TFT prediction calculation failed.",
+        )
 
     attention = tft_predictor.get_attention()
     return {

@@ -33,8 +33,8 @@ from starlette.responses import Response
 CACHE_RULES: dict[str, int] = {
     # ── Static / slow-changing (1 hour) ─────────────────────────────
     "/api/health":                      3600,
-    "/api/admin/status":                3600,
-    "/api/admin/data-quality":          3600,
+    "/api/admin/status":                -1,
+    "/api/admin/data-quality":          -1,
 
     # ── Semi-static (5 min) ─────────────────────────────────────────
     "/api/leaders":                     300,
@@ -127,19 +127,4 @@ class CacheHeadersMiddleware(BaseHTTPMiddleware):
 
         # Set Cache-Control.
         response.headers["Cache-Control"] = _build_cache_control(max_age)
-
-        # For cacheable responses (max_age > 0), generate an ETag from the
-        # response body and handle If-None-Match.
-        if max_age > 0 and hasattr(response, "body"):
-            etag_hash = hashlib.md5(response.body).hexdigest()
-            etag = f'"{etag_hash}"'
-            response.headers["ETag"] = etag
-
-            if_none_match = request.headers.get("if-none-match")
-            if if_none_match and if_none_match.strip() == etag:
-                return Response(status_code=304, headers={
-                    "ETag": etag,
-                    "Cache-Control": response.headers["Cache-Control"],
-                })
-
         return response
