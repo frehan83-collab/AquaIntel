@@ -278,7 +278,7 @@ export default function RadarChart({
         {datasets.map((ds, i) => (
           <div key={i} className="flex items-center gap-1.5 text-[11px]">
             <span
-              className="w-3 h-3 rounded-sm"
+              className="w-3 h-3 rounded-xs"
               style={{ backgroundColor: ds.color, opacity: 0.7 }}
             />
             <span className="text-[var(--text-secondary)]">{ds.name}</span>

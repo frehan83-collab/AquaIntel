@@ -200,7 +200,7 @@ export default function BioRiskPage() {
       </div>
 
       {/* Time Slider */}
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm px-5 py-4">
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xs px-5 py-4">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-2">
             <Activity className="w-3.5 h-3.5 text-ocean-400" />

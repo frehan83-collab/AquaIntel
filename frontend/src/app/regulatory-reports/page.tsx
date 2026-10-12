@@ -370,7 +370,7 @@ export default function RegulatoryReportsPage() {
                     type="number"
                     value={selectedLocality}
                     onChange={e => setSelectedLocality(Number(e.target.value))}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-sky-500/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-hidden focus:border-sky-500/50"
                   />
                 </div>
 
@@ -380,7 +380,7 @@ export default function RegulatoryReportsPage() {
                   <select
                     value={reportType}
                     onChange={e => setReportType(e.target.value as any)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-sky-500/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-hidden focus:border-sky-500/50"
                   >
                     <option value="weekly_lice">{t("compliance.weekly_lice")}</option>
                     <option value="monthly_treatment">{t("compliance.monthly_treatment")}</option>
@@ -394,14 +394,14 @@ export default function RegulatoryReportsPage() {
                       <label className="text-xs text-white/50 uppercase block mb-1">Week</label>
                       <input type="number" min={1} max={53} value={reportWeek}
                         onChange={e => setReportWeek(Number(e.target.value))}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-sky-500/50"
+                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-hidden focus:border-sky-500/50"
                       />
                     </div>
                     <div>
                       <label className="text-xs text-white/50 uppercase block mb-1">Year</label>
                       <input type="number" min={2020} max={2030} value={reportYear}
                         onChange={e => setReportYear(Number(e.target.value))}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-sky-500/50"
+                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-hidden focus:border-sky-500/50"
                       />
                     </div>
                   </div>
@@ -411,14 +411,14 @@ export default function RegulatoryReportsPage() {
                       <label className="text-xs text-white/50 uppercase block mb-1">Month</label>
                       <input type="number" min={1} max={12} value={reportMonth}
                         onChange={e => setReportMonth(Number(e.target.value))}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-sky-500/50"
+                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-hidden focus:border-sky-500/50"
                       />
                     </div>
                     <div>
                       <label className="text-xs text-white/50 uppercase block mb-1">Year</label>
                       <input type="number" min={2020} max={2030} value={reportYear}
                         onChange={e => setReportYear(Number(e.target.value))}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-sky-500/50"
+                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-hidden focus:border-sky-500/50"
                       />
                     </div>
                   </div>

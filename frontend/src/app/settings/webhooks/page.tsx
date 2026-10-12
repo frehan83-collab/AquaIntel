@@ -156,7 +156,7 @@ export default function WebhooksSettingsPage() {
                 value={formName}
                 onChange={e => setFormName(e.target.value)}
                 placeholder="e.g. Production Slack Channel"
-                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-cyan-500 focus:outline-hidden"
               />
             </div>
 
@@ -168,7 +168,7 @@ export default function WebhooksSettingsPage() {
                 value={formUrl}
                 onChange={e => setFormUrl(e.target.value)}
                 placeholder="https://hooks.slack.com/services/..."
-                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-cyan-500 focus:outline-hidden"
               />
             </div>
 

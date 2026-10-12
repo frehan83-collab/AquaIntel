@@ -80,10 +80,10 @@ export default function Top50Chart({ companies, onCompanyClick }: Top50ChartProp
           </button>
         ))}
         <div className="ml-auto flex items-center gap-2 text-[10px] text-[var(--text-secondary)]">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[var(--success)]" />&lt;0.15</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[var(--accent)]" />0.15-0.3</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[var(--warning)]" />0.3-0.5</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[var(--danger)]" />&gt;0.5</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-xs bg-[var(--success)]" />&lt;0.15</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-xs bg-[var(--accent)]" />0.15-0.3</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-xs bg-[var(--warning)]" />0.3-0.5</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-xs bg-[var(--danger)]" />&gt;0.5</span>
         </div>
       </div>
 

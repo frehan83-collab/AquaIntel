@@ -90,7 +90,7 @@ export default function PrivacyBenchmarkPage() {
               onChange={(e) => setCompanyName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && load()}
               placeholder="Enter company name..."
-              className="w-full pl-10 pr-4 py-2 text-sm rounded-lg bg-white/[0.04] border border-white/[0.08] text-[var(--text-primary)] focus:outline-none focus:border-ocean-500/40"
+              className="w-full pl-10 pr-4 py-2 text-sm rounded-lg bg-white/[0.04] border border-white/[0.08] text-[var(--text-primary)] focus:outline-hidden focus:border-ocean-500/40"
             />
           </div>
           <OcButton variant="primary" size="sm" onClick={() => load()} loading={loading}

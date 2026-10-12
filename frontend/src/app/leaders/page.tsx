@@ -301,7 +301,7 @@ function LeadersPageInner() {
         <select
           value={paFilter}
           onChange={(e) => setFilters({ pa: Number(e.target.value) })}
-          className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-ocean-500/30"
+          className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-xs focus:outline-hidden focus:border-ocean-500/30"
         >
           <option value={0}>All PAs</option>
           {Array.from({ length: 13 }, (_, i) => i + 1).map(pa => (
@@ -489,7 +489,7 @@ function LeadersPageInner() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-xs"
             onClick={() => setSelectedCompany(null)}
           >
             <motion.div
@@ -651,7 +651,7 @@ function LeadersPageInner() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-xs"
             onClick={() => setShowOptIn(false)}
           >
             <motion.div
@@ -680,17 +680,17 @@ function LeadersPageInner() {
                 <input
                   type="text"
                   placeholder="Company Name"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm focus:outline-none focus:border-ocean-500/30 transition-colors placeholder:text-[var(--text-secondary)]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm focus:outline-hidden focus:border-ocean-500/30 transition-colors placeholder:text-[var(--text-secondary)]"
                 />
                 <input
                   type="email"
                   placeholder="Email Address"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm focus:outline-none focus:border-ocean-500/30 transition-colors placeholder:text-[var(--text-secondary)]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm focus:outline-hidden focus:border-ocean-500/30 transition-colors placeholder:text-[var(--text-secondary)]"
                 />
                 <input
                   type="text"
                   placeholder="Your Role (CEO, Production Manager, etc.)"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm focus:outline-none focus:border-ocean-500/30 transition-colors placeholder:text-[var(--text-secondary)]"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm focus:outline-hidden focus:border-ocean-500/30 transition-colors placeholder:text-[var(--text-secondary)]"
                 />
                 <OcButton
                   variant="primary"

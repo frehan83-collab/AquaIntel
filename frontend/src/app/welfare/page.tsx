@@ -158,7 +158,7 @@ export default function WelfarePage() {
                 if (searchResults.length > 0) setShowDropdown(true);
               }}
               placeholder={t("welfare.search_placeholder")}
-              className="w-full h-10 pl-10 pr-4 text-sm rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/50 text-[var(--text-primary)] placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-salmon/40 focus:ring-1 focus:ring-salmon/20 outline-none transition-all"
+              className="w-full h-10 pl-10 pr-4 text-sm rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/50 text-[var(--text-primary)] placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-salmon/40 focus:ring-1 focus:ring-salmon/20 outline-hidden transition-all"
             />
             {showDropdown && (
               <div className="absolute z-20 top-full left-0 right-0 mt-1 max-h-60 overflow-y-auto rounded-lg bg-white dark:bg-fjord-midwater border border-slate-200 dark:border-slate-700 shadow-xl">

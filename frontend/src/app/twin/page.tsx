@@ -380,7 +380,7 @@ function BiomassOutlookSection() {
           <select
             value={scenario}
             onChange={(e) => setScenario(e.target.value)}
-            className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1.5 text-[11px] focus:outline-none focus:border-ocean-500/30"
+            className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1.5 text-[11px] focus:outline-hidden focus:border-ocean-500/30"
           >
             <option value="current">Current Regime</option>
             <option value="all_green">All PAs Green (+6%)</option>
@@ -389,7 +389,7 @@ function BiomassOutlookSection() {
           <select
             value={horizon}
             onChange={(e) => setHorizon(Number(e.target.value))}
-            className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1.5 text-[11px] focus:outline-none focus:border-ocean-500/30"
+            className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1.5 text-[11px] focus:outline-hidden focus:border-ocean-500/30"
           >
             {[8, 12, 20, 30, 52].map(h => (
               <option key={h} value={h}>{h}w</option>

@@ -183,7 +183,7 @@ export default function TopBar() {
       <div className="flex items-center gap-3">
         {/* Role Switcher */}
         <select
-          className="bg-slate-100 dark:bg-white/[0.04] backdrop-blur border border-slate-200 dark:border-white/[0.08] rounded-xl px-3 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-ocean-500/30 transition-colors appearance-none cursor-pointer"
+          className="bg-slate-100 dark:bg-white/[0.04] backdrop-blur border border-slate-200 dark:border-white/[0.08] rounded-xl px-3 py-1.5 text-xs text-[var(--text-primary)] focus:outline-hidden focus:border-ocean-500/30 transition-colors appearance-none cursor-pointer"
           aria-label={t("topbar.select_role")}
         >
           <option>{t("topbar.farmer")}</option>

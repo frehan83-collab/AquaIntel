@@ -121,7 +121,7 @@ export default function BenchmarkPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search company or ticker..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-white/20 focus:outline-none focus:border-ocean-500/30"
+            className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-white/20 focus:outline-hidden focus:border-ocean-500/30"
           />
         </div>
         <select
@@ -131,7 +131,7 @@ export default function BenchmarkPage() {
             if (pa) loadPA(pa);
             else { setSelectedPA(null); setPaData([]); }
           }}
-          className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-ocean-500/30"
+          className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-[var(--text-primary)] focus:outline-hidden focus:border-ocean-500/30"
         >
           <option value="">All Production Areas</option>
           {Array.from({ length: 13 }, (_, i) => i + 1).map(pa => (

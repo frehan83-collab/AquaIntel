@@ -507,7 +507,7 @@ function StepFarms({
             "w-full pl-10 pr-4 py-2.5 rounded-xl",
             "bg-white/[0.04] border border-white/[0.08]",
             "text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]",
-            "focus:outline-none focus:border-salmon/40 focus:ring-1 focus:ring-salmon/20",
+            "focus:outline-hidden focus:border-salmon/40 focus:ring-1 focus:ring-salmon/20",
             "transition-all"
           )}
         />
@@ -651,7 +651,7 @@ function StepAlerts({
               >
                 <div
                   className={cn(
-                    "absolute top-[2px] w-[18px] h-[18px] rounded-full bg-white shadow-sm transition-transform duration-200",
+                    "absolute top-[2px] w-[18px] h-[18px] rounded-full bg-white shadow-xs transition-transform duration-200",
                     isOn ? "translate-x-[20px]" : "translate-x-[2px]"
                   )}
                 />

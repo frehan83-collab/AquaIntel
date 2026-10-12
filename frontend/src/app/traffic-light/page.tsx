@@ -205,7 +205,7 @@ export default function TrafficLightPage() {
             <select
               value={selectedPa}
               onChange={(e) => setSelectedPa(Number(e.target.value))}
-              className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+              className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-hidden focus:ring-2 focus:ring-cyan-500/50"
             >
               {Array.from({ length: 13 }, (_, i) => i + 1).map((pa) => {
                 const info = pas.find((p: any) => p.production_area === pa);

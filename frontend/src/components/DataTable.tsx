@@ -133,7 +133,7 @@ export default function DataTable<T extends Record<string, any>>({
                   onChange={(e) => handleSearchChange(e.target.value)}
                   placeholder={t("table.search")}
                   aria-label={t("btn.search")}
-                  className="bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg pl-8 pr-7 py-1.5 text-xs text-[var(--text-primary)] placeholder-slate-400 dark:placeholder-white/20 focus:outline-none focus:border-ocean-500/30 w-44"
+                  className="bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg pl-8 pr-7 py-1.5 text-xs text-[var(--text-primary)] placeholder-slate-400 dark:placeholder-white/20 focus:outline-hidden focus:border-ocean-500/30 w-44"
                 />
                 {search && (
                   <button
@@ -235,7 +235,7 @@ export default function DataTable<T extends Record<string, any>>({
               value={rowsPerPage}
               onChange={(e) => handleRowsPerPageChange(Number(e.target.value))}
               aria-label="Rows per page"
-              className="bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-md px-1.5 py-0.5 text-[10px] text-[var(--text-primary)] focus:outline-none focus:border-ocean-500/30 cursor-pointer"
+              className="bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-md px-1.5 py-0.5 text-[10px] text-[var(--text-primary)] focus:outline-hidden focus:border-ocean-500/30 cursor-pointer"
             >
               {ROWS_PER_PAGE_OPTIONS.map((opt) => (
                 <option key={opt} value={opt} className="bg-slate-900">{opt}</option>

@@ -313,7 +313,7 @@ function AlertRulesSection() {
                     onChange={(e) => setFormName(e.target.value)}
                     placeholder="e.g. High lice in PA 3"
                     maxLength={100}
-                    className="w-full bg-fjord-abyss/50 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)]/50 focus:border-salmon/30 focus:outline-none"
+                    className="w-full bg-fjord-abyss/50 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)]/50 focus:border-salmon/30 focus:outline-hidden"
                     aria-label="Rule name"
                   />
                 </div>
@@ -325,7 +325,7 @@ function AlertRulesSection() {
                     <select
                       value={formMetric}
                       onChange={(e) => setFormMetric(e.target.value)}
-                      className="w-full bg-fjord-abyss/50 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] focus:border-salmon/30 focus:outline-none"
+                      className="w-full bg-fjord-abyss/50 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] focus:border-salmon/30 focus:outline-hidden"
                       aria-label="Metric"
                     >
                       {METRIC_OPTIONS.map((m) => (
@@ -338,7 +338,7 @@ function AlertRulesSection() {
                     <select
                       value={formOperator}
                       onChange={(e) => setFormOperator(e.target.value)}
-                      className="w-full bg-fjord-abyss/50 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] focus:border-salmon/30 focus:outline-none"
+                      className="w-full bg-fjord-abyss/50 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] focus:border-salmon/30 focus:outline-hidden"
                       aria-label="Operator"
                     >
                       {OPERATOR_OPTIONS.map((o) => (
@@ -356,7 +356,7 @@ function AlertRulesSection() {
                       value={formThreshold}
                       onChange={(e) => setFormThreshold(e.target.value)}
                       placeholder="0.5"
-                      className="w-full bg-fjord-abyss/50 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)]/50 focus:border-salmon/30 focus:outline-none"
+                      className="w-full bg-fjord-abyss/50 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)]/50 focus:border-salmon/30 focus:outline-hidden"
                       aria-label="Threshold value"
                     />
                   </div>
@@ -371,7 +371,7 @@ function AlertRulesSection() {
                     <select
                       value={formPA}
                       onChange={(e) => setFormPA(e.target.value)}
-                      className="w-full bg-fjord-abyss/50 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] focus:border-salmon/30 focus:outline-none"
+                      className="w-full bg-fjord-abyss/50 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] focus:border-salmon/30 focus:outline-hidden"
                       aria-label="Production area filter"
                     >
                       <option value="">All PAs</option>
@@ -863,7 +863,7 @@ function NotificationCenter() {
                   <select
                     value={severityFilter}
                     onChange={(e) => setFilters({ severity: e.target.value })}
-                    className="bg-fjord-abyss/50 border border-white/[0.08] rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)] focus:border-salmon/30 focus:outline-none"
+                    className="bg-fjord-abyss/50 border border-white/[0.08] rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)] focus:border-salmon/30 focus:outline-hidden"
                     aria-label="Filter by severity"
                   >
                     <option value="all">All Severities</option>
@@ -877,7 +877,7 @@ function NotificationCenter() {
                   <select
                     value={categoryFilter}
                     onChange={(e) => setFilters({ category: e.target.value })}
-                    className="bg-fjord-abyss/50 border border-white/[0.08] rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)] focus:border-salmon/30 focus:outline-none"
+                    className="bg-fjord-abyss/50 border border-white/[0.08] rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)] focus:border-salmon/30 focus:outline-hidden"
                     aria-label="Filter by category"
                   >
                     <option value="all">All Categories</option>

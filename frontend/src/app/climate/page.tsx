@@ -387,7 +387,7 @@ export default function ClimatePage() {
             <select
               value={selectedPa}
               onChange={(e) => setSelectedPa(Number(e.target.value))}
-              className="bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-ocean-400"
+              className="bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-ocean-400"
             >
               {Array.from({ length: 13 }, (_, i) => i + 1).map((pa) => (
                 <option key={pa} value={pa} className="bg-gray-900">PA-{pa}</option>

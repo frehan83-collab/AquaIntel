@@ -683,7 +683,7 @@ export default function ChatPage() {
             className={[
               "flex-1 resize-none bg-transparent px-4 py-3",
               "text-sm text-white/85 placeholder:text-white/22",
-              "focus:outline-none leading-relaxed",
+              "focus:outline-hidden leading-relaxed",
               "min-h-[46px] max-h-[130px] overflow-y-auto",
               "disabled:opacity-40 disabled:cursor-not-allowed",
             ].join(" ")}

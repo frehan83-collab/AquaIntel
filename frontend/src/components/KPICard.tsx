@@ -96,8 +96,8 @@ export default function KPICard({
         "bg-[var(--bg-card)] dark:bg-gradient-to-br dark:from-fjord-surface/60 dark:to-fjord-midwater/40",
         "border border-slate-200 dark:border-white/[0.08]",
         hero
-          ? "shadow-sm dark:shadow-[0_12px_48px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.04),inset_0_-1px_2px_rgba(0,0,0,0.2)]"
-          : "shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.03),inset_0_-1px_2px_rgba(0,0,0,0.2)]",
+          ? "shadow-xs dark:shadow-[0_12px_48px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.04),inset_0_-1px_2px_rgba(0,0,0,0.2)]"
+          : "shadow-xs dark:shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.03),inset_0_-1px_2px_rgba(0,0,0,0.2)]",
         hero ? "p-6 flex flex-col gap-3" : "p-4 flex flex-col gap-1.5",
         "transition-all duration-300",
         "hover:border-salmon/30 dark:hover:border-salmon/[0.15]",

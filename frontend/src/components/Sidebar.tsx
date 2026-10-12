@@ -282,7 +282,7 @@ export default function Sidebar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setMobileOpen(false)}
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs md:hidden"
           />
         )}
       </AnimatePresence>
@@ -353,7 +353,7 @@ export default function Sidebar() {
                 placeholder={`${t("search.pages")} (\u2318K)`}
                 aria-label={t("search.pages")}
                 className={cn(
-                  "w-full h-8 pl-8 pr-7 text-[12px] rounded-lg outline-none transition-all",
+                  "w-full h-8 pl-8 pr-7 text-[12px] rounded-lg outline-hidden transition-all",
                   "bg-slate-100 dark:bg-slate-800/50",
                   "border border-slate-300 dark:border-slate-700/50",
                   "text-slate-600 dark:text-slate-300",

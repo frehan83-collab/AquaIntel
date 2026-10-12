@@ -156,7 +156,7 @@ function CompanySelector({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   autoFocus
-                  className="w-full pl-8 pr-3 py-1.5 bg-white/[0.04] border border-white/[0.06] rounded-lg text-xs focus:outline-none focus:border-ocean-500/30"
+                  className="w-full pl-8 pr-3 py-1.5 bg-white/[0.04] border border-white/[0.06] rounded-lg text-xs focus:outline-hidden focus:border-ocean-500/30"
                 />
               </div>
             </div>

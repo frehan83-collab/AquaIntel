@@ -83,14 +83,14 @@ export default function FarmerPage() {
             value={localityNo}
             onChange={(e) => setLocalityNo(Number(e.target.value))}
             onKeyDown={(e) => e.key === "Enter" && fetchData(localityNo)}
-            className="w-24 px-3 py-2 rounded-xl bg-white/[0.04] backdrop-blur border border-white/[0.08] text-sm text-[var(--text-primary)] focus:outline-none focus:border-ocean-500/30 transition-colors"
+            className="w-24 px-3 py-2 rounded-xl bg-white/[0.04] backdrop-blur border border-white/[0.08] text-sm text-[var(--text-primary)] focus:outline-hidden focus:border-ocean-500/30 transition-colors"
             aria-label="Locality number"
           />
           <label className="text-xs text-[var(--text-secondary)]">PA:</label>
           <select
             value={selectedPa}
             onChange={(e) => setSelectedPa(Number(e.target.value))}
-            className="w-16 px-2 py-2 rounded-xl bg-white/[0.04] backdrop-blur border border-white/[0.08] text-sm text-[var(--text-primary)] focus:outline-none focus:border-ocean-500/30 transition-colors"
+            className="w-16 px-2 py-2 rounded-xl bg-white/[0.04] backdrop-blur border border-white/[0.08] text-sm text-[var(--text-primary)] focus:outline-hidden focus:border-ocean-500/30 transition-colors"
             aria-label="Production Area"
           >
             {Array.from({ length: 13 }, (_, i) => i + 1).map((pa) => (

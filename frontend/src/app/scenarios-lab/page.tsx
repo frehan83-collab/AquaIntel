@@ -80,7 +80,7 @@ function ISAParams({ params, onChange }: { params: any; onChange: (p: any) => vo
       <select
         value={params.production_area || 3}
         onChange={(e) => onChange({ ...params, production_area: Number(e.target.value) })}
-        className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-salmon/40"
+        className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)] focus:outline-hidden focus:border-salmon/40"
       >
         {PA_OPTIONS.map((pa) => (
           <option key={pa} value={pa} className="bg-fjord-abyss">PA {pa}</option>
@@ -98,7 +98,7 @@ function TrafficLightParams({ params, onChange }: { params: any; onChange: (p: a
         <select
           value={params.pa || 3}
           onChange={(e) => onChange({ ...params, pa: Number(e.target.value) })}
-          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-salmon/40"
+          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)] focus:outline-hidden focus:border-salmon/40"
         >
           {PA_OPTIONS.map((pa) => (
             <option key={pa} value={pa} className="bg-fjord-abyss">PA {pa}</option>
@@ -157,7 +157,7 @@ function GenericParams({ params, onChange }: { params: any; onChange: (p: any) =
           step={0.5}
           value={params.production_loss_pct ?? 1}
           onChange={(e) => onChange({ ...params, production_loss_pct: Number(e.target.value) })}
-          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm w-20 text-[var(--text-primary)] focus:outline-none focus:border-salmon/40"
+          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm w-20 text-[var(--text-primary)] focus:outline-hidden focus:border-salmon/40"
         />
       </div>
       <div className="flex items-center gap-3">
@@ -167,7 +167,7 @@ function GenericParams({ params, onChange }: { params: any; onChange: (p: any) =
           value={params.description || ""}
           placeholder="E.g. algal bloom in northern fjords"
           onChange={(e) => onChange({ ...params, description: e.target.value })}
-          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm flex-1 text-[var(--text-primary)] focus:outline-none focus:border-salmon/40"
+          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm flex-1 text-[var(--text-primary)] focus:outline-hidden focus:border-salmon/40"
         />
       </div>
     </div>

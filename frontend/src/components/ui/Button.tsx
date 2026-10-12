@@ -20,7 +20,7 @@ const buttonVariants = cva(
   [
     "relative inline-flex items-center justify-center gap-2",
     "font-medium transition-all duration-200",
-    "border outline-none select-none",
+    "border outline-hidden select-none",
     "backdrop-blur-md",
     // Focus ring — WCAG 2.2 compliant, 3:1 contrast
     "focus-visible:ring-2 focus-visible:ring-ocean-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-ocean-950",

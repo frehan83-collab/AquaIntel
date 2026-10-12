@@ -100,7 +100,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="you@company.com"
-                className="w-full pl-10 pr-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-white/20 focus:outline-none focus:border-ocean-500/30 transition-colors"
+                className="w-full pl-10 pr-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-white/20 focus:outline-hidden focus:border-ocean-500/30 transition-colors"
               />
             </div>
           </div>
@@ -116,7 +116,7 @@ export default function LoginPage() {
                 required
                 minLength={6}
                 placeholder="Min. 6 characters"
-                className="w-full pl-10 pr-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-white/20 focus:outline-none focus:border-ocean-500/30 transition-colors"
+                className="w-full pl-10 pr-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-white/20 focus:outline-hidden focus:border-ocean-500/30 transition-colors"
               />
             </div>
           </div>
@@ -132,7 +132,7 @@ export default function LoginPage() {
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
                     placeholder="Your company name"
-                    className="w-full pl-10 pr-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-white/20 focus:outline-none focus:border-ocean-500/30 transition-colors"
+                    className="w-full pl-10 pr-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-white/20 focus:outline-hidden focus:border-ocean-500/30 transition-colors"
                   />
                 </div>
               </div>
@@ -144,7 +144,7 @@ export default function LoginPage() {
                   <select
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-ocean-500/30 transition-colors appearance-none"
+                    className="w-full pl-10 pr-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] focus:outline-hidden focus:border-ocean-500/30 transition-colors appearance-none"
                   >
                     <option value="farmer">Salmon Farmer</option>
                     <option value="buyer">Buyer / Processor</option>

@@ -703,7 +703,7 @@ function HistoricalPriceChart() {
           <select
             value={years}
             onChange={(e) => setYears(Number(e.target.value))}
-            className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-[11px] focus:outline-none focus:border-ocean-500/30"
+            className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-[11px] focus:outline-hidden focus:border-ocean-500/30"
           >
             {[1, 2, 3, 5, 10].map(y => (
               <option key={y} value={y}>{y} year{y > 1 ? "s" : ""}</option>

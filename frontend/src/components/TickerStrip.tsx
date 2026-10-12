@@ -34,7 +34,7 @@ export function TickerStrip({ items, speed = 30, className }: TickerStripProps) 
       className={cn(
         "relative overflow-hidden",
         "bg-[var(--bg-card)]/80 dark:bg-fjord-surface/40",
-        "backdrop-blur-sm",
+        "backdrop-blur-xs",
         "border-y border-slate-200 dark:border-white/[0.06]",
         "py-2",
         className,

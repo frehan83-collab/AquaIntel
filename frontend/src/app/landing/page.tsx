@@ -131,7 +131,7 @@ export default function LandingPage() {
                   <input
                     type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
-                    className="flex-1 px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-white/20 focus:outline-none focus:border-ocean-500/30"
+                    className="flex-1 px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-white/20 focus:outline-hidden focus:border-ocean-500/30"
                   />
                   <button
                     onClick={() => { if (email.includes("@")) setSubmitted(true); }}

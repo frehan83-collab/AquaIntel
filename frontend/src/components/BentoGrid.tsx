@@ -64,7 +64,7 @@ export function BentoGrid({ items, columns = 4, gap = 16, className }: BentoGrid
             "rounded-2xl",
             "bg-[var(--bg-card)] dark:bg-gradient-to-br dark:from-fjord-surface/60 dark:to-fjord-midwater/40",
             "border border-slate-200 dark:border-white/[0.08]",
-            "shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.03)]",
+            "shadow-xs dark:shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.03)]",
             "p-5",
             "transition-all duration-300",
             "hover:border-salmon/30 dark:hover:border-salmon/[0.15]",

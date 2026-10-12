@@ -29,7 +29,7 @@ export default function DashboardCustomizePanel({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50"
             onClick={onClose}
           />
 
@@ -116,7 +116,7 @@ export default function DashboardCustomizePanel({
                     aria-label={`${widget.visible ? "Hide" : "Show"} ${widget.label}`}
                   >
                     <motion.div
-                      className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm flex items-center justify-center"
+                      className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-xs flex items-center justify-center"
                       animate={{ left: widget.visible ? 18 : 2 }}
                       transition={{ type: "spring", stiffness: 500, damping: 30 }}
                     >

@@ -175,7 +175,7 @@ export default function PriceOutlookPage() {
           <select
             value={horizon}
             onChange={(e) => setHorizon(Number(e.target.value))}
-            className="bg-white/[0.04] backdrop-blur border border-white/[0.08] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-ocean-500/30 transition-colors"
+            className="bg-white/[0.04] backdrop-blur border border-white/[0.08] rounded-xl px-3 py-2 text-sm focus:outline-hidden focus:border-ocean-500/30 transition-colors"
           >
             {[2, 4, 6, 8, 10, 12, 14, 16, 18, 20].map(h => (
               <option key={h} value={h}>{h} weeks</option>

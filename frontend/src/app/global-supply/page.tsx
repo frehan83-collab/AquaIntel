@@ -397,7 +397,7 @@ export default function GlobalSupplyPage() {
                 <div className="flex flex-wrap gap-3 mb-3">
                   {PIPELINE_COUNTRIES.map(pc => (
                     <div key={pc.key} className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: pc.color }} />
+                      <span className="w-2.5 h-2.5 rounded-xs" style={{ backgroundColor: pc.color }} />
                       <span className="text-[10px] text-[var(--text-secondary)]">{pc.key}</span>
                     </div>
                   ))}

@@ -49,14 +49,14 @@ export default function GlassCard({
               "rounded-xl",
               "bg-white/60 dark:bg-fjord-midwater/30",
               "border border-slate-200 dark:border-white/[0.05]",
-              "shadow-sm dark:shadow-[0_4px_16px_rgba(0,0,0,0.2)]",
+              "shadow-xs dark:shadow-[0_4px_16px_rgba(0,0,0,0.2)]",
               "p-4",
             ]
           : [
               "rounded-2xl",
               "bg-[var(--bg-card)] dark:bg-gradient-to-br dark:from-fjord-surface/60 dark:to-fjord-midwater/40",
               "border border-slate-200 dark:border-white/[0.08]",
-              "shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.03),inset_0_-1px_2px_rgba(0,0,0,0.2)]",
+              "shadow-xs dark:shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.03),inset_0_-1px_2px_rgba(0,0,0,0.2)]",
               "p-6",
             ],
         hover && tier !== "flush" && [

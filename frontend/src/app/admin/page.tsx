@@ -522,7 +522,7 @@ export default function AdminPage() {
                           [key]: { ...prev[key], fromDate: e.target.value },
                         }))
                       }
-                      className="bg-fjord-midwater/50 border border-white/[0.08] rounded px-2 py-1 text-xs text-[var(--text-primary)] focus:outline-none focus:border-ocean-500"
+                      className="bg-fjord-midwater/50 border border-white/[0.08] rounded px-2 py-1 text-xs text-[var(--text-primary)] focus:outline-hidden focus:border-ocean-500"
                       placeholder="From"
                     />
 
@@ -536,7 +536,7 @@ export default function AdminPage() {
                           [key]: { ...prev[key], toDate: e.target.value },
                         }))
                       }
-                      className="bg-fjord-midwater/50 border border-white/[0.08] rounded px-2 py-1 text-xs text-[var(--text-primary)] focus:outline-none focus:border-ocean-500"
+                      className="bg-fjord-midwater/50 border border-white/[0.08] rounded px-2 py-1 text-xs text-[var(--text-primary)] focus:outline-hidden focus:border-ocean-500"
                       placeholder="To"
                     />
 
@@ -670,7 +670,7 @@ export default function AdminPage() {
                   setAuditOffset(0);
                   fetchAuditLog(e.target.value || undefined, 0);
                 }}
-                className="bg-fjord-midwater/50 border border-white/[0.08] rounded px-2 py-1 text-xs text-[var(--text-primary)] focus:outline-none focus:border-ocean-500"
+                className="bg-fjord-midwater/50 border border-white/[0.08] rounded px-2 py-1 text-xs text-[var(--text-primary)] focus:outline-hidden focus:border-ocean-500"
               >
                 <option value="">All Actions</option>
                 <option value="login">Login</option>

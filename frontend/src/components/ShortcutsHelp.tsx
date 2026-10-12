@@ -74,7 +74,7 @@ export default function ShortcutsHelp({ open, onClose }: ShortcutsHelpProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-xs"
         >
           <motion.div
             ref={panelRef}

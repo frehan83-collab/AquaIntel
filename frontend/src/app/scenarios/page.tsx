@@ -508,7 +508,7 @@ export default function ScenariosPage() {
                 }`}
               >
                 <span
-                  className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${
+                  className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
                     regulatory ? "translate-x-5" : "translate-x-0.5"
                   }`}
                 />
@@ -532,7 +532,7 @@ export default function ScenariosPage() {
               <select
                 value={horizon}
                 onChange={(e) => setHorizon(Number(e.target.value))}
-                className="w-full h-9 px-3 pr-8 text-sm rounded-lg bg-white/[0.04] border border-white/[0.08] text-[var(--text-primary)] appearance-none cursor-pointer focus:outline-none focus:border-ocean-500/40"
+                className="w-full h-9 px-3 pr-8 text-sm rounded-lg bg-white/[0.04] border border-white/[0.08] text-[var(--text-primary)] appearance-none cursor-pointer focus:outline-hidden focus:border-ocean-500/40"
               >
                 {[4, 8, 12, 16].map((w) => (
                   <option key={w} value={w}>{w} Weeks</option>
@@ -551,7 +551,7 @@ export default function ScenariosPage() {
               <select
                 value={numScenarios}
                 onChange={(e) => setNumScenarios(Number(e.target.value))}
-                className="w-full h-9 px-3 pr-8 text-sm rounded-lg bg-white/[0.04] border border-white/[0.08] text-[var(--text-primary)] appearance-none cursor-pointer focus:outline-none focus:border-ocean-500/40"
+                className="w-full h-9 px-3 pr-8 text-sm rounded-lg bg-white/[0.04] border border-white/[0.08] text-[var(--text-primary)] appearance-none cursor-pointer focus:outline-hidden focus:border-ocean-500/40"
               >
                 {[500, 1000, 2000, 5000].map((n) => (
                   <option key={n} value={n}>{n.toLocaleString()} scenarios</option>

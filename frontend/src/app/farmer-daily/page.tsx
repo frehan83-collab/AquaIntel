@@ -319,7 +319,7 @@ export default function FarmerDailyPage() {
                 setFarmSearch("");
               }}
               placeholder={t("farmer.search_farms")}
-              className="w-full bg-white/[0.06] border border-white/[0.08] rounded-xl pl-9 pr-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-ocean-500/40"
+              className="w-full bg-white/[0.06] border border-white/[0.08] rounded-xl pl-9 pr-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-hidden focus:border-ocean-500/40"
             />
           </div>
           {/* Save / Unsave farm button */}
@@ -741,7 +741,7 @@ export default function FarmerDailyPage() {
                         <select
                           value={formMethod}
                           onChange={(e) => setFormMethod(e.target.value)}
-                          className="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-ocean-500/40"
+                          className="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-hidden focus:border-ocean-500/40"
                         >
                           {METHODS.map((m) => (
                             <option key={m} value={m}>{t(`farmer.method.${m}`) || m.charAt(0).toUpperCase() + m.slice(1)}</option>
@@ -755,7 +755,7 @@ export default function FarmerDailyPage() {
                           onChange={(e) => setFormNotes(e.target.value)}
                           rows={2}
                           placeholder="Any observations..."
-                          className="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-ocean-500/40 resize-none"
+                          className="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-hidden focus:border-ocean-500/40 resize-none"
                         />
                       </div>
                       <OcButton

@@ -230,21 +230,21 @@ export default function ConfidenceBand({
       <div className="flex justify-between text-[9px] text-[var(--text-secondary)] mt-1 px-1">
         <span className="flex items-center gap-1">
           <span
-            className="inline-block w-3 h-2 rounded-sm"
+            className="inline-block w-3 h-2 rounded-xs"
             style={{ background: `${chartPalette[0]}14` }}
           />
           95% confidence
         </span>
         <span className="flex items-center gap-1">
           <span
-            className="inline-block w-3 h-2 rounded-sm"
+            className="inline-block w-3 h-2 rounded-xs"
             style={{ background: `${chartPalette[0]}2E` }}
           />
           80% confidence
         </span>
         <span className="flex items-center gap-1">
           <span
-            className="inline-block w-3 h-1 rounded-sm"
+            className="inline-block w-3 h-1 rounded-xs"
             style={{ background: chartPalette[0] }}
           />
           Central estimate

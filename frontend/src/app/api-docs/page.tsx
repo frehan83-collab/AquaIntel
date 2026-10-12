@@ -523,7 +523,7 @@ function APIKeysSection() {
               <input
                 value={newKeyName}
                 onChange={(e) => setNewKeyName(e.target.value)}
-                className="mt-1 w-full bg-black/30 rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] border border-white/[0.06] outline-none focus:border-ocean-500/40"
+                className="mt-1 w-full bg-black/30 rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] border border-white/[0.06] outline-hidden focus:border-ocean-500/40"
                 placeholder="e.g., Production App, CI Pipeline"
               />
             </div>

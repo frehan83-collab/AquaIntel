@@ -239,15 +239,15 @@ export default function DiseasePage() {
         {/* Legend */}
         <div className="flex items-center gap-4 text-[10px] text-[var(--text-secondary)]">
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-rose-500/60" />
+            <span className="w-2.5 h-2.5 rounded-xs bg-rose-500/60" />
             <span>ISA Active</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-amber-500/60" />
+            <span className="w-2.5 h-2.5 rounded-xs bg-amber-500/60" />
             <span>PD Active</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500/30" />
+            <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500/30" />
             <span>Clear</span>
           </div>
           <span className="ml-auto text-[9px] opacity-50">
