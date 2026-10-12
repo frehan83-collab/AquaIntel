@@ -182,19 +182,19 @@ async def benchmark_summary():
 @router.get("/api/federated/company/{company_name}")
 async def federated_company(company_name: str):
     from core.market.federated_benchmark import federated_benchmark_engine
-    return federated_benchmark_engine.get_company_report(company_name)
+    return await federated_benchmark_engine.get_company_report(company_name)
 
 
 @router.get("/api/federated/cohorts")
 async def federated_cohorts():
     from core.market.federated_benchmark import federated_benchmark_engine
-    return federated_benchmark_engine.get_cohorts()
+    return await federated_benchmark_engine.get_cohorts()
 
 
 @router.get("/api/federated/cohort/{cohort_id}/summary")
 async def federated_cohort_summary(cohort_id: str):
     from core.market.federated_benchmark import federated_benchmark_engine
-    return federated_benchmark_engine.get_cohort_summary(cohort_id)
+    return await federated_benchmark_engine.get_cohort_summary(cohort_id)
 
 
 @router.get("/api/federated/privacy-info")

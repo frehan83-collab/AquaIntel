@@ -2,7 +2,7 @@
 
 > **Repository:** [github.com/frehan83-collab/OpenClaw](https://github.com/frehan83-collab/OpenClaw) (private)
 
-Last updated: 2026-04-11 (Session 37)
+Last updated: 2026-10-12 (Session 39)
 
 ---
 
@@ -10,14 +10,14 @@ Last updated: 2026-04-11 (Session 37)
 
 | Metric | Count |
 |--------|-------|
-| API routes | ~340 |
-| Router modules | 26 |
+| API routes | 324 (unique path+method, 0 duplicates) |
+| Router modules | 30 |
 | Market/data engines | ~75 (incl. 3 ML foundation models) |
 | Frontend pages | 63 (68 compiled routes) |
 | Shared components | 43+ |
 | Database tables | 31 |
 | DB migrations | 14 |
-| Test functions | 447 (all passing) |
+| Test functions | 638 collected (603 passing, 35 xfail/xpass) |
 | i18n keys | ~600 (NO/EN) |
 | Design tokens | 86 (Figma pipeline active) |
 | Data source clients | 45+ |
@@ -119,7 +119,12 @@ Last updated: 2026-04-11 (Session 37)
 | API keys | `apikey_routes.py` | 4 |
 | Integrations | `integration_routes.py` | 4 |
 | Admin | `admin_routes.py` | 12 |
-| Misc / ocean / satellite | `misc_routes.py` | 16 |
+| Feed cost | `feed_cost_routes.py` | 8 |
+| Ocean/satellite | `ocean_routes.py` | 13 |
+| AIS/regime/pairs/ESG/macro/contracts | `macro_routes.py` | 20 |
+| Causal inference | `causal_routes.py` | 2 |
+| RAS (land-based) | `ras_routes.py` | 3 |
+| Misc (tiers/climate/competitiveness/supply/traffic-light) | `misc_routes.py` | 11 |
 
 ---
 

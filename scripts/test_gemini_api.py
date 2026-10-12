@@ -23,6 +23,11 @@ def _load_api_key() -> str:
     return ""
 
 API_KEY = _load_api_key()
+if not API_KEY:
+    raise SystemExit(
+        "No Gemini API key found. Set GEMINI_API_KEY (recommended) or ensure the "
+        "Cline providers.json contains a gemini apiKey. Refusing to run unauthenticated."
+    )
 BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 
 

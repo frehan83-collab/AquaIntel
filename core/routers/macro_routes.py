@@ -111,7 +111,7 @@ async def pairs_signals(days: int = 7):
 @router.get("/api/pairs/{pair_name}")
 async def pairs_detail(pair_name: str):
     from core.market.pairs_engine import pairs_engine
-    result = pairs_engine.get_pair_detail(pair_name)
+    result = await pairs_engine.get_pair_detail(pair_name)
     if not result:
         raise HTTPException(404, f"Pair {pair_name} not found")
     return result

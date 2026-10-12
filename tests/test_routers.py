@@ -85,6 +85,28 @@ class TestSupplyRoutes:
         r = client.get("/api/supply/summary")
         assert r.status_code == 200
 
+    def test_biomass_outlook_computes(self, client):
+        """Regression: compute_outlook was called without await (silent failure)."""
+        r = client.get("/api/biomass/outlook?horizon=4&scenarios=100")
+        assert r.status_code == 200
+        data = r.json()
+        assert data["current_biomass_tonnes"] > 0
+        assert data["national_mab"] > 0
+        assert "data_provenance" in data
+
+    def test_biomass_scenarios_distinct(self, client):
+        """Regression: scenario cache key collision returned identical MABs."""
+        r = client.get("/api/biomass/scenarios")
+        assert r.status_code == 200
+        data = r.json()
+        mabs = {
+            data["current"]["national_mab"],
+            data["all_green"]["national_mab"],
+            data["all_red"]["national_mab"],
+        }
+        assert len(mabs) == 3, f"Scenario cache collision — identical MABs: {mabs}"
+        assert data["all_green"]["national_mab"] > data["all_red"]["national_mab"]
+
 
 # ---------------------------------------------------------------------------
 # Market Routes

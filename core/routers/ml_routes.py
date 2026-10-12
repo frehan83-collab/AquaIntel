@@ -61,7 +61,7 @@ async def gnn_train(epochs: int = 50):
         raise HTTPException(503, "torch_geometric not installed. Run: pip install torch_geometric")
 
     if not lice_gnn_trainer._graph_snapshots:
-        lice_gnn_trainer.build_training_data_from_db()
+        await lice_gnn_trainer.build_training_data_from_db()
 
     # Load training data from DB
     async with get_async_session() as s:

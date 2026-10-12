@@ -195,7 +195,7 @@ class FederatedBenchmarkEngine:
         except Exception:
             return {}
 
-    def _get_company_data(self) -> list[dict]:
+    async def _get_company_data(self) -> list[dict]:
         """Get all company data from existing engines. Cached for 1 hour."""
         now = dt.datetime.now(dt.UTC)
         if (
@@ -207,17 +207,17 @@ class FederatedBenchmarkEngine:
 
         try:
             from core.market.top50_engine import top50_engine
-            companies = top50_engine.compute_all()
-            if isinstance(companies, list):
+            companies = await top50_engine.compile_top50()
+            if isinstance(companies, list) and companies:
                 result = [self._to_dict(c) for c in companies]
                 self._cache = result
                 self._cache_time = now
                 return result
-            return []
+            raise ValueError("top50 engine returned no companies")
         except Exception:
             try:
                 from core.market.benchmarking import benchmarking_engine
-                raw = benchmarking_engine.compute_all()
+                raw = await benchmarking_engine.compute_all()
                 if isinstance(raw, dict):
                     items = raw.get("companies", [])
                 elif isinstance(raw, list):
@@ -274,9 +274,9 @@ class FederatedBenchmarkEngine:
             return "Below Average"
         return "Needs Improvement"
 
-    def get_company_report(self, company_name: str) -> dict:
+    async def get_company_report(self, company_name: str) -> dict:
         """Generate a full federated benchmark report for one company."""
-        all_companies = self._get_company_data()
+        all_companies = await self._get_company_data()
         if not all_companies:
             return {"error": "No company data available"}
 
@@ -398,9 +398,9 @@ class FederatedBenchmarkEngine:
             "privacy_note": "All peer statistics include calibrated Laplace noise (epsilon=1.0). No individual company data is revealed.",
         }
 
-    def get_cohorts(self) -> list[dict]:
+    async def get_cohorts(self) -> list[dict]:
         """List all cohorts with noised member counts."""
-        all_companies = self._get_company_data()
+        all_companies = await self._get_company_data()
         cohorts: dict[str, list] = {}
         for c in all_companies:
             co = self._assign_cohort(c)
@@ -420,9 +420,9 @@ class FederatedBenchmarkEngine:
                 })
         return sorted(result, key=lambda x: x["n_companies"], reverse=True)
 
-    def get_cohort_summary(self, cohort_id: str) -> dict:
+    async def get_cohort_summary(self, cohort_id: str) -> dict:
         """Aggregated noised statistics for a cohort."""
-        all_companies = self._get_company_data()
+        all_companies = await self._get_company_data()
         members = [c for c in all_companies if self._assign_cohort(c).cohort_id == cohort_id]
 
         if len(members) < MIN_COHORT_SIZE:

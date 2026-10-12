@@ -138,10 +138,11 @@ async def biomass_outlook(
     from core.market.biomass_predictor import biomass_predictor
     horizon = max(2, min(52, horizon))
     scenarios = max(100, min(5000, scenarios))
-    outlook = biomass_predictor.compute_outlook(horizon, scenarios, regulatory)
-    result = biomass_predictor.get_outlook_dict() or {"error": "Computation failed"}
-    if isinstance(result, dict) and "error" not in result:
-        result["data_provenance"] = DataProvenance.live("Smolt model + Fiskeridirektoratet + BarentsWatch", confidence=0.75).to_dict()
+    outlook = await biomass_predictor.compute_outlook(horizon, scenarios, regulatory)
+    result = biomass_predictor.get_outlook_dict()
+    if not result:
+        raise HTTPException(status_code=503, detail="Biomass outlook computation failed")
+    result["data_provenance"] = DataProvenance.live("Smolt model + Fiskeridirektoratet + BarentsWatch", confidence=0.75).to_dict()
     return result
 
 
@@ -149,11 +150,13 @@ async def biomass_outlook(
 async def biomass_scenarios():
     """Compare regulatory scenarios (current vs all-green vs all-red)."""
     from core.market.biomass_predictor import biomass_predictor
-    current = biomass_predictor.compute_outlook(20, 500, "current")
-    green = biomass_predictor.compute_outlook(20, 500, "all_green")
-    red = biomass_predictor.compute_outlook(20, 500, "all_red")
+    # Cache keys include the scenario, so each call computes fresh results.
+    current = await biomass_predictor.compute_outlook(20, 500, "current")
+    current_dict = biomass_predictor.get_outlook_dict()
+    green = await biomass_predictor.compute_outlook(20, 500, "all_green")
+    red = await biomass_predictor.compute_outlook(20, 500, "all_red")
     return {
-        "current": biomass_predictor.get_outlook_dict(),
+        "current": current_dict or {},
         "all_green": {
             "national_mab": green.national_mab,
             "forecast_biomass": green.forecast_biomass,

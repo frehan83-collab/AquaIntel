@@ -130,7 +130,7 @@ class PairsEngine:
         self._causal_lag_weeks = lag_weeks
         self._causal_confidence = confidence
 
-    def update_prices(self, prices: dict[str, float]) -> None:
+    async def update_prices(self, prices: dict[str, float]) -> None:
         """
         Update with latest stock prices.
 
@@ -147,10 +147,10 @@ class PairsEngine:
                 self._price_history[ticker] = self._price_history[ticker][-365:]
 
         # Recompute pair states
-        self._compute_pairs()
+        await self._compute_pairs()
         self._built = True
 
-    def _compute_pairs(self) -> None:
+    async def _compute_pairs(self) -> None:
         """Compute state for all pairs."""
         for ticker_a, ticker_b in PAIRS:
             if ticker_a not in self._price_history or ticker_b not in self._price_history:
@@ -206,7 +206,7 @@ class PairsEngine:
             )
 
             # Generate signals
-            self._check_signals(pair_name)
+            await self._check_signals(pair_name)
 
     def _compute_hedge_ratio(self, a: np.ndarray, b: np.ndarray) -> float:
         """
@@ -275,7 +275,7 @@ class PairsEngine:
         except Exception:
             return 30.0
 
-    def _check_signals(self, pair_name: str) -> None:
+    async def _check_signals(self, pair_name: str) -> None:
         """Check if pair state warrants a trading signal."""
         state = self._pairs.get(pair_name)
         if not state or not state.is_cointegrated:
@@ -285,7 +285,7 @@ class PairsEngine:
         now = dt.datetime.now(dt.UTC)
 
         # Get biological overlay
-        bio_overlay = self._get_biological_overlay(state.ticker_a, state.ticker_b)
+        bio_overlay = await self._get_biological_overlay(state.ticker_a, state.ticker_b)
 
         if abs(z) > Z_ENTRY:
             # Determine expected reversion horizon
@@ -493,7 +493,7 @@ class PairsEngine:
             if s.generated_at > cutoff
         ]
 
-    def get_pair_detail(self, pair_name: str) -> Optional[dict]:
+    async def get_pair_detail(self, pair_name: str) -> Optional[dict]:
         """Get detailed state for a specific pair."""
         state = self._pairs.get(pair_name)
         if not state:
@@ -533,7 +533,7 @@ class PairsEngine:
             "entry_threshold": Z_ENTRY,
             "exit_threshold": Z_EXIT,
             "stop_threshold": Z_STOP,
-            "biological_overlay": self._get_biological_overlay(state.ticker_a, state.ticker_b),
+            "biological_overlay": await self._get_biological_overlay(state.ticker_a, state.ticker_b),
         }
 
 

@@ -96,7 +96,7 @@ async def get_farm_network_risk(locality_no: int | None = None) -> dict:
         if locality_no:
             detail = farm_graph.get_farm_detail(locality_no)
             return detail if isinstance(detail, dict) else {"farm": locality_no, "data": str(detail)[:200]}
-        clusters = farm_graph.get_clusters(risk_level="high")
+        clusters = await farm_graph.get_clusters(risk_level="high")
         return {
             "high_risk_clusters": len(clusters) if isinstance(clusters, list) else 0,
             "clusters": (clusters if isinstance(clusters, list) else [])[:5],

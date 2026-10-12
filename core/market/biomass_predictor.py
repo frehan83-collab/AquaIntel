@@ -116,6 +116,7 @@ class BiomassOutlook:
     # Regulatory scenario impacts
     scenario_green_pct: float = 0.0   # % change if all PAs go green
     scenario_red_pct: float = 0.0     # % change if high-risk PAs go red
+    regulatory_scenario: str = "current"  # cache key component — see compute_outlook
 
     # Recommendations
     recommendations: list[str] = field(default_factory=list)
@@ -192,6 +193,7 @@ class BiomassPredictionEngine:
             and self._last_compute
             and (now - self._last_compute) < self._cache_ttl
             and self._latest.horizon_weeks == horizon_weeks
+            and self._latest.regulatory_scenario == regulatory_scenario
         ):
             return self._latest
 
@@ -246,6 +248,7 @@ class BiomassPredictionEngine:
             national_mab=effective_mab,
             utilization_pct=round(current_biomass / max(effective_mab, 1) * 100, 1),
             horizon_weeks=horizon_weeks,
+            regulatory_scenario=regulatory_scenario,
             forecast_biomass=[round(b, 0) for b in det_biomass],
             forecast_harvest=[round(h, 0) for h in det_harvest],
             p10_biomass=[round(b, 0) for b in p10],
@@ -331,7 +334,7 @@ class BiomassPredictionEngine:
 
             # Build synthetic cohorts from site data
             cohorts = []
-            sites = s.execute(
+            sites = (await s.execute(
                 select(
                     LiceRecord.locality_no,
                     LiceRecord.sea_temp_c,
@@ -339,7 +342,7 @@ class BiomassPredictionEngine:
                 )
                 .where(LiceRecord.year == year, LiceRecord.week == week)
                 .limit(200)  # sample for performance
-            ).all()
+            )).all()
 
             for site in sites:
                 # Each site is treated as a cohort

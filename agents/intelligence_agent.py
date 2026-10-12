@@ -220,7 +220,7 @@ class IntelligenceAgent(BaseAgent):
             if prices:
                 # Inject causal lag before computing signals so rationale is fresh
                 self._propagate_causal_lag()
-                self._pairs.update_prices(prices)
+                await self._pairs.update_prices(prices)
                 self._last["pairs"] = dt.datetime.now(dt.UTC)
                 self.log.info(
                     "intelligence.pairs_updated",
