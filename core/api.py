@@ -73,6 +73,8 @@ async def lifespan(app: FastAPI):
 
     log.info("startup.ready", version="2.2.0", routes=len(app.routes))
     yield
+    await _alerts_ws.stop()
+    await _command_centre_ws.stop()
     log.info("shutdown.complete")
 
 
@@ -711,33 +713,145 @@ async def intelligence_health():
 # WEBSOCKET — Real-time Command Centre streaming
 # ══════════════════════════════════════════════════════════════════════
 
-class ConnectionManager:
-    """Manages active WebSocket connections for the Command Centre."""
+class PushBroadcaster:
+    """Single-producer fan-out for push WebSocket endpoints.
+
+    Without this, every connected client ran its own poll loop and built its
+    own snapshot — N clients meant Nx the DB/compute load, and for /ws/alerts
+    Nx duplicate webhook dispatches (arch report P1). One producer task
+    builds the payload once per tick and broadcasts to all connections.
+    """
+
+    poll_interval: float = 30.0
 
     def __init__(self) -> None:
-        self.active: list[WebSocket] = []
+        self._connections: set[WebSocket] = set()
+        self._task: asyncio.Task | None = None
+        self._refresh = asyncio.Event()
 
-    async def connect(self, ws: WebSocket) -> None:
-        await ws.accept()
-        self.active.append(ws)
+    async def connect(self, websocket: WebSocket) -> None:
+        await websocket.accept()
+        self._connections.add(websocket)
+        if self._task is None or self._task.done():
+            self._task = asyncio.create_task(self._run())
 
-    def disconnect(self, ws: WebSocket) -> None:
-        if ws in self.active:
-            self.active.remove(ws)
+    def disconnect(self, websocket: WebSocket) -> None:
+        self._connections.discard(websocket)
 
-    async def broadcast(self, data: dict) -> None:
-        payload = json.dumps(data)
-        dead = []
-        for ws in self.active:
+    def request_refresh(self) -> None:
+        self._refresh.set()
+
+    async def stop(self) -> None:
+        if self._task and not self._task.done():
+            self._task.cancel()
+
+    async def _build_payload(self) -> dict:
+        raise NotImplementedError
+
+    async def _after_tick(self, payload: dict) -> None:
+        """Hook that must run ONCE per tick (e.g. webhook dispatch)."""
+
+    async def _run(self) -> None:
+        while self._connections:
             try:
-                await ws.send_text(payload)
+                payload = await self._build_payload()
+                dead = []
+                for ws in list(self._connections):
+                    try:
+                        await ws.send_json(payload)
+                    except Exception:
+                        dead.append(ws)
+                for ws in dead:
+                    self._connections.discard(ws)
+                await self._after_tick(payload)
+            except asyncio.CancelledError:
+                raise
             except Exception:
-                dead.append(ws)
-        for ws in dead:
-            self.disconnect(ws)
+                log.exception("ws_broadcaster.tick_failed")
+            try:
+                await asyncio.wait_for(
+                    self._refresh.wait(), timeout=self.poll_interval
+                )
+            except asyncio.TimeoutError:
+                pass
+            self._refresh.clear()
+        self._task = None
 
 
-_ws_manager = ConnectionManager()
+class _AlertsBroadcaster(PushBroadcaster):
+    """Alert checks computed once per tick for ALL /ws/alerts clients."""
+
+    async def _build_payload(self) -> dict:
+        from core.market.threshold_alerts import threshold_alert_engine
+
+        alerts = await threshold_alert_engine.check_all()
+        return {
+            "type": "alerts",
+            "count": len(alerts),
+            "critical": sum(1 for a in alerts if a.severity == "critical"),
+            "alerts": [a.to_dict() for a in alerts[:20]],
+            "timestamp": dt.datetime.now(dt.UTC).isoformat(),
+        }
+
+    async def _after_tick(self, payload: dict) -> None:
+        """Dispatch critical/high alerts to webhooks ONCE — previously each
+        connected client dispatched its own copy (N x duplicate webhooks)."""
+        critical = [a for a in payload.get("alerts", []) if a.get("severity") in ("critical", "high")]
+        if not critical:
+            return
+        try:
+            from core.market.webhook_dispatcher import webhook_dispatcher
+
+            for alert in critical[:5]:  # Cap to avoid flooding
+                await webhook_dispatcher.dispatch_alert(
+                    f"alert.{alert['category']}",
+                    {
+                        "title": alert["title"],
+                        "message": alert["message"],
+                        "severity": alert["severity"],
+                        "category": alert["category"],
+                        "metric_value": alert["metric_value"],
+                        "threshold": alert["threshold"],
+                        "timestamp": alert["created_at"],
+                    },
+                )
+        except Exception:
+            pass  # Webhook failures must not break the alert stream
+
+
+class _CommandCentreBroadcaster(PushBroadcaster):
+    """Intelligence snapshot built once per tick for ALL clients."""
+
+    async def _build_payload(self) -> dict:
+        from core.market.ais_tracker import ais_tracker
+        from core.market.sentiment_engine import sentiment_engine
+        from core.market.farm_graph import farm_graph
+        from core.market.regime_detector import regime_detector
+        from core.market.chile_monitor import chile_monitor
+        from core.market.pairs_engine import pairs_engine
+
+        return {
+            "type": "intelligence_update",
+            "generated_at": dt.datetime.now(dt.UTC).isoformat(),
+            "ais": {
+                "active_vessels": len(ais_tracker.get_active_tracks()),
+                "harvest_signals": len(ais_tracker.get_harvest_signals(72)),
+                "treatment_signals": len(ais_tracker.get_treatment_signals(72)),
+                "tracks": ais_tracker.get_active_tracks()[:10],
+            },
+            "sentiment": sentiment_engine.get_sentiment_summary(),
+            "articles": sentiment_engine.get_recent_articles(hours=6)[:5],
+            "farm_network": await farm_graph.get_graph_summary(),
+            "regime_alerts": regime_detector.get_alerts()[:5],
+            "chile": chile_monitor.get_latest_snapshot(),
+            "chile_signals": chile_monitor.get_signals(days=7)[:3],
+            "pairs": pairs_engine.get_all_pairs()[:6],
+            "pairs_signals": pairs_engine.get_signals(days=3)[:5],
+        }
+
+
+_alerts_ws = _AlertsBroadcaster()
+_command_centre_ws = _CommandCentreBroadcaster()
 
 
 @app.websocket("/ws/command-centre")
@@ -745,96 +859,44 @@ async def ws_command_centre(websocket: WebSocket):
     """
     Real-time WebSocket for Command Centre dashboard.
 
-    Streams a fresh intelligence snapshot every 30 seconds.
-    Clients can also send {"action": "refresh"} to trigger immediate update.
+    Single-producer broadcast: the intelligence snapshot is built once per
+    tick and fanned out to every client (previously each client built its
+    own snapshot every 30s). Clients can send {"action": "refresh"} to
+    trigger an immediate broadcast.
     """
-    await _ws_manager.connect(websocket)
+    await _command_centre_ws.connect(websocket)
     try:
         while True:
-            # Wait for client message (with timeout for periodic push)
-            try:
-                raw = await asyncio.wait_for(websocket.receive_text(), timeout=30.0)
-                msg = json.loads(raw) if raw else {}
-            except asyncio.TimeoutError:
-                msg = {"action": "auto_refresh"}
-            except WebSocketDisconnect:
-                break
-
-            if msg.get("action") in ("refresh", "auto_refresh"):
-                from core.market.ais_tracker import ais_tracker
-                from core.market.sentiment_engine import sentiment_engine
-                from core.market.farm_graph import farm_graph
-                from core.market.regime_detector import regime_detector
-                from core.market.chile_monitor import chile_monitor
-                from core.market.pairs_engine import pairs_engine
-
-                payload = {
-                    "type": "intelligence_update",
-                    "generated_at": dt.datetime.now(dt.UTC).isoformat(),
-                    "ais": {
-                        "active_vessels": len(ais_tracker.get_active_tracks()),
-                        "harvest_signals": len(ais_tracker.get_harvest_signals(72)),
-                        "treatment_signals": len(ais_tracker.get_treatment_signals(72)),
-                        "tracks": ais_tracker.get_active_tracks()[:10],
-                    },
-                    "sentiment": sentiment_engine.get_sentiment_summary(),
-                    "articles": sentiment_engine.get_recent_articles(hours=6)[:5],
-                    "farm_network": await farm_graph.get_graph_summary(),
-                    "regime_alerts": regime_detector.get_alerts()[:5],
-                    "chile": chile_monitor.get_latest_snapshot(),
-                    "chile_signals": chile_monitor.get_signals(days=7)[:3],
-                    "pairs": pairs_engine.get_all_pairs()[:6],
-                    "pairs_signals": pairs_engine.get_signals(days=3)[:5],
-                }
-                try:
-                    await websocket.send_text(json.dumps(payload))
-                except Exception:
-                    break
-
+            raw = await websocket.receive_text()
+            msg = json.loads(raw) if raw else {}
+            if msg.get("action") == "refresh":
+                _command_centre_ws.request_refresh()
     except WebSocketDisconnect:
         pass
+    except Exception:
+        pass
     finally:
-        _ws_manager.disconnect(websocket)
+        _command_centre_ws.disconnect(websocket)
 
 
 @app.websocket("/ws/alerts")
 async def ws_alerts(websocket: WebSocket):
-    """Real-time alert streaming via WebSocket."""
-    await websocket.accept()
+    """Real-time alert streaming via WebSocket.
+
+    Single-producer broadcast: alerts are computed once per 30s tick and
+    fanned out to every client; webhooks are dispatched once per tick (not
+    once per connected client, as before).
+    """
+    await _alerts_ws.connect(websocket)
     try:
         while True:
-            from core.market.threshold_alerts import threshold_alert_engine
-            alerts = await threshold_alert_engine.check_all()
-            await websocket.send_json({
-                "type": "alerts",
-                "count": len(alerts),
-                "critical": sum(1 for a in alerts if a.severity == "critical"),
-                "alerts": [a.to_dict() for a in alerts[:20]],
-                "timestamp": dt.datetime.now(dt.UTC).isoformat(),
-            })
-            # Dispatch critical/high alerts to configured webhooks
-            critical_alerts = [a for a in alerts if a.severity in ("critical", "high")]
-            if critical_alerts:
-                try:
-                    from core.market.webhook_dispatcher import webhook_dispatcher
-                    for alert in critical_alerts[:5]:  # Cap to avoid flooding
-                        await webhook_dispatcher.dispatch_alert(
-                            f"alert.{alert.category}",
-                            {
-                                "title": alert.title,
-                                "message": alert.message,
-                                "severity": alert.severity,
-                                "category": alert.category,
-                                "metric_value": alert.metric_value,
-                                "threshold": alert.threshold,
-                                "timestamp": alert.created_at,
-                            },
-                        )
-                except Exception:
-                    pass  # Webhook failures must not break the alert stream
-            await asyncio.sleep(30)  # Push every 30 seconds
+            await websocket.receive_text()  # keep-alive; clients only listen
     except WebSocketDisconnect:
         pass
+    except Exception:
+        pass
+    finally:
+        _alerts_ws.disconnect(websocket)
 
 
 # GNN/TWIN/EQUITY/OCEAN/CAUSAL/FEED-COST routes: Moved to routers

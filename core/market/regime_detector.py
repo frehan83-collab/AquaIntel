@@ -136,6 +136,32 @@ class RegimeDetector:
         self._alerts: list[ColorChangeAlert] = []
         self._lice_history: dict[int, list[float]] = {}  # PA → weekly lice averages
         self._built = False
+        self._build_scheduled = False
+
+    def _ensure_built(self) -> None:
+        """build() is async — sync getters cannot await it (un-awaited calls
+        leaked coroutines and the regime state silently never built before
+        2026-10). Schedule it when a loop is running; until it completes,
+        getters honestly return the (empty) current state."""
+        if self._built or self._build_scheduled:
+            return
+        import asyncio
+
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            log.warning("regime.not_built", hint="await regime_detector.build() first")
+            return
+        self._build_scheduled = True
+
+        async def _safe_build() -> None:
+            try:
+                await self.build()
+            except Exception as exc:
+                self._build_scheduled = False  # allow retry next call
+                log.warning("regime.build_failed", error=str(exc)[:120])
+
+        loop.create_task(_safe_build())
 
     async def build(self) -> None:
         """Load data and compute regime states."""
@@ -393,7 +419,7 @@ class RegimeDetector:
     def get_all_states(self) -> list[dict]:
         """Get regime states for all PAs."""
         if not self._built:
-            self.build()
+            self._ensure_built()
 
         return [
             {
@@ -417,7 +443,7 @@ class RegimeDetector:
     def get_alerts(self) -> list[dict]:
         """Get color change alerts."""
         if not self._built:
-            self.build()
+            self._ensure_built()
 
         return [
             {
@@ -439,7 +465,7 @@ class RegimeDetector:
     def get_pa_detail(self, pa: int) -> Optional[dict]:
         """Get detailed regime analysis for a specific PA."""
         if not self._built:
-            self.build()
+            self._ensure_built()
 
         state = self._pa_states.get(pa)
         if not state:
@@ -478,7 +504,7 @@ class RegimeDetector:
         PA exposure weighted by color change probability.
         """
         if not self._built:
-            self.build()
+            self._ensure_built()
 
         results = []
         for company, pa_exposure in COMPANY_PA_EXPOSURE.items():

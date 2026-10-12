@@ -8,6 +8,7 @@ Requires env vars: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
 """
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 from typing import Any
 
@@ -53,7 +54,10 @@ class StripeBillingEngine:
         return self._stripe
 
     async def _ensure_price(self, tier: str) -> str:
-        """Get or create Stripe Price for a tier."""
+        return await asyncio.to_thread(self._ensure_price_sync, tier)
+
+    def _ensure_price_sync(self, tier: str) -> str:
+        """Get or create Stripe Price for a tier (sync SDK calls)."""
         if tier in self._price_cache:
             return self._price_cache[tier]
 
@@ -95,15 +99,26 @@ class StripeBillingEngine:
     async def create_checkout_session(
         self, user_id: int, email: str, tier: str
     ) -> dict:
-        """Create a Stripe Checkout Session for subscription upgrade."""
+        """Create a Stripe Checkout Session for subscription upgrade.
+
+        The sync Stripe SDK + sync DB Session run in a worker thread so the
+        event loop is never blocked (arch report P1).
+        """
         if tier not in TIER_PRODUCTS:
             return {"error": f"Invalid tier: {tier}"}
 
         if not settings.stripe_secret_key:
             return {"error": "Stripe not configured", "demo_mode": True}
 
+        return await asyncio.to_thread(
+            self._create_checkout_session_sync, user_id, email, tier
+        )
+
+    def _create_checkout_session_sync(
+        self, user_id: int, email: str, tier: str
+    ) -> dict:
         stripe = self._get_stripe()
-        price_id = await self._ensure_price(tier)
+        price_id = self._ensure_price_sync(tier)
 
         # Get or create Stripe customer
         from core.models import Session as DBSession, User
@@ -152,18 +167,18 @@ class StripeBillingEngine:
         data = event["data"]["object"]
 
         if event_type == "checkout.session.completed":
-            await self._handle_checkout_completed(data)
+            await asyncio.to_thread(self._handle_checkout_completed_sync, data)
         elif event_type == "customer.subscription.updated":
-            await self._handle_subscription_updated(data)
+            await asyncio.to_thread(self._handle_subscription_updated_sync, data)
         elif event_type == "customer.subscription.deleted":
-            await self._handle_subscription_deleted(data)
+            await asyncio.to_thread(self._handle_subscription_deleted_sync, data)
         elif event_type == "invoice.payment_failed":
-            await self._handle_payment_failed(data)
+            self._handle_payment_failed(data)
 
         log.info("webhook_processed", event_type=event_type)
         return {"status": "ok"}
 
-    async def _handle_checkout_completed(self, session_data: dict) -> None:
+    def _handle_checkout_completed_sync(self, session_data: dict) -> None:
         """Activate subscription after successful checkout."""
         from core.models import Session as DBSession, User, Subscription
         from sqlalchemy import select
@@ -208,7 +223,7 @@ class StripeBillingEngine:
             s.commit()
         log.info("subscription_activated", user_id=user_id, tier=tier)
 
-    async def _handle_subscription_updated(self, sub_data: dict) -> None:
+    def _handle_subscription_updated_sync(self, sub_data: dict) -> None:
         """Update subscription status on changes."""
         from core.models import Session as DBSession, Subscription
         from sqlalchemy import select
@@ -228,7 +243,7 @@ class StripeBillingEngine:
                     )
                 s.commit()
 
-    async def _handle_subscription_deleted(self, sub_data: dict) -> None:
+    def _handle_subscription_deleted_sync(self, sub_data: dict) -> None:
         """Deactivate subscription on cancellation."""
         from core.models import Session as DBSession, User, Subscription
         from sqlalchemy import select
@@ -248,13 +263,17 @@ class StripeBillingEngine:
                 s.commit()
         log.info("subscription_cancelled", stripe_sub_id=stripe_sub_id)
 
-    async def _handle_payment_failed(self, invoice_data: dict) -> None:
+    def _handle_payment_failed(self, invoice_data: dict) -> None:
         """Log failed payment for follow-up."""
         customer_id = invoice_data.get("customer")
         log.warning("payment_failed", customer_id=customer_id, amount=invoice_data.get("amount_due"))
 
     async def get_subscription_status(self, user_id: int) -> dict:
-        """Get current subscription status from local DB."""
+        """Get current subscription status from local DB (sync Session runs
+        in a worker thread — must not block the event loop)."""
+        return await asyncio.to_thread(self._get_subscription_status_sync, user_id)
+
+    def _get_subscription_status_sync(self, user_id: int) -> dict:
         from core.models import Session as DBSession, User, Subscription
         from sqlalchemy import select
 
@@ -291,7 +310,11 @@ class StripeBillingEngine:
             }
 
     async def cancel_subscription(self, user_id: int) -> dict:
-        """Cancel subscription at period end."""
+        """Cancel subscription at period end (sync DB + Stripe SDK in a
+        worker thread — must not block the event loop)."""
+        return await asyncio.to_thread(self._cancel_subscription_sync, user_id)
+
+    def _cancel_subscription_sync(self, user_id: int) -> dict:
         from core.models import Session as DBSession, Subscription
         from sqlalchemy import select
 
@@ -320,7 +343,11 @@ class StripeBillingEngine:
         return {"status": "cancelled_at_period_end"}
 
     async def get_invoice_history(self, user_id: int) -> dict:
-        """Get invoice history from Stripe."""
+        """Get invoice history from Stripe (sync DB + SDK in a worker
+        thread — must not block the event loop)."""
+        return await asyncio.to_thread(self._get_invoice_history_sync, user_id)
+
+    def _get_invoice_history_sync(self, user_id: int) -> dict:
         from core.models import Session as DBSession, User
         from sqlalchemy import select
 

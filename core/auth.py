@@ -17,8 +17,10 @@ Security:
 """
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 import secrets
+import time
 from dataclasses import dataclass
 
 import hashlib
@@ -206,6 +208,35 @@ def verify_api_key(raw_key: str, hashed: str) -> bool:
         return False
 
 
+# ── Verified-API-key cache ──────────────────────────────────────────────
+# bcrypt verify (~250 ms by design) previously ran on EVERY API-key request
+# on the event loop (arch report P1). Positive verifications are cached
+# briefly:
+# - Cache key is (sha256(raw_key), stored_hash) — rotating or deleting the
+#   stored hash invalidates entries instantly; the raw key itself is not
+#   stored in the cache.
+# - Only positive results are cached, for 60 s. The DB lookup, is_active
+#   flag, and expiry checks still run on every request.
+_API_KEY_CACHE_TTL_S = 60.0
+_API_KEY_CACHE_MAX = 2048
+_api_key_cache: dict[tuple[str, str], float] = {}
+
+
+def verify_api_key_cached(raw_key: str, hashed: str) -> bool:
+    """bcrypt verify with a 60 s positive-result cache."""
+    now = time.monotonic()
+    key = (hashlib.sha256(raw_key.encode("utf-8")).hexdigest(), hashed)
+    expiry = _api_key_cache.get(key)
+    if expiry is not None and expiry > now:
+        return True
+    ok = verify_api_key(raw_key, hashed)
+    if ok:
+        if len(_api_key_cache) >= _API_KEY_CACHE_MAX:
+            _api_key_cache.clear()
+        _api_key_cache[key] = now + _API_KEY_CACHE_TTL_S
+    return ok
+
+
 def generate_api_key() -> str:
     """Generate a new random API key with oc_live_ prefix."""
     random_part = secrets.token_urlsafe(32)
@@ -237,7 +268,8 @@ async def _authenticate_via_api_key(request: Request) -> TokenPayload | None:
         candidate_keys = result.scalars().all()
 
         for api_key in candidate_keys:
-            if verify_api_key(raw_key, api_key.key_hash):
+            # bcrypt off the event loop + 60s positive-result cache
+            if await asyncio.to_thread(verify_api_key_cached, raw_key, api_key.key_hash):
                 # Check expiry
                 if api_key.expires_at and api_key.expires_at < dt.datetime.now(dt.UTC):
                     raise HTTPException(401, "API key expired")

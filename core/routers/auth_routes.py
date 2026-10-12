@@ -6,6 +6,8 @@ Fully async — uses get_async_session().
 """
 from __future__ import annotations
 
+import asyncio
+
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -54,7 +56,9 @@ async def register(request: Request, req: RegisterRequest):
 
         user = User(
             email=req.email,
-            hashed_password=hash_password(req.password),
+            # bcrypt (~250ms by design) runs in a worker thread, never on
+            # the event loop (arch report P1).
+            hashed_password=await asyncio.to_thread(hash_password, req.password),
             company=req.company,
             role=req.role if req.role in _ALLOWED_SELF_SERVE_ROLES else "farmer",
             tier="free",
@@ -91,14 +95,16 @@ async def login(request: Request, req: LoginRequest):
         user = (await s.execute(
             select(User).where(User.email == req.email)
         )).scalar()
-        if not user or not verify_password(req.password, user.hashed_password):
+        if not user or not await asyncio.to_thread(
+            verify_password, req.password, user.hashed_password
+        ):
             # Audit: failed login
             from core.audit import log_action, get_client_ip
             await log_action(None, "login_failed", f"email:{req.email}", ip=get_client_ip(request))
             raise HTTPException(401, "Invalid email or password")
 
         if needs_rehash(user.hashed_password):
-            user.hashed_password = hash_password(req.password)
+            user.hashed_password = await asyncio.to_thread(hash_password, req.password)
             await s.commit()
 
         token = create_token(user.id, user.email, user.tier)
