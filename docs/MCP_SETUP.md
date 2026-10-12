@@ -49,6 +49,19 @@
 
 No competitor exposes their aquaculture intelligence as MCP. A thin server wrapping our public API (`/api/lice/summary`, `/api/market/*`, `/api/causal/*`, `/api/brief`, provenance envelopes) lets any LLM client (Claude, Copilot, ChatGPT) query live salmon intelligence — a distribution channel as much as a feature.
 
+**Implemented (Session 40)**: `core/mcp_server.py` using the official `mcp`
+package (`mcp.server.mcpserver.MCPServer` — FastMCP is renamed to MCPServer in
+mcp 2.x). Six tools: morning brief, price outlook, national lice summary,
+causal insights, feed cost index, regulatory traffic light.
+
+```bash
+# Smoke (import + tool registration, exits)
+python -c "from core.mcp_server import mcp; print('MCP server ready')"
+
+# Client config entry for this repo (stdio transport):
+#   "fishintel": { "command": "python", "args": ["-m", "core.mcp_server"] }
+```
+
 ## Config snippets
 
 ### Cline (`cline_mcp_settings.json` — open via Cline → MCP Servers → Configure)
