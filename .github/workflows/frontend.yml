@@ -58,9 +58,14 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: frontend/
 
-      # 6. Run Playwright E2E tests
-      - name: Run Playwright E2E tests
-        run: npx playwright test --reporter=github
+      # 8. Visual regression (Linux baselines committed; deterministic stubs) — BLOCKING
+      - name: Run visual regression tests
+        run: npx playwright test e2e/visual.spec.ts --reporter=github
+        working-directory: frontend/
+
+      # 9. Remaining E2E tests (some need the FastAPI backend on :8000)
+      - name: Run remaining E2E tests
+        run: npx playwright test --reporter=github --grep-invert "visual baseline"
         working-directory: frontend/
         continue-on-error: true
 
