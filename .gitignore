@@ -40,3 +40,7 @@ Thumbs.db
 # Claude Code — ignore local session state/worktrees, but track shared skills
 .claude/*
 !.claude/skills/
+
+# Test run artifacts (Windows background-suite pattern)
+pytest_out.txt
+pytest_err.txt
