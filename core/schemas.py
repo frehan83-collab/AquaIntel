@@ -9,6 +9,8 @@ from __future__ import annotations
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Literal
 
+from core.version import API_SCHEMA_VERSION, PLATFORM_VERSION
+
 
 class DataProvenanceSchema(BaseModel):
     source: str
@@ -16,6 +18,7 @@ class DataProvenanceSchema(BaseModel):
     freshness: str
     confidence: float = Field(ge=0.0, le=1.0)
     fallback_reason: Optional[str] = None
+    schema_version: str = API_SCHEMA_VERSION
 
 
 class LiceSummaryResponse(BaseModel):
@@ -37,7 +40,7 @@ class HealthResponse(BaseModel):
     status: str
     database: str = "ok"
     routes: int = 0
-    version: str = "2.0.0"
+    version: str = PLATFORM_VERSION
 
 
 class DecisionCardResponse(BaseModel):
@@ -341,7 +344,7 @@ class MetricsResponse(BaseModel):
     cache: CacheStatsResponse = CacheStatsResponse()
     process: dict = {}
     routes: int = 0
-    version: str = "2.1.0"
+    version: str = PLATFORM_VERSION
 
 
 __all__ = [

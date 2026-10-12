@@ -10,6 +10,8 @@ import datetime as dt
 from dataclasses import dataclass, asdict
 from typing import Optional
 
+from core.version import API_SCHEMA_VERSION
+
 
 @dataclass
 class DataProvenance:
@@ -20,7 +22,7 @@ class DataProvenance:
     fallback_reason: Optional[str] = None  # Why live data unavailable
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        return {**asdict(self), "schema_version": API_SCHEMA_VERSION}
 
     @staticmethod
     def live(source: str, confidence: float = 0.9) -> "DataProvenance":

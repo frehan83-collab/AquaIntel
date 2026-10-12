@@ -110,9 +110,10 @@ class TestLiceSummaryResponse:
 
 class TestHealthResponse:
     def test_defaults(self):
+        from core.version import PLATFORM_VERSION
         r = HealthResponse(status="healthy")
         assert r.database == "ok"
-        assert r.version == "2.0.0"
+        assert r.version == PLATFORM_VERSION
         assert r.routes == 0
 
     def test_custom_values(self):
@@ -424,7 +425,8 @@ class TestCacheStatsResponse:
 
 class TestMetricsResponse:
     def test_defaults(self):
+        from core.version import PLATFORM_VERSION
         r = MetricsResponse()
         assert r.routes == 0
-        assert r.version == "2.1.0"
+        assert r.version == PLATFORM_VERSION
         assert isinstance(r.cache, CacheStatsResponse)

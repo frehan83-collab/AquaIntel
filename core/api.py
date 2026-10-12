@@ -22,6 +22,7 @@ from slowapi.errors import RateLimitExceeded
 from sqlalchemy import select, func
 
 from config.settings import settings
+from core.version import PLATFORM_VERSION
 from core.models import (
     Session, Signal, Order, AuditLog, LiceRecord, Locality, init_db,
     PricePrediction, FuturesSnapshot, ExportVolume, User,
@@ -81,7 +82,7 @@ async def lifespan(app: FastAPI):
         except Exception as exc:
             log.warning("startup.demo_seed_failed", error=str(exc)[:120])
 
-    log.info("startup.ready", version="2.2.0", routes=len(app.routes))
+    log.info("startup.ready", version=PLATFORM_VERSION, routes=len(app.routes))
     yield
     await _alerts_ws.stop()
     await _command_centre_ws.stop()
@@ -91,7 +92,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="FishIntel API",
     description="Aquaculture Intelligence Platform — real-time salmon market intelligence, disease monitoring, and decision support for farmers, traders, and investors.",
-    version="2.2.0",
+    version=PLATFORM_VERSION,
     lifespan=lifespan,
     docs_url="/api/docs",
     redoc_url="/api/redoc",
@@ -353,7 +354,7 @@ async def health():
         "cache": engine_cache.stats(),
         "cache_manager": cache_manager.get_stats(),
         "routes": len([r for r in app.routes if hasattr(r, 'path')]),
-        "version": "2.2.0",
+        "version": PLATFORM_VERSION,
         "rate_limits": TIER_LIMITS,
     }
 
@@ -411,7 +412,7 @@ async def metrics():
         "cache": cache,
         "process": process_info,
         "routes": len([r for r in app.routes if hasattr(r, 'path')]),
-        "version": "2.2.0",
+        "version": PLATFORM_VERSION,
     }
 
 
