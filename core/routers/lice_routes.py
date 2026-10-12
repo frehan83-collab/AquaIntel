@@ -12,11 +12,13 @@ from sqlalchemy import select, func
 from core.async_db import get_async_session
 from core.models import LiceRecord
 from core.schemas import LiceSummaryResponse
+from core.cache import cached
 
 router = APIRouter(prefix="/api/lice", tags=["lice"])
 
 
 @router.get("/summary", response_model=LiceSummaryResponse)
+@cached(ttl=300, key_prefix="lice_summary")
 async def lice_summary():
     """Get latest aggregated lice summary with std dev, threshold counts, and PA breakdown."""
     async with get_async_session() as s:
