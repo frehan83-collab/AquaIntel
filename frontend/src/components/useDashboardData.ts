@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import { useApiError } from "@/lib/useApiError";
@@ -11,9 +12,6 @@ import type {
   AISHarvestIntel, PairsSignal, Signal,
 } from "@/types/api";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-/** Extended LeaderEntry with sparkline data returned by /api/leaders/top100 */
 export interface DashboardLeader {
   company_name: string;
   ticker?: string;
@@ -26,25 +24,21 @@ export interface DashboardLeader {
   [key: string]: unknown;
 }
 
-/** Macro snapshot as returned by the dashboard endpoint */
 export interface DashboardMacro extends MacroSnapshot {
   indices?: Record<string, { value: number; label?: string }>;
   benchmarks?: Record<string, number>;
   yoy_changes?: Record<string, number>;
 }
 
-/** Supply data as used by the dashboard */
 export interface DashboardSupply extends GlobalSupply {
   balance?: string;
   supply_deficit_pct?: number;
 }
 
-/** AIS data as used by the dashboard */
 export interface DashboardAIS extends AISHarvestIntel {
   signals?: Array<{ vessel: string; activity: string; location: string; timestamp: string }>;
 }
 
-/** Production summary from Fiskeridirektoratet */
 export interface ProductionSummary {
   year?: number;
   latest_year?: number;
@@ -80,102 +74,152 @@ export interface DashboardData {
   setMetricsExpanded: (v: boolean) => void;
 }
 
+/**
+ * One dashboard resource as a TanStack Query.
+ *
+ * Shared defaults come from QueryProvider; every resource polls at the same
+ * 60s cadence the hook used before, but now with request dedupe, stale-while-
+ * revalidate across navigations, and retry(1). Errors route through the same
+ * useApiError policy (critical contexts still toast).
+ */
+function useDashboardQuery<T>(
+  queryKey: readonly unknown[],
+  queryFn: () => Promise<T>,
+  errorContext: string,
+  opts?: { critical?: boolean }
+) {
+  const handleError = useApiError();
+  const query = useQuery<T>({ queryKey, queryFn, refetchInterval: 60_000 });
+  const lastError = useRef<unknown>(null);
+  useEffect(() => {
+    if (query.error && query.error !== lastError.current) {
+      lastError.current = query.error;
+      handleError(errorContext, { critical: opts?.critical })(query.error);
+    }
+  }, [query.error, errorContext, handleError, opts?.critical]);
+  return query;
+}
+
 export function useDashboardData(locale: Locale): DashboardData {
   const { addToast } = useToast();
-  const handleError = useApiError();
-
-  const [summary, setSummary] = useState<LiceSummary | null>(null);
-  const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
-  const [signals, setSignals] = useState<Signal[]>([]);
-  const [leaders, setLeadersRaw] = useState<DashboardLeader[]>([]);
-  const setLeaders = (v: unknown) => {
-    try {
-      const raw = v as DashboardLeader[] | { data?: DashboardLeader[]; companies?: DashboardLeader[] };
-      const arr = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : Array.isArray(raw?.companies) ? raw.companies : [];
-      setLeadersRaw(arr);
-    } catch { setLeadersRaw([]); }
-  };
-  const [ssbSpot, setSsbSpot] = useState<number>(0);
-  const [supplyData, setSupplyData] = useState<Array<{ week: string; volume: number }>>([]);
-  const [regimeAlerts, setRegimeAlerts] = useState<RegimeAlert[]>([]);
-  const [pairsSignals, setPairsSignals] = useState<PairsSignal[]>([]);
-  const [aisData, setAisData] = useState<DashboardAIS | null>(null);
-  const [macro, setMacro] = useState<DashboardMacro | null>(null);
-  const [supply, setSupply] = useState<DashboardSupply | null>(null);
-  const [diseaseCount, setDiseaseCount] = useState<number>(0);
-  const [anomaly, setAnomaly] = useState<AnomalyScores | null>(null);
-  const [production, setProduction] = useState<ProductionSummary | null>(null);
-  const [counties, setCounties] = useState<Array<{ county: string; harvest_tonnes: number }>>([]);
-  const [heroAlert, setHeroAlert] = useState<AlertItem | null>(null);
-  const [alertsLoaded, setAlertsLoaded] = useState(false);
   const [metricsExpanded, setMetricsExpanded] = useState(true);
-
   const isFirstLoad = useRef(true);
 
-  const loadData = useCallback(() => {
-    api.liceSummary().then(setSummary).catch(handleError("lice_summary", { critical: true }));
-    api.signals().then((d: any) => setSignals(d)).catch(handleError("signals"));
-    api.leadersTop30().then(setLeaders).catch(handleError("leaders_top30"));
-    api.ssbPriceHistory(8).then((d: SSBPriceHistory) => {
-      setSsbSpot(d.spot_nok || 0);
-      if (d.history?.length) {
-        setSupplyData(d.history.slice(-6).map((h) => ({
-          week: h.label?.replace(/^\d{4}/, "") || String(h.week),
-          volume: Math.round((h.volume_tonnes || 0) / 1000),
-        })));
-      }
-    }).catch(handleError("ssb_price", { critical: true }));
-    api.regimeAlerts().then((d: any) => setRegimeAlerts(d)).catch(handleError("regime_alerts"));
-    api.pairsSignals(7).then((d: any) => setPairsSignals(d)).catch(handleError("pairs_signals"));
-    api.aisHarvestSignals(72).then((d: any) => setAisData(d)).catch(handleError("ais_data"));
-    api.macroSnapshot().then((d: any) => setMacro(d)).catch(handleError("macro_snapshot"));
-    api.globalSupply().then((d: any) => setSupply(d)).catch(handleError("global_supply"));
-    api.diseaseByCompany().then((d: DiseaseByCompany) => {
-      const total = Object.values(d || {}).reduce((sum: number, c) => sum + (c?.total || 0), 0);
-      setDiseaseCount(total);
-    }).catch(handleError("disease_count"));
-    api.anomalyScores().then((d: AnomalyScores) => {
-      setAnomaly(d);
-      if (isFirstLoad.current && d?.composite_score >= 60) {
-        addToast({
-          type: "alert",
-          title: "Elevated Risk Detected",
-          message: `Anomaly score: ${formatNumber(d.composite_score, locale, 0)} — ${d.risk_level || "HIGH"}`,
-          duration: 8000,
-        });
-      }
-    }).catch(handleError("anomaly_scores", { critical: true }));
-    api.activeAlerts().then((d: AlertsResponse | AlertItem[]) => {
-      const alerts: AlertItem[] = Array.isArray(d) ? d : d?.alerts || [];
-      if (alerts.length > 0) {
-        const sevOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
-        const sorted = [...alerts].sort((a: AlertItem, b: AlertItem) =>
-          (sevOrder[a.severity] ?? 5) - (sevOrder[b.severity] ?? 5)
-        );
-        setHeroAlert(sorted[0]);
-      }
-      setAlertsLoaded(true);
-    }).catch((err: unknown) => { setAlertsLoaded(true); handleError("hero_alerts")(err); });
-    api.productionSummary().then((d: any) => setProduction(d)).catch(handleError("production_stats"));
-    api.productionByCounty().then((d: any) => {
-      const arr = Array.isArray(d) ? d : d?.data || d?.counties || [];
-      setCounties(arr.sort((a: any, b: any) => (b.harvest_tonnes || 0) - (a.harvest_tonnes || 0)).slice(0, 5));
-    }).catch(handleError("counties"));
-    setFetchedAt(new Date());
-    isFirstLoad.current = false;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const summaryQ = useDashboardQuery<LiceSummary>(
+    ["lice-summary"], () => api.liceSummary() as Promise<LiceSummary>, "lice_summary", { critical: true });
+  const signalsQ = useDashboardQuery<Signal[]>(
+    ["signals"], () => api.signals() as Promise<Signal[]>, "signals");
+  const leadersQ = useDashboardQuery<unknown>(
+    ["leaders-top30"], () => api.leadersTop30() as Promise<unknown>, "leaders_top30");
+  const ssbQ = useDashboardQuery<SSBPriceHistory>(
+    ["ssb-price-history", 8], () => api.ssbPriceHistory(8) as Promise<SSBPriceHistory>, "ssb_price", { critical: true });
+  const regimeQ = useDashboardQuery<RegimeAlert[]>(
+    ["regime-alerts"], () => api.regimeAlerts() as unknown as Promise<RegimeAlert[]>, "regime_alerts");
+  const pairsQ = useDashboardQuery<PairsSignal[]>(
+    ["pairs-signals", 7], () => api.pairsSignals(7) as unknown as Promise<PairsSignal[]>, "pairs_signals");
+  const aisQ = useDashboardQuery<DashboardAIS>(
+    ["ais-harvest", 72], () => api.aisHarvestSignals(72) as unknown as Promise<DashboardAIS>, "ais_data");
+  const macroQ = useDashboardQuery<DashboardMacro>(
+    ["macro-snapshot"], () => api.macroSnapshot() as unknown as Promise<DashboardMacro>, "macro_snapshot");
+  const supplyQ = useDashboardQuery<DashboardSupply>(
+    ["global-supply"], () => api.globalSupply() as unknown as Promise<DashboardSupply>, "global_supply");
+  const diseaseQ = useDashboardQuery<DiseaseByCompany>(
+    ["disease-by-company"], () => api.diseaseByCompany() as Promise<DiseaseByCompany>, "disease_count");
+  const anomalyQ = useDashboardQuery<AnomalyScores>(
+    ["anomaly-scores"], () => api.anomalyScores() as Promise<AnomalyScores>, "anomaly_scores", { critical: true });
+  const alertsQ = useDashboardQuery<AlertsResponse | AlertItem[]>(
+    ["active-alerts"], () => api.activeAlerts() as Promise<AlertsResponse | AlertItem[]>, "hero_alerts");
+  const productionQ = useDashboardQuery<ProductionSummary>(
+    ["production-summary"], () => api.productionSummary() as unknown as Promise<ProductionSummary>, "production_stats");
+  const countiesQ = useDashboardQuery<unknown>(
+    ["production-by-county"], () => api.productionByCounty() as Promise<unknown>, "counties");
 
+  // ── Derived values (identical semantics to the pre-Query implementation) ──
+  const leaders = useMemo<DashboardLeader[]>(() => {
+    const raw = leadersQ.data as
+      | DashboardLeader[]
+      | { data?: DashboardLeader[]; companies?: DashboardLeader[] }
+      | undefined;
+    if (Array.isArray(raw)) return raw;
+    if (Array.isArray(raw?.data)) return raw.data;
+    if (Array.isArray(raw?.companies)) return raw.companies;
+    return [];
+  }, [leadersQ.data]);
+
+  const ssbSpot = ssbQ.data?.spot_nok || 0;
+
+  const supplyData = useMemo(() => {
+    const history = ssbQ.data?.history;
+    if (!history?.length) return [];
+    return history.slice(-6).map((h) => ({
+      week: h.label?.replace(/^\d{4}/, "") || String(h.week),
+      volume: Math.round((h.volume_tonnes || 0) / 1000),
+    }));
+  }, [ssbQ.data]);
+
+  const diseaseCount = useMemo(
+    () => Object.values(diseaseQ.data || {}).reduce((sum, c) => sum + (c?.total || 0), 0),
+    [diseaseQ.data]
+  );
+
+  const heroAlert = useMemo<AlertItem | null>(() => {
+    const d = alertsQ.data;
+    const alerts: AlertItem[] = Array.isArray(d) ? d : d?.alerts || [];
+    if (!alerts.length) return null;
+    const sevOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+    const sorted = [...alerts].sort(
+      (a, b) => (sevOrder[a.severity] ?? 5) - (sevOrder[b.severity] ?? 5)
+    );
+    return sorted[0];
+  }, [alertsQ.data]);
+
+  const counties = useMemo<Array<{ county: string; harvest_tonnes: number }>>(() => {
+    type CountyRow = { county: string; harvest_tonnes: number };
+    const d = countiesQ.data as
+      | CountyRow[]
+      | { data?: CountyRow[]; counties?: CountyRow[] }
+      | undefined;
+    const arr = Array.isArray(d) ? d : d?.data || d?.counties || [];
+    return [...arr]
+      .sort((a, b) => (b.harvest_tonnes || 0) - (a.harvest_tonnes || 0))
+      .slice(0, 5);
+  }, [countiesQ.data]);
+
+  const fetchedAt = summaryQ.dataUpdatedAt ? new Date(summaryQ.dataUpdatedAt) : null;
+
+  // One-time anomaly toast (same policy as before: first load, score >= 60)
   useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 60_000);
-    return () => clearInterval(interval);
-  }, [loadData]);
+    const d = anomalyQ.data;
+    if (isFirstLoad.current && d && d.composite_score >= 60) {
+      addToast({
+        type: "alert",
+        title: "Elevated Risk Detected",
+        message: `Anomaly score: ${formatNumber(d.composite_score, locale, 0)} — ${d.risk_level || "HIGH"}`,
+        duration: 8000,
+      });
+    }
+    if (anomalyQ.isFetched) isFirstLoad.current = false;
+  }, [anomalyQ.data, anomalyQ.isFetched, addToast, locale]);
 
   return {
-    summary, fetchedAt, signals, leaders, ssbSpot, supplyData,
-    regimeAlerts, pairsSignals, aisData, macro, supply, diseaseCount,
-    anomaly, production, counties, heroAlert, alertsLoaded,
-    metricsExpanded, setMetricsExpanded,
+    summary: (summaryQ.data as LiceSummary) ?? null,
+    fetchedAt,
+    signals: (signalsQ.data as Signal[]) ?? [],
+    leaders,
+    ssbSpot,
+    supplyData,
+    regimeAlerts: (regimeQ.data as RegimeAlert[]) ?? [],
+    pairsSignals: (pairsQ.data as PairsSignal[]) ?? [],
+    aisData: (aisQ.data as DashboardAIS) ?? null,
+    macro: (macroQ.data as DashboardMacro) ?? null,
+    supply: (supplyQ.data as DashboardSupply) ?? null,
+    diseaseCount,
+    anomaly: (anomalyQ.data as AnomalyScores) ?? null,
+    production: (productionQ.data as ProductionSummary) ?? null,
+    counties,
+    heroAlert,
+    alertsLoaded: alertsQ.isFetched,
+    metricsExpanded,
+    setMetricsExpanded,
   };
 }

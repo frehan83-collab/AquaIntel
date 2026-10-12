@@ -11,6 +11,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import DataAttribution from "@/components/DataAttribution";
 import KeyboardShortcuts from "@/components/KeyboardShortcuts";
 import GlobalErrorHandler from "@/components/GlobalErrorHandler";
+import QueryProvider from "@/components/QueryProvider";
 
 const dmSerif = DM_Serif_Display({
   weight: "400",
@@ -64,16 +65,18 @@ export default function RootLayout({
         <OfflineIndicator />
         <GlobalErrorHandler />
         <ToastProvider>
-          <KeyboardShortcuts />
-          <Sidebar />
-          <div className="md:ml-[240px] min-h-screen flex flex-col">
-            <DemoShell />
-            <TopBar />
-            <main id="main-content" className="flex-1 p-6">
-              <ErrorBoundary>{children}</ErrorBoundary>
-            </main>
-            <DataAttribution />
-          </div>
+          <QueryProvider>
+            <KeyboardShortcuts />
+            <Sidebar />
+            <div className="md:ml-[240px] min-h-screen flex flex-col">
+              <DemoShell />
+              <TopBar />
+              <main id="main-content" className="flex-1 p-6">
+                <ErrorBoundary>{children}</ErrorBoundary>
+              </main>
+              <DataAttribution />
+            </div>
+          </QueryProvider>
         </ToastProvider>
       </body>
     </html>
