@@ -77,6 +77,12 @@ class Settings(BaseSettings):
     cmems_username: str = ""
     cmems_password: str = ""
 
+    # Copernicus Data Space Ecosystem (CDSE) Sentinel Hub — free tier:
+    # 10,000 requests + 10,000 PU/month. OAuth client from
+    # https://shapps.dataspace.copernicus.eu/dashboard/ (Account → OAuth clients)
+    sentinel_hub_client_id: str = ""
+    sentinel_hub_client_secret: str = ""
+
     # Bloom alert thresholds (mg/m3 chlorophyll-a)
     bloom_chl_elevated: float = 2.0
     bloom_chl_high: float = 5.0

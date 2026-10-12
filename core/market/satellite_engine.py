@@ -28,8 +28,11 @@ import structlog
 log = structlog.get_logger(__name__)
 
 # ── Configuration ──────────────────────────────────────────────────
-SH_CLIENT_ID = os.environ.get("SENTINEL_HUB_CLIENT_ID", "")
-SH_CLIENT_SECRET = os.environ.get("SENTINEL_HUB_CLIENT_SECRET", "")
+from config.settings import settings
+
+# CDSE credentials (from .env via settings, env-var fallback)
+SH_CLIENT_ID = settings.sentinel_hub_client_id or os.environ.get("SENTINEL_HUB_CLIENT_ID", "")
+SH_CLIENT_SECRET = settings.sentinel_hub_client_secret or os.environ.get("SENTINEL_HUB_CLIENT_SECRET", "")
 SH_CONFIGURED = bool(SH_CLIENT_ID and SH_CLIENT_SECRET)
 
 # Evalscript: returns RGB + NIR + NDWI + cloud mask
@@ -114,24 +117,12 @@ class SatelliteEngine:
         self._sh_config = None
 
     def _get_sh_config(self):
-        """Lazy-init Sentinel Hub config."""
-        if self._sh_config is not None:
-            return self._sh_config
-        if not SH_CONFIGURED:
-            return None
-        try:
-            from sentinelhub import SHConfig
-            config = SHConfig()
-            config.sh_client_id = SH_CLIENT_ID
-            config.sh_client_secret = SH_CLIENT_SECRET
-            config.sh_base_url = "https://sh.dataspace.copernicus.eu"
-            config.sh_token_url = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
-            self._sh_config = config
-            log.info("satellite.configured", base_url=config.sh_base_url)
-            return config
-        except Exception as e:
-            log.warning("satellite.config_failed", error=str(e)[:80])
-            return None
+        """Deprecated: kept for compatibility.
+
+        The sentinelhub package is no longer used — queries go through
+        core.satellite.cdse_client (pure httpx + OAuth). Returns None always.
+        """
+        return None
 
     async def _get_farm_locations(self, limit: int = 50) -> list[dict]:
         """Get farm locations from database."""
@@ -160,64 +151,41 @@ class SatelliteEngine:
             return []
 
     async def query_farm(self, lat: float, lon: float, days_back: int = 10) -> dict | None:
-        """Query Sentinel-2 for a single farm location via Sentinel Hub API."""
-        config = self._get_sh_config()
-        if not config:
+        """Query Sentinel-2 for a single farm location via CDSE Statistical API."""
+        if not SH_CONFIGURED:
             return None
 
         try:
-            from sentinelhub import (
-                SentinelHubStatistical, DataCollection, BBox, CRS,
-                Geometry, SentinelHubRequest, MimeType,
-            )
+            from core.satellite.cdse_client import cdse_client
+            stats = await cdse_client.fetch_farm_stats(lat, lon, days_back)
+            if not stats or "data" not in stats:
+                return None
 
-            # 500m buffer around farm
-            delta = 0.005  # ~500m in degrees
-            bbox = BBox([lon - delta, lat - delta, lon + delta, lat + delta], crs=CRS.WGS84)
-            end_date = dt.datetime.now(dt.UTC)
-            start_date = end_date - dt.timedelta(days=days_back)
-            time_interval = (start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
-
-            request = SentinelHubRequest(
-                evalscript=EVALSCRIPT_STATS,
-                input_data=[
-                    SentinelHubRequest.input_data(
-                        data_collection=DataCollection.SENTINEL2_L2A.define_from(
-                            "s2l2a", service_url=config.sh_base_url
-                        ),
-                        time_interval=time_interval,
-                        other_args={"dataFilter": {"maxCloudCoverage": 30}},
-                    )
-                ],
-                responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
-                bbox=bbox,
-                size=(10, 10),  # Small tile for stats
-                config=config,
-            )
-
-            data = request.get_data()
-            if data and len(data) > 0:
-                img = np.array(data[0])
-                # Average over valid (non-cloud) pixels
-                cloud_mask = img[:, :, 3] < 0.5
-                if cloud_mask.sum() > 0:
-                    ndwi = float(np.mean(img[:, :, 0][cloud_mask]))
-                    ndvi = float(np.mean(img[:, :, 1][cloud_mask]))
-                    turbidity = float(np.mean(img[:, :, 2][cloud_mask]))
-                    nir = float(np.mean(img[:, :, 4][cloud_mask]))
-                    cloud_pct = float(1.0 - cloud_mask.sum() / cloud_mask.size)
+            # Find the most recent valid day
+            for day_data in reversed(stats["data"]):
+                outputs = day_data.get("outputs", {}).get("default", {}).get("bands", {})
+                if not outputs:
+                    continue
+                # B3 is cloud mask from evalscript (index 3)
+                cloud_stats = outputs.get("B3", {}).get("stats", {})
+                cloud_pct = cloud_stats.get("mean", 1.0)
+                if cloud_pct < 0.5:
+                    ndwi = outputs.get("B0", {}).get("stats", {}).get("mean", 0)
+                    ndvi = outputs.get("B1", {}).get("stats", {}).get("mean", 0)
+                    turb = outputs.get("B2", {}).get("stats", {}).get("mean", 0)
+                    nir = outputs.get("B4", {}).get("stats", {}).get("mean", 0)
                     return {
                         "ndwi": round(ndwi, 4),
                         "ndvi": round(ndvi, 4),
-                        "turbidity": round(turbidity, 4),
+                        "turbidity": round(turb, 4),
                         "nir_reflectance": round(nir, 4),
                         "cloud_pct": round(cloud_pct * 100, 1),
-                        "date": end_date.strftime("%Y-%m-%d"),
+                        "date": day_data["interval"]["to"][:10],
                     }
-
+            return None
         except Exception as e:
             log.warning("satellite.query_failed", lat=lat, lon=lon, error=str(e)[:100])
-
+            return None
         return None
 
     def _simulate_reading(self, farm: dict, date: str) -> FarmSatelliteReading:
@@ -291,11 +259,11 @@ class SatelliteEngine:
         date_str = now.strftime("%Y-%m-%d")
         readings: list[FarmSatelliteReading] = []
 
-        config = self._get_sh_config()
-
         for farm in farms:
-            if config:
-                # Live Sentinel Hub query
+            if SH_CONFIGURED:
+                # Live CDSE Statistical API query (pure-httpx client; no
+                # sentinelhub C-deps — they are blocked by Device Guard and
+                # unused since Session 40)
                 result = await self.query_farm(farm["lat"], farm["lon"])
                 if result:
                     anomaly = False
@@ -356,10 +324,10 @@ class SatelliteEngine:
                 "avg_ndvi": round(float(np.mean(ndvi_vals)), 4) if ndvi_vals else 0,
                 "avg_turbidity": round(float(np.mean(turb_vals)), 4) if turb_vals else 0,
                 "anomaly_rate_pct": round(len(anomalies) / max(len(readings), 1) * 100, 1),
-                "data_source": "Sentinel-2 L2A (CDSE)" if config else "Simulated (configure CDSE credentials for live data)",
-                "is_live": bool(config),
-                "data_quality": "live" if config else "simulated",
-                "confidence": 0.9 if config else 0.0,
+                "data_source": "Sentinel-2 L2A (CDSE)" if SH_CONFIGURED else "Simulated (configure CDSE credentials for live data)",
+                "is_live": bool(SH_CONFIGURED),
+                "data_quality": "live" if SH_CONFIGURED else "simulated",
+                "confidence": 0.9 if SH_CONFIGURED else 0.0,
             },
         )
 
@@ -370,7 +338,7 @@ class SatelliteEngine:
             n_farms=len(farms),
             n_readings=len(readings),
             n_anomalies=len(anomalies),
-            live=bool(config),
+            live=bool(SH_CONFIGURED),
         )
         return snapshot
 
