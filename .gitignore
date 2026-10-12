@@ -49,7 +49,5 @@ openapi.json
 # Frontend run artifacts
 frontend/test-results/
 frontend/playwright-report/
-frontend/dev.log
-frontend/prod.log
-frontend/pw_*.log
+frontend/*.log
 frontend/_l*.txt
