@@ -108,11 +108,27 @@ export default function TrendComparison({
         {/* Hover area */}
         <div
           className="absolute inset-0"
+          role="button"
+          tabIndex={0}
+          aria-label={`${label || metric} trend comparison. Use arrow keys to navigate weekly data points.`}
           onMouseMove={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const idx = Math.round((x / rect.width) * (currentYear.length - 1));
             setHovered(Math.max(0, Math.min(currentYear.length - 1, idx)));
+          }}
+          onFocus={() => { if (currentYear.length > 0) setHovered(0); }}
+          onBlur={() => setHovered(null)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowRight" && hovered !== null && hovered < currentYear.length - 1) {
+              e.preventDefault();
+              setHovered(hovered + 1);
+            } else if (e.key === "ArrowLeft" && hovered !== null && hovered > 0) {
+              e.preventDefault();
+              setHovered(hovered - 1);
+            } else if (e.key === "Escape") {
+              setHovered(null);
+            }
           }}
         />
       </div>

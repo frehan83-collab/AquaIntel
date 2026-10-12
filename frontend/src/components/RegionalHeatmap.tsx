@@ -126,7 +126,7 @@ export default function RegionalHeatmap({ data, title, metric, maxValue }: Regio
           aria-label={`${title} heatmap showing ${metric} across Norway production areas 1 to 13`}
           suppressHydrationWarning
         >
-          <title>{title} - {metric} by Production Area</title>
+          <title suppressHydrationWarning>{title} - {metric} by Production Area</title>
           {/* Background */}
           <rect x="0" y="0" width={SVG_W} height={SVG_H} rx="8" fill="rgba(15,23,42,0.6)" />
 
@@ -141,8 +141,19 @@ export default function RegionalHeatmap({ data, title, metric, maxValue }: Regio
             return (
               <g
                 key={pa.pa}
+                role="button"
+                tabIndex={0}
+                aria-label={`PA ${pa.pa} ${pa.name}: ${d ? `${value} ${metric || ""} - ${intensityLabel(ratio)}` : "No data"}`}
                 onMouseEnter={() => setHoveredPA(pa.pa)}
                 onMouseLeave={() => setHoveredPA(null)}
+                onFocus={() => setHoveredPA(pa.pa)}
+                onBlur={() => setHoveredPA(null)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setHoveredPA(hoveredPA === pa.pa ? null : pa.pa);
+                  }
+                }}
                 style={{ cursor: "pointer" }}
               >
                 {/* Cell background */}
