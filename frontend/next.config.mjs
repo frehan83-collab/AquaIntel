@@ -29,10 +29,11 @@ const nextConfig = {
   // Probe: Session 41 spike; verified against visual baselines before keeping.
   cacheComponents: true,
 
-  // Explicit choice required when cacheComponents is on. `false` preserves
-  // today's prefetch behavior; switching to App-Shell prefetching (`true`) is
-  // the next-cache-components-optimizer skill's post-adoption step.
-  partialPrefetching: false,
+  // Explicit choice required when cacheComponents is on. `true` switches to
+  // App-Shell prefetching (shared shell prefetch by default, fewer duplicated
+  // full-prefetch requests); verified against the instant + visual guards
+  // before shipping (Session 41d).
+  partialPrefetching: true,
 
   // Reduce bundle size by excluding server-only packages from client bundles
   serverExternalPackages: ["sharp"],
