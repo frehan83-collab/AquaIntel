@@ -19,3 +19,25 @@ export async function suppressOnboarding(page: Page): Promise<void> {
     window.localStorage.setItem("openclaw_tour_completed", "true");
   });
 }
+
+/**
+ * Block the PWA service worker (public/sw.js) for route-stubbed specs.
+ *
+ * sw.js intercepts ALL GET fetches (network-first, offline -> cache ->
+ * 503 "Offline"). Once active it takes over the page's data fetches,
+ * and service-worker fetches BYPASS page.route — route stubs silently
+ * stop intercepting (observed: stubbed /api/china/demand answered 503
+ * with zero route-handler hits). PWARegister registers /sw.js on mount;
+ * stubbing navigator.serviceWorker.register keeps page.route in control.
+ * Errors are swallowed by PWARegister's own .catch(() => {}).
+ */
+export async function blockServiceWorker(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    if ("serviceWorker" in navigator) {
+      Object.defineProperty(navigator.serviceWorker, "register", {
+        value: () => Promise.reject(new Error("SW disabled for this e2e spec")),
+        configurable: true,
+      });
+    }
+  });
+}

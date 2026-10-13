@@ -62,6 +62,32 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `tests/conftest.py` + both CI workflows (same pattern as the rate
   limit); enforcement verified explicitly in the new tests.
 
+### Fixed (review H4 — /china-demand printed "estimates shown" while nothing was shown)
+- `frontend/src/app/china-demand/page.tsx`: the supplier note and the
+  "Data Sources" footer now render only when a snapshot is actually on
+  screen (and, for the supplier note, when supplier rows are listed) —
+  no provenance claim while loading or after a total fetch failure.
+- Distinct fetch-failure state (`snapshotError`): a rose banner states
+  exactly what happened ("Failed to load China demand data — no figures
+  are currently shown…" / on a failed refresh: "showing the previously
+  loaded snapshot") with a Retry button — instead of the old false
+  "SSB series unavailable; shown from curated estimates" text.
+- New `frontend/e2e/china-demand-honesty.spec.ts` (4 tests, all
+  /api/china/** stubbed — no backend needed): loading (gated in-flight
+  fetch → no claims), fetch failure (404 → error banner, zero estimate
+  claims), live snapshot (LIVE SSB claims shown), degraded snapshot
+  (curated-estimate claims shown only because data IS shown).
+- e2e tooling fix discovered on the way: the PWA service worker
+  (`public/sw.js`) takes over all GET fetches once active and its
+  fetches BYPASS `page.route` — stubbed routes silently stopped
+  intercepting (observed: stubbed /api/china/demand answered 503
+  "Offline" with zero route-handler hits). New
+  `blockServiceWorker()` helper in `frontend/e2e/utils.ts` (stubs
+  `navigator.serviceWorker.register`; PWARegister swallows the error)
+  keeps route stubs reliable for stubbed specs.
+- Visual baselines unaffected (`/china-demand` has no baseline; the
+  stubbed-routes pattern matches `visual.spec.ts`).
+
 ## [Unreleased] — RUN-1 Sprint 4: R9 release + R10 accessibility/honesty (2026-10-13)
 
 ### Released (R9)

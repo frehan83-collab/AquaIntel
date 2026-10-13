@@ -26,19 +26,31 @@ export default function ChinaDemandPage() {
   const [signals, setSignals] = useState<any>(null);
   const [impact, setImpact] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  // Distinct fetch-failure state (review H4): the page must never claim
+  // "estimates are shown" while loading or when nothing could be loaded.
+  const [snapshotError, setSnapshotError] = useState(false);
 
   const load = async () => {
     setLoading(true);
+    setSnapshotError(false);
     try {
       const [snapRes, sigRes, impRes] = await Promise.allSettled([
         api.chinaDemand(),
         api.chinaDemandSignals(),
         api.chinaDemandImpact(),
       ]);
-      if (snapRes.status === "fulfilled") setSnapshot(snapRes.value);
+      if (snapRes.status === "fulfilled") {
+        setSnapshot(snapRes.value);
+      } else {
+        // Keep any stale snapshot for context, but mark the failure so no
+        // provenance claim is made about data that was not (re)loaded.
+        setSnapshotError(true);
+      }
       if (sigRes.status === "fulfilled") setSignals(sigRes.value);
       if (impRes.status === "fulfilled") setImpact(impRes.value);
-    } catch { /* empty */ }
+    } catch {
+      setSnapshotError(true);
+    }
     setLoading(false);
   };
 
@@ -87,6 +99,20 @@ export default function ChinaDemandPage() {
         <OcButton variant="secondary" size="sm" onClick={load} loading={loading}
           leftIcon={<RefreshCw className="w-3.5 h-3.5" />}>Refresh</OcButton>
       </motion.div>
+
+      {/* Fetch-failure banner (review H4): distinct from loading; states
+          exactly what is (not) on screen instead of claiming estimates. */}
+      {snapshotError && !loading && (
+        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-between gap-3">
+          <p className="text-sm text-rose-300">
+            {snapshot
+              ? "Failed to refresh China demand data — showing the previously loaded snapshot."
+              : "Failed to load China demand data — no figures are currently shown. The API could not be reached."}
+          </p>
+          <OcButton variant="secondary" size="sm" onClick={load}
+            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}>Retry</OcButton>
+        </div>
+      )}
 
       {/* KPI Row */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
@@ -180,13 +206,17 @@ export default function ChinaDemandPage() {
               ))}
             </div>
           )}
-          <p className="text-[10px] text-[var(--text-muted)] mt-3 flex items-start gap-1">
-            <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
-            {norwayLive
-              ? "Norway data is LIVE from SSB."
-              : "SSB series unavailable — Norway shown from curated estimates."}{" "}
-            Other origins are structured estimates from UN Comtrade/GACC.
-          </p>
+          {/* Honest provenance note (review H4): only claimed when data is
+              actually on screen — hidden while loading/failed. */}
+          {snapshot && suppliers.length > 0 && (
+            <p className="text-[10px] text-[var(--text-muted)] mt-3 flex items-start gap-1">
+              <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
+              {norwayLive
+                ? "Norway data is LIVE from SSB."
+                : "SSB series unavailable — Norway shown from curated estimates."}{" "}
+              Other origins are structured estimates from UN Comtrade/GACC.
+            </p>
+          )}
         </GlassCard>
 
         {/* Demand Momentum */}
@@ -413,16 +443,21 @@ export default function ChinaDemandPage() {
         </GlassCard>
       )}
 
-      {/* Data Source Footer */}
-      <div className="text-[10px] text-[var(--text-muted)] p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-        <strong>Data Sources:</strong>{" "}
-        {norwayLive
-          ? "Norwegian exports to China are LIVE from SSB table 08799 (Statistics Norway)."
-          : "The SSB table 08799 series is currently unavailable; Norwegian export figures are shown from curated estimates."}
-        Total Chinese salmon imports and non-Norwegian origin volumes are structured estimates from
-        UN Comtrade / GACC, last updated {snapshot?.china_total_imports?.data_source || "Q4 2025"}.
-        All growth rates, market shares, and momentum are computed dynamically from the data.
-      </div>
+      {/* Data Source Footer — honest claims only (review H4): rendered
+          only when a snapshot is actually on screen. While loading or
+          after a total fetch failure no provenance claim is made (the
+          banner above states the failure instead). */}
+      {snapshot && (
+        <div className="text-[10px] text-[var(--text-muted)] p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+          <strong>Data Sources:</strong>{" "}
+          {norwayLive
+            ? "Norwegian exports to China are LIVE from SSB table 08799 (Statistics Norway)."
+            : "The SSB table 08799 series is currently unavailable; Norwegian export figures are shown from curated estimates."}
+          Total Chinese salmon imports and non-Norwegian origin volumes are structured estimates from
+          UN Comtrade / GACC, last updated {snapshot?.china_total_imports?.data_source || "Q4 2025"}.
+          All growth rates, market shares, and momentum are computed dynamically from the data.
+        </div>
+      )}
     </div>
   );
 }
