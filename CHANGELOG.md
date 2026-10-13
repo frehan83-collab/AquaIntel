@@ -113,6 +113,20 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Fixed (review M5 — degraded snapshots pinned the platform for the full TTL)
+- `ChinaDemandEngine.get_snapshot` split into a cache probe
+  (`_cached_snapshot_if_fresh`) + `_fetch_snapshot_locked`:
+  - **Negative-cache TTL:** degraded snapshots (no SSB 08799 records)
+    now cache for 10 minutes instead of the full 2-hour data TTL, so
+    recovery after an SSB outage takes minutes.
+  - **Single-flight:** a lazily-created per-event-loop `asyncio.Lock`
+    prevents concurrent cold calls from double-fetching the upstream
+    (with a post-acquire cache re-check).
+- New `tests/test_china_demand_cache.py` (5 tests, fake fetcher — no
+  network): degraded TTL expiry + recovery to LIVE, LIVE keeps the 2h
+  TTL, TTL ordering, and both single-flight cases (concurrent cold calls
+  fetch exactly once, degraded fetch included).
+
 ### Changed (repo hygiene — review H3 + M6)
 - Untracked the `.hypothesis` cache (5,178 files; already in `.gitignore`,
   so CI/repo weight drops without losing anything — the local cache stays

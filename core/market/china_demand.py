@@ -90,6 +90,15 @@ class ChinaDemandEngine:
         self._snapshot: ChinaDemandSnapshot | None = None
         self._last_fetch: dt.datetime | None = None
         self._cache_ttl = dt.timedelta(hours=2)
+        # Negative cache (review M5): a degraded snapshot (SSB returned no
+        # records) may recover within minutes — caching it for the full
+        # data TTL would keep the platform degraded for up to 2 hours.
+        self._degraded_cache_ttl = dt.timedelta(minutes=10)
+        # Single-flight (review M5): created lazily per event loop — the
+        # engine is a module singleton used from TestClient loops and the
+        # server loop, and an asyncio.Lock must not be shared across loops.
+        self._fetch_lock = None
+        self._fetch_lock_loop = None
 
     async def _ensure_ssb_data(self) -> dict:
         """Fetch live Norway-to-China export data from SSB."""
@@ -182,15 +191,56 @@ class ChinaDemandEngine:
         """
         Full China demand snapshot.
         LIVE Norwegian exports from SSB + structured estimates for total market.
-        """
-        now = dt.datetime.now(dt.UTC)
-        if (
-            self._last_fetch
-            and (now - self._last_fetch) < self._cache_ttl
-            and self._snapshot
-        ):
-            return self._format_snapshot(self._snapshot)
 
+        Caching (review M5):
+        - fresh snapshots use the full data TTL (SSB publishes weekly);
+        - degraded snapshots (no SSB records) use a short negative-cache
+          TTL so recovery after an SSB outage takes minutes, not hours;
+        - a per-event-loop single-flight lock prevents concurrent cold
+          calls from double-fetching.
+        """
+        cached = self._cached_snapshot_if_fresh()
+        if cached is not None:
+            return cached
+
+        lock = self._fetch_lock_for_loop()
+        if lock is None:  # no running loop (sync context) — just fetch
+            return await self._fetch_snapshot_locked()
+        async with lock:
+            return await self._fetch_snapshot_locked()
+
+    def _cached_snapshot_if_fresh(self) -> dict | None:
+        """Formatted snapshot when still within its effective TTL."""
+        if not (self._last_fetch and self._snapshot):
+            return None
+        ttl = self._cache_ttl
+        if not self._snapshot.norway_monthly_series:
+            ttl = self._degraded_cache_ttl
+        if (dt.datetime.now(dt.UTC) - self._last_fetch) < ttl:
+            return self._format_snapshot(self._snapshot)
+        return None
+
+    def _fetch_lock_for_loop(self):
+        """Per-event-loop lazily-created fetch lock (see M5 note above)."""
+        import asyncio
+
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return None
+        if self._fetch_lock is None or self._fetch_lock_loop is not loop:
+            self._fetch_lock = asyncio.Lock()
+            self._fetch_lock_loop = loop
+        return self._fetch_lock
+
+    async def _fetch_snapshot_locked(self) -> dict:
+        # Re-check after acquiring the lock: a concurrent task may have
+        # just filled the cache while we waited (single-flight).
+        cached = self._cached_snapshot_if_fresh()
+        if cached is not None:
+            return cached
+
+        now = dt.datetime.now(dt.UTC)
         ssb = await self._ensure_ssb_data()
         est_year = self._get_latest_estimate_year()
         total_imports = self._compute_total_imports(est_year)
