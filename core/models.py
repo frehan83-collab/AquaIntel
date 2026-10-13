@@ -68,6 +68,9 @@ class LiceRecord(Base):
     __table_args__ = (
         UniqueConstraint("locality_no", "week", "year", name="uq_lice_week"),
         Index("ix_lice_lookup", "locality_no", "year", "week"),
+        # Serves /api/lice/summary (year/week predicates + latest-week ORDER BY);
+        # migration 015 back-fills Alembic-managed databases.
+        Index("ix_lice_year_week", "year", "week"),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)

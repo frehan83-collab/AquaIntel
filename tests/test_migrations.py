@@ -34,3 +34,37 @@ def test_alembic_upgrade_head_on_fresh_database(tmp_path):
         "alembic upgrade head failed on a fresh database:\n"
         f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )
+
+
+def test_fresh_database_has_lice_year_week_index(tmp_path):
+    """015 must leave ix_lice_year_week present (the /api/lice/summary fix)."""
+    import sqlite3
+
+    db_file = tmp_path / "fresh_migrations.db"
+    env = {
+        **os.environ,
+        "DATABASE_URL": f"sqlite:///{db_file}",
+        "FISHINTEL_ENV": "",
+    }
+    result = subprocess.run(
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=REPO_ROOT,
+        timeout=180,
+    )
+    assert result.returncode == 0, f"upgrade failed:\n{result.stderr}"
+
+    conn = sqlite3.connect(db_file)
+    try:
+        names = {
+            row[0]
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'index' "
+                "AND tbl_name = 'lice_records'"
+            )
+        }
+        assert "ix_lice_year_week" in names, f"missing 015 index; found: {sorted(names)}"
+    finally:
+        conn.close()

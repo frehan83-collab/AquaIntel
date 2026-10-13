@@ -95,7 +95,7 @@ test runs with `Start-Process ... -RedirectStandardOutput` and poll the file.
 | `core/market/` | ~71 intelligence engines (singleton + `@cached` + provenance) |
 | `core/ml/` | Foundation-model wrappers (chronos, timesfm, moirai) |
 | `core/auth.py` | JWT, 4-tier access, `require_admin`, `is_admin` |
-| `core/models.py` | SQLAlchemy models (31 tables, 14 Alembic migrations) |
+| `core/models.py` | SQLAlchemy models (31 tables, 15 Alembic migrations) |
 | `core/async_db.py` | `get_async_session()` — **never** sync `Session` in async code |
 | `agents/`, `main.py` | 12 background agents (asyncio; daemon-thread mode for dev only) |
 | `frontend/src/app/` | Next.js App Router pages (`"use client"`) |

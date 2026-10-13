@@ -15,7 +15,7 @@ Plan: `docs/AUTONOMOUS_RUN_PLAN.md` (**RUN-1**, active) · Prior plan:
 | ID | Workstream | Status | Notes |
 |----|-----------|--------|-------|
 | P0-1 | Backend-backed e2e in CI | ✅ DONE (CI-PROVEN) | Commit 8fca76b: Frontend Build run 38317892995 — build ✅ + **e2e-backend ✅** (api specs step ✅, app specs step ✅ on fresh ubuntu runner); Backend Tests ✅; Docker ✅ |
-| P0-2 | DuckDB read path (lice analytics) | BLOCKED (evidence) | sqlite_scanner extension blocked by Windows app-control policy locally; extension-free variant measured ~5× slower than the existing path (220 ms vs 47 ms). Details in plan doc P0-2. Revisit on Linux env / parquet pipeline |
+| P0-2 | DuckDB read path (lice analytics) | ✅ CLOSED (evidence) | RUN-1 R5 validated it on Linux (container + named volume): sqlite **19.4 ms** vs DuckDB sqlite_scanner **80.2 ms (4.1× slower)** vs rowload 180.4 ms; Windows 30.0/78.8/12.6 ms; identical summaries everywhere. Gate (≥1.5×) not met → **no DuckDB path ships**. The real read-path fix shipped as R6: Alembic 015 `ix_lice_year_week` (EXPLAIN-proven SCAN→SEARCH, 19–30 ms → <0.1 ms). Details: plan doc P0-2 + CHANGELOG Sprint 2 |
 | P0-3 | Cache Components `use cache` scoping | DONE (audit) | Skill-guided audit: no server-renderable data routes exist (all pages client components). Deliverable shipped: instant() lock extended 3 → 11 routes, rig wired into CI `e2e-backend` (11/11 green locally on prod rig) |
 | P0-4 | uv adoption (pin Python 3.12) | IN VERIFICATION | pyproject.toml + .python-version (3.12 pin) + requirements.lock (248 pins, linux target); CI test.yml + e2e-backend + Dockerfile switched to uv; Docker build verifying locally; CI proof pending push |
 | P1-5 | Local env verification & test hygiene | ✅ DONE | Full suite on Win/Py3.14: 639 passed / 13 xfailed / 22 xpassed / 0 failed; ruff + tsc + smoke_security clean; 12 stale migration-lag xfail markers removed (TimesFM one verified CI-safe via honest fallback); remaining xfails justified in plan |
@@ -222,6 +222,26 @@ added `tests/test_migrations.py`.
     unchanged committed baselines (byte-identical regen verified).
     **Next: Sprint 2 — R5 (DuckDB bench on Linux via Docker) → R6
     (latency sweep / migration 015), per `docs/AUTONOMOUS_RUN_PLAN.md`.**
+- 2026-10-13 · **RUN-1 Sprint 2 (R5 + R6) complete (commit pending push):**
+  - **R5** — `scripts/bench_lice_read.py` built and run on BOTH platforms
+    (Linux: python:3.12-slim container with the DB staged in a named volume —
+    the Docker-for-Windows mount bridge measurably pollutes I/O; first
+    attempt read 1,217 ms vs native 19 ms). Warm medians (186,139 rows):
+    Linux sqlite 19.4 / DuckDB 80.2 / rowload-latest 180.4 ms; Windows
+    30.0 / 78.8 / 12.6 ms; all summaries identical (match=true). **P0-2
+    CLOSED: no DuckDB path ships** (gate ≥1.5× unmet; even the old Windows
+    extension blocker did not reproduce today).
+  - **R6** — the real cost was a missing index: `/api/lice/summary` filters
+    `lice_records (year, week)` → three full scans + temp b-tree sort. Alembic
+    **015** `ix_lice_year_week` (existence-guarded; model parity) —
+    EXPLAIN: SCAN → SEARCH USING INDEX; indexed-copy bench 19–30 ms → <0.1 ms.
+    Latency note: Scotland snapshot is a cold-cache external fetch (25,695 ms
+    cold → 9 ms warm; `@cached(ttl=900)`), not a DB issue.
+  - Gates: test_migrations green (fresh-DB upgrade head with 015 + new
+    index-existence assertion); ruff clean; full suite 652 passed / 13
+    xfailed / 10 xpassed / 0 failed (231.39 s); frontend untouched.
+  - **Next: Sprint 3 — R7 (Holy-Grail supply–demand upgrade) per
+    `docs/AUTONOMOUS_RUN_PLAN.md`; R8 only if budget remains.**
   - Noted for later workstreams: KPICard count-up strips "%" from value
     strings app-wide (~20 pages) and mis-parses nb-locale "0,29" as 0 →
     candidate component fix (see CHANGELOG "Noted").

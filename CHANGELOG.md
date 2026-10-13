@@ -3,6 +3,42 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
+## [Unreleased] — RUN-1 Sprint 2: P0-2 closed, lice read-index shipped (2026-10-13)
+
+### Closed (R5 — DuckDB P0-2, cross-platform evidence)
+- Built `scripts/bench_lice_read.py`: the exact four `/api/lice/summary` queries
+  vs DuckDB `sqlite_scanner` ATTACH vs extension-free row-loading; identical
+  summaries enforced across candidates (`match=true`).
+- Ran on **Linux** (`python:3.12-slim` container, DB staged in a named volume
+  so the Docker-for-Windows mount bridge didn't pollute I/O) and Windows,
+  186,139 rows, warm medians: **Linux sqlite 19.4 ms vs DuckDB 80.2 ms
+  (4.1× slower)** vs rowload-latest 180.4 ms; **Windows 30.0 / 78.8 / 12.6 ms**.
+- **Verdict: CLOSE P0-2** — the `sqlite_scanner` path loses on both platforms
+  (4.1× Linux, 2.6× Windows); the row-load variant wins only on Windows
+  (12.6 vs 30.0 ms) and loses on Linux (180.4 vs 19.4 ms) — no portable win,
+  ≥1.5× gate unmet → **no DuckDB read path will ship**. The 2026-10-13 Windows
+  extension blocker did not reproduce today, so the decision no longer
+  depends on it. Full closure write-up in `docs/NEXT_STEPS_PLAN.md` §P0-2.
+
+### Fixed (R6 — the real read-path cost: a missing index)
+- `/api/lice/summary` filters `lice_records` by `(year, week)` with **no index
+  for those columns** (the only index leads with `locality_no`) → **three full
+  scans** of 186k rows + a temp b-tree sort per read.
+- **Alembic 015** adds `ix_lice_year_week (year, week)` (existence-guarded,
+  013 pattern) and `LiceRecord` declares it for create_all parity. EXPLAIN
+  QUERY PLAN: `SCAN lice_records` → `SEARCH ... USING INDEX (year=? AND
+  week=?)`; bench on an indexed copy: **19–30 ms → <0.1 ms warm**.
+- Latency-sweep note (same R6): the e2e-flagged slow route (Scotland snapshot
+  ~25 s) is a cold-cache EXTERNAL fetch — measured **25,695 ms cold → 9 ms
+  warm** with the existing `@cached(ttl=900)`; network-bound, no DB fix.
+
+### Verified
+- `tests/test_migrations.py` green (fresh-DB `alembic upgrade head` incl. 015,
+  plus a new assertion that `ix_lice_year_week` exists after the chain);
+  `ruff check .` clean; py_compile on touched modules; full pytest suite
+  **652 passed / 13 xfailed / 10 xpassed / 0 failed (231.39 s)**;
+  frontend untouched.
+
 ## [Unreleased] — RUN-1 Sprint 1: hygiene & ratchet truth (2026-10-13)
 
 ### Fixed (R1 — /market honesty pass)

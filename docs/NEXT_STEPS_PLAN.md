@@ -86,7 +86,7 @@ ubuntu runner. Backend Tests run ✅ and Docker Build ✅ on the same commit. 8 
 specs fixed to the real contracts; admin block rewritten to the pytest 401/403/200
 security contract; 2 real bugs fixed (price_feed_hub dead import; /market ssb binding).
 
-### P0-2 · DuckDB read path for lice analytics — ⛔ BLOCKED / deferred with evidence (2026-10-13)
+### P0-2 · DuckDB read path for lice analytics — ✅ CLOSED with evidence (2026-10-13, RUN-1 R5+R6)
 **Why:** 189k-row lice aggregate; TTL cache gives 70 ms → 2 ms warm, but analytics are
 still SQLite/PG. DuckDB is the project's stated next step for this path.
 - Add `duckdb` (or `duckdb-engine`) behind the existing lice analytics queries; keep the
@@ -107,6 +107,23 @@ still SQLite/PG. DuckDB is the project's stated next step for this path.
 **Resolution:** do not ship a DuckDB path until it can be validated end-to-end (Linux dev
 env or CI) against a real workload. Revisit with either (a) sqlite_scanner verified on
 Linux, or (b) a parquet materialization of lice history once an export pipeline exists.
+
+**CLOSED (2026-10-13, RUN-1 R5+R6)** — validated end-to-end on BOTH platforms with
+`scripts/bench_lice_read.py` (186,139 rows, warm, median over N runs, identical summaries
+across all candidates): **Linux** (python:3.12-slim container, DB staged in a named volume
+to bypass the Docker-for-Windows mount bridge): sqlite **19.4 ms** vs DuckDB sqlite_scanner
+**80.2 ms (4.1× slower)** vs row-load-latest 180.4 ms vs full row-load (aborted after
+minutes; Windows: 3.6 s/run). **Windows**: 30.0 / 78.8 / 12.6 ms. DuckDB does not meet the
+≥1.5× gate on this workload → **no DuckDB read path will ship** (the old Windows
+extension-app-control blocker did not even reproduce today — the decision no longer
+depends on it). The real read-path cost was a **missing index**: `/api/lice/summary`
+filters `lice_records (year, week)` with no matching index → three full scans of 186k rows
++ a temp b-tree sort. **Alembic 015** now ships `ix_lice_year_week (year, week)`
+(existence-guarded; model declares it for create_all parity) — EXPLAIN QUERY PLAN:
+`SCAN lice_records` → `SEARCH ... USING INDEX (year=? AND week=?)`; the summary read path
+drops from 19–30 ms warm to <0.1 ms. Latency-sweep note: the e2e-flagged slow route
+(Scotland snapshot ~25 s) is a cold-cache external fetch — measured 25,695 ms cold →
+9 ms warm with the existing `@cached(ttl=900)`; network-bound, no DB fix applies.
 No requirements/code changes made (no fake value, per AGENTS.md honesty rule).
 
 ### P0-3 · Cache Components `use cache` scoping — ✅ DONE (audit + extended guard, 2026-10-13)
@@ -274,7 +291,7 @@ git push origin master
 1. **Sprint A (stabilize):** P0-4 (uv) → P1-5 (local env + test hygiene) → P0-1 (e2e in CI).
    ✅ Done — CI-proven (runs 38317892995, 38319321808: build + e2e-backend + backend + docker all green).
 2. **Sprint B (performance + quality):** P0-2 (DuckDB) → P0-3 (use cache) → P1-6 (prod parity).
-   P0-2 blocked-with-evidence; P0-3 done (instant lock ×11, CI-wired); P1-6 verified done-except-doc-nicety.
+   P0-2 closed-with-evidence (RUN-1 R5+R6); P0-3 done (instant lock ×11, CI-wired); P1-6 verified done-except-doc-nicety.
 3. **Sprint C (product):** P1-7 Tier-1 audit → P2-8 → P2-9.
    ✅ Audits complete, all features verified shipped; no gaps to build.
 
@@ -303,8 +320,9 @@ Status of the four follow-ups handed off at plan exhaustion (§7):
    (returns SSB `.history`; the page read `.curve` → permanently empty) to the
    real `/api/futures/forward-curve`, with an `is_synthetic`-aware badge
    ("Fish Pool" ↔ "SSB synthetic").
-3. ⛔ P0-2 DuckDB — still blocked by the Windows app-control policy on this dev
-   box (sqlite_scanner extension + uv-managed interpreters). Revisit on Linux.
+3. ✅ P0-2 DuckDB — CLOSED (RUN-1 R5/R6): no portable DuckDB win on either
+   platform (Linux 19.4 vs 80.2 ms); the missing `(year, week)` index shipped
+   as Alembic 015 instead.
 4. ✅ seasonal-card explicit empty state — plus the underlying binding fix
    (`.data` → `.seasonal_pattern`, week→median dict) and an honesty relabel
    (the endpoint computes medians, not averages).

@@ -16,7 +16,7 @@ Last updated: 2026-10-12 (Session 40)
 | Frontend pages | 63 (68 compiled routes) |
 | Shared components | 43+ |
 | Database tables | 31 |
-| DB migrations | 14 |
+| DB migrations | 15 |
 | Test functions | 651 collected (616 passing, 35 xfail/xpass) |
 | i18n keys | ~600 (NO/EN) |
 | Design tokens | 86 (Figma pipeline active) |
