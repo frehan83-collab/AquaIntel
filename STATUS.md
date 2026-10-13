@@ -72,9 +72,12 @@ against a live local backend on 2026-10-12; all stale, spec had never run in CI)
 
 ### Remaining for P0-1
 - Push + watch CI run of the new job go green (needs network repo write access).
-- Follow-up noted: workflow `paths:` filter is `frontend/**` only — backend-only
-  changes won't trigger the backend-backed job. Consider adding `core/**`,
-  `agents/**`, `main.py`, `requirements*.txt` paths (or a dedicated workflow) later.
+- ✅ DONE (2026-10-13 follow-up sweep): workflow `paths:` filters now include
+  the backend surfaces the job boots against (`core/**`, `agents/**`,
+  `config/**`, `alembic*`, `main.py`, dependency manifests,
+  `scripts/ci_bootstrap_db.py`, `scripts/design_token_pipeline.py`, the
+  workflow file itself) — backend-only changes trigger the backend-backed e2e
+  instead of silently skipping it.
 - Accepted risk (review F4): the blocking job's assertions depend on live
   third-party APIs (SSB/SEPA/DFO…). Mitigations: Playwright retries=2 on CI,
   120 s/test timeouts, honest degraded responses still 200. Vendor-outage
@@ -153,7 +156,27 @@ added `tests/test_migrations.py`.
   686a93c (P0-3+P0-4) all three green incl. uv installs + instant rig on CI;
   26eb194 (P1-5) Backend+Docker green.
 - 2026-10-13 · **Full plan exhausted — every workstream DONE or
-  BLOCKED-with-evidence.** Next agent: pick up the documented follow-ups
-  (workflow paths filter for core/**, /market futures+seasonal card bindings,
-  P0-2 revisit on a Linux env, seasonal-card explicit empty state).
+  BLOCKED-with-evidence.**
+- 2026-10-13 · **Follow-up sweep (post-plan):** /market card bindings fixed —
+  seasonal card binds `.seasonal_pattern` (week→median dict; footer says
+  "median" + data span `(2020-2026)`; explicit empty state instead of the
+  eternal skeleton); futures card repointed to the real
+  `/api/futures/forward-curve` (Fish Pool live → SSB synthetic fallback) with a
+  synthetic-aware badge; macro KPI cards fixed (`FRED_USDNOK`/`FRED_WTI_OIL`
+  were never valid series names → both 404'd on every visit; now `nok_usd` /
+  `brent_crude`, WTI→Brent relabel incl. the banner ticker; heading "Weekly
+  Average"→"Weekly Median"; badge fail-safe, only when a curve exists). Same
+  cluster fixed on /investor (`nok_usd`/`brent_crude`/`soybeans`,
+  Brent/Soybeans labels, $/t unit, no fabricated $0.00 → "—"). Stale
+  `FuturesForwardCurve` TS type aligned to the engine contract. `frontend.yml`
+  paths filter extended with the backend surfaces (P0-1 follow-up above).
+  Verified live on the local rig (/market + /investor): 52/52 seasonal bars,
+  curve + KPIs render, "SSB synthetic" badge, NOK/USD 9.64 / Brent $83.73 /
+  Soybeans $442.45/t, 0 console errors / 0 failed requests; tsc 0 errors;
+  eslint 0 errors; pytest 651 passed / 13 xfailed / 10 xpassed / 0 failed
+  (253 s).
+- Remaining documented follow-ups: **P0-2 DuckDB** (still environment-blocked —
+  Windows app-control policy; revisit on a Linux env) and the noted /futures
+  `<title>` children-array + /market hydration warnings (non-fatal, no
+  assertions on them).
 

@@ -3,6 +3,66 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
+## [Unreleased] — follow-up sweep: /market bindings + frontend CI triggers (2026-10-13, continued)
+
+### Fixed (documented post-plan follow-ups)
+- **`/market` seasonal card** bound `.data` from `/api/market/ssb-seasonal`,
+  but the endpoint returns `.seasonal_pattern` (week → median dict) → the card
+  showed a permanent loading shimmer. Now maps the dict (keys are ISO week
+  numbers) into the chart, the footer honestly says **median** (the endpoint
+  computes `np.median`) and appends the `data_years` span, and an empty
+  response renders an explicit "Seasonal data unavailable" state instead of
+  the eternal skeleton.
+- **`/market` Futures Forward Curve card** bound `.curve` from
+  `/api/market/futures-curve` (that endpoint returns SSB `.history`) →
+  permanently "Futures data unavailable". Repointed to the real forward curve
+  `/api/futures/forward-curve` (Fish Pool live forwards → SSB seasonal
+  synthesis fallback); the card badge flips to **"SSB synthetic"** when
+  `is_synthetic` so a fallback curve is never labelled as Fish Pool live.
+- **`/market` macro KPI cards**: `macroSeries("FRED_USDNOK")` /
+  `("FRED_WTI_OIL")` are not valid series names for
+  `macro_intelligence.get_series_history` (its keys are `nok_usd` /
+  `brent_crude`) → both cards 404'd on every visit. Bound to the real series
+  and the crude card is relabelled **Brent Crude** (the backend has no WTI
+  series; labelling Brent as WTI would be dishonest), incl. the banner ticker
+  ("Brent $…" instead of "WTI $…").
+- `FuturesForwardCurve` type mirrored a stale contract (`contracts`/`spot_nok`/
+  `fx_rate`); now mirrors the engine response (`curve`/`spot_nok_kg`/
+  `spot_eur_kg`/`eur_nok_rate`/`is_live`/`is_synthetic`/`data_provenance`).
+- **`/investor` Macro Environment card** — same cluster, found by the pre-commit
+  review: invalid series names (`FRED_USDNOK`/`FRED_WTI_OIL`/`FRED_SOYBEAN` →
+  `nok_usd`/`brent_crude`/`soybeans`), "WTI Crude Oil" labelling Brent data,
+  `$/bu` on a USD/tonne series, and a `|| 0` fallback that fabricated a
+  **$0.00** quote whenever a fetch failed. Labels/units now match the
+  `macro_intelligence.FRED_SERIES` registry; failures render "—" with a
+  "FRED series unavailable" note.
+
+### Changed (review hardening)
+- Seasonal card heading relabelled "Weekly Average" → **"Weekly Median"**
+  (`market.weekly_avg`, only consumer) — it plots the medians the footer now
+  also names.
+- Fish Pool badge renders only when a curve exists; anything except an
+  explicit `is_synthetic === false` reads "SSB synthetic" (fail-safe — a
+  payload without flags can never be presented as live Fish Pool forwards);
+  the `curve` mapping is `Array.isArray`-guarded.
+
+### Changed (CI)
+- `frontend.yml` path filters now also trigger on the backend surfaces the
+  `e2e-backend` job boots against (`core/**`, `agents/**`, `config/**`,
+  `alembic*`, `main.py`, dependency manifests, `scripts/ci_bootstrap_db.py`,
+  `scripts/design_token_pipeline.py` and the workflow file itself) — backend-only
+  changes previously skipped the backend-backed e2e entirely (documented P0-1
+  follow-up).
+
+### Verified
+- Live local rig (uvicorn + `next dev` + headless chromium on /market and
+  /investor): 52/52 seasonal bars from the real SSB medians ("Weekly Median",
+  footer "(2020-2026)"), forward-curve chart + KPI strip render with an honest
+  "SSB synthetic" badge, NOK/USD 9.64 · Brent $83.73 · Soybeans $442.45/t
+  (FRED live), **0 console errors / 0 failed requests** on both pages.
+- `npx tsc --noEmit` 0 errors; eslint 0 errors (warnings tolerated);
+  pytest **651 passed / 13 xfailed / 10 xpassed / 0 failed** (253 s).
+
 ## [Unreleased] — P1-5/P1-6/P1-7 audits (2026-10-13, continued)
 
 ### Changed (P1-5 — test hygiene)

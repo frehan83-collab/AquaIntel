@@ -394,7 +394,7 @@ const translations: Record<string, Record<Locale, string>> = {
   // ── Page: Market Terminal ──
   "market.title": { en: "Market Terminal", no: "Markedsterminal" },
   "market.spot_price": { en: "Spot Price", no: "Spotpris" },
-  "market.weekly_avg": { en: "Weekly Average", no: "Ukentlig gjennomsnitt" },
+  "market.weekly_avg": { en: "Weekly Median", no: "Ukentlig median" },
   "market.price_history": { en: "Price History", no: "Prishistorikk" },
   "market.news_sentiment": { en: "News & Sentiment", no: "Nyheter og sentiment" },
   "market.harvest_intel": { en: "AIS Harvest Intelligence", no: "AIS-slakteetterretning" },

@@ -7,10 +7,43 @@ on:
     branches: [master, main]
     paths:
       - "frontend/**"
+      # Backend surfaces the e2e-backend job boots against (fresh-DB bootstrap
+      # + live API): backend-only changes must still exercise the real
+      # contract instead of silently skipping CI (P0-1 follow-up).
+      - "core/**"
+      - "agents/**"
+      - "config/**"
+      - "alembic/**"
+      - "alembic.ini"
+      - "main.py"
+      - "pyproject.toml"
+      - ".python-version"
+      - "requirements*.txt"
+      - "requirements.lock"
+      - "scripts/ci_bootstrap_db.py"
+      - "scripts/design_token_pipeline.py"
+      - "execution/**"
+      - "compliance/**"
+      - ".github/workflows/frontend.yml"
   pull_request:
     branches: [master, main]
     paths:
       - "frontend/**"
+      - "core/**"
+      - "agents/**"
+      - "config/**"
+      - "alembic/**"
+      - "alembic.ini"
+      - "main.py"
+      - "pyproject.toml"
+      - ".python-version"
+      - "requirements*.txt"
+      - "requirements.lock"
+      - "scripts/ci_bootstrap_db.py"
+      - "scripts/design_token_pipeline.py"
+      - "execution/**"
+      - "compliance/**"
+      - ".github/workflows/frontend.yml"
 
 jobs:
   build:

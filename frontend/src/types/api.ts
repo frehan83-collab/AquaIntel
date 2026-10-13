@@ -250,16 +250,21 @@ export interface CompetitivenessOrigin {
 
 /** /api/futures/forward-curve */
 export interface FuturesForwardCurve {
-  contracts: Array<{
-    month: string;
-    price_eur: number;
-    price_nok: number;
-    volume?: number;
-  }>;
-  spot_nok: number;
-  fx_rate: number;
-  source: string;
+  spot_nok_kg: number | null;
+  spot_eur_kg: number | null;
+  eur_nok_rate: number;
+  is_live: boolean;
   is_synthetic: boolean;
+  curve: Array<{
+    month: string;
+    price_eur_kg: number;
+    price_nok_kg: number;
+    months_ahead: number;
+    source: "fishpool_forward" | "ssb_synthetic";
+  }>;
+  n_months: number;
+  methodology: string;
+  generated_at: string;
   data_provenance: DataProvenance;
 }
 

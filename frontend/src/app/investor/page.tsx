@@ -62,9 +62,9 @@ export default function InvestorPage() {
     if (r8.status === "fulfilled") setDiseaseByCompany(r8.value || {});
     if (r9.status === "fulfilled") setAnomaly(r9.value);
     if (r10.status === "fulfilled") setMacro(r10.value);
-    api.macroSeries("FRED_USDNOK", 24).then(setMacroNok).catch(handleError("investor_macro_nok"));
-    api.macroSeries("FRED_WTI_OIL", 24).then(setMacroOilInv).catch(handleError("investor_macro_oil"));
-    api.macroSeries("FRED_SOYBEAN", 24).then(setMacroSoy).catch(handleError("investor_macro_soy"));
+    api.macroSeries("nok_usd", 24).then(setMacroNok).catch(handleError("investor_macro_nok"));
+    api.macroSeries("brent_crude", 24).then(setMacroOilInv).catch(handleError("investor_macro_oil"));
+    api.macroSeries("soybeans", 24).then(setMacroSoy).catch(handleError("investor_macro_soy"));
     setLoading(false);
   };
 
@@ -416,17 +416,23 @@ export default function InvestorPage() {
         <div className="grid grid-cols-3 gap-4">
           {[
             { label: "NOK/USD", data: macroNok, prefix: "", suffix: "" },
-            { label: "WTI Crude Oil", data: macroOilInv, prefix: "$", suffix: "" },
-            { label: "Soybean", data: macroSoy, prefix: "$", suffix: "/bu" },
-          ].map(({ label, data, prefix, suffix }) => (
-            <div key={label} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-              <div className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-1">{label}</div>
-              <div className="text-lg font-bold text-[var(--text-primary)]">
-                {prefix}{(data?.latest_value || data?.value || data?.data?.[data?.data?.length - 1]?.value || 0).toFixed(2)}{suffix}
+            { label: "Brent Crude Oil", data: macroOilInv, prefix: "$", suffix: "" },
+            { label: "Soybeans", data: macroSoy, prefix: "$", suffix: "/t" },
+          ].map(({ label, data, prefix, suffix }) => {
+            // Honest rendering: never fabricate a $0.00 quote when the series failed.
+            const v = data?.latest_value ?? data?.value ?? data?.data?.[data?.data?.length - 1]?.value;
+            return (
+              <div key={label} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-1">{label}</div>
+                <div className="text-lg font-bold text-[var(--text-primary)]">
+                  {v != null ? `${prefix}${Number(v).toFixed(2)}${suffix}` : "\u2014"}
+                </div>
+                <div className="text-[10px] text-[var(--text-secondary)] mt-0.5">
+                  {v != null ? "24-month FRED data" : "FRED series unavailable"}
+                </div>
               </div>
-              <div className="text-[10px] text-[var(--text-secondary)] mt-0.5">24-month FRED data</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </GlassCard>
 

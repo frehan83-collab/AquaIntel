@@ -291,4 +291,47 @@ git push origin master
 - Don't trust docs that say Next 15.5/React 19.1: actual pinned versions are in
   `frontend/package.json` (Next 16.4) and `core/version.py`.
 
+## 9. Post-plan follow-up sweep (2026-10-13)
+
+Status of the four follow-ups handed off at plan exhaustion (§7):
+
+1. ✅ `frontend.yml` paths filter — extended to the backend surfaces the
+   `e2e-backend` job boots (`core/**`, `agents/**`, `config/**`, `alembic*`,
+   `main.py`, dependency manifests, the two scripts it runs, the workflow file
+   itself). Backend-only changes now exercise the real e2e contract.
+2. ✅ `/market` futures card — repointed from `/api/market/futures-curve`
+   (returns SSB `.history`; the page read `.curve` → permanently empty) to the
+   real `/api/futures/forward-curve`, with an `is_synthetic`-aware badge
+   ("Fish Pool" ↔ "SSB synthetic").
+3. ⛔ P0-2 DuckDB — still blocked by the Windows app-control policy on this dev
+   box (sqlite_scanner extension + uv-managed interpreters). Revisit on Linux.
+4. ✅ seasonal-card explicit empty state — plus the underlying binding fix
+   (`.data` → `.seasonal_pattern`, week→median dict) and an honesty relabel
+   (the endpoint computes medians, not averages).
+
+Bonus same-class finds during live verification (fixed, honest relabels):
+- macro series names (`FRED_USDNOK`/`FRED_WTI_OIL` → `nok_usd`/`brent_crude`;
+  both cards had 404'd since inception) and WTI→Brent (no WTI series exists in
+  `macro_intelligence.FRED_SERIES`; the banner ticker now says "Brent $…").
+- `/investor` Macro Environment card (found by the pre-commit review, same
+  cluster): invalid series names (`FRED_SOYBEAN` → `soybeans` too), "WTI Crude
+  Oil" labelling Brent data, `$/bu` on a USD/tonne series, and a fabricated
+  **$0.00** fallback — labels/units now match the registry, failures render
+  "—" + "FRED series unavailable".
+- `FuturesForwardCurve` in `frontend/src/types/api.ts` was a stale contract;
+  now mirrors `euronext_futures.get_forward_curve` and is consumed typed by
+  the /market page.
+- Review hardening: seasonal heading "Weekly Average" → "Weekly Median"; Fish
+  Pool badge renders only with a curve and only when `is_synthetic === false`
+  (fail-safe — unknown payloads read "SSB synthetic"); empty-state strings
+  assert no unverified causes.
+
+Evidence (live local rig — uvicorn + `next dev` + headless chromium on
+/market and /investor): 52/52 seasonal bars from real SSB medians; 12-month
+curve renders with the synthetic badge; NOK/USD 9.64 · Brent $83.73 ·
+Soybeans $442.45/t (FRED live); 0 console errors / 0 failed requests;
+`tsc --noEmit` + eslint 0 errors; pytest 651 passed / 13 xfailed / 10 xpassed
+/ 0 failed.
+
+
 

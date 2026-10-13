@@ -9,6 +9,7 @@ import KPICard from "@/components/KPICard";
 import DataQualityBadge from "@/components/DataQualityBadge";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
+import type { FuturesForwardCurve } from "@/types/api";
 import { useApiError } from "@/lib/useApiError";
 import dynamic from "next/dynamic";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -23,7 +24,7 @@ import { chartPalette, colors } from "@/lib/design-tokens";
 interface FishPoolPoint { week: string; price: number; change_pct: number }
 interface EquityPrices { prices: Record<string, number>; changes: Record<string, number>; timestamps: Record<string, string> }
 interface SsbPoint { week: string; price_nok_kg: number }
-interface SeasonalPoint { week_of_year: number; avg_price: number; min_price: number; max_price: number }
+interface SeasonalPoint { week_of_year: number; median_price: number }
 interface ExportDest { country: string; volume_tonnes: number; value_nok_mill: number; share_pct: number }
 interface FuturesPoint { month: string; price: number }
 interface HedgeSignal { type: string; ticker: string; rationale: string; confidence: number }
@@ -113,18 +114,24 @@ function FishPoolChart({ data }: { data: FishPoolPoint[] }) {
 // ─── SSB Seasonal Bar Chart ───────────────────────────────────────────────────
 
 function SeasonalBars({ data }: { data: SeasonalPoint[] }) {
-  if (!data.length) return <Skeleton className="h-32 w-full" />;
+  if (!data.length) {
+    return (
+      <div className="flex items-center justify-center h-32 text-white/30 text-sm italic">
+        Seasonal data unavailable
+      </div>
+    );
+  }
   const W = 800; const H = 120;
-  const maxP = Math.max(...data.map((d) => d.avg_price));
-  const minP = Math.min(...data.map((d) => d.avg_price));
+  const maxP = Math.max(...data.map((d) => d.median_price));
+  const minP = Math.min(...data.map((d) => d.median_price));
   const range = maxP - minP || 1;
   const gap = W / data.length;
   const barW = gap * 0.7;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" preserveAspectRatio="none">
       {data.map((d, i) => {
-        const barH = Math.max(2, ((d.avg_price - minP) / range) * (H - 20));
-        const t = (d.avg_price - minP) / range;
+        const barH = Math.max(2, ((d.median_price - minP) / range) * (H - 20));
+        const t = (d.median_price - minP) / range;
         const r = Math.round(t * 139);
         const g = Math.round(212 - t * 132);
         const b = Math.round(200 + t * 55);
@@ -193,7 +200,7 @@ function FuturesCurveChart({ data }: { data: FuturesPoint[] }) {
   if (!data.length) {
     return (
       <div className="flex items-center justify-center h-24 text-white/30 text-sm italic">
-        Futures data unavailable — contact Fish Pool
+        Futures data unavailable
       </div>
     );
   }
@@ -264,6 +271,8 @@ export default function MarketTerminalPage() {
   const [seasonal, setSeasonal] = useState<SeasonalPoint[]>([]);
   const [exports, setExports] = useState<ExportDest[]>([]);
   const [futures, setFutures] = useState<FuturesPoint[]>([]);
+  const [futuresSynthetic, setFuturesSynthetic] = useState(false);
+  const [seasonalYears, setSeasonalYears] = useState<string | null>(null);
   const [signals, setSignals] = useState<HedgeSignal[]>([]);
   const [sentimentArticles, setSentimentArticles] = useState<any[]>([]);
   const [harvestIntel, setHarvestIntel] = useState<any>(null);
@@ -285,7 +294,7 @@ export default function MarketTerminalPage() {
         api.ssbPriceHistory(52),
         api.ssbSeasonal(),
         api.exportDestinations(12),
-        api.futuresCurve(),
+        api.futuresForwardCurve(12),
         api.hedgerSignals(),
       ]);
       if (fpRes.status === "fulfilled") setFishPool((fpRes.value as any).data ?? []);
@@ -298,9 +307,29 @@ export default function MarketTerminalPage() {
           hist.map((h) => ({ week: String(h.week ?? ""), price_nok_kg: Number(h.price_nok) })),
         );
       }
-      if (seasonRes.status === "fulfilled") setSeasonal((seasonRes.value as any).data ?? []);
+      // /api/market/ssb-seasonal returns {seasonal_pattern: {"1": median, …}, data_years}
+      // — keys are ISO week numbers, values are multi-year medians (SSB table 03024).
+      if (seasonRes.status === "fulfilled") {
+        const sv = seasonRes.value as {
+          seasonal_pattern?: Record<string, number>;
+          data_years?: string;
+        };
+        setSeasonal(
+          Object.entries(sv?.seasonal_pattern ?? {})
+            .map(([week, price]) => ({ week_of_year: Number(week), median_price: Number(price) }))
+            .sort((a, b) => a.week_of_year - b.week_of_year),
+        );
+        setSeasonalYears(sv?.data_years ?? null);
+      }
       if (expRes.status === "fulfilled") setExports((expRes.value as any).destinations ?? []);
-      if (futRes.status === "fulfilled") setFutures((futRes.value as any).curve ?? []);
+      // /api/futures/forward-curve: Fish Pool live forwards → SSB synthetic fallback
+      if (futRes.status === "fulfilled") {
+        const fv = futRes.value as Partial<FuturesForwardCurve>;
+        // Fail-safe honesty: only an explicit is_synthetic=false (live Fish Pool
+        // forwards) may ever show the Fish Pool badge; unknown payloads read synthetic.
+        setFuturesSynthetic(fv.is_synthetic !== false);
+        setFutures((Array.isArray(fv.curve) ? fv.curve : []).map((c) => ({ month: c.month, price: c.price_nok_kg })));
+      }
       if (sigRes.status === "fulfilled") setSignals((sigRes.value as any).signals ?? []);
       // Fetch NOK/USD, sentiment, AIS
       try {
@@ -316,8 +345,8 @@ export default function MarketTerminalPage() {
         setHarvestIntel(harvest);
       } catch (e) { handleError("market_ais_harvest")(e); }
       api.sentimentSummary().then(setSentSummary).catch(handleError("market_sentiment_summary"));
-      api.macroSeries("FRED_USDNOK", 12).then(setMacroNOK).catch(handleError("market_macro_nok"));
-      api.macroSeries("FRED_WTI_OIL", 12).then(setMacroOil).catch(handleError("market_macro_oil"));
+      api.macroSeries("nok_usd", 12).then(setMacroNOK).catch(handleError("market_macro_nok"));
+      api.macroSeries("brent_crude", 12).then(setMacroOil).catch(handleError("market_macro_oil"));
       setLastUpdated(new Date());
     } finally {
       setLoading(false);
@@ -377,7 +406,7 @@ export default function MarketTerminalPage() {
     // Feed cost / macro context
     if (macroOil) {
       const oilVal = macroOil.latest_value || macroOil.value || macroOil.data?.[macroOil.data?.length - 1]?.value;
-      if (oilVal != null) parts.push(`WTI $${Number(oilVal).toFixed(0)}`);
+      if (oilVal != null) parts.push(`Brent $${Number(oilVal).toFixed(0)}`);
     }
 
     return parts.join(" · ");
@@ -621,7 +650,8 @@ export default function MarketTerminalPage() {
           </div>
           {loading ? <Skeleton className="h-32" /> : <SeasonalBars data={seasonal} />}
           <p className="text-[10px] text-white/25 mt-3">
-            Historical seasonality from SSB table 03024 · avg NOK/kg by week-of-year
+            Historical seasonality from SSB table 03024 · median NOK/kg by week-of-year
+            {seasonalYears ? ` (${seasonalYears})` : ""}
           </p>
         </GlassCard>
       </div>
@@ -664,9 +694,17 @@ export default function MarketTerminalPage() {
         <GlassCard accent="violet" delay={0.3}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-[var(--text-primary)]">Futures Forward Curve</h2>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20">
-              Fish Pool
-            </span>
+            {futures.length > 0 && (
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full border ${
+                  futuresSynthetic
+                    ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                    : "bg-violet-500/10 text-violet-400 border-violet-500/20"
+                }`}
+              >
+                {futuresSynthetic ? "SSB synthetic" : "Fish Pool"}
+              </span>
+            )}
           </div>
           {loading ? <Skeleton className="h-28" /> : <FuturesCurveChart data={futures} />}
           {!loading && futures.length > 0 && (
@@ -865,7 +903,7 @@ export default function MarketTerminalPage() {
             )}
             {macroOil && (
               <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                <div className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-1">WTI Crude</div>
+                <div className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-1">Brent Crude</div>
                 <div className="text-lg font-bold text-[var(--text-primary)]">
                   ${formatNumber(macroOil.latest_value || macroOil.value || macroOil.data?.[macroOil.data?.length - 1]?.value || 0, locale, 1)}
                 </div>
