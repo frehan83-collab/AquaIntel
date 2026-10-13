@@ -17,12 +17,15 @@ const InteractiveChart = dynamic(() => import("@/components/InteractiveChart"), 
 import FreshnessIndicator from "@/components/FreshnessIndicator";
 import TickerStrip from "@/components/TickerStrip";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
-import { chartPalette, colors } from "@/lib/design-tokens";
+import { chartPalette } from "@/lib/design-tokens";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface FishPoolPoint { week: string; price: number; change_pct: number }
-interface EquityPrices { prices: Record<string, number>; changes: Record<string, number>; timestamps: Record<string, string> }
+interface EquityPrices {
+  prices_nok: Record<string, number>;
+  benchmarks?: { fpi_eur_per_kg: number | null; ssb_nok_per_kg: number | null };
+  source?: string;
+}
 interface SsbPoint { week: string; price_nok_kg: number }
 interface SeasonalPoint { week_of_year: number; median_price: number }
 interface ExportDest { country: string; volume_tonnes: number; value_nok_mill: number; share_pct: number }
@@ -34,80 +37,6 @@ interface HedgeSignal { type: string; ticker: string; rationale: string; confide
 function Skeleton({ className }: { className?: string }) {
   return (
     <div className={`animate-pulse bg-white/[0.06] rounded-lg ${className ?? ""}`} />
-  );
-}
-
-// ─── Fish Pool SVG Chart ───────────────────────────────────────────────────────
-
-function FishPoolChart({ data }: { data: FishPoolPoint[] }) {
-  if (!data || data.length < 2) return <Skeleton className="h-40 w-full" />;
-
-  const W = 800; const H = 160;
-  const PAD = { top: 16, right: 64, bottom: 32, left: 52 };
-  const prices = data.map((d) => d.price);
-  const minP = prices.length > 0 ? Math.min(...prices) : 0;
-  const maxP = prices.length > 0 ? Math.max(...prices) : 1;
-  const range = maxP - minP || 1;
-
-  const x = (i: number) => PAD.left + (i / (data.length - 1)) * (W - PAD.left - PAD.right);
-  const y = (p: number) => PAD.top + (1 - (p - minP) / range) * (H - PAD.top - PAD.bottom);
-
-  const linePts = data.map((d, i) => `${x(i)},${y(d.price)}`).join(" ");
-  const areaPath =
-    `M${x(0)},${y(data[0].price)} ` +
-    data.map((d, i) => `L${x(i)},${y(d.price)}`).join(" ") +
-    ` L${x(data.length - 1)},${H - PAD.bottom} L${x(0)},${H - PAD.bottom} Z`;
-
-  const hiIdx = prices.indexOf(maxP);
-  const loIdx = prices.indexOf(minP);
-  const latest = data[data.length - 1];
-  const xTicks = data.filter((_, i) => i % 13 === 0);
-  const yTicks = Array.from({ length: 4 }, (_, i) => minP + (range / 3) * i);
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" preserveAspectRatio="none" style={{ overflow: "visible" }}>
-      <defs>
-        <linearGradient id="fpArea" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#0ea5e9" stopOpacity={0.3} />
-          <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0} />
-        </linearGradient>
-        <linearGradient id="fpLine" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#06b6d4" />
-          <stop offset="100%" stopColor="#38bdf8" />
-        </linearGradient>
-      </defs>
-      {yTicks.map((val, i) => (
-        <g key={i}>
-          <line x1={PAD.left} y1={y(val)} x2={W - PAD.right} y2={y(val)}
-            stroke="rgba(255,255,255,0.05)" strokeWidth={1} />
-          <text x={PAD.left - 6} y={y(val) + 4} textAnchor="end"
-            fill="rgba(255,255,255,0.35)" fontSize={10}>{val.toFixed(0)}</text>
-        </g>
-      ))}
-      {xTicks.map((d, i) => {
-        const idx = data.indexOf(d);
-        return (
-          <text key={i} x={x(idx)} y={H - PAD.bottom + 14} textAnchor="middle"
-            fill="rgba(255,255,255,0.35)" fontSize={9}>{d.week.slice(0, 7)}</text>
-        );
-      })}
-      <path d={areaPath} fill="url(#fpArea)" />
-      <polyline points={linePts} fill="none" stroke="url(#fpLine)" strokeWidth={2}
-        strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={x(hiIdx)} cy={y(maxP)} r={4} fill={colors.positive} />
-      <text x={x(hiIdx)} y={y(maxP) - 8} textAnchor="middle" fontSize={9} fill={colors.positive}>
-        H {maxP.toFixed(1)}
-      </text>
-      <circle cx={x(loIdx)} cy={y(minP)} r={4} fill={colors.negative} />
-      <text x={x(loIdx)} y={y(minP) + 16} textAnchor="middle" fontSize={9} fill={colors.negative}>
-        L {minP.toFixed(1)}
-      </text>
-      <circle cx={x(data.length - 1)} cy={y(latest.price)} r={4} fill="#38bdf8" />
-      <rect x={x(data.length - 1) - 26} y={y(latest.price) - 18} width={52} height={16} rx={4}
-        fill="rgba(14,165,233,0.25)" />
-      <text x={x(data.length - 1)} y={y(latest.price) - 7} textAnchor="middle" fontSize={10}
-        fill="#7dd3fc" fontWeight="600">{latest.price.toFixed(1)} NOK</text>
-    </svg>
   );
 }
 
@@ -241,31 +170,11 @@ function FuturesCurveChart({ data }: { data: FuturesPoint[] }) {
   );
 }
 
-// ─── Equity Mini Sparkline (5-bar proxy) ─────────────────────────────────────
-
-function MiniBar5({ change }: { change: number }) {
-  const bases = [0.3, 0.5, 0.4, 0.7, 1.0];
-  const bars = bases.map((b) => Math.max(0.05, b + change / 20));
-  const max = Math.max(...bars);
-  return (
-    <svg viewBox="0 0 28 16" width={28} height={16}>
-      {bars.map((b, i) => {
-        const h = Math.max(2, (b / max) * 14);
-        return (
-          <rect key={i} x={i * 6} y={16 - h} width={4} height={h} rx={1}
-            fill={change >= 0 ? colors.success : colors.negative} opacity={0.65 + i * 0.07} />
-        );
-      })}
-    </svg>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function MarketTerminalPage() {
   const { t, locale } = useTranslation();
   const handleError = useApiError();
-  const [fishPool, setFishPool] = useState<FishPoolPoint[]>([]);
   const [equity, setEquity] = useState<EquityPrices | null>(null);
   const [ssbHistory, setSsbHistory] = useState<SsbPoint[]>([]);
   const [seasonal, setSeasonal] = useState<SeasonalPoint[]>([]);
@@ -288,8 +197,7 @@ export default function MarketTerminalPage() {
     if (showRefresh) setRefreshing(true);
     else setLoading(true);
     try {
-      const [fpRes, eqRes, ssbRes, seasonRes, expRes, futRes, sigRes] = await Promise.allSettled([
-        Promise.resolve({ data: [] }),  // Fish Pool removed — dead since 2025
+      const [eqRes, ssbRes, seasonRes, expRes, futRes, sigRes] = await Promise.allSettled([
         api.equityPrices(),
         api.ssbPriceHistory(52),
         api.ssbSeasonal(),
@@ -297,7 +205,6 @@ export default function MarketTerminalPage() {
         api.futuresForwardCurve(12),
         api.hedgerSignals(),
       ]);
-      if (fpRes.status === "fulfilled") setFishPool((fpRes.value as any).data ?? []);
       if (eqRes.status === "fulfilled") setEquity(eqRes.value as EquityPrices);
       // /api/market/ssb-price-history returns {spot_nok, history:[{week, price_nok,…}]}
       // — map to the SsbPoint contract the price chart + sparkline consume.
@@ -356,11 +263,13 @@ export default function MarketTerminalPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const latestFP = fishPool[fishPool.length - 1];
-  const fpChange = latestFP?.change_pct ?? 0;
   const latestSSB = ssbHistory[ssbHistory.length - 1];
-  const mowiPrice = equity?.prices?.MOWI;
-  const mowiChange = equity?.changes?.MOWI ?? 0;
+  const prevSSB = ssbHistory.length > 1 ? ssbHistory[ssbHistory.length - 2] : null;
+  const ssbWow = latestSSB && prevSSB?.price_nok_kg
+    ? ((latestSSB.price_nok_kg - prevSSB.price_nok_kg) / prevSSB.price_nok_kg) * 100
+    : null;
+  const mowiPrice = equity?.prices_nok?.MOWI;
+  const salmPrice = equity?.prices_nok?.SALM;
 
   const signalBadgeColor = (type: string) =>
     type === "HEDGE"
@@ -381,20 +290,6 @@ export default function MarketTerminalPage() {
     const parts: string[] = [`Salmon spot at NOK ${latest.price_nok_kg?.toFixed(1)}/kg`];
     if (prev) parts.push(`${priceDelta > 0 ? "+" : ""}${priceDelta.toFixed(1)}% WoW`);
 
-    // Equity context
-    if (equity?.prices) {
-      const mowi = equity.prices.MOWI;
-      const mowiDelta = equity.changes?.MOWI;
-      const salm = equity.prices.SALM;
-      const salmDelta = equity.changes?.SALM;
-      if (mowi != null && mowiDelta != null) {
-        parts.push(`MOWI ${mowiDelta >= 0 ? "+" : ""}${mowiDelta.toFixed(1)}%`);
-      }
-      if (salm != null && salmDelta != null) {
-        parts.push(`SALM ${salmDelta >= 0 ? "+" : ""}${salmDelta.toFixed(1)}%`);
-      }
-    }
-
     // Sentiment context
     if (sentSummary) {
       const dir = (sentSummary.direction || sentSummary.sentiment || "").toLowerCase();
@@ -410,7 +305,7 @@ export default function MarketTerminalPage() {
     }
 
     return parts.join(" · ");
-  }, [ssbHistory, equity, sentSummary, macroOil]);
+  }, [ssbHistory, sentSummary, macroOil]);
 
   return (
     <ErrorBoundary fallbackTitle="Market Terminal error">
@@ -433,7 +328,7 @@ export default function MarketTerminalPage() {
             </h1>
             <div className="flex items-center gap-2 mt-0.5">
               <p className="text-sm text-[var(--text-secondary)]">
-                Fish Pool · SSB · Futures · Equity
+                SSB · Futures · Equity · AIS
               </p>
               {/* No invented confidence numbers: endpoint provenance is not
                   available here, so classify by whether SSB data arrived. */}
@@ -486,35 +381,25 @@ export default function MarketTerminalPage() {
               label: "SSB Spot",
               value: `${formatCurrency(latestSSB.price_nok_kg, locale)}/kg`,
             }] : []),
-            ...(latestFP ? [{
-              label: "Fish Pool",
-              value: `${formatNumber(latestFP.price, locale, 1)} NOK`,
-              change: fpChange,
-            }] : []),
             ...(mowiPrice != null ? [{
               label: "MOWI",
               value: `${formatNumber(mowiPrice, locale, 1)} NOK`,
-              change: mowiChange,
             }] : []),
-            ...(equity?.prices?.SALM != null ? [{
+            ...(equity?.prices_nok?.SALM != null ? [{
               label: "SALM",
-              value: `${formatNumber(equity.prices.SALM, locale, 1)} NOK`,
-              change: equity.changes?.SALM ?? 0,
+              value: `${formatNumber(equity.prices_nok.SALM, locale, 1)} NOK`,
             }] : []),
-            ...(equity?.prices?.LSG != null ? [{
+            ...(equity?.prices_nok?.LSG != null ? [{
               label: "LSG",
-              value: `${formatNumber(equity.prices.LSG, locale, 1)} NOK`,
-              change: equity.changes?.LSG ?? 0,
+              value: `${formatNumber(equity.prices_nok.LSG, locale, 1)} NOK`,
             }] : []),
-            ...(equity?.prices?.GSF != null ? [{
+            ...(equity?.prices_nok?.GSF != null ? [{
               label: "GSF",
-              value: `${formatNumber(equity.prices.GSF, locale, 1)} NOK`,
-              change: equity.changes?.GSF ?? 0,
+              value: `${formatNumber(equity.prices_nok.GSF, locale, 1)} NOK`,
             }] : []),
-            ...(equity?.prices?.BAKKA != null ? [{
+            ...(equity?.prices_nok?.BAKKA != null ? [{
               label: "BAKKA",
-              value: `${formatNumber(equity.prices.BAKKA, locale, 1)} NOK`,
-              change: equity.changes?.BAKKA ?? 0,
+              value: `${formatNumber(equity.prices_nok.BAKKA, locale, 1)} NOK`,
             }] : []),
             ...(nokUsd > 0 ? [{
               label: "NOK/USD",
@@ -531,20 +416,13 @@ export default function MarketTerminalPage() {
         ) : (
           <>
             <KPICard
-              label="Fish Pool Index"
-              value={latestFP ? `${formatNumber(latestFP.price, locale, 1)} NOK` : "\u2014"}
-              delta={latestFP ? `W${latestFP.week.slice(-2)}` : undefined}
-              deltaType="neutral"
-              icon={Activity}
-              delay={0}
-              sparkline={fishPool.slice(-10).map((d) => d.price)}
-            />
-            <KPICard
               label="WoW Change"
-              value={latestFP ? `${fpChange >= 0 ? "+" : ""}${formatNumber(fpChange, locale, 2)}%` : "\u2014"}
-              deltaType={fpChange > 0 ? "positive" : fpChange < 0 ? "negative" : "neutral"}
-              icon={fpChange >= 0 ? TrendingUp : TrendingDown}
-              delay={0.05}
+              value={ssbWow != null ? `${ssbWow >= 0 ? "+" : ""}${formatNumber(ssbWow, locale, 2)}` : "\u2014"}
+              unit={ssbWow != null ? "%" : undefined}
+              delta={latestSSB ? latestSSB.week : undefined}
+              deltaType={ssbWow != null ? (ssbWow > 0 ? "positive" : ssbWow < 0 ? "negative" : "neutral") : "neutral"}
+              icon={ssbWow != null && ssbWow < 0 ? TrendingDown : TrendingUp}
+              delay={0}
             />
             <KPICard
               label={t("market.spot_price")}
@@ -558,12 +436,18 @@ export default function MarketTerminalPage() {
               sparkline={ssbHistory.slice(-10).map((d) => d.price_nok_kg)}
             />
             <KPICard
-              label="MOWI (Oslo B\u00f8rs)"
+              label={"MOWI (Oslo B\u00f8rs)"}
               value={mowiPrice != null ? `${formatCurrency(mowiPrice, locale)}` : "\u2014"}
-              delta={mowiChange ? `${mowiChange >= 0 ? "+" : ""}${formatNumber(mowiChange, locale, 2)}%` : undefined}
-              deltaType={mowiChange > 0 ? "positive" : mowiChange < 0 ? "negative" : "neutral"}
+              deltaType="neutral"
               icon={DollarSign}
               delay={0.15}
+            />
+            <KPICard
+              label="SALM (Lerøy)"
+              value={salmPrice != null ? `${formatCurrency(salmPrice, locale)}` : "\u2014"}
+              deltaType="neutral"
+              icon={DollarSign}
+              delay={0.2}
             />
           </>
         )}
@@ -615,29 +499,28 @@ export default function MarketTerminalPage() {
           ) : !equity ? (
             <p className="text-xs text-white/30 text-center py-8">{t("common.no_data")}</p>
           ) : (
-            <div className="space-y-1">
-              {equityTickers.map((ticker) => {
-                const price = equity.prices?.[ticker];
-                const change = equity.changes?.[ticker] ?? 0;
-                const isPos = change >= 0;
-                return (
-                  <div key={ticker}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.03] transition-colors">
-                    <span className="text-xs font-bold text-[var(--text-primary)] w-12 font-mono">
-                      {ticker}
-                    </span>
-                    <span className="text-sm font-semibold text-[var(--text-primary)] flex-1">
-                      {price != null ? formatNumber(price, locale, 2) : "\u2014"}
-                      <span className="text-[10px] text-white/30 ml-1">NOK</span>
-                    </span>
-                    <span className={`text-xs font-semibold w-16 text-right ${isPos ? "text-emerald-400" : "text-rose-400"}`}>
-                      {change != null ? `${isPos ? "+" : ""}${formatNumber(change, locale, 2)}%` : "\u2014"}
-                    </span>
-                    <MiniBar5 change={change} />
-                  </div>
-                );
-              })}
-            </div>
+            <>
+              <div className="space-y-1">
+                {equityTickers.map((ticker) => {
+                  const price = equity.prices_nok?.[ticker];
+                  return (
+                    <div key={ticker}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.03] transition-colors">
+                      <span className="text-xs font-bold text-[var(--text-primary)] w-12 font-mono">
+                        {ticker}
+                      </span>
+                      <span className="text-sm font-semibold text-[var(--text-primary)] flex-1">
+                        {price != null ? formatNumber(price, locale, 2) : "\u2014"}
+                        <span className="text-[10px] text-white/30 ml-1">NOK</span>
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              {equity.source && (
+                <p className="text-[10px] text-white/25 mt-3">Source: {equity.source}</p>
+              )}
+            </>
           )}
         </GlassCard>
 
