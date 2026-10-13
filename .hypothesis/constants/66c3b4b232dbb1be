@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\conv\hypergraph_conv.py
-# hypothesis_version: 6.151.10
-
-[0.2, 1.0, 'add', 'aggr', 'bias', 'edge', 'glorot', 'inf', 'node', 'num_edges', 'source_to_target', 'sum']

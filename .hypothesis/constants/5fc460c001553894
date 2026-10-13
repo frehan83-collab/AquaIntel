@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\nbeats\_nbeatskan_pkg.py
-# hypothesis_version: 6.151.10
-
-[-0.5, 0.0, 0.5, 1.0, 'NBeatsKAN', 'Sohaib-Ahmed21', 'authors', 'backcast_loss_ratio', 'capability:exogenous', 'capability:pred_int', 'data_loader_kwargs', 'generic', 'grid_range', 'info:compute', 'info:name', 'info:pred_type', 'info:y_type', 'k', 'loss', 'num', 'num_block_layers', 'num_blocks', 'numeric', 'point', 'sp_trainable', 'sparse_init', 'stack_types', 'target']

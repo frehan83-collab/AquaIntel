@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\image\ssim.py
-# hypothesis_version: 6.151.10
-
-[0.0, 0.01, 0.03, 0.0448, 0.1333, 0.2363, 0.2856, 0.3001, 1.0, 1.5, 'cat', 'elementwise_mean', 'image_return', 'none', 'relu', 'similarity', 'simple', 'sum', 'total']

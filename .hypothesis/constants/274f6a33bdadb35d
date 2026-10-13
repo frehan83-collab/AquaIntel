@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\market\disease_alerts.py
-# hypothesis_version: 6.151.10
-
-[0.0, 0.5, 1.5, 2.0, 200, '%Y-%m-%d', 'CAN', 'CHL', 'Chile', 'FRO', 'GBR', 'I', 'ISL', 'NOR', 'Norway', 'User-Agent', 'active_outbreaks', 'alerts', 'anaemia', 'cases', 'countries_affected', 'country', 'countryIso3', 'countryName', 'country_code', 'critical', 'data', 'date', 'deaths', 'disease', 'disease.woah_error', 'disease.woah_status', 'diseaseId', 'diseaseName', 'elevated', 'generated_at', 'haematopoietic', 'high', 'insights', 'isa_outbreaks', 'iso3', 'low', 'moderate', 'ongoing', 'predicted', 'probability', 'red', 'regime_detector', 'reportDate', 'reportType', 'report_date', 'reports', 'risk_level', 'salmon', 'septicaemia', 'sernapesca', 'severity', 'source', 'srs_outbreaks', 'status', 'supply_impact_pct', 'suspected', 'trade_impact', 'woah', 'woah_wahis', 'year']

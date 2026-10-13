@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\protein_mpnn_dataset.py
-# hypothesis_version: 6.151.10
-
-[0.0, 0.7, 3.5, -100, 100, 150, 300, 352, 10000, ',', '.', '/', '2030-01-01', 'C', 'CA', 'CHAINID', 'CLUSTER', 'DEPOSITION', 'HASH', 'HHHHHH', 'Load split', 'N', 'O', 'Processing', 'Processing split', 'RESOLUTION', '_', 'asmb_chains', 'asmb_ids', 'bij,raj->brai', 'chains', 'idx', 'label', 'large', 'list.csv', 'masked', 'masked_list', 'name', 'num_of_chains', 'rb', 'seq', 'small', 'splits.pkl', 'test', 'test.pt', 'test_clusters.txt', 'tm', 'train', 'train.pt', 'valid', 'valid.pt', 'valid_clusters.txt', 'visible_list', 'wb', 'xyz']

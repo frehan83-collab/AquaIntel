@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\namedarray\parallelcompat.py
-# hypothesis_version: 6.151.10
-
-['.', 'T_ChunkedArray', 'arkouda', 'arkouda-xarray', 'chunk_manager', 'cubed', 'cubed-xarray', 'dask', 'xarray.chunkmanagers']

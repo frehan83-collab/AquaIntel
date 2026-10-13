@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\scipy\io\matlab\__init__.py
-# hypothesis_version: 6.151.10
-
-['MatReadError', 'MatReadWarning', 'MatWriteError', 'MatWriteWarning', 'MatlabFunction', 'MatlabObject', 'MatlabOpaque', 'loadmat', 'mat_struct', 'matfile_version', 'savemat', 'varmats_from_mat', 'whosmat']

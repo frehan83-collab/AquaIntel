@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\gnn_benchmark_dataset.py
-# hypothesis_version: 6.151.10
-
-['/', 'CIFAR10', 'CLUSTER', 'CSL', 'MNIST', 'PATTERN', 'TSP', 'data.pt', 'processed', 'raw', 'rb', 'test', 'test_data.pt', 'train', 'train_data.pt', 'val', 'val_data.pt']

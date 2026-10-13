@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\patsy\build.py
-# hypothesis_version: 6.151.10
-
-[0.5, 7.5, ' (%r versus %r)', '%s%s', '%s[%s]', ':', 'Index', 'Intercept', 'MOCK', 'MOCK CONTRAST', 'MOCK MOCK', 'MOCKMOCK', 'NaN', 'None', 'Number of rows', '[c1]', '[c2]', 'a', 'b', 'c', 'calls', 'categorical', 'chunk', 'data argument', 'data.index', 'dataframe', 'drop', 'f0', 'f1', 'f1:f2[c1]:f3', 'f1:f2[c2]:f3', 'f1[0]:f2[c1]:f3', 'f1[0]:f2[c2]:f3', 'f1[1]:f2[c1]:f3', 'f1[1]:f2[c2]:f3', 'f2', 'f2a', 'f2b', 'f3', 'matrix', 'memorize_chunk', 'memorize_finish', 'mock', 'numerical', 'token']

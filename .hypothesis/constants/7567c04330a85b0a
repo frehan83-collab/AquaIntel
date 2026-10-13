@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\aggr\scaler.py
-# hypothesis_version: 6.151.10
-
-['amplification', 'attenuation', 'avg_deg_lin', 'avg_deg_log', 'identity', 'inverse_linear', 'linear']

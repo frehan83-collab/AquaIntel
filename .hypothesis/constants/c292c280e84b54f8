@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\prometheus_client\process_collector.py
-# hypothesis_version: 6.151.10
-
-[b')', b'Max open file', b'btime ', 100.0, 4096, '/proc', 'SC_CLK_TCK', '_process_', 'cpu_seconds_total', 'fd', 'limits', 'max_fds', 'open_fds', 'process_', 'rb', 'self', 'start_time_seconds', 'stat', 'virtual_memory_bytes']

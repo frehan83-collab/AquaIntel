@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\explain\config.py
-# hypothesis_version: 6.151.10
-
-['attributes', 'common_attributes', 'edge', 'graph', 'hard', 'log_probs', 'model', 'node', 'object', 'phenomenon', 'probs', 'raw', 'regression', 'topk', 'topk_hard']

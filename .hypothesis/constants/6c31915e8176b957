@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\callbacks\lr_monitor.py
-# hypothesis_version: 6.151.10
-
-['-momentum', '-weight_decay', '/pg1', 'any', 'betas', 'epoch', 'lr', 'lr-', 'momentum', 'name', 'optimizer', 'pl.Trainer', 'step', 'weight_decay']

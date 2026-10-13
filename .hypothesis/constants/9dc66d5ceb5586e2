@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\trainer\call.py
-# hypothesis_version: 6.151.10
-
-['1.5.0dev', 'callbacks', 'configure_model', 'experiment', 'failed', 'on_exception', 'on_load_checkpoint', 'on_save_checkpoint', 'pl.LightningModule', 'pl.Trainer', 'post_setup', 'pre_setup', 'setup', 'success', 'teardown']

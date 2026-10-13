@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\data\on_disk_dataset.py
-# hypothesis_version: 6.151.10
-
-['name', 'rocksdb', 'sqlite']

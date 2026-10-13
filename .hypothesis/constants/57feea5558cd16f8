@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\regression\csi.py
-# hypothesis_version: 6.151.10
-
-['cat', 'false_alarms', 'false_alarms_list', 'hits', 'hits_list', 'misses', 'misses_list', 'sum']

@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\namedarray\core.py
-# hypothesis_version: 6.151.10
-
-['Mean of empty slice', 'Self', 'T_NamedArray', 'T_NamedArrayInteger', 'This function', '_NamedArray[Any]', '_attrs', '_data', '_dims', 'bool', 'broadcast_to', 'chunk', 'coo', 'ignore', 'integral', 'itemsize', 'nbytes', 'raise', 'shape']

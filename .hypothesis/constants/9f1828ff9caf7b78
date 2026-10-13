@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\coding\variables.py
-# hypothesis_version: 6.151.10
-
-['O', 'S1', 'T', '_FillValue', '_Unsigned', 'add_offset', 'array', 'bool', 'datetime', 'days', 'dtype', 'enum', 'false', 'hours', 'i', 'i1', 'item', 'iu', 'microseconds', 'milliseconds', 'minutes', 'missing_value', 'nanoseconds', 'scale_factor', 'seconds', 'signed', 'since', 'timedelta', 'true', 'u', 'units', 'unsigned']

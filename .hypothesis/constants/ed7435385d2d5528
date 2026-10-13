@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\schemas.py
-# hypothesis_version: 6.151.10
-
-[0.0, 0.3, 0.5, 1.0, 4.0, 10.0, 16.0, 100, 1000, '2.0.0', '2.1.0', '<', '<=', '==', '>', '>=', 'Comparison operator', 'Farm locality number', 'Free-text notes', 'Metric to monitor', 'Mortality % observed', 'PA 1-13 filter', 'Rule name', 'Threshold value', 'biological', 'bloom_risk', 'disease_count', 'freshwater', 'lice_avg', 'mechanical', 'medicinal', 'method', 'metric', 'ok', 'operator', 'post_lice_count', 'pre_lice_count', 'recorded', 'saved', 'spot_price', 'sst', 'thermal']

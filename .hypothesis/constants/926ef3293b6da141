@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\audio\sdr.py
-# hypothesis_version: 6.151.10
-
-[0.0, 512, 'fast_bss_eval', 'mnum', 'msum', 'sum', 'sum_sdr', 'sum_si_sdr', 'total']

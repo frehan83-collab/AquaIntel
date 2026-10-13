@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch\backends\cudnn\rnn.py
-# hypothesis_version: 6.151.10
-
-['<unserializable>', 'GRU', 'LSTM', 'RNN_RELU', 'RNN_TANH', 'cuda', 'desc_', 'rnn']

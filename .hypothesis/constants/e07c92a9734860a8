@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\skbase\base\_clone_plugins.py
-# hypothesis_version: 6.151.10
-
-['base_cls', 'clone_config', 'clone_plugins', 'get_params', 'safe', 'scikit-learn', 'sklearn.base.clone']

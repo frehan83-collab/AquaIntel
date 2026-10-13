@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\backends\h5netcdf_.py
-# hypothesis_version: 6.151.10
-
-[b'\x89HDF\r\n\x1a\n', '.cdf', '.nc', '.nc4', '/', '1.6.4', 'NETCDF4', 'NETCDF4_CLASSIC', '_FillValue', '_filename', '_group', '_manager', '_mode', 'access', 'autoclose', 'chunks', 'chunksizes', 'complevel', 'compression', 'compression_opts', 'datatype', 'decode_vlen_strings', 'driver', 'dtype', 'enum', 'enum_name', 'enumtypes', 'fletcher32', 'format', 'gzip', 'h5netcdf', 'invalid_netcdf', 'is_remote', 'lock', 'missing_value', 'original_shape', 'phony_dims', 'preferred_chunks', 'r', 'rb', 'shuffle', 'source', 'unlimited_dims', 'utf-8', 'zlib']

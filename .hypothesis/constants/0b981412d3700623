@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\patsy\tokens.py
-# hypothesis_version: 6.151.10
-
-['!', '!=', '"""a""" is 1 or 2==3', '\'a\' "b" \'c\'', '(', ')', '*', '**', '+', '+-*/%&^|<>', ',', '-', '//', '1', '1 * (2 + 3 ** 2)', '1 + +10 + -1 - 5', '1 + 1', '1*(2+3**2)', '1+1', ':', '<<', '<=', '<>', '=', '==', '>=', '>>', 'EOF in multi-line', '[', ']', 'a', 'a + (b', 'a + (foo * -1)', 'a = foo(b=1)', 'a and b', 'a b "c', 'a b # c', 'a=foo(b = 1)', 'b', 'foo', 'foo ( * args )', 'foo ( ** args )', 'foo ( a * args )', 'foo ( a ** args )', 'foo (1, * args )', 'foo (1, ** args )', 'foo (1, a * args )', 'foo (1, a ** args )', 'foo(**args)', 'foo(*args)', 'foo(+ 10, bar = - 1)', 'foo(+10, bar=-1)', 'foo(1, **args)', 'foo(1, *args)', 'foo(1, a * args)', 'foo(1, a ** args)', 'foo(a * args)', 'foo(a ** args)', 'foo(a=bar.baz[1:])', 'pretty_untokenize', 'python_tokenize', '{', '{"hi": foo[:]}', '{"hi":foo[:]}', '}', '~']

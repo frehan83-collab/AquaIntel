@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\fabric\strategies\fsdp.py
-# hypothesis_version: 6.151.10
-
-[2.0, '32-true', 'CPUOffload', 'DeviceMesh', 'FULL_SHARD', 'HYBRID', 'HYBRID_SHARD', 'MixedPrecision', 'NO_SHARD', 'SHARD_GRAD_OP', 'ShardingStrategy', '_LRScheduler', '_POLICY', '_SHARDING_STRATEGY', '_fsdp_flattened', 'auto_wrap_policy', 'check_fn', 'cpu', 'cuda', 'device_id', 'device_mesh', 'fsdp', 'fsdp_cpu_offload', 'full', 'ignore', 'mean', 'meta', 'nccl', 'num_replicas', 'params', 'process_group', 'rank', 'sharded', 'timeout', 'torchmetrics', 'use_orig_params']

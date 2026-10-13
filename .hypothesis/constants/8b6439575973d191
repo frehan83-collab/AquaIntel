@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\dense\linear.py
-# hypothesis_version: 6.151.10
-
-[1.0, '_hook', 'bias', 'bias_initializer', 'glorot', 'kaiming_uniform', 'pytest', 'uniform', 'weight', 'weight_initializer', 'zeros']

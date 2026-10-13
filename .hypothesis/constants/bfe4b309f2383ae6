@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\statsmodels\iolib\tableformatting.py
-# hypothesis_version: 6.151.10
-
-['  \\\\', ' & ', '": ', '%11s', '%18s', '%19s', '%8s', '%s', '-', '-%19s', '-%21s', '--', '=', '\\hline', 'c', 'colsep', 'colwidths', 'data_aligns', 'data_fmt', 'data_fmts', 'empty', 'empty_cell', 'fmt', 'header', 'header_align', 'header_dec_below', 'header_fmt', 'l', 'ltx', 'missing', 'r', 'row_dec_below', 'row_post', 'row_pre', 'strip_backslash', 'stub', 'stub_align', 'stub_fmt', 'stubs_align', 'table_dec_above', 'table_dec_below', 'title_align', 'txt']

@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\actor.py
-# hypothesis_version: 6.151.10
-
-[1.0, ',', 'data.pt', 'out1_graph_edges.txt', 'test_mask', 'train_mask', 'val_mask']

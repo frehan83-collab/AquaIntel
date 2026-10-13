@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\routers\alerts_routes.py
-# hypothesis_version: 6.151.10
-
-[0.75, '/api/alerts', '/api/alerts/check', '/api/alerts/read-all', '/api/alerts/summary', '/api/parametric/scan', 'alerts', 'count', 'data_provenance', 'marked', 'new_alerts', 'new_triggers', 'success']

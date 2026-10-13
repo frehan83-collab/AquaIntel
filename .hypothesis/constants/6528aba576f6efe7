@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\io\__init__.py
-# hypothesis_version: 6.151.10
-
-['parse_npz', 'parse_sdf', 'parse_txt_array', 'read_npz', 'read_obj', 'read_off', 'read_planetoid_data', 'read_ply', 'read_sdf', 'read_tu_data', 'read_txt_array', 'write_off']

@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\aggr\multi.py
-# hypothesis_version: 6.151.10
-
-[',\n', 'attn', 'cat', 'dense_combine', 'in_channels', 'lin', 'logsumexp', 'max', 'mean', 'min', 'multihead_attn', 'num_heads', 'out_channels', 'proj', 'std', 'sum', 'var']

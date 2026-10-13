@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\gdelt_lite.py
-# hypothesis_version: 6.151.10
-
-['data.pt', 'dst', 'edge_features.pt', 'edges.csv', 'node_features.pt', 'src', 'time']

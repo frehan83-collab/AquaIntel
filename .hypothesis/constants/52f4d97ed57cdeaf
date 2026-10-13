@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\classification\calibration_error.py
-# hypothesis_version: 6.151.10
-
-[0.0, 1.0, 'CalibrationError', 'Class', 'accuracies', 'binary', 'cat', 'confidences', 'ignore_index', 'l1', 'l2', 'max', 'multiclass', 'n_bins', 'norm', 'validate_args']

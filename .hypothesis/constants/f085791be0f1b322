@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\prometheus_client\multiprocess.py
-# hypothesis_version: 6.151.10
-
-[0.0, '*.db', '_', '_bucket', '_count', 'gauge', 'histogram', 'le', 'live', 'livemax', 'livemin', 'livemostrecent', 'livesum', 'max', 'min', 'mostrecent', 'pid', 'sum']

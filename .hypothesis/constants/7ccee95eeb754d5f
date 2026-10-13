@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\routers\bloom_routes.py
-# hypothesis_version: 6.151.10
-
-[0.05, 0.5, 0.85, 0.9, 100, 1500, 5000, '%Y-%m-%d', '(', '/alerts', '/api/bio-risk', '/api/bloom', '/chlorophyll', '/risk', '/risk/{locality_no}', '/snapshot', '9999', 'CRITICAL', 'ELEVATED', 'HIGH', 'LOW', 'active_cases', 'active_outbreaks', 'affected_areas', 'alert', 'assessed_at', 'avg', 'bio-risk', 'bloom', 'by_disease', 'channel', 'chl_a', 'chl_a_mg_m3', 'chl_a_sparkline', 'chl_a_trend', 'current_color', 'data_provenance', 'date', 'delivery_status', 'diagnosis_date', 'disease', 'factors', 'green', 'grid_cell_id', 'high_count', 'id', 'is_live', 'items', 'latest', 'latitude', 'lice', 'locality_name', 'locality_no', 'longitude', 'message', 'normal', 'outbreak_count', 'owner_company', 'pa_summary', 'red', 'regime', 'risk_level', 'risk_score', 'sent_at', 'sst', 'status', 'total_farms', 'types', 'watch', 'week_label', 'week_offset', 'yellow']

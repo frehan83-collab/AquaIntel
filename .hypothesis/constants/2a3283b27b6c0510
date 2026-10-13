@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\market\alert_engine.py
-# hypothesis_version: 6.151.10
-
-[0.0, 0.6, 2.0, 5.0, 100, 'Anomaly detected', 'Bakkafrost', 'Critical Risk Level', 'Elevated Risk Level', 'Grieg', 'ISA', 'Lerøy', 'Mowi', 'SalMar', 'alert.created', 'anomalies', 'anomaly', 'anomaly_engine', 'by_severity', 'category', 'composite_risk_score', 'critical', 'description', 'disease', 'drop', 'enabled_categories', 'feed_cost', 'high', 'info', 'last_check', 'lice', 'lice_z_threshold', 'low', 'mattilsynet', 'max_severity', 'medium', 'message', 'min_severity', 'pa', 'price', 'price_threshold_pct', 'probability', 'production_area', 'regime', 'regime_detector', 'severity', 'source', 'ssb_price_client', 'supply', 'surge', 'tickers', 'total_count', 'unread_count', 'watched_companies', 'watched_pas', 'z_score']

@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\strategies\model_parallel.py
-# hypothesis_version: 6.151.10
-
-['.', 'DeviceMesh', 'auto', 'configure_model', 'cpu', 'data_parallel', 'device_id', 'mean', 'meta', 'nccl', 'num_replicas', 'optimizer_states', 'param_groups', 'params', 'pl.Trainer', 'rank', 'state', 'state_dict', 'timeout']

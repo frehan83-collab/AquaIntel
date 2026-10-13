@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch\xpu\graphs.py
-# hypothesis_version: 6.151.10
-
-['XPUGraph', '_P', '_R', '_XPUGraph', '_XpuStreamBase', 'graph', 'graph_pool_handle', 'torch.nn.Module']

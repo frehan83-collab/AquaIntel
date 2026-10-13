@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\coding\cftime_offsets.py
-# hypothesis_version: 6.151.10
-
-[0.0, 1000, 3600, 86400, '2.2', '360_day', '365_day', '366_day', 'A', 'A-', 'APR', 'AS', 'AUG', 'D', 'DEC', 'FEB', 'H', 'JAN', 'JUL', 'JUN', 'L', 'M', 'MAR', 'MAY', 'ME', 'MS', 'NOV', 'OCT', 'Q', 'QE', 'QS', 'S', 'SEP', 'T', 'T_FreqStr', 'U', 'Y', 'Y-', 'YE', 'YE-', 'YS', 'all_leap', 'both', 'cftime', 'end', 'freq', 'gregorian', 'h', 'ignore', 'julian', 'left', 'min', 'ms', 'multiple', 'noleap', 'ns', 'proleptic_gregorian', 'right', 's', 'standard', 'start', 'us', '|']

@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\functional\image\lpips.py
-# hypothesis_version: 6.151.10
-
-[-0.188, -0.088, -0.03, 0.0, 1e-08, 0.448, 0.45, 0.458, 1.0, 128, 192, 256, 384, 512, '..', 'AlexNet_Weights', 'VGG16_Weights', '_NoTrainLpips', 'alex', 'alexnet', 'area', 'bilinear', 'cpu', 'mean', 'none', 'scale', 'shift', 'squeeze', 'squeezenet1_1', 'sum', 'vgg', 'vgg16']

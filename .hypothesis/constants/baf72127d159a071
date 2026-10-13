@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\pcpnet_dataset.py
-# hypothesis_version: 6.151.10
-
-['.curv', '.normals', '.pidx', '.pt', '.xyz', 'All', 'HighNoise', 'LowNoise', 'MedNoise', 'NoNoise', 'Noisy', 'NoisyAndVarDensity', 'VarDensity', 'VarDensityGradient', 'VarDensityStriped', '_', 'test', 'testset_all.txt', 'testset_no_noise.txt', 'train', 'val']

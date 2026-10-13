@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\llvmlite\binding\ffi.py
-# hypothesis_version: 6.151.10
-
-['.', '<dead OutputString>', 'LLVMBlocksIterator', 'LLVMContext', 'LLVMElementIterator', 'LLVMExecutionEngine', 'LLVMGlobalsIterator', 'LLVMMemoryBuffer', 'LLVMModule', 'LLVMObjectCache', 'LLVMObjectFile', 'LLVMOperandsIterator', 'LLVMOrcLLJITRef', 'LLVMPassBuilder', 'LLVMPassManager', 'LLVMSectionIterator', 'LLVMTarget', 'LLVMTargetData', 'LLVMTargetMachine', 'LLVMType', 'LLVMTypesIterator', 'LLVMValue', 'NULL pointer', '_cfn', '_fntab', '_lib_handle', '_lock', '_ptr', 'close']

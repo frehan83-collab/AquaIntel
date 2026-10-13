@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\loggers\wandb.py
-# hypothesis_version: 6.151.10
-
-[100, '*', '-', '.', 'Artifact', 'Run', 'RunDisabled', 'WANDB_MODE', 'WANDB_PROJECT', '_attach', '_attach_id', '_every_n_train_steps', '_experiment', '_id', '_name', 'all', 'allow', 'anonymous', 'best', 'define_metric', 'dir', 'dryrun', 'global_step', 'gradients', 'id', 'immutable', 'latest', 'lightning_logs', 'mode', 'model', 'model.ckpt', 'monitor', 'mutable', 'name', 'original_filename', 'project', 'resume', 'save_last', 'save_top_k', 'save_weights_only', 'score', 'service', 'success', 'sync_tensorboard', 'trainer/global_step', 'wandb>=0.12.10']

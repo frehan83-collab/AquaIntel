@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\classification\negative_predictive_value.py
-# hypothesis_version: 6.151.10
-
-[0.0, 0.5, 1.0, 'Class', 'Label', 'binary', 'global', 'ignore_index', 'macro', 'micro', 'multiclass', 'multidim_average', 'multilabel', 'none', 'samplewise', 'validate_args', 'weighted']

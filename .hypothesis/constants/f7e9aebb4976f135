@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\strategies\xla.py
-# hypothesis_version: 6.151.10
-
-['1', 'MpDeviceLoader', 'PT_XLA_DEBUG', 'avg', 'batch_sampler', 'fork', 'mean', 'num_replicas', 'pl.Trainer', 'rank', 'reduce', 'sum', 'xla', 'xla_debug']

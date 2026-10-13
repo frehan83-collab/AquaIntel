@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\audio\pit.py
-# hypothesis_version: 6.151.10
-
-[0.0, 'dist_sync_fn', 'dist_sync_on_step', 'max', 'min', 'permutation-wise', 'pit', 'process_group', 'speaker-wise', 'sum', 'sum_pit_metric', 'total']

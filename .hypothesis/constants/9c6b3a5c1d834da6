@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\functional\regression\__init__.py
-# hypothesis_version: 6.151.10
-
-['concordance_corrcoef', 'cosine_similarity', 'explained_variance', 'kl_divergence', 'log_cosh_error', 'mean_absolute_error', 'mean_squared_error', 'minkowski_distance', 'pearson_corrcoef', 'r2_score', 'spearman_corrcoef']

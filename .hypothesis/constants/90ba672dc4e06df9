@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\models\__init__.py
-# hypothesis_version: 6.151.10
-
-['ARGA', 'ARGVA', 'ARLinkPredictor', 'AttentiveFP', 'CorrectAndSmooth', 'DeepGCNLayer', 'DeepGraphInfomax', 'DimeNet', 'DimeNetPlusPlus', 'EdgeCNN', 'GAE', 'GAT', 'GCN', 'GIN', 'GNNFF', 'GPSE', 'GPSENodeEncoder', 'GraphSAGE', 'GraphUNet', 'GroupAddRev', 'InnerProductDecoder', 'JumpingKnowledge', 'LINKX', 'LPFormer', 'LabelPropagation', 'LightGCN', 'MLP', 'MaskLabel', 'MetaLayer', 'MetaPath2Vec', 'NeuralFingerprint', 'Node2Vec', 'PMLP', 'PNA', 'Polynormer', 'RECT_L', 'RENet', 'SGFormer', 'SchNet', 'SignedGCN', 'TGNMemory', 'VGAE', 'ViSNet', 'to_captum_input', 'to_captum_model']

@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\ged_dataset.py
-# hypothesis_version: 6.151.10
-
-[0.5, '*.gexf', 'AIDS700nef', 'ALKANE', 'As', 'B', 'Bi', 'Br', 'C', 'Cl', 'Co', 'Cu', 'F', 'Ga', 'Hg', 'Ho', 'I', 'IMDBMulti', 'LINUX', 'Li', 'N', 'Ni', 'O', 'P', 'Pb', 'Pd', 'Pt', 'Ru', 'S', 'Sb', 'Se', 'Si', 'Sn', 'Tb', 'Te', 'data', 'extract', 'ged.pickle', 'id', 'inf', 'pickle', 'rb', 'test', 'train', 'training', 'type']

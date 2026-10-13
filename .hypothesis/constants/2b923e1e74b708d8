@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\utilities\model_summary\model_summary_deepspeed.py
-# hypothesis_version: 6.151.10
-
-['.', 'FLOPs', 'In sizes', 'Mode', 'Name', 'Out sizes', 'Params', 'Params per Device', 'Type', 'deepspeed<0.6.6', 'ds_numel', 'eval', 'train']

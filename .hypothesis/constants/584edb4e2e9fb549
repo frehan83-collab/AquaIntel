@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\statsmodels\tsa\vector_ar\hypothesis_test_results.py
-# hypothesis_version: 6.151.10
-
-[' causality %s-test', ' object. ', '%#0.3F', '%#0.4g', '%s', ', ', '.', '. ', ': ', '<', '</td>', '<td>', 'Adjusted ', 'Conclusion: %s H_0', 'Critical value', 'Granger', 'Granger-', 'H_0: ', 'Instantaneous', 'Jarque-Bera', 'Portmanteau', 'Test statistic', '[', ']', 'cause ', 'data_fmts', 'df', 'f', 'fail to reject', 'granger', 'inst', 'instantaneously ', 'p-value', 'reject', 'wald']

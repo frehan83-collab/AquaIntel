@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\strategies\launchers\subprocess_script.py
-# hypothesis_version: 6.151.10
-
-['LOCAL_RANK', 'MASTER_ADDR', 'MASTER_PORT', 'NODE_RANK', 'PL_GLOBAL_SEED', 'WORLD_SIZE', 'hydra-core', 'pl.Trainer']

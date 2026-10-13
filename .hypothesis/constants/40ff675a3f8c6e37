@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\core\groupby.py
-# hypothesis_version: 6.151.10
-
-[1000000.0, ', ', '0.10.0', '0.9', '0.9.4', '>', 'DataArray', 'Dataset', 'T_DataArray', '_', '_by_chunked', '_codes', '_dims', '_group_dim', '_groups', '_inserted_dims', '_len', '_obj', '_original_obj', '_restore_coord_dims', '_sizes', '_stacked_dim', 'all', 'assign_coords', 'cohorts', 'coords', 'dataarray', 'different', 'encoded', 'equals', 'exact', 'fill_value', 'first', 'flox', 'func', 'group', 'group1d', 'groupby', 'groupers', 'last', 'linear', 'method', 'min_count', 'name', 'numeric_only', 'outer', 'prod', 'quantile', 'right', 'size', 'stacked_', 'sum', 'use_flox', 'wrap']

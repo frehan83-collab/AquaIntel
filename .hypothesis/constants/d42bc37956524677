@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\loops\evaluation_loop.py
-# hypothesis_version: 6.151.10
-
-[120, '-', '-inf', '/dataloader_idx_', ':', 'batch', 'batch_idx', 'batch_to_device', 'center', 'cyan', 'dataloader_idx', 'inf', 'magenta', 'none', 'on_test_batch_end', 'on_test_batch_start', 'on_test_end', 'on_test_epoch_end', 'on_test_epoch_start', 'on_test_model_eval', 'on_test_model_train', 'on_test_start', 'on_validation_end', 'on_validation_start', 'pl.Trainer', 'sequential', 'test_step', 'validation_step', '─']

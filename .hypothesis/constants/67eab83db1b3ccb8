@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\callbacks\pruning.py
-# hypothesis_version: 6.151.10
-
-[0.5, '_mask', '_orig', '_structured', 'amount', 'bias', 'data', 'dim', 'l1_unstructured', 'ln_structured', 'n', 'names', 'pl.Trainer', 'random_structured', 'random_unstructured', 'reset_parameters', 'self', 'state_dict', 'unstructured', 'weight']

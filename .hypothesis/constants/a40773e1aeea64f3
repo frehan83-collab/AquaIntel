@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\routers\apikey_routes.py
-# hypothesis_version: 6.151.10
-
-[100, 400, 401, 404, '/api/keys', '/{key_id}', '/{key_id}/rotate', 'API key not found', 'API key revoked', 'My API Key', 'api-keys', 'created_at', 'expires_at', 'free', 'generate_api_key', 'id', 'is_active', 'key_prefix', 'keys', 'last_used', 'message', 'name', 'rate_limit', 'raw_key', 'revoke_api_key', 'rotated_from', 'tier']

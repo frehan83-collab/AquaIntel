@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\execution\paper_broker.py
-# hypothesis_version: 6.151.10
-
-[0.0, 1000000.0, 100, 'BUY', 'Insufficient capital', 'LONG', 'SELL', 'SHORT', 'broker', 'cash', 'closed', 'closed_trades', 'error', 'exit_price', 'filled', 'initial_capital', 'open_positions', 'paper', 'paper_broker.close', 'paper_broker.fill', 'pnl', 'portfolio_value', 'price', 'quantity', 'reason', 'rejected', 'return_pct', 'side', 'status', 'ticker', 'timestamp', 'total_realized_pnl']

@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\data\hetero_data.py
-# hypothesis_version: 6.151.10
-
-[',\n', 'DataTuple', 'NaN', '__', '_dict$', '_edge_attrs', '_edge_store_dict', '_global_store', '_node_store_dict', 'adj', 'adj_t', 'batch', 'coo', 'csc', 'csr', 'edge_index', 'edge_label_index', 'index', 'input_id', 'num_nodes', 'ptr']

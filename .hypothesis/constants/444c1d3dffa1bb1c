@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\callbacks\model_checkpoint.py
-# hypothesis_version: 6.151.10
-
-[1.0, '(\\{.*?)[:\\}]', '-', '-inf', '.ckpt', '=', 'best_k_models', 'best_k_models.yaml', 'best_model_path', 'best_model_score', 'checkpoints', 'current_score', 'dirpath', 'enable_validation', 'epoch', 'fit', 'inf', 'is_last_batch', 'kth_best_model_path', 'kth_value', 'last', 'last_model_path', 'layer', 'link', 'max', 'min', 'monitor', 'pl.LightningModule', 'pl.Trainer', 'saved_models', 'step', 'w', '{', '{epoch}', '{step}']

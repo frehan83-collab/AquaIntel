@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\io\planetoid.py
-# hypothesis_version: 6.151.10
-
-[500, 'allx', 'ally', 'citeseer', 'graph', 'ignore', 'latin1', 'nell.0.001', 'rb', 'test.index', 'todense', 'tx', 'ty', 'x', 'y']

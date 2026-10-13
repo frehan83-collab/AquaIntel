@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\callbacks\stochastic_weight_avg.py
-# hypothesis_version: 6.151.10
-
-[0.8, 'average_model_state', 'cos', 'cpu', 'epoch', 'inf', 'initial_lr', 'latest_update_epoch', 'linear', 'n_averaged', 'pl.LightningModule', 'pl.Trainer', 'scheduler_state']

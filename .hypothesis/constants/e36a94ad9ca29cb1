@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\routers\farm_routes.py
-# hypothesis_version: 6.151.10
-
-[0.0, 0.15, 0.3, 0.5, 0.85, 100, 400, 404, ',', '/api/exposure/sites', '/api/farms/offshore', '/api/farms/portfolio', 'SCHEDULE_TREATMENT', 'TREAT_NOW', 'UNKNOWN', 'action', 'avg_lice_level', 'cleaner_fish', 'company', 'critical', 'current_lice', 'data_provenance', 'data_week', 'decision', 'error', 'farm', 'farms', 'forecast_1w', 'forecast_2w', 'generated_at', 'harvest_advice', 'has_cleaner_fish', 'high', 'id', 'lat', 'lice', 'lice_level', 'lng', 'locality_no', 'low', 'max_yw', 'moderate', 'name', 'pa', 'production_area', 'reasoning', 'recommended_method', 'risk_breakdown', 'risk_level', 'risk_score', 'roi_estimate', 'sea_temp_c', 'summary', 'temp', 'total_farms', 'treatment_needed', 'treatment_urgency', 'trend', 'urgency']

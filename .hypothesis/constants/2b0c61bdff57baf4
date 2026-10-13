@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\functional\classification\logauc.py
-# hypothesis_version: 6.151.10
-
-[0.0, 0.001, 0.1, 1.0, 'binary', 'macro', 'multiclass', 'multilabel', 'none', 'weighted']

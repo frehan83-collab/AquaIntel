@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\conv\message_passing.py
-# hypothesis_version: 6.151.10
-
-['MessagePassing', '_i', '_j', '_jinja_propagate', '_orig_propagate', 'add', 'adj_t', 'aggr', 'aggregate', 'channels', 'collect', 'dim_size', 'edge_attr', 'edge_collect', 'edge_index', 'edge_index_i', 'edge_index_j', 'edge_type', 'edge_update', 'edge_updater', 'edge_updater.jinja', 'edge_weight', 'explain_message', 'fuse', 'in_channels', 'index', 'inspector', 'max', 'mean', 'message', 'message_passing', 'min', 'out_channels', 'propagate', 'propagate.jinja', 'ptr', 'size', 'size_i', 'size_j', 'source_to_target', 'sum', 'target_to_source', 'update']

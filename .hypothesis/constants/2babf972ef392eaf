@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\medshapenet.py
-# hypothesis_version: 6.151.10
-
-[100, 120, '.stl', '/', '3DTeethSeg', 'CoronaryArteries', 'FLARE', 'KITS', 'PULMONARY', 'SurgicalInstruments', 'ThoracicAorta_Saitta', 'ToothFairy', 'dataset.pt', 'faces', 'medshapenet.ddns.net', 'medshapenetcore/AVT', 'npz', 'stl', 'vertices']

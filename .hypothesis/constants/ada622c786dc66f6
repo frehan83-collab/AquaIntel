@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\utilities\data.py
-# hypothesis_version: 6.151.10
-
-[', ', 'BType', '_', '__pl_saved_args', '__pl_saved_kwargs', 'batch_sampler', 'batch_size', 'dataset', 'drop_last', 'sampler', 'self', 'shuffle', 'sum']

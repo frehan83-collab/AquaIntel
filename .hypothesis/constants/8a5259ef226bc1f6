@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\zinc.py
-# hypothesis_version: 6.151.10
-
-[',', 'atom_type', 'bond_type', 'full', 'molecules', 'processed', 'rb', 'subset', 'test', 'test.index', 'test.pickle', 'test.pt', 'train', 'train.index', 'train.pickle', 'train.pt', 'val', 'val.index', 'val.pickle', 'val.pt']

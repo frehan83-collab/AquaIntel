@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\functional\text\ter.py
-# hypothesis_version: 6.151.10
-
-[0.0, 1.0, 2e+16, 1000, " 's", " 's ", ' \\1 ', ' \\1 \\2', '"', '&', '&amp;', '&gt;', '&lt;', '&quot;', "'s ", "'s$", '([0-9])(-)', '([\\.,])([^0-9])', '([\\u3200-\\u3f22])', '([^0-9])([\\.,])', '([{-~[-` -&(-+:-@/])', '<', '>', '[\\.,\\?:;!\\"\\(\\)]', '\\1 \\2 ', '\\n', '\\n-', '_TercomTokenizer']

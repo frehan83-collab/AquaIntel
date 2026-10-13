@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\loggers\utilities.py
-# hypothesis_version: 6.151.10
-
-['_', '_class_path', 'best', 'best_k', 'best_k_models', 'best_model_path', 'best_model_score', 'current_score', 'last_model_path', 'latest', 'pl.Trainer']

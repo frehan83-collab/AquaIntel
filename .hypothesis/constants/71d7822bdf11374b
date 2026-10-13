@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\statsmodels\tsa\vector_ar\util.py
-# hypothesis_version: 6.151.10
-
-[0.05, 100, '*/', '.', '<(.*) (\\w)([\\d]+)>.*', 'A', 'L', 'M', 'Q', '\\s+', 'c', 'const', 'ct', 'ctt', 'exog', 'initial_values', 'n', 'nc', 'ndim', 'nsimulations', 'rb', 'skip', 'trend', 'trend**2']

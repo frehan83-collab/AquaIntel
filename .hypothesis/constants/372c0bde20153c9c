@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\plot\facetgrid.py
-# hypothesis_version: 6.151.10
-
-[0.02, 0.5, 0.8, 0.9, 1.02, 270, '...', 'DataArray', 'E', 'FacetGrid', 'T_FacetGrid', '_is_facetgrid', '_size', 'add_colorbar', 'add_guide', 'add_labels', 'add_legend', 'add_quiverkey', 'add_title', 'autoscale_None', 'axes fraction', 'axes.labelsize', 'cbar_ax', 'cbar_kwargs', 'center', 'center right', 'cmap', 'cmap_params', 'colors', 'continuous', 'dataarray', 'dataset', 'extend', 'figure', 'get_renderer', 'hist', 'hue', 'hue_label', 'hue_style', 'imshow', 'label', 'left', 'levels', 'line', 'loc', 'markersize', 'meta_data', 'plot1d', 'quiver', 'rgb', 'scale', 'scatter', 'size', 'size_mapping', 'size_norm', 'small', 'surface', 'u', 'units', 'v', 'x', 'xlabel', 'y', 'ylabel', 'z', '{coord} = {value}']

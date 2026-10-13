@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\nbeats\_nbeatskan.py
-# hypothesis_version: 6.151.10
-
-[0.0, 0.001, 0.01, 0.02, 0.1, 0.5, 1.0, 512, 1000, 'base_fun', 'generic', 'grid_eps', 'grid_range', 'k', 'logging_metrics', 'loss', 'noise_scale', 'num', 'sb_trainable', 'scale_base_mu', 'scale_base_sigma', 'scale_sp', 'seasonality', 'sp_trainable', 'sparse_init', 'trend']

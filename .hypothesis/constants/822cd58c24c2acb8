@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\core\nputils.py
-# hypothesis_version: 6.151.10
-
-['0.7.0', '0.8.0', '2.0.0.dev0', 'ddof', 'dtype', 'ignore', 'linear', 'method', 'nanargmax', 'nanargmin', 'nancumprod', 'nancumsum', 'nanmax', 'nanmean', 'nanmedian', 'nanmin', 'nanprod', 'nanquantile', 'nanstd', 'nanvar', 'numbagg', 'numpy', 'q', 'quantiles', 'std', 'uif', 'uifc', 'use_bottleneck', 'use_numbagg', 'var']

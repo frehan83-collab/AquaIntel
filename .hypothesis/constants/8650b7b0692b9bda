@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\statsmodels\base\data.py
-# hypothesis_version: 6.151.10
-
-['_', 'columns', 'columns_eq', 'const', 'cov', 'cov_eq', 'dataframe', 'dates', 'design_info', 'drop', 'dtype', 'endog', 'exog', 'exog is not 1d or 2d', 'formula', 'frame', 'generic_columns', 'generic_columns_2d', 'index', 'lower', 'missing_idx', 'multivariate_confint', 'none', 'orig_endog', 'orig_exog', 'raise', 'restore_design_info', 'rows', 'upper', 'x%d', 'y', 'y%d', 'ynames']

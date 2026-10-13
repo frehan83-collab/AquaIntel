@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\metric.py
-# hypothesis_version: 6.151.10
-
-['CompositionalMetric', 'Metric', 'Module.bfloat16', 'Module.double', 'Module.float', 'Module.half', 'Module.type', '__iter__', '_update_called', '_update_signature', 'cat', 'compute', 'compute_on_cpu', 'compute_with_cache', 'cpu', 'device', 'dist_sync_fn', 'dist_sync_on_step', 'full_state_update', 'higher_is_better', 'is_differentiable', 'max', 'mean', 'metric_a', 'metric_b', 'metric_state', 'min', 'plot_legend_name', 'plot_lower_bound', 'plot_upper_bound', 'process_group', 'sum', 'sync_on_compute', 'torch.device', 'torch.dtype', 'update']

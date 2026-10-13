@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\routers\disease_routes.py
-# hypothesis_version: 6.151.10
-
-[0.8, 0.9, 100, 200, 2026, '+00:00', '/alerts', '/api/disease', '/by-company', '/norway', '/norway/geo', '/resistance-map', '/resistance/pa/{pa}', '/treatments', 'BAKTERIELL_NYRESYKE', 'BKD', 'FRANCISELLOSE', 'Feature', 'FeatureCollection', 'Francisellosis', 'IHN', 'ILA', 'INFEKSIØS_LAKSEANEMI', 'ISA', 'PANKREASSYKDOM', 'PD', 'Point', 'Z', 'active', 'adult_female', 'combination', 'company', 'coordinates', 'critical', 'data_provenance', 'days_active', 'diagnosis_date', 'disease', 'features', 'geometry', 'high', 'lat', 'lice', 'lng', 'locality_name', 'locality_no', 'medicinal', 'medium', 'mobile', 'non_medicinal', 'properties', 'reports', 'sea_temp', 'sensitivity_tests', 'sessile', 'severity', 'source', 'subtype', 'suspicion_date', 'total_active', 'total_reports', 'treatments', 'type', 'week', 'with_treatments', 'year']

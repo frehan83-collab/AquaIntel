@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\hydro_net.py
-# hypothesis_version: 6.151.10
-
-['*.npz', '*.zip', '.npz', '.zip', 'O', 'Partition', 'RemoteFile', '\\s+', '_', 'atom', 'energy', 'hydronet_splits.zip', 'label', 'medium', 'num_graphs', 'pos', 'small', 'split_00_small.npz', 'string', 'train_idx', 'use_processed', 'val_idx', 'x', 'y', 'z']

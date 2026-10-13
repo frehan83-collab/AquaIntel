@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\image\fid.py
-# hypothesis_version: 6.151.10
-
-[0.0, 128, 192, 255, 299, 768, 2048, '192', '2048', '64', '768', 'Metric', 'NoTrainInceptionV3', '_dtype', 'bilinear', 'fake_features_sum', 'inception', 'inception-v3-compat', 'logits', 'logits_unbiased', 'num_features', 'real_features_sum', 'sum']

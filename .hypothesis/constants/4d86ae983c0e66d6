@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\loops\fit_loop.py
-# hypothesis_version: 6.151.10
-
-[1.0, '-inf', 'combined_loader', 'epoch', 'inf', 'max_size_cycle', 'none', 'on_train_end', 'on_train_epoch_end', 'on_train_epoch_start', 'on_train_start', 'pl.Trainer', 'restarted_mid_epoch', 'resumed_on_epoch_end', 'run_training_epoch', 'sequential', 'train_dataloader', 'train_dataloader()', 'training_step']

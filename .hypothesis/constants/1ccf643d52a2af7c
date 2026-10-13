@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\execution\execution_agent.py
-# hypothesis_version: 6.151.10
-
-[0.0, 0.5, 100, 120, 'BUY', 'SELL', 'SHORT', 'SSB_NOK', 'error', 'executed', 'execution', 'execution.order', 'expired', 'failed', 'filled', 'order_execution', 'paper', 'pending', 'reason', 'rejected', 'status', 'user_consent', 'user_rejection']

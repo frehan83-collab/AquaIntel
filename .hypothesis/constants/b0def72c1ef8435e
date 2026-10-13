@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\market\ssb_price_client.py
-# hypothesis_version: 6.151.10
-
-[0.0, 30.0, 100, 200, 2020, '01', 'Content-Type', 'ContentsCode', 'Kilopris', 'Tid', 'U', 'VareGrupper2', 'Vekt', 'W', 'application/json', 'category', 'code', 'dimension', 'filter', 'format', 'fromTo', 'item', 'json-stat2', 'label', 'price', 'price_nok', 'pris', 'query', 'response', 'selection', 'size', 'ssb_03024', 'ssb_price.bulk_done', 'ssb_price.bulk_year', 'ssb_price.error', 'ssb_price.fetched', 'ssb_price.persisted', 'top', 'value', 'values', 'vekt', 'volume', 'volume_tonnes', 'week', 'year']

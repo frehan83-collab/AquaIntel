@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\metrics\_point_pkg\__init__.py
-# hypothesis_version: 6.151.10
-
-['CrossEntropy_pkg', 'MAE_pkg', 'MAPE_pkg', 'MASE_pkg', 'PoissonLoss_pkg', 'RMSE_pkg', 'SMAPE_pkg', 'TweedieLoss_pkg']

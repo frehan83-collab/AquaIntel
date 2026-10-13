@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\fabric\plugins\environments\torchelastic.py
-# hypothesis_version: 6.151.10
-
-['127.0.0.1', '12910', 'GROUP_RANK', 'LOCAL_RANK', 'MASTER_ADDR', 'MASTER_PORT', 'RANK', 'WORLD_SIZE']

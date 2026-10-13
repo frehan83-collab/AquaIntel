@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\plot\dataset_plot.py
-# hypothesis_version: 6.151.10
-
-[0.85, 0.9, 'E', 'F', '__doc__', '__module__', '__name__', '__qualname__', '_is_facetgrid', 'add_colorbar', 'add_legend', 'add_quiverkey', 'args', 'cbar_kwargs', 'cmap', 'cmap_params', 'col', 'color', 'continuous', 'darray', 'data', 'dataset', 'ds', 'figsize', 'figure', 'hue', 'hue_label', 'hue_style', 'kwargs', 'label', 'markersize', 'meta_data', 'middle', 'norm', 'pivot', 'plotfunc', 'quiver', 'row', 'streamplot', 'u', 'units', 'v', 'vmax', 'vmin', 'x', 'xlabel', 'ylabel', 'z']

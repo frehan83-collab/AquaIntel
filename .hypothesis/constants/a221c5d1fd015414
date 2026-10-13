@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\deepar\_deepar_pkg.py
-# hypothesis_version: 6.151.10
-
-[0.001, 1.0, 100, 'DeepAR', 'GRU', 'LSTM', 'agency', 'authors', 'capability:exogenous', 'capability:pred_int', 'cell_type', 'clip_target', 'cpflows', 'data_loader_kwargs', 'distr', 'hidden_size', 'info:compute', 'info:name', 'info:pred_type', 'info:y_type', 'jdb78', 'loss', 'n_plotting_samples', 'numeric', 'price_actual', 'python_dependencies', 'target', 'volume']

@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch\distributed\config.py
-# hypothesis_version: 6.151.10
-
-['compile_on_one_rank', 'use_torchcomms']

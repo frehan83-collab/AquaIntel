@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\hm.py
-# hypothesis_version: 6.151.10
-
-['Active', 'FN', 'age', 'article', 'article_id', 'articles.csv.zip', 'club_member_status', 'colour_group_code', 'colour_group_name', 'customer', 'customer_id', 'customers.csv.zip', 'data.pt', 'data_merged.pt', 'garment_group_name', 'garment_group_no', 'index_code', 'index_group_name', 'index_group_no', 'index_name', 'price', 'product_group_name', 'product_type_name', 'product_type_no', 'rev_to', 'sales_channel_id', 'section_name', 'section_no', 't_dat', 'to', 'transaction']

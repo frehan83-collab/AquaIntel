@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\willow_object_class.py
-# hypothesis_version: 6.151.10
-
-[0.224, 0.225, 0.229, 0.406, 0.456, 0.485, 256.0, 255, 256, '*.png', 'README', 'RGB', 'WILLOW-ObjectClass', 'bilinear', 'car', 'cpu', 'cuda', 'data.pt', 'demo_showAnno.m', 'duck', 'face', 'motorbike', 'processed', 'pts_coord', 'raw', 'rb', 'winebottle']

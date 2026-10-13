@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\trainer\trainer.py
-# hypothesis_version: 6.151.10
-
-[0.0, ':', 'auto', 'hparams', 'inf', 'litmodels', 'local_rank', 'node_rank', 'num_nodes', 'on_fit_end', 'on_fit_start', 'on_sanity_check_end', 'pl.LightningModule', 'run-stage', 'save_checkpoint', 'scaler', 'validation_step', 'world_size']

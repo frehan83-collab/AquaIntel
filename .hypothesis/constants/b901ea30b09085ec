@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\numba\core\types\scalars.py
-# hypothesis_version: 6.151.10
-
-['%s<%s>(%s)', '%s[%s]', 'Enum', 'Enum class', 'IntEnum', 'IntEnum class', 'Literal[bool]({})', 'Literal[int]({})', 'complex', 'datetime64', 'float', 'int', 'int%d', 'timedelta64', 'uint', 'uint%d']

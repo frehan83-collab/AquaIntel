@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\prometheus_client\platform_collector.py
-# hypothesis_version: 6.151.10
-
-['Java', 'implementation', 'jvm_name', 'jvm_release', 'jvm_vendor', 'jvm_version', 'major', 'minor', 'patchlevel', 'python_info', 'version']

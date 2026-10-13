@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\groupers.py
-# hypothesis_version: 6.151.10
-
-['BinGrouper', 'D', 'DJ', 'EncodedGroups', 'Grouper', 'J', 'JFMAMJJASOND', 'Resampler', 'SeasonGrouper', 'SeasonResampler', 'TimeResampler', 'UniqueGrouper', '__resample_dim__', '__season_dim__', 'count', 'drop', 'f', 'first', 'index', 'labels', 'month', 'parallelized', 'raise', 'season', 'start_day', 'year']

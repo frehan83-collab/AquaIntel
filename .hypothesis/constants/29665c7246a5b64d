@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\async_db.py
-# hypothesis_version: 6.151.10
-
-[3600, '30000', 'postgresql', 'postgresql://', 'server_settings', 'sqlite', 'sqlite+aiosqlite:///', 'sqlite:///', 'statement_timeout']

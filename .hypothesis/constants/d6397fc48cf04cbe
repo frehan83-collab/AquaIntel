@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\retrieval\__init__.py
-# hypothesis_version: 6.151.10
-
-['RetrievalAUROC', 'RetrievalFallOut', 'RetrievalHitRate', 'RetrievalMAP', 'RetrievalMRR', 'RetrievalPrecision', 'RetrievalRPrecision', 'RetrievalRecall']

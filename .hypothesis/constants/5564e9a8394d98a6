@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\market\lice_gnn.py
-# hypothesis_version: 6.151.10
-
-[0.0, 1e-06, 1e-05, 0.0001, 0.001, 0.15, 0.3, 0.4, 0.5, 1.0, 1.3, 4.0, 5.0, 8.0, 10.0, 13.0, 20.0, 28.0, 30.0, 58.0, 100.0, 100, 128, 'Model not trained.', 'above_threshold', 'best_val_loss', 'company_id', 'cpu', 'cuda', 'edge_attr', 'edge_index', 'epochs', 'error', 'exceed_probability', 'farm_id', 'gnn.building_data', 'gnn.db_import_failed', 'has_cleaner_fish', 'inf', 'lat', 'lice_gnn.train', 'locality_no', 'lon', 'message', 'n_edges', 'n_farms', 'n_snapshots', 'none', 'ok', 'predicted_at', 'predicted_lice', 'production_area', 'sea_temp_c', 'status', 'train_loss', 'train_loss_final', 'val_loss', 'valid_mask', 'week', 'week_range', 'x', 'y_classification', 'y_regression', 'year']

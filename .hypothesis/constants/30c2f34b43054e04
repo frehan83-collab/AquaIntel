@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\ogb_mag.py
-# hypothesis_version: 6.151.10
-
-['___', 'affiliated_with', 'author', 'cites', 'data.pt', 'edge.csv.gz', 'field_of_study', 'gzip', 'has_topic', 'institution', 'mag', 'mag.zip', 'metapath2vec', 'node-feat', 'node-feat.csv.gz', 'node-label', 'node-label.csv.gz', 'node_year.csv.gz', 'num-node-dict.csv.gz', 'ogbn-mag()', 'paper', 'processed', 'raw', 'relations', 'split', 'test', 'time', 'train', 'transe', 'val', 'valid', 'writes']

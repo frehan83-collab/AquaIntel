@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\patsy\parse_formula.py
-# hypothesis_version: 6.151.10
-
-[-100, 100, 200, 250, 300, 500, '(', '(a + b):c', '(a ~ b)', '(a) <.>', ')', '*', '**', '+', '-', '-1', '-a**2', '-a:b', '/', '0', '1', '10', '2', ':', '<', '<(>a + b', '<)>', '<*> a', '>', 'NUMBER', 'ONE', 'PYTHON_EXPR', 'ZERO', '[', ']', 'a', 'a * b|c', 'a + (b ~ c) + d', 'a + <(>', 'a + <)>', 'a + <*>', 'a + <[bar>', 'a + <foo(bar>', 'a + <foo[bar>', 'a + <foo{bar>', 'a + <{bar>', 'a + <{bar[]>', 'a + b * c', 'a + b + c', 'a + b <# asdf>', 'a + b ~ c * d', 'a + b:c', 'a + b<)>', 'a + foo<)>bar', 'a + foo<]>bar', 'a + foo[]<]>bar', 'a + foo{}<}>bar', "a +< >'foo", 'a <+>', 'a | b', 'a ~ ((((+b))))', 'a ~ ((((b))))', 'a ~ b', 'a ~ b + c', 'a*b:c', 'a+b / c', 'b', 'c', 'd', 'foo(b, c + 2)', 'np.log(a, base=10)', 'parse_formula', 'y', '{', '|', '}', '~', '~ 1', '~ a']

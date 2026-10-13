@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\market\fiskeridir_data.py
-# hypothesis_version: 6.151.10
-
-[0.0, 4.5, 1000000.0, 100, 200, 1000, 947943, 'BEHFISK_STK', 'BIOMASSE_KG', 'Data', 'Downloads', 'DØDFISK_STK', 'FORFORBRUK_KG', 'FYLKE', 'MÅNED_KODE', 'RØMMING_STK', 'UTSETT_SMOLT_STK', 'UTTAK_KG', 'avg_biomass_tonnes', 'biological_fcr', 'biomass', 'biomass_tonnes', 'county', 'dead', 'error', 'escape', 'feed', 'feed_tonnes', 'fish', 'fish_count_millions', 'fiskeridir.loaded', 'harvest', 'harvest_tonnes', 'month', 'months', 'months_reported', 'mortality_millions', 'mortality_rate_pct', 'mortality_thousands', 'r', 'records', 'smolt', 'smolt_millions', 'smolt_thousands', 'source', 'utf-8', 'utilization_pct', 'year', 'ÅR']

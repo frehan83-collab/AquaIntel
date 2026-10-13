@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\loggers\mlflow.py
-# hypothesis_version: 6.151.10
-
-[100, 250, 1000, '-', './mlruns', 'Checkpoint', 'FAILED', 'FINISHED', 'MLFLOW_TRACKING_URI', 'MlflowClient', '[^a-zA-Z0-9_/. -]+', '_every_n_train_steps', '_every_n_val_epochs', 'all', 'best', 'deleted', 'failed', 'file:', 'finished', 'latest', 'lightning_logs', 'mlflow', 'mlflow>=1.0.0', 'mlflow>=2.8.0', 'mode', 'monitor', 'original_filename', 'registry', 'resolve_tags', 'save_last', 'save_top_k', 'save_weights_only', 'score', 'success', 'synchronous', 'w']

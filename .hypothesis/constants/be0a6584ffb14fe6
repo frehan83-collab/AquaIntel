@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\bloom\models.py
-# hypothesis_version: 6.151.10
-
-[128, 'assessed_at', 'bloom_alerts', 'chlorophyll_readings', 'date', 'grid_cell_id', 'ix_chl_date', 'locality_no', 'sent', 'sent_at', 'uq_chl_date_cell', 'users.id']

@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\loader\node_loader.py
-# hypothesis_version: 6.151.10
-
-['DistNeighborSampler', 'batch', 'collate_fn', 'dataset', 'e_id', 'n_id', 'num_sampled_edges', 'num_sampled_nodes']

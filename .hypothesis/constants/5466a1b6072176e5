@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\fabric\utilities\data.py
-# hypothesis_version: 6.151.10
-
-[', ', 'PL_SEED_WORKERS', '_', '__delattr__', '__init__', '__pl_attrs_record', '__pl_current_call', '__pl_inside_init', '__pl_saved_arg_names', '__pl_saved_args', '__pl_saved_kwargs', '__setattr__', 'batch_sampler', 'batch_size', 'dataset', 'del', 'drop_last', 'method', 'sampler', 'sched_getaffinity', 'self', 'set', 'set_epoch', 'shuffle', 's} {}', 'worker_init_fn', '{:']

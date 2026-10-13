@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\trainer\connectors\logger_connector\logger_connector.py
-# hypothesis_version: 6.151.10
-
-['callback', 'cpu', 'epoch', 'log', 'pbar', 'pl.Trainer', 'step']

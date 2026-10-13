@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\trainer\connectors\signal_connector.py
-# hypothesis_version: 6.151.10
-
-['SLURM_ARRAY_JOB_ID', 'SLURM_ARRAY_TASK_ID', 'SLURM_JOB_ID', '[0-9_-]+', '_original_handlers', 'finished', 'pl.Trainer', 'requeue', 'scontrol']

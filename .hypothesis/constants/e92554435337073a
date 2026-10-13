@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\agents\base.py
-# hypothesis_version: 6.151.10
-
-[900, 'agent', 'agent.start', 'agent.stopped', 'agent.tick_error', 'base_agent', 'error', 'error_count', 'idle', 'last_run', 'run_count', 'running', 'status', 'stopped']

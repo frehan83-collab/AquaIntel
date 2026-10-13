@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\temporal_fusion_transformer\_tft.py
-# hypothesis_version: 6.151.10
-
-[-1000000000.0, 0.0, 1e-05, 0.001, 0.1, 0.2, 0.25, 1.0, 100, 1000, 'Attention', 'Importance in %', 'Number of samples', 'Time index', 'add_embedding', 'add_figure', 'attention', 'decoder', 'decoder_attention', 'decoder_cat', 'decoder_cont', 'decoder_lengths', 'decoder_variables', 'encoder', 'encoder_attention', 'encoder_cat', 'encoder_cont', 'encoder_lengths', 'encoder_variables', 'interpretation', 'k', 'log_interpretation', 'max_encoder_length', 'mean', 'nan', 'none', 'plot_interpretation', 'right', 'static_variables', 'sum', 'target_scale']

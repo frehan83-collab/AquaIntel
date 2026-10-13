@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\market\pairs_engine.py
-# hypothesis_version: 6.151.10
-
-[-0.1, 0.0, 1e-06, 0.02, 0.05, 0.15, 0.5, 0.8, 0.88, 0.95, 1.0, 1.5, 2.0, 3.5, 30.0, 60.0, -365, -100, 100, 120, 365, 'AIC', 'ENTRY LONG', 'ENTRY SHORT', 'EXIT', 'GSF', 'HOLD', 'LSG', 'MOWI', 'SALM', 'Supports', 'adf_pvalue', 'biological_overlay', 'causal_calibrated', 'causal_confidence', 'causal_horizon_days', 'causal_lag_weeks', 'cointegrated', 'confidence', 'correlation', 'date', 'entry_long_spread', 'entry_short_spread', 'entry_threshold', 'exit', 'exit_threshold', 'generated_at', 'half_life_days', 'hedge_ratio', 'high', 'long', 'low', 'medium', 'pair', 'rationale', 'reversion_days', 'short', 'signal', 'spread', 'spread_history', 'spread_mean', 'spread_std', 'stop_threshold', 'ticker_a', 'ticker_b', 'tradeable', 'z_score']

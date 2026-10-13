@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\tide\_tide_pkg.py
-# hypothesis_version: 6.151.10
-
-[0.001, 0.2, 1.0, 'Sohaib-Ahmed21', 'TiDEModel', 'agency', 'authors', 'capability:exogenous', 'capability:pred_int', 'data_loader_kwargs', 'dropout', 'hidden_size', 'info:compute', 'info:name', 'info:pred_type', 'info:y_type', 'loss', 'numeric', 'point', 'price_actual', 'sku', 'softplus', 'target', 'trainer_kwargs', 'use_layer_norm', 'volume']

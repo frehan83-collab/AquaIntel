@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\coma.py
-# hypothesis_version: 6.151.10
-
-[100, '*.ply', 'COMA_data.zip', 'FaceTalk_*', 'bareteeth', 'cheeks_in', 'eyebrow', 'high_smile', 'lips_back', 'lips_up', 'mouth_down', 'mouth_extreme', 'mouth_middle', 'mouth_open', 'mouth_side', 'mouth_up', 'test.pt', 'training.pt']

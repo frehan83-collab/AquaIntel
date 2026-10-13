@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\distributed\local_graph_store.py
-# hypothesis_version: 6.151.10
-
-['LocalGraphStore', 'col', 'coo', 'edge_id', 'graph.pt', 'is_hetero', 'is_sorted', 'row', 'size']

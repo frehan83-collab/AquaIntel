@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\classification\auroc.py
-# hypothesis_version: 6.151.10
-
-[0.0, 1.0, 'AUROC', 'BinaryAUROC.plot', 'Class', 'Label', 'MulticlassAUROC.plot', 'MultilabelAUROC.plot', 'binary', 'ignore_index', 'macro', 'micro', 'multiclass', 'multilabel', 'none', 'thresholds', 'validate_args', 'weighted']

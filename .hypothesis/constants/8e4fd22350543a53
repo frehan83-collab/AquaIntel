@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\trainer\connectors\accelerator_connector.py
-# hypothesis_version: 6.151.10
-
-['0', '16-mixed', '16-true', '32-true', '64-true', ':4096:8', 'No precision set', '_layer_sync', 'accelerator', 'auto', 'bf16-mixed', 'bf16-true', 'cluster_environment', 'cpu', 'cuda', 'ddp', 'ddp_fork', 'deepspeed', 'fork', 'gpu', 'hpu', 'is_distributed', 'mps', 'num_nodes', 'parallel_devices', 'set_world_ranks', 'tpu', 'transformer-engine', 'warn']

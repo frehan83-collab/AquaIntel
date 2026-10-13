@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\functional\text\bert.py
-# hypothesis_version: 6.151.10
-
-[0.0, 512, ',', 'attention_mask', 'bert_score', 'blpd, blrd -> blpr', 'bls, bs -> bls', 'blsd, bs -> blsd', 'en', 'f1', 'hash', 'input_ids', 'input_ids_idf', 'num_hidden_layers', 'precision', 'recall', 'roberta-large', 'utf-8']

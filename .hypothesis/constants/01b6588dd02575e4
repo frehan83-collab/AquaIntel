@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\core\accessor_dt.py
-# hypothesis_version: 6.151.10
-
-[360, 365, '360_day', 'DJF', 'JJA', 'MAM', 'O', 'SON', '_obj', 'ceil', 'date', 'day', 'dayofweek', 'dayofyear', 'days', 'days_in_month', 'days_in_year', 'decimal_year', 'floor', 'hour', 'ignore', 'is_leap_year', 'is_month_end', 'is_month_start', 'is_quarter_end', 'is_quarter_start', 'is_year_end', 'is_year_start', 'isocalendar', 'microsecond', 'microseconds', 'minute', 'month', 'nan', 'nanosecond', 'nanoseconds', 'quarter', 'round', 'season', 'second', 'seconds', 'strftime', 'time', 'total_seconds', 'week', 'weekday', 'year']

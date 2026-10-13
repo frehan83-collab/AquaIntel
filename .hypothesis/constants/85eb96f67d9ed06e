@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\backtest\engine.py
-# hypothesis_version: 6.151.10
-
-[-0.8, 0.0, 0.05, 0.15, 0.2, 0.3, 0.35, 0.4, 0.5, 1.0, 2.0, 200.0, 1000000.0, 100, 500, 2018, 2025, 10000, 'MOWI', 'N/A', 'SHORT', 'avg_lice', 'backtest.done', 'backtest.monte_carlo', 'backtest.start', 'breadth', 'close', 'composite', 'count', 'direction', 'entry_price', 'entry_week', 'exit_price', 'exit_week', 'locality_no', 'max', 'max_lice', 'mean', 'n_above', 'n_total', 'pct_above', 'pnl', 'pnl_pct', 'price', 'severity', 'trend', 'week', 'year']

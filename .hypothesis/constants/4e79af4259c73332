@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\integrations\fishtalk_client.py
-# hypothesis_version: 6.151.10
-
-[0.0, 0.92, 0.93, 0.95, 30.0, 100, '/api/v1/status', '5.x', 'Accept', 'Authorization', 'FISHTALK_API_KEY', 'FISHTALK_API_URL', 'Fishtalk 5 API', 'GET', 'OpenClaw/2.3.0', 'User-Agent', 'adult_female_avg', 'api_version', 'application/json', 'automated', 'biomass_kg', 'caligus_avg', 'connected', 'count_date', 'counting_method', 'data_provenance', 'date', 'duration_hours', 'endpoint', 'error', 'feed_kg', 'fishtalk.lice_error', 'fishtalk_url', 'last_sync', 'message', 'method', 'mobile_avg', 'mortality_count', 'mortality_during', 'not_configured', 'post_lice_avg', 'pre_lice_avg', 'product', 'sample_size', 'site_id', 'status', 'temperature_c', 'total_treatments', 'treatments', 'version']

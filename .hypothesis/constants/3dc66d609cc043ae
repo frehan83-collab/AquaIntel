@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\patsy\infix_parser.py
-# hypothesis_version: 6.151.10
-
-[-9999999, '%s(%r)', '%s(%r, %r, %r)', '(', ')', '*', '+', '-', 'ATOM1', 'ATOM2', 'ATOMIC', 'End of token stream', 'Found close-paren', 'LPAREN', 'Operator', 'ParseNode', 'Pushing noun %r (%r)', 'Pushing open-paren', 'Pushing unary op %r', 'RPAREN', 'Reducing %r (%r)', 'Token', "Unmatched '('", 'a', 'asdf', 'b', 'c', 'd', 'extra', 'parse']

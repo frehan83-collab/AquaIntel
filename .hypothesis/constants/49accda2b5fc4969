@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\edge_index.py
-# hypothesis_version: 6.151.10
-
-[0.0, 1.0, 'EdgeIndex', 'SortReturnType', '_T_indptr', '_T_perm', '_data', '_indptr', 'add', 'amax', 'amin', 'col', 'cuda', 'is_undirected=True', 'max', 'mean', 'min', 'mps', 'row', 'sum']

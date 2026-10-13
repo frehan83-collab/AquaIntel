@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\prometheus_client\metrics_core.py
-# hypothesis_version: 6.151.10
-
-['_', '_bucket', '_count', '_created', '_gcount', '_gsum', '_info', '_sum', '_total', 'counter', 'gauge', 'gaugehistogram', 'histogram', 'info', 'le', 'stateset', 'summary', 'unknown', 'untyped']

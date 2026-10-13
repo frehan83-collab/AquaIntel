@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\market\benchmarking.py
-# hypothesis_version: 6.151.10
-
-[0.0, 50.0, 100.0, 100, 200, 'Average', 'Below Average', 'Disease Resilience', 'ESG Sustainability', 'Excellent', 'Good', 'Lice Performance', 'Needs Improvement', 'Overall Performance', 'Threshold Compliance', 'avg_percentile', 'benchmarks', 'company_name', 'direction', 'generated_at', 'higher_is_better', 'isa', 'lower_is_better', 'metric', 'n_companies', 'n_localities', 'n_peers', 'narrative', 'overall_percentile', 'overall_verdict', 'pa', 'pa_avg', 'pa_benchmark', 'pa_benchmarks', 'pa_median', 'peer_avg', 'peer_median', 'percentile', 'production_areas', 'ticker', 'top_percentile', 'top_performer', 'total', 'total_peers', 'verdict', 'verdict_distribution', 'your_lice', 'your_value']

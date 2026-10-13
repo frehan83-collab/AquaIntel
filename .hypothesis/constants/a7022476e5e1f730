@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\rel_link_pred_dataset.py
-# hypothesis_version: 6.151.10
-
-['FB15k-237', 'data.pt', 'entities.dict', 'processed', 'raw', 'relations.dict', 'test', 'test.txt', 'train', 'train.txt', 'train_edge_index', 'train_edge_type', 'valid', 'valid.txt']

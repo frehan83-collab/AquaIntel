@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\skbase\utils\deep_equals\_deep_equals.py
-# hypothesis_version: 6.151.10
-
-['.is_relative', '.keys,', '.values', 'ForecastingHorizon', '__len__', 'bool', 'deep_equals', 'dtype', 'dtypes', 'fkiraly', 'jax', 'name', 'names', 'numpy', 'object', 'pandas', 'str']

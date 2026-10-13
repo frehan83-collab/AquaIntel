@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\scipy\sparse\csr.py
-# hypothesis_version: 6.151.10
-
-['_csr', 'csr', 'csr_matrix', 'isspmatrix_csr', 'sparse', 'spmatrix']

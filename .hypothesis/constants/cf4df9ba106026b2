@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\xlstm\_xlstm_pkg.py
-# hypothesis_version: 6.151.10
-
-[0.2, 'authors', 'capability:exogenous', 'capability:pred_int', 'decomposition_kernel', 'dropout', 'hidden_size', 'info:compute', 'info:name', 'info:pred_type', 'info:y_type', 'input_size', 'mlstm', 'muslehal', 'num_layers', 'numeric', 'output_size', 'phoeenniixx', 'point', 'slstm', 'xLSTMTime', 'xlstm_type']

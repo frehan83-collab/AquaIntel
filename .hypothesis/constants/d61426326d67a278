@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\utilities\model_summary\model_summary.py
-# hypothesis_version: 6.151.10
-
-[1e-06, 8.0, 100, ' | ', '-', '.', '16', '16-true', '32', '32-true', '64', '64-true', '?', 'B', 'FLOPs', 'In sizes', 'K', 'M', 'Mode', 'Modules in eval mode', 'Name', 'Non-trainable params', 'Out sizes', 'Params', 'T', 'Total Flops', 'Total params', 'Trainable params', 'Type', 'bf16', 'bf16-true', 'eval', 'n/a', 'other params', 'pl.LightningModule', 'shape', 'train', '{:<{}}']

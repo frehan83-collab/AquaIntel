@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\nhits\sub_modules.py
-# hypothesis_version: 6.151.10
-
-[0.5, '-', 'LeakyReLU', 'PReLU', 'ReLU', 'SELU', 'Sigmoid', 'Softplus', 'Tanh', 'average', 'bicubic', 'cubic', 'glorot_normal', 'glorot_uniform', 'he_normal', 'he_uniform', 'lecun_normal', 'linear', 'max', 'nearest', 'orthogonal']

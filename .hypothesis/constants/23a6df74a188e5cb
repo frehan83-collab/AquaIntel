@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\market\biomass_predictor.py
-# hypothesis_version: 6.151.10
-
-[-0.06, 0.0, 0.00028, 0.001, 0.06, 0.08, 0.1, 0.15, 0.5, 0.8, 0.935, 0.95, 1.0, 1.5, 2.4, 3.0, 3.5, 5.0, 10.0, 12.0, 18.0, 100.0, 1000.0, 100, 200, 780, 1000, 20000, 200000, 947943, 'all_green', 'all_red', 'avg_sea_temp', 'avg_weight_kg', 'biomass_tonnes', 'cohorts', 'current', 'current_color', 'forecast_biomass', 'forecast_harvest', 'generated_at', 'green', 'horizon_weeks', 'lice', 'locality_no', 'month', 'n_fish', 'n_scenarios', 'national_mab', 'p10_biomass', 'p50_biomass', 'p90_biomass', 'production_area', 'recommendations', 'red', 'regime_colors', 'temp_c', 'total_biomass_tonnes', 'utilization_pct', 'yellow']

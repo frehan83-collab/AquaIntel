@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\distributed\partition.py
-# hypothesis_version: 6.151.10
-
-['META.json', 'Saving metadata', 'col', 'csc', 'edge_attr', 'edge_feats.pt', 'edge_id', 'edge_map', 'edge_map.pt', 'edge_time', 'edge_types', 'feats', 'global_id', 'graph.pt', 'id', 'is_hetero', 'is_sorted', 'node_feats.pt', 'node_map', 'node_map.pt', 'node_offset', 'node_types', 'num_parts', 'rb', 'row', 'size', 'time', 'w', 'x']

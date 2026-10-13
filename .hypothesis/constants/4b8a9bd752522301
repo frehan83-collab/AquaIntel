@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\teeth3ds.py
-# hypothesis_version: 6.151.10
-
-[30000, '*', '**', '.', '.json', '.obj', 'Cusp', 'Distal', 'FacialPoint', 'InnerPoint', 'Mesial', 'OuterPoint', 'Teeth3DS', '_', '__kpt.json', 'class', 'coord', 'data_part_1.zip', 'data_part_2.zip', 'data_part_3.zip', 'data_part_4.zip', 'data_part_5.zip', 'data_part_6.zip', 'data_part_7.zip', 'instances', 'labels', 'license.txt', 'objects', 'sample', 'teeth3ds_sample', 'testing', 'train_test_split', 'training']

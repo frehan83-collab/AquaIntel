@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\overrides\distributed.py
-# hypothesis_version: 6.151.10
-
-[250, 1024, '__getstate__', '__iter__', '__len__', '__next__', '_iterator']

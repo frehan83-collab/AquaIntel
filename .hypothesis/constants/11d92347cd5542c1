@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\transforms\to_sparse_tensor.py
-# hypothesis_version: 6.151.10
-
-['edge_index', 'edge_label', 'edge_label_index', 'edge_weight', 'to_sparse_tensor']

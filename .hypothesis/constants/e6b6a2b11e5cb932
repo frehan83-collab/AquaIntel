@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\malnet_tiny.py
-# hypothesis_version: 6.151.10
-
-['/', 'data.pt', 'malnet-graphs-tiny', 'split_info_tiny', 'split_slices.pt', 'test', 'train', 'trainval', 'type', 'val']

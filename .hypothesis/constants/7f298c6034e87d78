@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\data\batch.py
-# hypothesis_version: 6.151.10
-
-['_base_cls', '_num_graphs', '_slice_dict', 'args', 'batch', 'kwargs', 'ptr']

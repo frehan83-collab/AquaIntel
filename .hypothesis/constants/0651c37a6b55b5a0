@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\core\_aggregations.py
-# hypothesis_version: 6.151.10
-
-['all', 'any', 'count', 'flox', 'max', 'mean', 'min', 'prod', 'std', 'sum', 'use_flox', 'var']

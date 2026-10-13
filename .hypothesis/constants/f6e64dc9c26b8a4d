@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\git_mol_dataset.py
-# hypothesis_version: 6.151.10
-
-[0.224, 0.225, 0.229, 0.406, 0.456, 0.485, 0.5, 119, 224, 'RGB', 'cid', 'gitmol.zip', 'isosmiles', 'misc', 'possible_bond_dirs', 'possible_degree_list', 'possible_numH_list', 'rdApp.*', 'summary', 'test.pt', 'test_450.pkl', 'train.pt', 'train_3500.pkl', 'valid.pt', 'valid_450.pkl']

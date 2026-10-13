@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\utilities\compile.py
-# hypothesis_version: 6.151.10
-
-[', ', 'compiler', 'dynamo', 'dynamo_ctx', 'original_forward', 'original_test_step', 'pl.LightningModule']

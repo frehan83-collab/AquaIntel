@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\coding\times.py
-# hypothesis_version: 6.151.10
-
-[1000.0, 1000000.0, 1000000000.0, 1000, 1582, 1677, 2262, 145224, 854775, 1000000, '$', '(.+) since (.+)', '(?:', '(?P<', '(\\d+)(.*)', ')', ')?', '.', '.*\\d{4}.*', '1970-01-01', '=M8[us]', '>', 'CFDatetimeCoder', 'CFTimedeltaCoder', 'D', 'M8[us]', 'NaT', 'O', 'T', 'UTC', '[+-]?\\d{4,5}', '\\-', '\\:', '\\d{1,6}', '\\d{2}', '^', 'add_offset', 'calendar', 'cftime', 'datetime64', 'datetimes', 'day', 'days', 'decode_timedelta', 'decode_times', 'dtype', 'f', 'float64', 'gregorian', 'h', 'hour', 'hours', 'i', 'ignore', 'int64', 'iu', 'm', 'microsecond', 'microseconds', 'millisecond', 'milliseconds', 'minute', 'minutes', 'month', 'ms', 'nanoseconds', 'ns', 'object', 'proleptic_gregorian', 's', 'scale_factor', 'second', 'seconds', 'since', 'standard', 'the default calendar', 'timedelta64', 'timedeltas', 'u', 'units', 'us', 'year']

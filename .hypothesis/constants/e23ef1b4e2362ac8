@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\loops\optimization\automatic.py
-# hypothesis_version: 6.151.10
-
-['ClosureResult', 'backward', 'loss', 'on_before_zero_grad', 'optimizer_step', 'optimizer_zero_grad', 'pl.Trainer', 'training_step']

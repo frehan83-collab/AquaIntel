@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\entities.py
-# hypothesis_version: 6.151.10
-
-['aifb', 'am', 'bgs', 'bond', 'completeDataset.tsv', 'data.pt', 'hetero_data.pt', 'label_affiliation', 'label_cateogory', 'label_lithogenesis', 'label_mutagenic', 'mutag', 'nt', 'person', 'processed', 'proxy', 'raw', 'rb', 'rock', 'testSet.tsv', 'trainingSet.tsv', 'v']

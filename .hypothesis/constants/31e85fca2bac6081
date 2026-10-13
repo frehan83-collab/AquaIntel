@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\data\timeseries\__init__.py
-# hypothesis_version: 6.151.10
-
-['TimeSeries', 'TimeSeriesDataSet', '_find_end_indices', 'check_for_nonfinite']

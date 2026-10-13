@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\market\offshore_engine.py
-# hypothesis_version: 6.151.10
-
-[0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5, 0.55, 0.6, 0.75, 0.8, 0.85, 1.0, 1.5, 2.5, 5.0, 15.0, 100, '60-80%', 'Farm not found', 'access_risk', 'cage_volume_m3', 'company', 'components', 'confidence', 'current_risk', 'current_speed_avg_ms', 'data_provenance', 'depth_risk', 'distance_to_shore_km', 'error', 'exposed', 'extreme', 'farm_count', 'farm_type', 'freshness', 'generated_at', 'high', 'inshore', 'is_live', 'latitude', 'lice_reduction_pct', 'locality_no', 'longitude', 'low', 'max_depth_m', 'minimal', 'moderate', 'name', 'note', 'ocean', 'offshore', 'offshore_engine', 'offshore_farms', 'parameters', 'production_area', 'reference', 'risk_level', 'semi_offshore', 'sheltered', 'source', 'standard', 'structural_risk', 'wave_exposure_class', 'wave_risk', 'weekly']

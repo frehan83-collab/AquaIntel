@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\amazon_book.py
-# hypothesis_version: 6.151.10
-
-['book', 'data.pt', 'edge_index', 'edge_label_index', 'item_list.txt', 'rated_by', 'rates', 'test.txt', 'train.txt', 'user', 'user_list.txt']

@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\patsy\redundancy.py
-# hypothesis_version: 6.151.10
-
-['%r%s', '%s(%r)', '+', '-', '->', 'a', 'a+', 'a-', 'b', 'b+', 'b-', 'c', 'c-', 'd', 'd-', 'testing if:', 'x']

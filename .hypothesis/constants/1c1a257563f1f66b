@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\transforms\add_metapaths.py
-# hypothesis_version: 6.151.10
-
-[1.0, 'add_metapaths', 'add_random_metapaths', 'drop_orig_edges', 'edge_weight', 'row']

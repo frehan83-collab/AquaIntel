@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\loops\prediction_loop.py
-# hypothesis_version: 6.151.10
-
-['batch', 'batch_idx', 'batch_sampler', 'batch_to_device', 'cpu', 'dataloader_idx', 'inf', 'on_predict_batch_end', 'on_predict_end', 'on_predict_epoch_end', 'on_predict_start', 'pl.Trainer', 'predict_dataloader', 'predict_dataloader()', 'predict_step', 'sequential']

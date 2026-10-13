@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\market\tft_data.py
-# hypothesis_version: 6.151.10
-
-[0.0, 0.15, 0.5, 8.0, 2012, 'add_encoder_length', 'add_target_scales', 'avg_adult_lice', 'avg_mobile_lice', 'avg_sessile_lice', 'cleaner_fish_pct', 'cos_week', 'group_id', 'group_ids', 'last', 'left', 'log_price', 'max_encoder_length', 'month', 'pct_above_05', 'price_lag_1', 'price_lag_12', 'price_lag_4', 'price_nok', 'price_return_4w', 'salmon_national', 'sea_temp_avg', 'sin_week', 'static_categoricals', 'target', 'tft_data.built', 'time_idx', 'volume_lag_1', 'volume_tonnes', 'week', 'week_of_year', 'year']

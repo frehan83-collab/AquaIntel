@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\callbacks\rich_model_summary.py
-# hypothesis_version: 6.151.10
-
-['FLOPs', 'In sizes', 'Mode', 'Name', 'Out sizes', 'Params', 'Params per Device', 'Type', 'bold magenta', 'dim', 'header_style', 'left', 'right', 'white', '{:<{}}']

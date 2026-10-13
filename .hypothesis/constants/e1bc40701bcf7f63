@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\_onnx.py
-# hypothesis_version: 6.151.10
-
-['PYTEST_CURRENT_TEST', 'allowzero', 'dynamo', 'input_names', 'opset_version', 'output_names', 'pytest', 'serialize_model_into']

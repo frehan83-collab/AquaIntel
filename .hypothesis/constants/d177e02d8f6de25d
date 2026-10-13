@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\tuner\lr_finder.py
-# hypothesis_version: 6.151.10
-
-[0.0, 1e-08, 0.98, 4.0, 100, 'Axes', 'Learning rate', 'Loss', 'callbacks', 'exponential', 'initial_lr', 'ipywidgets', 'learning_rate', 'limit_val_batches', 'linear', 'log', 'loggers', 'loop_state_dict', 'loss', 'lr', 'lr_scheduler_configs', 'matplotlib', 'max_steps', 'nan', 'o', 'optimizers', 'pl.LightningModule', 'pl.Trainer', 'plt.Figure', 'plt.SubFigure', 'red', 'step']

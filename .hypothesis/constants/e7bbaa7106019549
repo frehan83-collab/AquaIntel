@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\tag_dataset.py
-# hypothesis_version: 6.151.10
-
-[256, 512, '-', 'TAGDataset', 'Token saved:', '_', 'all', 'attention_mask', 'downloading raw text', 'get_idx_split', 'gzip', 'input', 'input_ids', 'is_gold', 'labels', 'lazy load is_gold!!', 'llm_explanation', 'max_length', 'n_id', 'node-text.csv.gz', 'ogbn-arxiv', 'ogbn-products', 'pandas', 'pre_filter.pt', 'pre_transformed.pt', 'pt', 'raw', 'raw_text', 'text', 'token', 'token_type_ids', 'train', 'true']

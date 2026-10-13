@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\numba\core\cpu_options.py
-# hypothesis_version: 6.151.10
-
-[', ', '__call__', 'afn', 'always', 'arcp', 'comprehension', 'contract', 'enabled', 'fast', 'fusion', 'inplace_binop', 'never', 'ninf', 'nnan', 'nsz', 'numpy', 'prange', 'reassoc', 'reduction', 'setitem', 'stencil']

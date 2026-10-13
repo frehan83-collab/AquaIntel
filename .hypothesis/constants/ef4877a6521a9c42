@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\faust.py
-# hypothesis_version: 6.151.10
-
-[100, 'MPI-FAUST', 'MPI-FAUST.zip', 'registrations', 'test.pt', 'tr_reg_{0:03d}.ply', 'training', 'training.pt']

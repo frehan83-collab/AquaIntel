@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\statsmodels\stats\multitest.py
-# hypothesis_version: 6.151.10
-
-[-0.5, 0.0, 1e-08, 0.05, 0.5, 1.0, 'Bonferroni', 'Holm', 'Holm-Sidak', 'Hommel', 'Nelder-Mead', 'NullDistribution', 'RegressionFDR', 'Sidak', 'Simes-Hochberg', 'b', 'bh', 'bky', 'bonf', 'bonferroni', 'fdr_2sbh', 'fdr_2sbky', 'fdr_bh', 'fdr_by', 'fdr_c', 'fdr_gbs', 'fdr_i', 'fdr_n', 'fdr_p', 'fdr_tsbh', 'fdr_tsbky', 'fdr_twostage', 'fdrcorr', 'fdrcorrection', 'fdri', 'fdrn', 'fdrp', 'h', 'ho', 'holm', 'holm-sidak', 'hommel', 'hs', 'i', 'indep', 'local_fdr', 'multipletests', 'n', 'negcorr', 'p', 'poscorr', 's', 'sh', 'sidak', 'simes-hochberg', 'x']

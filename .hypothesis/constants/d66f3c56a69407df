@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\strategies\ddp.py
-# hypothesis_version: 6.151.10
-
-['can_set_static_graph', 'cpu', 'cuda', 'ddp', 'ddp_fork', 'ddp_notebook', 'ddp_spawn', 'device_id', 'fork', 'forkserver', 'mean', 'nccl', 'num_replicas', 'params', 'pl.LightningModule', 'pl.Trainer', 'popen', 'rank', 'spawn', 'static_graph', 'timeout']

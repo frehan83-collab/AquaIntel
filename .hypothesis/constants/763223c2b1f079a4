@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\nn\to_hetero_transformer.py
-# hypothesis_version: 6.151.10
-
-['-', ':', 'Graph', 'GraphModule', 'Node', '_', '__', 'call_function', 'call_method', 'call_module', 'get', 'max', 'mean', 'min', 'mul', 'reset_parameters', 'sum']

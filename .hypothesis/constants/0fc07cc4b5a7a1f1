@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\timexer\_timexer_pkg.py
-# hypothesis_version: 6.151.10
-
-[0.001, 0.1, 0.15, 0.2, 1.0, 'PranavBhatP', 'TimeXer', 'activation', 'agency', 'authors', 'capability:exogenous', 'capability:pred_int', 'd_ff', 'data_loader_kwargs', 'dropout', 'e_layers', 'gelu', 'hidden_size', 'info:compute', 'info:name', 'info:pred_type', 'info:y_type', 'loss', 'n_heads', 'numeric', 'patch_length', 'point', 'price_actual', 'quantile', 'sku', 'softplus', 'target', 'volume']

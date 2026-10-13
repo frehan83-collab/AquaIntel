@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\llm\models\glem.py
-# hypothesis_version: 6.151.10
-
-[0.0, 0.05, 0.5, 'GNN inference stage', 'LM inference stage', 'cpu', 'gnn', 'input', 'is_gold', 'labels', 'lm', 'mean', 'n_id', 'none', 'offload', 'prajjwal1/bert-tiny']

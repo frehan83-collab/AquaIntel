@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\core\optimizer.py
-# hypothesis_version: 6.151.10
-
-['Lightning', 'LightningOptimizer', 'No Optimizer', 'configure_optimizers', 'epoch', 'interval', 'lr_scheduler', 'lr_scheduler_step', 'monitor', 'optimizer', 'optimizer_idx', 'pl.LightningModule', 'reduce_on_plateau', 'scheduler', 'step', 'strict']

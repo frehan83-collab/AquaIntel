@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\callbacks\early_stopping.py
-# hypothesis_version: 6.151.10
-
-[0.0, 1.0, '<', '>', 'best_score', 'max', 'min', 'patience', 'pl.LightningModule', 'pl.Trainer', 'stopped_epoch', 'stopping_reason', 'wait_count']

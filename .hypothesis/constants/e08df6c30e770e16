@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\backends\zarr.py
-# hypothesis_version: 6.151.10
-
-[',', '.zarr', '.zarray', '/', '3', '<d', 'S', 'U', '_ARRAY_DIMENSIONS', '_FillValue', '_NCZARR_ARRAY', '_align_chunks', '_append_dim', '_array', '_cache_members', '_group', '_members', '_mode', '_nc', '_read_only', '_safe_chunks', '_synchronizer', '_write_empty', '_write_region', 'a', 'a-', 'all', 'auto', 'b', 'bytes', 'cache_metadata', 'chunk_key_encoding', 'chunk_store', 'chunks', 'compressor', 'compressors', 'config', 'consolidated', 'coordinates', 'dimension_names', 'dimrefs', 'dtype', 'f', 'fill_value', 'filters', 'iu', 'name', 'oindex', 'order', 'original_shape', 'overwrite', 'path', 'preferred_chunks', 'r', 'r+', 'serializer', 'shape', 'shards', 'source', 'storage_options', 'string', 'synchronizer', 'use_consolidated', 'vlen-utf8', 'w', 'w-', 'write_empty_chunks', 'zarr', 'zarr_format', 'zarr_group', 'zarr_version']

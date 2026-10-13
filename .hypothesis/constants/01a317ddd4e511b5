@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\coding\frequencies.py
-# hypothesis_version: 6.151.10
-
-[1000, "'index' must be 1D", 'D', 'ME', 'MS', 'QE', 'QS', 'YE', 'YS', 'ce', 'cs', 'datetime64', 'dim', 'h', 'min', 'ms', 's', 'timedelta64', 'us']

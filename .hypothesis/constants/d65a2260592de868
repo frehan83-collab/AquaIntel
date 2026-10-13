@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\routers\auth_routes.py
-# hypothesis_version: 6.151.10
-
-[400, 401, '/api/auth', '/login', '/me', '/register', '/tiers', 'AIS Vessel Tracking', 'Basic lice summary', 'Causal Engine', 'Dashboard overview', 'Everything in Free', 'Everything in Market', 'Everything in Pro', 'Farm Advisory', 'Lice Exposure Map', 'Market Terminal', 'Priority support', 'Trading Signals', 'White-label reports', 'api_calls_per_day', 'auth', 'company', 'email', 'farmer', 'features', 'free', 'id', 'institutional', 'login', 'login_failed', 'market', 'message', 'name', 'price_nok', 'pro', 'register', 'role', 'tier', 'token', 'user']

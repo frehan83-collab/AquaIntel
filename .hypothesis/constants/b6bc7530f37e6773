@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\utilities\enums.py
-# hypothesis_version: 6.151.10
-
-['-', 'Average method', 'Classification', 'Data type', 'EnumStr', 'MDMC Average method', 'Task', '_', 'any', 'binary', 'global', 'key', 'macro', 'micro', 'multi-class', 'multi-label', 'multiclass', 'multilabel', 'samples', 'samplewise', 'value', 'weighted']

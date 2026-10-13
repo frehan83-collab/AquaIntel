@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\loops\utilities.py
-# hypothesis_version: 6.151.10
-
-[1000, 'dataloader_idx', 'dataloader_iter', 'gloo', 'inference_mode', 'pl.LightningModule', 'pl.Trainer', 'predict_step', 'test_step', 'training_step', 'validation_step']

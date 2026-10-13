@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\market\price_feed_hub.py
-# hypothesis_version: 6.151.10
-
-[1.0, -260, 260, '%Y-%m', 'Fish Pool', 'LFEX', 'Nasdaq Salmon Index', 'No valid price data', 'Not configured', 'SSB Table 03024', 'active', 'active_feeds', 'annual_average_nok', 'auth_required', 'auto', 'checked_at', 'configured', 'current_spot_nok', 'curve', 'daily', 'data_quality', 'description', 'error', 'euronext', 'feeds', 'fetched_at', 'fishpool', 'frequency', 'futures', 'generated_at', 'healthy', 'is_synthetic', 'last_price', 'lfex', 'methodology', 'month', 'months', 'months_ahead', 'name', 'not_configured', 'overall_healthy', 'price_nok_kg', 'projected_nok_kg', 'reason', 'seasonal_factor', 'source', 'spot', 'ssb', 'status', 'synthetic_model', 'total_feeds', 'type', 'unavailable', 'volume_tonnes', 'week', 'weekly', 'year']

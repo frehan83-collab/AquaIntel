@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\explain\algorithm\captum_explainer.py
-# hypothesis_version: 6.151.10
-
-['Deconvolution', 'GuidedBackprop', 'InputXGradient', 'IntegratedGradients', 'Saliency', 'ShapleyValueSampling', 'baselines', 'edge_mask', 'internal_batch_size', 'node_mask']

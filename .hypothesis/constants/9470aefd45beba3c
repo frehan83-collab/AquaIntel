@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torchmetrics\functional\text\sacre_bleu.py
-# hypothesis_version: 6.151.10
-
-[0.0, 1.0, ' -Owakati', ' \\1 ', ' \\1 \\2', '"', '&', '&amp;', '&gt;', '&lt;', '&quot;', '([0-9])(-)', '([\\.,])([^0-9])', '([^0-9])([\\.,])', '(\\P{N})(\\p{P})', '(\\p{P})(\\P{N})', '(\\p{S})', '-\n', '/', '13a', '<', '<skipped>', '>', '\\1 \\2 ', '_SacreBLEUTokenizer', '_tokenize_13a', '_tokenize_base', '_tokenize_char', '_tokenize_flores_101', '_tokenize_flores_200', '_tokenize_ja_mecab', '_tokenize_ko_mecab', '_tokenize_zh', 'char', 'flores', 'flores101', 'flores200', 'intl', 'ja-mecab', 'ko-mecab', 'none', 'torchmetrics-flores', 'wb', 'zh', '\u20000', '☀', '⛿', '✀', '➿', '⩭6', '⺀', '\u2eff', '⼀', '⾀0', '⾡d', '\u2fdf', '⿰', '⿿', '〿', '\u3100', 'ㄯ', 'ㆠ', 'ㆿ', '㇀', '㇯', '㈀', '㋿', '㌀', '㏿', '㐀', '䶵', '一', '龥', '龦', '龻', '豈', '鶴', '侮', '頻', '並', '龎', '︐', '\ufe1f', '︰', '﹏', '\uff00', '\uffef']

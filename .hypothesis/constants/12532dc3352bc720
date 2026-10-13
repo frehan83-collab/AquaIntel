@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\market\contract_risk_engine.py
-# hypothesis_version: 6.151.10
-
-[-0.5, -0.15, -0.1, 0.0, 0.1, 0.15, 0.3, 0.5, 0.6, 0.7, 0.95, 1.0, 1.05, 1.2, 100, 1000, '12w', '4w', '8w', '; ', 'BEARISH', 'BULLISH', 'NEUTRAL', 'SSB Table 03024', 'STRONG_BEARISH', 'STRONG_BULLISH', 'action', 'bearish', 'bullish', 'combined_signal', 'confidence', 'contract_price_nok', 'counterparty', 'direction', 'end_date', 'error', 'fetched_at', 'forecasts', 'hedge_ratio', 'hi80', 'hi95', 'hold', 'increase_hedge', 'live_spot_nok', 'lo80', 'lo95', 'loss', 'mtm_pnl_nok', 'neutral', 'predicted_nok', 'price_nok', 'profit', 'ratio', 'rationale', 'recent_prices', 'reduce_hedge', 'scenarios_p10', 'scenarios_p25', 'scenarios_p50', 'scenarios_p75', 'scenarios_p90', 'spot', 'spot_available', 'spot_source', 'spot_week', 'start_date', 'var_95_nok', 'var_nok', 'var_pct', 'volume_tonnes', 'week', 'worst_price']

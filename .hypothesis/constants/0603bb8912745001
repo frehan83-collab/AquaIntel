@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\statsmodels\regression\_prediction.py
-# hypothesis_version: 6.151.10
-
-[0.05, 2.0, 'fixed scale', 'formula', 'index', 'mean', 'mean_ci_lower', 'mean_ci_upper', 'mean_se', 'norm', 'obs_ci_lower', 'obs_ci_upper', 'row_labels', 'scale', 't', 'weights']

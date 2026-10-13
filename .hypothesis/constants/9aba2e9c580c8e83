@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\metrics\_point_pkg\_cross_entropy\_cross_entropy_pkg.py
-# hypothesis_version: 6.151.10
-
-['CrossEntropy', 'info:metric_name', 'metric_type', 'no_rescaling', 'point_classification', 'requires:data_type']

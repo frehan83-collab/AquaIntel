@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\pytorch_forecasting\models\nbeats\_nbeats_adapter.py
-# hypothesis_version: 6.151.10
-
-['Decomposition', 'Time', 'add_figure', 'axes.prop_cycle', 'backcast', 'color', 'context_length', 'decoder_target', 'encoder_cont', 'encoder_target', 'generic', 'log_interpretation', 'loss', 'plot_interpretation', 'prediction', 'prediction_length', 'seasonality', 'target', 'target_scale', 'train', 'trend', 'val']

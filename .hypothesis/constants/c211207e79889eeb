@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\routers\ml_routes.py
-# hypothesis_version: 6.151.10
-
-[0.7, 0.72, 0.75, 100, 128, 256, 400, 404, 503, '/api', '/gnn/predict-all', '/gnn/status', '/gnn/train', 'above_threshold', 'all_predictions', 'company_id', 'data_provenance', 'generated_at', 'has_cleaner_fish', 'high_risk_farms', 'horizon', 'lat', 'locality_no', 'lon', 'ml', 'n_farms', 'n_high_risk', 'price', 'production_area', 'sea_temp_c', 'status', 'trained', 'values', 'week', 'xreg', 'year']

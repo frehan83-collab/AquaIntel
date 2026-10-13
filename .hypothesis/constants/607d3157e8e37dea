@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\toolz\curried\operator.py
-# hypothesis_version: 6.151.10
-
-['__abs__', '__index__', '__inv__', '__invert__', '__neg__', '__not__', '__pos__', '_abs', 'abs', 'attrgetter', 'index', 'inv', 'invert', 'is_none', 'is_not_none', 'itemgetter', 'neg', 'not_', 'pos', 'truth']

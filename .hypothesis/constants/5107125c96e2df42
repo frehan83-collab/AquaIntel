@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\numba\core\runtime\nrt.py
-# hypothesis_version: 6.151.10
-
-['NRT_', '_', 'alloc', 'free', 'mi_alloc', 'mi_free', 'nrt_mstats']

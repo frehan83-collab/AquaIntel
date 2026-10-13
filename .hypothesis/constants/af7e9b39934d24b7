@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\lrgb.py
-# hypothesis_version: 6.151.10
-
-['-', 'coco-sp', 'pascalvoc-sp', 'pcqm-contact', 'pcqmcontact', 'peptides', 'peptides-func', 'peptides-struct', 'peptidesfunc', 'peptidesstruct', 'processed', 'raw', 'rb', 'sp', 'test', 'test.pickle', 'test.pt', 'train', 'train.pickle', 'train.pt', 'val', 'val.pickle', 'val.pt']

@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\compliance\compliance_agent.py
-# hypothesis_version: 6.151.10
-
-[3600, 'BUY', 'actor', 'compliance', 'compliance_check', 'compliance_violation', 'detail', 'event_type', 'filled', 'id', 'timestamp']

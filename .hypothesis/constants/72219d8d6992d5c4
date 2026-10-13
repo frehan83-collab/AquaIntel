@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\lightning\pytorch\callbacks\gradient_accumulation_scheduler.py
-# hypothesis_version: 6.151.10
-
-['optimizer_step', 'optimizer_zero_grad', 'pl.LightningModule', 'pl.Trainer']

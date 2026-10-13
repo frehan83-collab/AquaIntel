@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\computation\ops.py
-# hypothesis_version: 6.151.10
-
-['_reduce_method', 'add', 'all', 'allowed', 'and', 'any', 'argsort', 'available_min_count', 'conj', 'count', 'data', 'exact', 'floordiv', 'i', 'inner', 'item', 'left', 'lshift', 'max', 'mean', 'median', 'min', 'mod', 'mul', 'numeric_only', 'or', 'pow', 'prod', 'round', 'rshift', 'searchsorted', 'std', 'sub', 'sum', 'truediv', 'var', 'xor']

@@ -1,4 +1,0 @@
-# file: C:\Users\freha\OpenClaw\core\routers\traceability_routes.py
-# hypothesis_version: 6.151.10
-
-[0.95, 404, '/api/compliance', '/api/traceability', '/asc/checklist', '/certificate', '/certificates', '/dashboard', '/eudr-status', '/iuu-risk', '/lot', '/lot/{lot_id}/chain', 'Lot not found', 'compliance', 'data_provenance', 'traceability']

@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\compat\npcompat.py
-# hypothesis_version: 6.151.10
-
-['bool', 'complex floating', 'integral', 'numeric', 'real floating', 'signed integer', 'unsigned integer']

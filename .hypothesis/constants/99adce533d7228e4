@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\movie_lens.py
-# hypothesis_version: 6.151.10
-
-['all-MiniLM-L6-v2', 'genres', 'ml-latest-small', 'movie', 'movieId', 'movies.csv', 'rates', 'rating', 'ratings.csv', 'timestamp', 'title', 'user', 'userId', '|']

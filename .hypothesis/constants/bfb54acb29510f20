@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\torch_geometric\datasets\wikics.py
-# hypothesis_version: 6.151.10
-
-['data.json', 'data.pt', 'data_undirected.pt', 'features', 'labels', 'links', 'stopping_masks', 'test_mask', 'train_masks', 'val_masks']

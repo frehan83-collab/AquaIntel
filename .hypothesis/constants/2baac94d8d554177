@@ -1,4 +1,0 @@
-# file: C:\Users\freha\AppData\Roaming\Python\Python314\site-packages\xarray\computation\apply_ufunc.py
-# hypothesis_version: 6.151.10
-
-[',', '<no-fill-value>', '_all_core_dims', '_all_input_core_dims', 'allow_rechunk', 'allowed', 'copy', 'data_vars', 'dims', 'drop', 'exact', 'forbidden', 'inner', 'input_core_dims', 'keys', 'left', 'meta', 'outer', 'output_core_dims', 'output_sizes', 'override', 'parallelized', 'raise', 'right', 'variable', 'where']
