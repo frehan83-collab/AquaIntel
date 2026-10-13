@@ -341,6 +341,16 @@ class TestSupplyEndpoints:
     def test_smolt_forecast(self, client):
         r = client.get("/api/supply/smolt-forecast")
         assert r.status_code == 200
+        body = r.json()
+        # Post-review contract correction: envelope + provenance (was a
+        # bare list with an unreachable provenance guard).
+        assert isinstance(body["pipeline"], list)
+        assert body["horizon_months"] == 18
+        assert body["data_provenance"]["is_live"] is True
+        if body["pipeline"]:
+            first = body["pipeline"][0]
+            for key in ("month_label", "projected_harvest_tonnes", "lo80", "hi80"):
+                assert key in first, f"pipeline point missing {key}"
 
     def test_demand_balance(self, client):
         r = client.get("/api/supply/demand-balance")

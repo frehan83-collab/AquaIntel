@@ -150,9 +150,26 @@ test.describe("Supply Chain", () => {
     expect(data).toHaveProperty("countries");
   });
 
-  test("GET /api/supply/smolt-forecast returns pipeline", async ({ request }) => {
+  test("GET /api/supply/smolt-forecast returns pipeline envelope", async ({ request }) => {
     const res = await request.get(`${API}/api/supply/smolt-forecast`);
     expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    // Contract corrected post-review: envelope with provenance (was a
+    // bare list with an unreachable provenance guard, consumed by three
+    // fictional shapes).
+    expect(Array.isArray(body.pipeline)).toBeTruthy();
+    expect(body).toHaveProperty("horizon_months");
+    expect(body).toHaveProperty("total_harvest_tonnes");
+    expect(body).toHaveProperty("data_provenance");
+  });
+
+  test("GET /api/supply/cohort-timeline returns cohorts envelope", async ({ request }) => {
+    const res = await request.get(`${API}/api/supply/cohort-timeline`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(Array.isArray(body.cohorts)).toBeTruthy();
+    expect(body).toHaveProperty("count");
+    expect(body).toHaveProperty("data_provenance");
   });
 
   test("GET /api/supply/demand-balance keeps the additive R7 contract", async ({ request }) => {

@@ -10566,6 +10566,7 @@
     },
     "/api/supply/cohort-timeline": {
       "get": {
+        "description": "Active cohorts with their growth stage.\n\nContract correction (same class as smolt-forecast): this route\nreturned a BARE LIST with an unreachable provenance guard; it now\nreturns {\"cohorts\": [...], \"count\": n, \"data_provenance\": {...}} so\nthe platform doctrine holds (every engine response carries\nprovenance). Sole in-repo consumer is the supply-forecast page.",
         "operationId": "supply_cohort_timeline_api_supply_cohort_timeline_get",
         "responses": {
           "200": {
@@ -10605,6 +10606,7 @@
     },
     "/api/supply/smolt-forecast": {
       "get": {
+        "description": "18-month cohort-based smolt pipeline.\n\nContract correction (post-review, L5 migration finding): this route\nreturned a BARE LIST with no provenance metadata \u2014 the old\n``isinstance(result, dict)`` guard could never fire, and three\ndivergent fictional shapes existed across the frontend type and the\napi-docs sample. It now returns the documented platform envelope,\nconsistent with the sibling supply routes:\n\n    {\"pipeline\": [SupplyPoint...], \"horizon_months\": n,\n     \"total_harvest_tonnes\": t, \"data_provenance\": {...}}\n\nEvery engine response must carry provenance\n(core/market/data_provenance.py doctrine). In-repo consumers were\nverified (frontend only); docs/openapi.frozen.json declares no schema\nfor this path (re-frozen, no diff).",
         "operationId": "supply_smolt_forecast_api_supply_smolt_forecast_get",
         "parameters": [
           {

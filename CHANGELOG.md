@@ -113,6 +113,37 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Fixed (NEW finding during the L5 migration — supply-forecast contract fiction)
+- `/api/supply/smolt-forecast` returned a **bare list** (the old
+  `isinstance(result, dict)` provenance guard could never fire) while the
+  frontend type, the api-docs sample and the page all described *three
+  different fictional shapes* — the smolt section silently rendered
+  "No data" against the real backend. The route now returns the
+  documented envelope `{pipeline[], horizon_months, total_harvest_tonnes,
+  data_provenance}` (OpenAPI re-frozen, 2-line description-only diff;
+  in-repo consumers verified).
+- Same defect class on `/api/supply/cohort-timeline` (bare list, no
+  provenance) → now `{cohorts[], count, data_provenance}`.
+- `frontend/src/app/supply-forecast/page.tsx`: reads the real fields —
+  the cohort volume column showed "—" for every row because it read a
+  `projected_harvest_tonnes` key that cohorts don't have (now
+  `harvest_tonnes`); removed other fictional fields (`intake_month`,
+  `expected_harvest`, `monthly_projections`, `smolt_releases`).
+- The header badge was hardcoded `source="Smolt Model" quality="live"`
+  → now provenance-driven from the payload (no claim when the fetch
+  fails).
+- The page is fully typed (state + maps, eslint-disable removed) via new
+  `SmoltPipelinePoint` / `SmoltForecastResponse` / `SmoltCohortRow` /
+  `SmoltCohortTimeline` / `SmoltDemandBalance` / `SupplySummary`
+  interfaces; the fictional `SmoltForecast` type is gone.
+- Regression nets: backend tests pin the envelopes + pipeline point keys
+  (test_routers, test_api_routes); e2e `api-contracts.spec.ts` asserts
+  the envelopes against the real backend; new
+  `frontend/e2e/supply-forecast-contract.spec.ts` (stubbed, no backend)
+  pins that the page renders real pipeline rows, the cohort volume
+  column, and a payload-driven badge — and shows no badge at all when
+  the payloads fail.
+
 ### Changed (review L5/L7/L8 — bounded slices of the backlog item)
 - **L5 (typing slice):** new `ChinaDemand*` interfaces in
   `frontend/src/types/api.ts` (snapshot / signals / impact / suppliers /

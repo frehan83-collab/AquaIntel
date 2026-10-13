@@ -80,6 +80,19 @@ class TestSupplyRoutes:
     def test_supply_smolt_forecast(self, client):
         r = client.get("/api/supply/smolt-forecast")
         assert r.status_code == 200
+        body = r.json()
+        # Contract corrected post-review (was a bare list, no provenance).
+        assert isinstance(body["pipeline"], list)
+        assert body["horizon_months"] == 18
+        assert body["data_provenance"]["is_live"] is True
+
+    def test_supply_cohort_timeline(self, client):
+        r = client.get("/api/supply/cohort-timeline")
+        assert r.status_code == 200
+        body = r.json()
+        assert isinstance(body["cohorts"], list)
+        assert body["count"] == len(body["cohorts"])
+        assert "data_provenance" in body
 
     def test_supply_summary(self, client):
         r = client.get("/api/supply/summary")

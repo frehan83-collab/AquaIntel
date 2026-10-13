@@ -706,27 +706,75 @@ export interface GlobalSupply {
 }
 
 /** /api/supply/smolt-forecast */
-export interface SmoltForecast {
-  forecast_months: number;
-  cohorts: Array<{
-    id: string;
-    smolt_date: string;
-    expected_harvest: string;
-    expected_weight_kg: number;
-    survival_pct: number;
-    volume_tonnes: number;
-  }>;
-  monthly_supply: Array<{
-    month: string;
-    tonnes: number;
-    confidence_lo: number;
-    confidence_hi: number;
-  }>;
-  demand_balance: {
-    status: "surplus" | "deficit" | "balanced";
-    pressure: string;
-  };
-  data_provenance: DataProvenance;
+// ── Supply (smolt pipeline) ──────────────────────────────────────────
+
+/** One month of the cohort-based smolt → harvest pipeline
+ *  (/api/supply/smolt-forecast, /api/supply/summary .pipeline) */
+export interface SmoltPipelinePoint {
+  year: number;
+  month: number;
+  month_label: string;
+  projected_harvest_tonnes: number;
+  lo80: number;
+  hi80: number;
+  /** Not emitted by the engine today; the UI derives 95% bands when
+   *  absent. Reserved for a future interval upgrade. */
+  lo95?: number;
+  hi95?: number;
+  demand_tonnes: number;
+  balance: number;
+  n_cohorts: number;
+}
+
+/** /api/supply/smolt-forecast (envelope corrected post-review) */
+export interface SmoltForecastResponse {
+  pipeline: SmoltPipelinePoint[];
+  horizon_months: number;
+  total_harvest_tonnes: number;
+  data_provenance?: DataProvenance;
+}
+
+/** One active cohort (/api/supply/cohort-timeline) */
+export interface SmoltCohortRow {
+  intake: string;
+  region: string;
+  n_smolt_millions: number;
+  current_weight_kg: number;
+  months_at_sea: number;
+  stage: string;
+  harvest_month: string;
+  harvest_tonnes: number;
+}
+
+/** /api/supply/cohort-timeline (envelope corrected post-review) */
+export interface SmoltCohortTimeline {
+  cohorts: SmoltCohortRow[];
+  count: number;
+  data_provenance?: DataProvenance;
+}
+
+/** Legacy smolt-model supply/demand balance block (unmodified by R7) */
+export interface SmoltDemandBalance {
+  horizon_months: number;
+  total_supply_tonnes: number;
+  total_demand_tonnes: number;
+  balance_tonnes: number;
+  balance_pct: number;
+  signal: string;
+  price_pressure: string;
+}
+
+/** /api/supply/summary */
+export interface SupplySummary {
+  next_quarter_harvest_tonnes: number;
+  smolt_releases_ytd_millions: number;
+  supply_growth_yoy_pct: number;
+  mab_utilization_pct: number;
+  price_pressure: string;
+  pipeline: SmoltPipelinePoint[];
+  cohorts: SmoltCohortRow[];
+  demand_balance: SmoltDemandBalance;
+  data_provenance?: DataProvenance;
 }
 
 // ── Auth & Billing Types ─────────────────────────────────────────────

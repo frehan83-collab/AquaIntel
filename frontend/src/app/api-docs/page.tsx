@@ -82,7 +82,7 @@ const CATEGORIES: EndpointCategory[] = [
     description: "7-country supply balance model, smolt-to-harvest forecasting, AIS vessel tracking, and global disruption monitoring.",
     endpoints: [
       { method: "GET", path: "/api/supply/summary", summary: "Global supply balance across 7 countries" },
-      { method: "GET", path: "/api/supply/smolt-forecast", summary: "18-month cohort-based supply pipeline", sample: '{ "months": [{ "month": "2026-06", "tonnes": 142000, "ci_low": 118000, "ci_high": 166000 }] }' },
+      { method: "GET", path: "/api/supply/smolt-forecast", summary: "18-month cohort-based supply pipeline", sample: '{ "pipeline": [{ "month_label": "2026-06", "projected_harvest_tonnes": 142000, "lo80": 118000, "hi80": 166000 }], "horizon_months": 18, "total_harvest_tonnes": 1720000, "data_provenance": { "source": "Smolt model + Fiskeridirektoratet + BarentsWatch", "is_live": true, "confidence": 0.75 } }' },
       { method: "GET", path: "/api/supply/demand-balance", summary: "Supply-demand balance with price pressure signal" },
       { method: "GET", path: "/api/ais/harvest-intelligence", summary: "AIS vessel activity and harvest signal detection" },
       { method: "GET", path: "/api/canada/snapshot", summary: "Canada/BC aquaculture intelligence from DFO" },

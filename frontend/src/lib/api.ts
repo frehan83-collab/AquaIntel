@@ -18,7 +18,8 @@ import type {
   SentimentSummary, AISHarvestIntel, CausalSummary, GlobalSupply,
   WaveRisk,
   WaveForecast,
-  SmoltForecast, LoginResponse, SubscriptionStatus, EfficacyBenchmarks,
+  SmoltForecastResponse, SmoltCohortTimeline, SupplySummary, SupplyDemandBalance,
+  LoginResponse, SubscriptionStatus, EfficacyBenchmarks,
   TrafficLightCurrent, TrafficLightSimulation, TreatmentCostComparison,
   YoYComparison,
   ChinaDemandSnapshot, ChinaDemandSignals, ChinaDemandImpact,
@@ -82,11 +83,11 @@ export const api = {
   audit: () => fetchAPI("/api/audit"),
   tiers: () => fetchAPI("/api/tiers"),
   supplyForecast: () => fetchAPI("/api/supply-forecast"),
-  smoltForecast: (months?: number) =>
-    fetchAPI<SmoltForecast>(`/api/supply/smolt-forecast?months=${months || 18}`),
-  cohortTimeline: () => fetchAPI("/api/supply/cohort-timeline"),
-  supplyDemandBalance: () => fetchAPI("/api/supply/demand-balance"),
-  supplySummary: () => fetchAPI("/api/supply/summary"),
+  smoltForecast: (months?: number): Promise<SmoltForecastResponse> =>
+    fetchAPI<SmoltForecastResponse>(`/api/supply/smolt-forecast?months=${months || 18}`),
+  cohortTimeline: (): Promise<SmoltCohortTimeline> => fetchAPI<SmoltCohortTimeline>("/api/supply/cohort-timeline"),
+  supplyDemandBalance: (): Promise<SupplyDemandBalance> => fetchAPI<SupplyDemandBalance>("/api/supply/demand-balance"),
+  supplySummary: (): Promise<SupplySummary> => fetchAPI<SupplySummary>("/api/supply/summary"),
   farmerAdvisory: (localityNo: number) => fetchAPI(`/api/farmer-advisory/${localityNo}`),
 
   // ML Price Predictions

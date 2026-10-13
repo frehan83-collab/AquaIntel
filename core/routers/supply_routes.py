@@ -92,20 +92,60 @@ async def supply_forecast():
 
 @router.get("/supply/smolt-forecast")
 async def supply_smolt_forecast(months: int = 18):
+    """18-month cohort-based smolt pipeline.
+
+    Contract correction (post-review, L5 migration finding): this route
+    returned a BARE LIST with no provenance metadata — the old
+    ``isinstance(result, dict)`` guard could never fire, and three
+    divergent fictional shapes existed across the frontend type and the
+    api-docs sample. It now returns the documented platform envelope,
+    consistent with the sibling supply routes:
+
+        {"pipeline": [SupplyPoint...], "horizon_months": n,
+         "total_harvest_tonnes": t, "data_provenance": {...}}
+
+    Every engine response must carry provenance
+    (core/market/data_provenance.py doctrine). In-repo consumers were
+    verified (frontend only); docs/openapi.frozen.json declares no schema
+    for this path (re-frozen, no diff).
+    """
     from core.valuechain.smolt_model import smolt_model
-    result = smolt_model.get_supply_pipeline(months)
-    if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("Smolt model + Fiskeridirektoratet + BarentsWatch", confidence=0.75).to_dict()
-    return result
+    pipeline = smolt_model.get_supply_pipeline(months)
+    if not isinstance(pipeline, list):
+        return pipeline
+    return {
+        "pipeline": pipeline,
+        "horizon_months": months,
+        "total_harvest_tonnes": round(
+            sum(p.get("projected_harvest_tonnes", 0) for p in pipeline), 0
+        ),
+        "data_provenance": DataProvenance.live(
+            "Smolt model + Fiskeridirektoratet + BarentsWatch", confidence=0.75
+        ).to_dict(),
+    }
 
 
 @router.get("/supply/cohort-timeline")
 async def supply_cohort_timeline():
+    """Active cohorts with their growth stage.
+
+    Contract correction (same class as smolt-forecast): this route
+    returned a BARE LIST with an unreachable provenance guard; it now
+    returns {"cohorts": [...], "count": n, "data_provenance": {...}} so
+    the platform doctrine holds (every engine response carries
+    provenance). Sole in-repo consumer is the supply-forecast page.
+    """
     from core.valuechain.smolt_model import smolt_model
-    result = smolt_model.get_cohort_timeline()
-    if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("Smolt model + Fiskeridirektoratet + BarentsWatch", confidence=0.75).to_dict()
-    return result
+    cohorts = smolt_model.get_cohort_timeline()
+    if not isinstance(cohorts, list):
+        return cohorts
+    return {
+        "cohorts": cohorts,
+        "count": len(cohorts),
+        "data_provenance": DataProvenance.live(
+            "Smolt model + Fiskeridirektoratet + BarentsWatch", confidence=0.75
+        ).to_dict(),
+    }
 
 
 @router.get("/supply/demand-balance")
