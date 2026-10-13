@@ -1,5 +1,14 @@
 # OpenClaw Lice-Impact Arbitrage Bot
 # Python 3.11+
+#
+# Dependency policy (review L8):
+#   - THIS file uses >= lower bounds and is for local development.
+#   - requirements.lock is the reproducible, fully-pinned set used by
+#     Docker images and CI (uv pip install --system -r requirements.lock).
+#   - Dev and image environments can therefore drift; re-generate the
+#     lock after changing this file:
+#       uv pip compile pyproject.toml --python-version 3.12 \
+#           --python-platform linux -o requirements.lock
 
 # Core
 httpx>=0.27

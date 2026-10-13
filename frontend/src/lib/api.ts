@@ -20,7 +20,8 @@ import type {
   WaveForecast,
   SmoltForecast, LoginResponse, SubscriptionStatus, EfficacyBenchmarks,
   TrafficLightCurrent, TrafficLightSimulation, TreatmentCostComparison,
-  YoYComparison, ProvenanceWrapped,
+  YoYComparison,
+  ChinaDemandSnapshot, ChinaDemandSignals, ChinaDemandImpact,
 } from "@/types/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -169,9 +170,9 @@ export const api = {
   chileRefresh: () => fetchAPI("/api/chile/refresh", { method: "POST" }),
 
   // China Demand Indicators
-  chinaDemand: () => fetchAPI("/api/china/demand"),
-  chinaDemandSignals: () => fetchAPI("/api/china/demand-signals"),
-  chinaDemandImpact: () => fetchAPI("/api/china/demand-impact"),
+  chinaDemand: (): Promise<ChinaDemandSnapshot> => fetchAPI<ChinaDemandSnapshot>("/api/china/demand"),
+  chinaDemandSignals: (): Promise<ChinaDemandSignals> => fetchAPI<ChinaDemandSignals>("/api/china/demand-signals"),
+  chinaDemandImpact: (): Promise<ChinaDemandImpact> => fetchAPI<ChinaDemandImpact>("/api/china/demand-impact"),
 
   // Statistical Pairs Trading
   pairsAll: () => fetchAPI("/api/pairs/all"),

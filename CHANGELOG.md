@@ -113,6 +113,26 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Changed (review L5/L7/L8 — bounded slices of the backlog item)
+- **L5 (typing slice):** new `ChinaDemand*` interfaces in
+  `frontend/src/types/api.ts` (snapshot / signals / impact / suppliers /
+  momentum, incl. the `is_live` contract) mirroring the engine payloads;
+  `api.chinaDemand*` client methods are now typed;
+  `frontend/src/app/china-demand/page.tsx` dropped its `any` state/maps
+  and eslint-disable entirely (typed state + `?? 0` narrowing helpers),
+  plus removed an unused `ProvenanceWrapped` import in `api.ts`. The
+  remaining ~460 `any` usages elsewhere stay on the backlog.
+- **L7 (observability slice):** verified the Prometheus endpoint — it
+  exists whenever the (locked) instrumentator dependency is installed,
+  which is true in CI and the Docker image; new `tests/test_metrics.py`
+  asserts `/api/metrics/prometheus` serves text/plain metrics and stays
+  out of the frozen OpenAPI contract (skips locally if the dependency is
+  absent). The china-demand snapshot log now carries the `live` flag.
+- **L8 (dependency-drift note):** `requirements.txt` gained an explicit
+  policy header: `>=` bounds are for local dev, `requirements.lock` is
+  the reproducible set used by Docker/CI, and the exact `uv pip compile`
+  command to re-generate the lock after changing the file.
+
 ### Added (review L4 — provenance contract net for the R10 bug class)
 - Shared records-based provenance helper
   `core.market.data_provenance.from_records(records, ...)`: live only

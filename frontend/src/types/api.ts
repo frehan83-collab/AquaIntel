@@ -912,3 +912,85 @@ export interface SupplyDemandBalance {
   price_forecast?: SupplyDemandForecast | null;
   data_provenance?: DataProvenance;
 }
+
+// ── China Demand (review L5 typing slice) ────────────────────────────
+
+/** One month of Norwegian exports to China (SSB table 08799) */
+export interface ChinaMonthlyExportPoint {
+  month: string;
+  tonnes: number;
+  value_mnok: number;
+}
+
+export interface ChinaNorwayExports {
+  tonnes_12m: number;
+  nok_millions_12m?: number;
+  avg_price_nok_kg?: number;
+  yoy_trend_pct?: number;
+  /** Structured liveness contract (review M3): records-based, never a
+   *  rounded tonnage. Use this instead of parsing `data_source`. */
+  is_live?: boolean;
+  data_source?: string;
+}
+
+export interface ChinaSupplierRow {
+  origin: string;
+  flag: string;
+  tonnes: number;
+  share_pct: number;
+  is_live?: boolean;
+  data_source?: string;
+  yoy_growth_pct?: number;
+}
+
+export interface ChinaTotalImports {
+  tonnes_annual?: number;
+  estimate_year?: number;
+  data_source?: string;
+}
+
+/** /api/china/demand */
+export interface ChinaDemandSnapshot {
+  source?: string;
+  fetched_at?: string;
+  norway_exports_to_china?: ChinaNorwayExports;
+  china_total_imports?: ChinaTotalImports;
+  monthly_series?: ChinaMonthlyExportPoint[];
+  suppliers?: ChinaSupplierRow[];
+  norway_share_pct?: number;
+  data_provenance?: DataProvenance;
+}
+
+/** /api/china/demand-signals */
+export interface ChinaMomentumPoint {
+  month: string;
+  rolling_3m_tonnes: number;
+  monthly_tonnes?: number;
+}
+
+export interface ChinaDemandSignals {
+  yoy_growth_pct?: number;
+  acceleration_pct?: number;
+  seasonal_index?: number;
+  seasonal_label?: string;
+  market_growth_pct?: number;
+  signal_score?: number;
+  signal_label?: string;
+  signal_direction?: string;
+  momentum_chart?: ChinaMomentumPoint[];
+  insights?: string[];
+  data_provenance?: DataProvenance;
+}
+
+/** /api/china/demand-impact */
+export interface ChinaDemandImpact {
+  correlation_vol_price?: number;
+  estimated_price_impact_pct?: number;
+  impact_label?: string;
+  demand_direction?: string;
+  yoy_growth_pct?: number;
+  china_share_of_norway_exports?: number;
+  transmission_mechanism?: string;
+  assessment?: string;
+  data_provenance?: DataProvenance;
+}

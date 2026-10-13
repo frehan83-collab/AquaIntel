@@ -11,8 +11,11 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import DataQualityBadge from "@/components/DataQualityBadge";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type {
+  ChinaDemandImpact,
+  ChinaDemandSignals,
+  ChinaDemandSnapshot,
+} from "@/types/api";
 
 const FLAG_EMOJI: Record<string, string> = {
   NO: "\uD83C\uDDF3\uD83C\uDDF4", CL: "\uD83C\uDDE8\uD83C\uDDF1",
@@ -22,9 +25,9 @@ const FLAG_EMOJI: Record<string, string> = {
 
 export default function ChinaDemandPage() {
   const { t } = useTranslation();
-  const [snapshot, setSnapshot] = useState<any>(null);
-  const [signals, setSignals] = useState<any>(null);
-  const [impact, setImpact] = useState<any>(null);
+  const [snapshot, setSnapshot] = useState<ChinaDemandSnapshot | null>(null);
+  const [signals, setSignals] = useState<ChinaDemandSignals | null>(null);
+  const [impact, setImpact] = useState<ChinaDemandImpact | null>(null);
   const [loading, setLoading] = useState(true);
   // Distinct fetch-failure state (review H4): the page must never claim
   // "estimates are shown" while loading or when nothing could be loaded.
@@ -56,29 +59,34 @@ export default function ChinaDemandPage() {
 
   useEffect(() => { load(); }, []);
 
-  const norExp = snapshot?.norway_exports_to_china || {};
+  const norExp = snapshot?.norway_exports_to_china;
   // Structured liveness contract (review M3): the engine exposes
   // norway_exports_to_china.is_live keyed on records actually returned —
   // no more parsing the data_source display string for "LIVE".
-  const norwayLive = norExp.is_live === true;
-  const chinaTotal = snapshot?.china_total_imports || {};
-  const suppliers = snapshot?.suppliers || [];
-  const monthlySeries = snapshot?.monthly_series || [];
-  const momentum = signals?.momentum_chart || [];
-  const insights = signals?.insights || [];
+  const norwayLive = norExp?.is_live === true;
+  const yoy = norExp?.yoy_trend_pct ?? 0;
+  const yoyGrowth = signals?.yoy_growth_pct ?? 0;
+  const accel = signals?.acceleration_pct ?? 0;
+  const signalScore = signals?.signal_score ?? 0;
+  const impactPct = impact?.estimated_price_impact_pct ?? 0;
+  const chinaTotal = snapshot?.china_total_imports;
+  const suppliers = snapshot?.suppliers ?? [];
+  const monthlySeries = snapshot?.monthly_series ?? [];
+  const momentum = signals?.momentum_chart ?? [];
+  const insights = signals?.insights ?? [];
 
   // Sparkline from monthly series
-  const sparkVols = monthlySeries.slice(-12).map((p: any) => p.tonnes);
+  const sparkVols = monthlySeries.slice(-12).map((p) => p.tonnes);
 
   // Signal color
-  const signalColor = (dir: string) => {
+  const signalColor = (dir?: string) => {
     if (dir?.includes("bullish")) return "text-emerald-400";
     if (dir?.includes("bearish")) return "text-rose-400";
     return "text-amber-400";
   };
 
   // Impact color
-  const impactColor = (label: string) => {
+  const impactColor = (label?: string) => {
     if (label?.includes("Upward")) return "text-emerald-400";
     if (label?.includes("Downward")) return "text-rose-400";
     return "text-amber-400";
@@ -121,17 +129,17 @@ export default function ChinaDemandPage() {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <KPICard
           label="China Total Imports"
-          value={chinaTotal.tonnes_annual ? `${(chinaTotal.tonnes_annual / 1000).toFixed(0)}k t` : "\u2014"}
-          delta={chinaTotal.estimate_year ? `${chinaTotal.estimate_year} estimate` : ""}
+          value={chinaTotal?.tonnes_annual ? `${(chinaTotal.tonnes_annual / 1000).toFixed(0)}k t` : "\u2014"}
+          delta={chinaTotal?.estimate_year ? `${chinaTotal.estimate_year} estimate` : ""}
           deltaType="neutral"
           icon={Globe2}
           delay={0}
         />
         <KPICard
           label="Norway \u2192 China (12m)"
-          value={norExp.tonnes_12m ? `${Number(norExp.tonnes_12m).toLocaleString()} t` : "\u2014"}
-          delta={norExp.yoy_trend_pct ? `${norExp.yoy_trend_pct > 0 ? "+" : ""}${norExp.yoy_trend_pct}% YoY` : ""}
-          deltaType={norExp.yoy_trend_pct > 0 ? "positive" : norExp.yoy_trend_pct < 0 ? "negative" : "neutral"}
+          value={norExp?.tonnes_12m ? `${Number(norExp.tonnes_12m).toLocaleString()} t` : "\u2014"}
+          delta={yoy ? `${yoy > 0 ? "+" : ""}${yoy}% YoY` : ""}
+          deltaType={yoy > 0 ? "positive" : yoy < 0 ? "negative" : "neutral"}
           icon={TrendingUp}
           sparkline={sparkVols.length >= 4 ? sparkVols : undefined}
           delay={0.05}
@@ -156,7 +164,7 @@ export default function ChinaDemandPage() {
           label="Price Impact"
           value={impact?.impact_label || "\u2014"}
           delta={impact?.estimated_price_impact_pct ? `${impact.estimated_price_impact_pct > 0 ? "+" : ""}${impact.estimated_price_impact_pct}% est.` : ""}
-          deltaType={impact?.estimated_price_impact_pct > 0 ? "positive" : impact?.estimated_price_impact_pct < 0 ? "negative" : "neutral"}
+          deltaType={impactPct > 0 ? "positive" : impactPct < 0 ? "negative" : "neutral"}
           icon={Activity}
           delay={0.2}
         />
@@ -178,7 +186,7 @@ export default function ChinaDemandPage() {
             <p className="text-[var(--text-muted)] text-sm py-8 text-center">No data available</p>
           ) : (
             <div className="space-y-2">
-              {suppliers.map((s: any, i: number) => (
+              {suppliers.map((s, i) => (
                 <div key={i}
                   className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] transition">
                   <div className="flex items-center gap-2.5">
@@ -236,8 +244,8 @@ export default function ChinaDemandPage() {
           ) : (
             <div className="space-y-1">
               <div className="flex items-end gap-1 h-40">
-                {momentum.slice(-12).map((p: any, i: number) => {
-                  const maxVal = Math.max(...momentum.slice(-12).map((m: any) => m.rolling_3m_tonnes));
+                {momentum.slice(-12).map((p, i) => {
+                  const maxVal = Math.max(...momentum.slice(-12).map((m) => m.rolling_3m_tonnes));
                   const pct = maxVal > 0 ? (p.rolling_3m_tonnes / maxVal) * 100 : 0;
                   return (
                     <div key={i} className="flex-1 flex flex-col items-center gap-1">
@@ -283,7 +291,7 @@ export default function ChinaDemandPage() {
                 <div className="p-3 rounded-lg bg-white/[0.03]">
                   <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Est. Price Impact</p>
                   <p className={`text-lg font-bold ${impactColor(impact.impact_label)}`}>
-                    {impact.estimated_price_impact_pct > 0 ? "+" : ""}{impact.estimated_price_impact_pct}%
+                    {impactPct > 0 ? "+" : ""}{impactPct}%
                   </p>
                 </div>
                 <div className="p-3 rounded-lg bg-white/[0.03]">
@@ -330,14 +338,14 @@ export default function ChinaDemandPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg bg-white/[0.03]">
                   <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">YoY Growth</p>
-                  <p className={`text-lg font-bold ${signals.yoy_growth_pct > 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                    {signals.yoy_growth_pct > 0 ? "+" : ""}{signals.yoy_growth_pct}%
+                  <p className={`text-lg font-bold ${yoyGrowth > 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                    {yoyGrowth > 0 ? "+" : ""}{yoyGrowth}%
                   </p>
                 </div>
                 <div className="p-3 rounded-lg bg-white/[0.03]">
                   <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Acceleration</p>
-                  <p className={`text-lg font-bold ${signals.acceleration_pct > 0 ? "text-emerald-400" : signals.acceleration_pct < 0 ? "text-rose-400" : "text-amber-400"}`}>
-                    {signals.acceleration_pct > 0 ? "+" : ""}{signals.acceleration_pct}%
+                  <p className={`text-lg font-bold ${accel > 0 ? "text-emerald-400" : accel < 0 ? "text-rose-400" : "text-amber-400"}`}>
+                    {accel > 0 ? "+" : ""}{accel}%
                   </p>
                 </div>
                 <div className="p-3 rounded-lg bg-white/[0.03]">
@@ -374,7 +382,7 @@ export default function ChinaDemandPage() {
                       signals.signal_direction?.includes("bullish") ? "bg-emerald-500" :
                       signals.signal_direction?.includes("bearish") ? "bg-rose-500" : "bg-amber-500"
                     }`}
-                    style={{ width: `${Math.min(Math.max((signals.signal_score + 1) / 2 * 100, 5), 95)}%` }}
+                    style={{ width: `${Math.min(Math.max((signalScore + 1) / 2 * 100, 5), 95)}%` }}
                   />
                 </div>
               </div>
@@ -420,8 +428,8 @@ export default function ChinaDemandPage() {
                 </tr>
               </thead>
               <tbody>
-                {monthlySeries.slice(-12).map((row: any, i: number) => {
-                  const maxT = Math.max(...monthlySeries.slice(-12).map((r: any) => r.tonnes));
+                {monthlySeries.slice(-12).map((row, i) => {
+                  const maxT = Math.max(...monthlySeries.slice(-12).map((r) => r.tonnes));
                   const pct = maxT > 0 ? (row.tonnes / maxT) * 100 : 0;
                   return (
                     <tr key={i} className="border-b border-white/[0.03] hover:bg-white/[0.02]">

@@ -264,7 +264,14 @@ class ChinaDemandEngine:
 
         self._snapshot = snap
         self._last_fetch = now
-        log.info("china_demand.snapshot", norway_t=norway_tonnes, total_t=total_imports)
+        # Liveness flag in the log (review L7): operators can see at a
+        # glance whether the snapshot came from SSB records or degraded.
+        log.info(
+            "china_demand.snapshot",
+            norway_t=norway_tonnes,
+            total_t=total_imports,
+            live=norway_live,
+        )
         return self._format_snapshot(snap)
 
     def _build_supplier_breakdown(
