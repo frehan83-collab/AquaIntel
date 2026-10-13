@@ -3,6 +3,74 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
+## [Unreleased] — RUN-1 Sprint 3: R7 integrated supply–demand engine + 2–20w price path (2026-10-13)
+
+### Added (R7 — "Holy Grail" flagship)
+- `core/market/supply_demand_engine.py`: singleton engine composing the smolt
+  pipeline (Norway supply + baseline demand), biomass outlook (Monte Carlo,
+  seeded), global supply (Chile/Scotland/Faroe), lice pressure → harvest-delay
+  adjustment, China demand momentum and SSB 03024 price history.
+- **2–20 week price path** (19 weekly points): seasonal median + mean-reversion
+  of the current deviation (half-life 4w) **measured from the latest PUBLISHED
+  SSB week**; empirical p10–p90 bands from **walk-forward residual quantiles**
+  (~80% measured out-of-sample coverage; in-sample quantiles only when history
+  is too short for a walk-forward fit). Bounded heuristic overlays (labelled,
+  NOT backtested): global supply-deficit tilt (0.5%/pt, cap ±5%) and
+  lice-delay tilt (cap 2%), ramped in over 4 weeks. The legacy smolt
+  `price_pressure` signal is deliberately NOT used as a price tilt — its
+  balance is pipeline coverage, structurally ≈ −80%, so a tilt from it would
+  peg constantly (would have been a fabricated signal).
+- `scripts/backtest_supply_demand.py`: strict no-lookahead walk-forward
+  backtest over real SSB history → `data/models/supply_demand_backtest.json`
+  (gitignored, mirroring the `price_backtest.json` artifact contract; route
+  surfaces `price_forecast.backtest` ONLY from the validated artifact).
+  Measured 2026-10-13 (352 weeks, 248 walk-forward origins):
+  **MAPE 9.08% @2w → 20.94% @20w**; walk-forward band coverage **79.3–80.0%**
+  (the in-sample-quantile variant covers only 55.3–69.9% — why the engine
+  ships the walk-forward calibration).
+- Route `/api/supply/demand-balance` extended **additively** (contract
+  `additive-v1`): every legacy field byte-identical, plus `balance_label`,
+  `integration` (sources + structured fallbacks), `supply_breakdown`,
+  `demand_breakdown`, `price_forecast`. `docs/openapi.frozen.json` re-frozen
+  (1-line route description; the response schema was and remains `{}`).
+- Frontend: `/supply-forecast` demand-balance card gains the price-path chart
+  (mid + p10–p90 band), spot week + publication-lag disclosure,
+  `DataQualityBadge`, backtest MAPE line, method note, and amber notices when
+  the artifact is missing or bands fall back. `frontend/e2e/api-contracts.spec.ts`
+  now asserts the live additive contract server-side in CI.
+- 11 new engine tests (`tests/test_supply_demand_engine.py`) — offline,
+  deterministic, no network/DB — including an H2 regression guard that
+  horizons are referenced to the latest published week.
+
+### Fixed (independent review — all findings applied)
+- **H1 (evidence provenance):** silent sub-engine degradation can no longer be
+  advertised as live — `_safe` wraps every source (sync *and* async), biomass
+  and global supply raise when they have no real result/anchor, and the China
+  demand input is explicitly disclosed as industry estimates (with the
+  fallback recorded and provenance `degraded`) whenever live SSB exports are
+  unavailable. Structured fallback strings now carry the failure reason.
+- **H2 (reference frame):** forecast horizons are now anchored to `spot_week`
+  — the same reference the walk-forward calibration uses. Previously the live
+  path was anchored to `today + h` while MAPE/bands described `spot + h`
+  (SSB's ~2-week publication lag therefore understated uncertainty and shifted
+  every displayed point). `spot_lag_weeks` + `horizon_reference` are now in
+  the payload and the UI shows the lag.
+- M1/M2: method note corrected (the walk-forward fallback trigger is "too
+  short for a 104w train + 20w horizon", not "history < 2 years"); UI hardened
+  against partial artifacts (`?? "–"`, optional `n_origins`). L-fixes:
+  `bands_source` disclosed in the UI, `components_backtested` renamed to
+  reflect that no component ablation exists, legacy `price_pressure` tile
+  labelled with its source model, padStart/spot-week rendering consistency,
+  stale comments removed.
+
+### Verified
+- `ruff check` clean; authoritative suite (`pytest tests/`, CI-equivalent)
+  **663 passed / 13 xfailed / 10 xpassed / 0 failed (231.31 s)**; `tsc --noEmit`
+  and eslint 0 errors; `next build` compiled; live curl of the running route
+  (legacy + additive keys, 19 weekly points, honest degraded provenance);
+  Playwright api-contracts assertion added so CI's e2e-backend proves the
+  additive contract server-side on every run.
+
 ## [Unreleased] — RUN-1 Sprint 2: P0-2 closed, lice read-index shipped (2026-10-13)
 
 ### Closed (R5 — DuckDB P0-2, cross-platform evidence)

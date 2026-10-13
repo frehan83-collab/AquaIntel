@@ -110,10 +110,22 @@ async def supply_cohort_timeline():
 
 @router.get("/supply/demand-balance")
 async def supply_demand_balance():
+    """Integrated supply-demand balance + 2-20 week price path (R7).
+
+    Legacy fields (horizon_months, total_supply_tonnes, total_demand_tonnes,
+    balance_tonnes, balance_pct, signal, price_pressure) are unchanged;
+    everything new is additive (contract: additive-v1):
+      balance_label, integration, supply_breakdown, demand_breakdown,
+      price_forecast (incl. empirical p10-p90 bands + validated backtest).
+    """
+    from core.market.supply_demand_engine import supply_demand_engine
     from core.valuechain.smolt_model import smolt_model
+
     result = smolt_model.get_demand_balance()
-    if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("Smolt model + Fiskeridirektoratet + BarentsWatch", confidence=0.75).to_dict()
+    if not isinstance(result, dict):
+        return result
+    intel = await supply_demand_engine.compute()
+    result.update(intel)
     return result
 
 

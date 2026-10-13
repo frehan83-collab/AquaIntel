@@ -18,24 +18,61 @@ import { api } from "@/lib/api";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
 import DataQualityBadge from "@/components/DataQualityBadge";
 
+function PricePathChart({ weekly }: { weekly: Array<{ mid_nok_kg: number; p10?: number; p90?: number }> }) {
+  if (!weekly?.length) return null;
+  const W = 320;
+  const H = 96;
+  const PAD = 6;
+  const lo = (p: { mid_nok_kg: number; p10?: number }) => p.p10 ?? p.mid_nok_kg;
+  const hi = (p: { mid_nok_kg: number; p90?: number }) => p.p90 ?? p.mid_nok_kg;
+  const min = Math.min(...weekly.map(lo));
+  const max = Math.max(...weekly.map(hi));
+  const span = Math.max(max - min, 1e-9);
+  const x = (i: number) => PAD + (i / Math.max(weekly.length - 1, 1)) * (W - 2 * PAD);
+  const y = (v: number) => H - PAD - ((v - min) / span) * (H - 2 * PAD);
+  const band = [
+    ...weekly.map((p, i) => `${x(i)},${y(hi(p))}`),
+    ...[...weekly].reverse().map((p, j) => `${x(weekly.length - 1 - j)},${y(lo(p))}`),
+  ].join(" ");
+  const mid = weekly
+    .map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(p.mid_nok_kg).toFixed(1)}`)
+    .join(" ");
+  return (
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className="w-full h-24"
+      preserveAspectRatio="none"
+      role="img"
+      aria-label="2-20 week price path with p10-p90 band"
+    >
+      <polygon points={band} fill="rgba(56,189,248,0.14)" />
+      <path d={mid} fill="none" stroke="#38bdf8" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+
 export default function SupplyForecastPage() {
   const [summary, setSummary] = useState<any>(null);
   const [smoltData, setSmoltData] = useState<any>(null);
   const [cohortData, setCohortData] = useState<any>(null);
+  const [intel, setIntel] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { t, locale } = useTranslation();
 
   const load = async () => {
     setLoading(true);
     try {
-      const [sum, smolt, cohort] = await Promise.allSettled([
+      const [sum, smolt, cohort, intelRes] = await Promise.allSettled([
         api.supplySummary(),
         api.smoltForecast(18),
         api.cohortTimeline(),
+        api.supplyDemandBalance(),
       ]);
       if (sum.status === "fulfilled") setSummary(sum.value);
       if (smolt.status === "fulfilled") setSmoltData(smolt.value);
       if (cohort.status === "fulfilled") setCohortData(cohort.value);
+      if (intelRes.status === "fulfilled") setIntel(intelRes.value);
     } catch { /* empty */ }
     setLoading(false);
   };
@@ -45,6 +82,7 @@ export default function SupplyForecastPage() {
   const pipeline = summary?.pipeline || [];
   const cohorts = summary?.cohorts || [];
   const balance = summary?.demand_balance || {};
+  const pf = intel?.price_forecast;
 
   return (
     <div className="space-y-6">
@@ -271,6 +309,7 @@ export default function SupplyForecastPage() {
             <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-[var(--text-secondary)]">Price Pressure Signal</span>
+                <span className="text-[9px] text-[var(--text-secondary)] italic">{t("supply.smolt_model_tag")}</span>
                 <span className={`text-sm font-bold ${
                   balance.price_pressure === "bullish" ? "text-emerald-400" :
                   balance.price_pressure === "bearish" ? "text-rose-400" : "text-amber-400"
@@ -286,6 +325,68 @@ export default function SupplyForecastPage() {
                   : t("supply.balanced")}
               </p>
             </div>
+            {pf && pf.weekly?.length > 0 && (
+              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[var(--text-secondary)]">{t("supply.price_path")}</span>
+                  <DataQualityBadge provenance={intel?.data_provenance} />
+                </div>
+                <PricePathChart weekly={pf.weekly} />
+                <div className="flex items-center justify-between text-[9px] text-[var(--text-secondary)] font-mono">
+                  <span>
+                    {pf.weekly[0].year}W{String(pf.weekly[0].iso_week).padStart(2, "0")}
+                  </span>
+                  <span>
+                    {pf.weekly[pf.weekly.length - 1].year}W
+                    {String(pf.weekly[pf.weekly.length - 1].iso_week).padStart(2, "0")}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="p-2 rounded-lg bg-white/[0.02]">
+                    <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] mb-0.5">Spot</div>
+                    <div className="text-sm font-bold text-[var(--text-primary)]">
+                      {formatNumber(pf.spot_nok_kg, locale, 1)}
+                    </div>
+                    <div className="text-[9px] text-[var(--text-secondary)] font-mono">
+                      {pf.spot_week}
+                      {pf.spot_lag_weeks != null ? ` · lag ${pf.spot_lag_weeks}w` : ""}
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-white/[0.02]">
+                    <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] mb-0.5">
+                      {t("supply.spot_vs_seasonal")}
+                    </div>
+                    <div className={`text-sm font-bold ${(pf.gap_vs_seasonal_pct || 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      {(pf.gap_vs_seasonal_pct || 0) >= 0 ? "+" : ""}
+                      {formatNumber(pf.gap_vs_seasonal_pct, locale, 1)}%
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-white/[0.02]">
+                    <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] mb-0.5">
+                      {t("supply.forecast_band")}
+                    </div>
+                    <div className="text-sm font-bold text-ocean-400">p10–p90</div>
+                  </div>
+                </div>
+                {pf.backtest?.mape ? (
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="text-[var(--text-secondary)]">
+                      {t("supply.backtest")}
+                      {pf.backtest.n_origins != null ? ` · ${pf.backtest.n_origins} origins` : ""}
+                    </span>
+                    <span className="font-mono text-[var(--text-primary)]">
+                      MAPE 2w {pf.backtest.mape["2"] ?? "–"}% → 20w {pf.backtest.mape["20"] ?? "–"}%
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-amber-400/80">{t("supply.backtest_missing")}</p>
+                )}
+                {pf.bands_source !== "walk_forward_residuals" && (
+                  <p className="text-[10px] text-amber-400/80">{t("supply.bands_fallback")}</p>
+                )}
+                <p className="text-[9px] leading-relaxed text-[var(--text-secondary)]">{pf.method}</p>
+              </div>
+            )}
           </div>
         </GlassCard>
       </div>

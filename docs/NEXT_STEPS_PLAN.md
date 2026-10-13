@@ -31,6 +31,10 @@ a salmon aquaculture intelligence platform for Norwegian farmers, traders, and a
 - **The "Holy Grail" model**: integrated supply–demand balance (Norwegian biomass PA 1–13,
   Chile/Scotland/Faroe production, lice-driven harvest delays vs EU/Asia/US demand) →
   price forecast with 2–20 week horizon and uncertainty bands.
+  — **SHIPPED in RUN-1 R7** (2026-10-13): `core/market/supply_demand_engine.py`
+  composes the existing engines behind an additive `/api/supply/demand-balance`
+  contract with a walk-forward-calibrated price path; live evidence in
+  `STATUS.md` (Sprint 3 log) and `CHANGELOG.md` [Unreleased].
 - **Monetization** (shipped foundations): subscription tiers, performance fees (20%),
   premium signal tier.
 - **Non-negotiables** (from `AGENTS.md`, rule source of truth):

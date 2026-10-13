@@ -250,3 +250,55 @@ added `tests/test_migrations.py`.
     strings app-wide (~20 pages) and mis-parses nb-locale "0,29" as 0 →
     candidate component fix (see CHANGELOG "Noted").
 
+- 2026-10-13 Â· **RUN-1 Sprint 3 (R7 â€” "Holy Grail" flagship) complete:**
+  - **Engine** â€” new singleton `core/market/supply_demand_engine.py` composing
+    smolt pipeline + biomass outlook (MC, seeded) + global supply +
+    lice-pressure harvest-delay + China demand + SSB 03024 history into one
+    balance, plus a **2â€“20 week price path** (19 points): seasonal +
+    reversion core (half-life 4w) with **walk-forward residual p10â€“p90
+    bands** (~80% measured out-of-sample coverage; in-sample fallback only
+    when history is too short for a walk-forward fit). Heuristic overlays
+    labelled NOT-backtested: global supply-deficit tilt (0.5%/pt, cap Â±5%)
+    and lice-delay tilt (cap 2%), ramped in over 4 weeks. The legacy smolt
+    `price_pressure` is deliberately NOT used as a tilt (structurally
+    â‰ˆ âˆ’80% pipeline coverage â€” a tilt from it would peg constantly, i.e.
+    a fabricated signal).
+  - **Backtest (real artifacts only)** â€” `scripts/backtest_supply_demand.py`,
+    strict no-lookahead walk-forward, 352 weeks / 248 origins:
+    **MAPE 9.08% @2w â†’ 20.94% @20w**; band coverage 79.3â€“80.0% (wf) vs
+    55.3â€“69.9% (in-sample quantiles). Artifact at
+    `data/models/supply_demand_backtest.json` (gitignored, `price_ml`
+    contract); the route surfaces `price_forecast.backtest` ONLY from the
+    validated artifact, null elsewhere.
+  - **Route (additive-v1)** â€” `/api/supply/demand-balance` keeps all 7 legacy
+    fields byte-identical and adds `balance_label`, `integration`
+    (sources + structured fallbacks), `supply_breakdown`, `demand_breakdown`,
+    `price_forecast`. `docs/openapi.frozen.json` re-frozen (1-line route
+    description; its response schema was and remains `{}`). Live curl proof:
+    legacy `signal: undersupply` + all additive keys, 19 points starting
+    W42 (= spot W40 + 2, lag disclosed), provenance honestly **degraded 0.6**
+    with reason "china demand: live SSB exports unavailable (estimates
+    used)".
+  - **Frontend** â€” `/supply-forecast` demand-balance card gains the
+    price-path chart (mid + p10â€“p90 band), spot week + publication-lag
+    disclosure, `DataQualityBadge`, backtest MAPE line, method note, and
+    amber notices when the artifact is missing or bands fall back;
+    `frontend/e2e/api-contracts.spec.ts` asserts the live additive contract
+    in CI.
+  - **Independent review: no CRITICAL; both HIGH + M/L findings applied** â€”
+    H1 (silent sub-engine degradation can no longer be advertised as live:
+    `_safe` wraps sync+async, biomass/global raise on empty results, China
+    estimates disclosed with the fallback recorded); H2 (forecast horizons
+    re-anchored to the latest PUBLISHED week â€” the calibration reference â€”
+    with `spot_lag_weeks` disclosed); M1/M2 method-note + UI robustness;
+    L-fixes (structured fallback reasons, `bands_source` in UI,
+    `components_backtested` naming, legacy price_pressure tile source tag).
+    One real bug caught by the tests during the fix round: `_safe` awaited a
+    sync source (now awaitable-aware).
+  - Gates: ruff clean; new engine tests 11/11 (offline, deterministic);
+    route + openapi-contract tests green; `tsc` + eslint 0 errors;
+    `next build` compiled; full suite 663 passed / 13 xfailed / 10 xpassed / 0 failed (231.31 s).
+  - **Next: CI watch (3 workflows) â†’ Sprint 4 (R9 version bump 2.2.0 â†’
+    2.3.0 + GitHub release, then R10) per `docs/AUTONOMOUS_RUN_PLAN.md`.**
+
+

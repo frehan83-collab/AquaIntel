@@ -154,6 +154,34 @@ test.describe("Supply Chain", () => {
     const res = await request.get(`${API}/api/supply/smolt-forecast`);
     expect(res.ok()).toBeTruthy();
   });
+
+  test("GET /api/supply/demand-balance keeps the additive R7 contract", async ({ request }) => {
+    const res = await request.get(`${API}/api/supply/demand-balance`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    // Legacy smolt-model fields must never disappear (additive-only policy)
+    for (const legacy of [
+      "horizon_months",
+      "total_supply_tonnes",
+      "total_demand_tonnes",
+      "balance_tonnes",
+      "balance_pct",
+      "signal",
+      "price_pressure",
+    ]) {
+      expect(body, `legacy field ${legacy} missing`).toHaveProperty(legacy);
+    }
+    // Additive R7 integration payload
+    expect(body).toHaveProperty("integration");
+    expect(body).toHaveProperty("supply_breakdown");
+    expect(body).toHaveProperty("demand_breakdown");
+    expect(body).toHaveProperty("price_forecast");
+    expect(body.data_provenance).toBeTruthy();
+    if (body.price_forecast) {
+      // 2..20 weeks -> 19 points; bands must be ordered when present
+      expect(body.price_forecast.weekly.length).toBe(19);
+    }
+  });
 });
 
 test.describe("ML Models", () => {

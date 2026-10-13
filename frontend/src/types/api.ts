@@ -843,3 +843,72 @@ export interface PairsSignal {
   half_life_weeks: number;
   correlation: number;
 }
+
+// ── Supply-Demand Intelligence (R7 /api/supply/demand-balance) ───────
+
+export interface SupplyDemandPricePoint {
+  horizon_weeks: number;
+  year: number;
+  iso_week: number;
+  mid_nok_kg: number;
+  p10?: number;
+  p25?: number;
+  p75?: number;
+  p90?: number;
+}
+
+export interface SupplyDemandBacktest {
+  generated_at?: string;
+  n_origins?: number;
+  min_train_weeks?: number;
+  history_weeks?: number;
+  mape?: Record<string, number>;
+  coverage_80_band_walk_forward?: Record<string, number>;
+  components_backtested?: string[];
+  components_not_backtested?: string[];
+}
+
+export interface SupplyDemandForecast {
+  horizon_weeks: number;
+  generated_week: string;
+  horizon_reference?: string;
+  spot_nok_kg: number;
+  spot_week: string;
+  spot_lag_weeks?: number;
+  seasonal_median_nok_kg: number;
+  gap_vs_seasonal_pct: number;
+  global_deficit_tilt_pct: number;
+  lice_tilt_pct: number;
+  combined_tilt_pct: number;
+  method: string;
+  bands_source: string;
+  components_backtested: string[];
+  components_heuristic: string[];
+  history_weeks_used: number;
+  weekly: SupplyDemandPricePoint[];
+  backtest: SupplyDemandBacktest | null;
+}
+
+export interface SupplyDemandBalance {
+  // Legacy smolt-model fields (unchanged by R7)
+  horizon_months: number;
+  total_supply_tonnes: number;
+  total_demand_tonnes: number;
+  balance_tonnes: number;
+  balance_pct: number;
+  signal: string;
+  price_pressure: string;
+  // Additive R7 integration payload
+  balance_label?: string;
+  integration?: {
+    engine: string;
+    contract: string;
+    composed_at: string;
+    sources: string[];
+    fallbacks: string[];
+  };
+  supply_breakdown?: Record<string, number | string | null>;
+  demand_breakdown?: Record<string, number | string | null>;
+  price_forecast?: SupplyDemandForecast | null;
+  data_provenance?: DataProvenance;
+}

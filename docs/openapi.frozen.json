@@ -10585,6 +10585,7 @@
     },
     "/api/supply/demand-balance": {
       "get": {
+        "description": "Integrated supply-demand balance + 2-20 week price path (R7).\n\nLegacy fields (horizon_months, total_supply_tonnes, total_demand_tonnes,\nbalance_tonnes, balance_pct, signal, price_pressure) are unchanged;\neverything new is additive (contract: additive-v1):\n  balance_label, integration, supply_breakdown, demand_breakdown,\n  price_forecast (incl. empirical p10-p90 bands + validated backtest).",
         "operationId": "supply_demand_balance_api_supply_demand_balance_get",
         "responses": {
           "200": {

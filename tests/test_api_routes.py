@@ -345,6 +345,27 @@ class TestSupplyEndpoints:
     def test_demand_balance(self, client):
         r = client.get("/api/supply/demand-balance")
         assert r.status_code == 200
+        body = r.json()
+        # Legacy contract untouched (R7 keeps every original field) ...
+        for legacy in (
+            "horizon_months",
+            "total_supply_tonnes",
+            "total_demand_tonnes",
+            "balance_tonnes",
+            "balance_pct",
+            "signal",
+            "price_pressure",
+        ):
+            assert legacy in body, f"legacy field {legacy} missing"
+        # ... plus the additive R7 integration payload
+        assert "balance_label" in body
+        assert "integration" in body and "supply_breakdown" in body
+        assert "demand_breakdown" in body and "price_forecast" in body
+        assert body["data_provenance"]["source"]
+        pf = body["price_forecast"]
+        if pf is not None:  # requires SSB reachability (present in e2e env)
+            assert len(pf["weekly"]) == 19
+            assert pf["bands_source"] in ("walk_forward_residuals", "in_sample_history")
 
     def test_supply_summary(self, client):
         r = client.get("/api/supply/summary")
