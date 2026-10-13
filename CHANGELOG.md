@@ -113,6 +113,22 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Changed (repo hygiene — review H3 + M6)
+- Untracked the `.hypothesis` cache (5,178 files; already in `.gitignore`,
+  so CI/repo weight drops without losing anything — the local cache stays
+  on disk for pytest runs). `chore(repo)` commit `be3cea8`.
+- PR #2 ("Session 38: Wire welfare/NorKyst/PACE endpoints + ErrorBoundary
+  sweep", branch `claude/happy-curie`) closed as **superseded** with a
+  documented evidence comment: 6-month-old conflicting branch (`mergeable:
+  CONFLICTING`, master 96 commits ahead, every file in its 90-file diff
+  rewritten since) whose headline features already exist in master —
+  welfare SWIM scores (`/api/welfare/score/{pa}` in farm_routes), NorKyst800
+  v3 (`/api/ocean/norkyst/current`) and NASA PACE
+  (`/api/satellite/pace/chlorophyll`) in ocean_routes, and the
+  JWT-fail-fast/auth hardening in `core/auth.py`.
+- Stale remote branches deleted: `claude/happy-curie` (closed PR #2) and
+  `claude/cool-cray` (PR #1, merged). Remote now tracks only `master`.
+
 ### Fixed (review M4 — DataQualityBadge mislabels + tooltip duplication)
 - `qualityFromProvenance` now maps by provenance STATE, never by
   confidence thresholds: `is_live` → "Live", `source === "simulated"` →
