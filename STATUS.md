@@ -250,27 +250,27 @@ added `tests/test_migrations.py`.
     strings app-wide (~20 pages) and mis-parses nb-locale "0,29" as 0 →
     candidate component fix (see CHANGELOG "Noted").
 
-- 2026-10-13 · **RUN-1 Sprint 3 (R7 â€” "Holy Grail" flagship) complete:**
-  - **Engine** â€” new singleton `core/market/supply_demand_engine.py` composing
+- 2026-10-13 · **RUN-1 Sprint 3 (R7 — "Holy Grail" flagship) complete:**
+  - **Engine** — new singleton `core/market/supply_demand_engine.py` composing
     smolt pipeline + biomass outlook (MC, seeded) + global supply +
     lice-pressure harvest-delay + China demand + SSB 03024 history into one
-    balance, plus a **2â€“20 week price path** (19 points): seasonal +
-    reversion core (half-life 4w) with **walk-forward residual p10â€“p90
+    balance, plus a **2–20 week price path** (19 points): seasonal +
+    reversion core (half-life 4w) with **walk-forward residual p10–p90
     bands** (~80% measured out-of-sample coverage; in-sample fallback only
     when history is too short for a walk-forward fit). Heuristic overlays
     labelled NOT-backtested: global supply-deficit tilt (0.5%/pt, cap ±5%)
     and lice-delay tilt (cap 2%), ramped in over 4 weeks. The legacy smolt
     `price_pressure` is deliberately NOT used as a tilt (structurally
-    â‰ˆ âˆ’80% pipeline coverage â€” a tilt from it would peg constantly, i.e.
+    ≈ −80% pipeline coverage — a tilt from it would peg constantly, i.e.
     a fabricated signal).
-  - **Backtest (real artifacts only)** â€” `scripts/backtest_supply_demand.py`,
+  - **Backtest (real artifacts only)** — `scripts/backtest_supply_demand.py`,
     strict no-lookahead walk-forward, 352 weeks / 248 origins:
-    **MAPE 9.08% @2w â†’ 20.94% @20w**; band coverage 79.3â€“80.0% (wf) vs
-    55.3â€“69.9% (in-sample quantiles). Artifact at
+    **MAPE 9.08% @2w → 20.94% @20w**; band coverage 79.3–80.0% (wf) vs
+    55.3–69.9% (in-sample quantiles). Artifact at
     `data/models/supply_demand_backtest.json` (gitignored, `price_ml`
     contract); the route surfaces `price_forecast.backtest` ONLY from the
     validated artifact, null elsewhere.
-  - **Route (additive-v1)** â€” `/api/supply/demand-balance` keeps all 7 legacy
+  - **Route (additive-v1)** — `/api/supply/demand-balance` keeps all 7 legacy
     fields byte-identical and adds `balance_label`, `integration`
     (sources + structured fallbacks), `supply_breakdown`, `demand_breakdown`,
     `price_forecast`. `docs/openapi.frozen.json` re-frozen (1-line route
@@ -279,17 +279,17 @@ added `tests/test_migrations.py`.
     W42 (= spot W40 + 2, lag disclosed), provenance honestly **degraded 0.6**
     with reason "china demand: live SSB exports unavailable (estimates
     used)".
-  - **Frontend** â€” `/supply-forecast` demand-balance card gains the
-    price-path chart (mid + p10â€“p90 band), spot week + publication-lag
+  - **Frontend** — `/supply-forecast` demand-balance card gains the
+    price-path chart (mid + p10–p90 band), spot week + publication-lag
     disclosure, `DataQualityBadge`, backtest MAPE line, method note, and
     amber notices when the artifact is missing or bands fall back;
     `frontend/e2e/api-contracts.spec.ts` asserts the live additive contract
     in CI.
-  - **Independent review: no CRITICAL; both HIGH + M/L findings applied** â€”
+  - **Independent review: no CRITICAL; both HIGH + M/L findings applied** —
     H1 (silent sub-engine degradation can no longer be advertised as live:
     `_safe` wraps sync+async, biomass/global raise on empty results, China
     estimates disclosed with the fallback recorded); H2 (forecast horizons
-    re-anchored to the latest PUBLISHED week â€” the calibration reference â€”
+    re-anchored to the latest PUBLISHED week — the calibration reference —
     with `spot_lag_weeks` disclosed); M1/M2 method-note + UI robustness;
     L-fixes (structured fallback reasons, `bands_source` in UI,
     `components_backtested` naming, legacy price_pressure tile source tag).
@@ -312,14 +312,14 @@ added `tests/test_migrations.py`.
 
 
 - 2026-10-13 · **RUN-1 Sprint 4 (R9 release + R10 bounded slice):**
-  - **R9 DONE** â€” `PLATFORM_VERSION` 2.2.0 â†’ **2.3.0**; `API_SCHEMA_VERSION`
-    1.0 â†’ **1.1** (the additive contract change from R7, per the policy in
+  - **R9 DONE** — `PLATFORM_VERSION` 2.2.0 → **2.3.0**; `API_SCHEMA_VERSION`
+    1.0 → **1.1** (the additive contract change from R7, per the policy in
     `core/version.py`); frozen OpenAPI re-frozen (2-line diff: provenance
     `schema_version` default + `info.version`; drift test green);
     `/api/health` verified locally reporting 2.3.0; CHANGELOG `[Unreleased]`
     sections folded under `[2.3.0]`; **GitHub release published**:
     https://github.com/frehan83-collab/AquaIntel/releases/tag/v2.3.0
-    (commit e59aa57; Docker âœ… + Backend Tests âœ… on it, Frontend watched).
+    (commit e59aa57; Docker ✅ + Backend Tests ✅ on it, Frontend watched).
   - **R10 (bounded accessibility/honesty slice)** — `DataQualityBadge` now
     has WCAG semantics (`role=img` + `aria-label` incl. confidence/source,
     focusable tooltip, span-based markup avoiding `<div>`-in-`<p>` hydration
@@ -339,8 +339,8 @@ added `tests/test_migrations.py`.
   - Gates: ruff clean; `test_routers.py` + openapi contract **48 passed**;
     `tsc` + eslint 0 errors; full suite + CI on this commit to be confirmed
     in the run summary.
-  - **RUN-1 status: R1â€“R10 all delivered** (R1/R1b/R1c, R5/R6, R7, R9, R10;
-    R8 deliberately deferred per plan â€” budget). Remaining future work
+  - **RUN-1 status: R1–R10 all delivered** (R1/R1b/R1c, R5/R6, R7, R9, R10;
+    R8 deliberately deferred per plan — budget). Remaining future work
     tracked in `docs/NEXT_STEPS_PLAN.md` + this log.
 
 
