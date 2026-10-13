@@ -222,7 +222,7 @@ added `tests/test_migrations.py`.
     unchanged committed baselines (byte-identical regen verified).
     **Next: Sprint 2 — R5 (DuckDB bench on Linux via Docker) → R6
     (latency sweep / migration 015), per `docs/AUTONOMOUS_RUN_PLAN.md`.**
-- 2026-10-13 · **RUN-1 Sprint 2 (R5 + R6) complete (commit pending push):**
+- 2026-10-13 · **RUN-1 Sprint 2 (R5 + R6) complete (commit 539d7a0, CI-PROVEN):**
   - **R5** — `scripts/bench_lice_read.py` built and run on BOTH platforms
     (Linux: python:3.12-slim container with the DB staged in a named volume —
     the Docker-for-Windows mount bridge measurably pollutes I/O; first
@@ -240,6 +240,10 @@ added `tests/test_migrations.py`.
   - Gates: test_migrations green (fresh-DB upgrade head with 015 + new
     index-existence assertion); ruff clean; full suite 652 passed / 13
     xfailed / 10 xpassed / 0 failed (231.39 s); frontend untouched.
+  - **CI (539d7a0): all three workflows green** — Docker Build 2m07s;
+    Backend Tests incl. the new ruff ratchet step + full suite; Frontend
+    Build incl. **e2e-backend on a fresh DB bootstrapped through Alembic 015**
+    (39 api + 49 app specs + instant rig) — 015 is validated end-to-end in CI.
   - **Next: Sprint 3 — R7 (Holy-Grail supply–demand upgrade) per
     `docs/AUTONOMOUS_RUN_PLAN.md`; R8 only if budget remains.**
   - Noted for later workstreams: KPICard count-up strips "%" from value
