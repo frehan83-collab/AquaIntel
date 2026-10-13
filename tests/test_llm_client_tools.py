@@ -8,7 +8,6 @@ import json
 from types import SimpleNamespace
 from unittest import mock
 
-import pytest
 
 
 class TestToOpenaiMessages:

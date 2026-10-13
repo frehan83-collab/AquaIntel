@@ -11,7 +11,6 @@ from __future__ import annotations
 import os
 os.environ["PYTENSOR_FLAGS"] = "device=cpu,floatX=float64,optimizer=fast_compile,cxx="
 
-import datetime as dt
 
 import numpy as np
 import pandas as pd
@@ -28,7 +27,7 @@ from config.settings import settings
 # All agents and FastAPI endpoints use async get_async_session() instead.
 from core.models import (
     Session, Locality, LiceRecord, CompanyExposure, Signal, Order,
-    AuditLog, PerformanceFee, init_db,
+    PerformanceFee, init_db,
 )
 from execution.execution_agent import ExecutionAgent
 from compliance.compliance_agent import ComplianceAgent

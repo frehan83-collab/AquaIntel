@@ -2,7 +2,6 @@
 Tests for causal inference endpoints (/api/causal/summary and /api/causal/granger).
 Verifies stateless execution on cold workers without cross-request state dependencies.
 """
-import pytest
 from unittest import mock
 from starlette.testclient import TestClient
 from types import SimpleNamespace

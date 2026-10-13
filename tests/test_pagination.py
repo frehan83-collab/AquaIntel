@@ -9,7 +9,7 @@ import pytest
 from starlette.testclient import TestClient
 
 from core.api import app
-from core.pagination import MAX_LIMIT, PageParams, paginate
+from core.pagination import PageParams, paginate
 
 
 @pytest.fixture(scope="module")

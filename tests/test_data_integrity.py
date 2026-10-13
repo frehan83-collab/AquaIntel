@@ -11,7 +11,7 @@ suite skips there rather than failing the pipeline. Run locally against the
 full dataset for the real verification.
 """
 import pytest
-from core.models import Session, Locality, LiceRecord, SSBWeeklyPrice
+from core.models import Session, Locality, LiceRecord
 from sqlalchemy import select, func
 
 

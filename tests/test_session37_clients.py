@@ -13,8 +13,7 @@ from __future__ import annotations
 
 import datetime as dt
 import math
-from dataclasses import asdict
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -549,7 +548,7 @@ class TestNASAPACEImport:
 
     def test_dataclasses_exist(self):
         from core.market.nasa_pace_client import (
-            ChlorophyllReading, HABRiskAssessment, BloomMapPoint,
+            ChlorophyllReading,
         )
         reading = ChlorophyllReading(latitude=60.0, longitude=5.0, date="2026-04-10")
         assert reading.to_dict()["source"] == "NASA_PACE_OCI"

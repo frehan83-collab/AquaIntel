@@ -9,7 +9,6 @@ silently are the most dangerous bug category."
 
 Run with: pytest tests/test_property.py -v
 """
-import math
 from hypothesis import given, settings, assume
 from hypothesis import strategies as st
 
@@ -203,10 +202,6 @@ class TestFeedCostProperties:
     @settings(max_examples=150, deadline=None)
     def test_production_cost_always_positive(self, fishmeal: float, soy: float, wheat: float):
         """Production cost per kg salmon must always be positive."""
-        from core.market.feed_cost_engine import FeedCostEngine
-        engine = FeedCostEngine()
-        # Simulate ingredient prices
-        prices = {"fishmeal": fishmeal, "soy": soy, "wheat": wheat}
         # Feed cost = weighted sum * FCR * ingredient-to-delivered multiplier
         feed_per_kg = sum(
             p * w for p, w in zip(
@@ -238,8 +233,6 @@ class TestFeedCostProperties:
 
     def test_ingredient_weights_sum_approximately(self):
         """Ingredient weights should sum close to 1.0 (they are relative weights)."""
-        from core.market.feed_cost_engine import FeedCostEngine
-        engine = FeedCostEngine()
         weights = {
             "fishmeal": 0.12, "fish_oil": 0.10, "soy": 0.41,
             "rapeseed": 0.20, "wheat": 0.13

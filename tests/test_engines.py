@@ -106,7 +106,7 @@ class TestAnomalyEngine:
         assert report.risk_level in ("LOW", "ELEVATED", "HIGH", "CRITICAL")
 
     def test_to_dict_returns_dict(self):
-        from core.market.anomaly_engine import AnomalyEngine, AnomalyReport
+        from core.market.anomaly_engine import AnomalyEngine
         engine = AnomalyEngine()
         report = run_async(engine.compute())
         result = engine.to_dict(report)
@@ -117,7 +117,7 @@ class TestAnomalyEngine:
     def test_get_alerts_returns_list(self):
         from core.market.anomaly_engine import AnomalyEngine
         engine = AnomalyEngine()
-        report = run_async(engine.compute())
+        run_async(engine.compute())  # populate state for get_alerts
         alerts = engine.get_alerts(min_score=0)
         assert isinstance(alerts, list)
 

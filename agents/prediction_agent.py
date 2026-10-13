@@ -12,7 +12,6 @@ Runs the full tiered prediction pipeline every 15 minutes:
 """
 from __future__ import annotations
 
-import datetime as dt
 
 import numpy as np
 import pandas as pd

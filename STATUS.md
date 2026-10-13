@@ -190,4 +190,30 @@ added `tests/test_migrations.py`.
   Holy-Grail supply–demand flagship → Sprint 4 release/polish). The 11-step
   "delta loop" is the per-change protocol; stop conditions and a run-complete
   checklist are included. Next agent starts at Sprint 0 of RUN-1.
+- 2026-10-13 · **RUN-1 Sprint 0–1 progress:**
+  - Sprint 0 (orientation): clean tree verified; backend boots (327 routes,
+    /api/health 200, v2.2.0); fast smoke green (37 passed).
+  - **R1 DONE (commit 48c743b)** — /market honesty pass: dead Fish Pool
+    surface removed (chart/state/KPI cards/strip entry/tagline); equity
+    bindings fixed (`prices_nok`; the fabricated "+0.00%" change deltas
+    deleted; source caption added); "WoW Change" KPI now real SSB
+    week-over-week; new SALM KPI; MOWI label-escape bug fixed. Gates: full
+    suite 651/13/10/0, tsc + eslint 0 errors, live render all-live KPI row
+    + 0 console errors/404s, independent review clean (no CRITICAL/HIGH;
+    findings applied). Visual: Linux regen via `visual-baselines.yml` came
+    back **byte-identical** — the /market baseline encodes the first-visit
+    wizard overlay (dimmed page below), so no baseline commit was needed.
+  - **R1b (commit pending)** — the ruff ratchet had **drifted (30 violations
+    repo-wide) and was never CI-enforced** despite ruff.toml's "ENFORCED in
+    CI" claim. Cleared all 30 (24 F401 + 6 F841; side-effecting test call
+    kept as bare statement); `test.yml` now runs `uvx ruff check .`.
+    Evidence: `ruff check .` clean; py_compile + agent imports OK;
+    targeted tests over every touched file 217 passed; full suite green.
+  - R1c closed: /futures `<title>` + /market hydration warnings are **not
+    reproducible** (4 dev captures: both pages × fresh/onboarded, all
+    console types — clean); likely resolved incidentally. Reopen only with
+    a reproduction.
+  - Noted for later workstreams: KPICard count-up strips "%" from value
+    strings app-wide (~20 pages) and mis-parses nb-locale "0,29" as 0 →
+    candidate component fix (see CHANGELOG "Noted").
 

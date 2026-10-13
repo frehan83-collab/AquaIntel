@@ -12,10 +12,10 @@ from __future__ import annotations
 
 import datetime as dt
 
-from sqlalchemy import select, func
+from sqlalchemy import select
 
 from agents.base import BaseAgent
-from core.models import AuditLog, Order, PerformanceFee, Signal
+from core.models import AuditLog, Order, PerformanceFee
 from core.async_db import get_async_session
 from config.settings import settings
 

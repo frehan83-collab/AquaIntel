@@ -1,7 +1,6 @@
 """
 Tests for standardized domain errors and global exception handling.
 """
-import pytest
 from starlette.testclient import TestClient
 
 from core.errors import UpstreamUnavailable, ResourceNotFound, ErrorBody

@@ -16,7 +16,6 @@ os.environ["PYTENSOR_FLAGS"] = "device=cpu,floatX=float64,optimizer=fast_compile
 
 import asyncio
 import signal
-import sys
 
 import click
 import structlog

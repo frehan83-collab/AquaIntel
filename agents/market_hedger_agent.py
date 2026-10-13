@@ -19,7 +19,7 @@ import structlog
 from sqlalchemy import select, func
 
 from agents.base import BaseAgent
-from core.models import LiceRecord, Signal, AuditLog, CompanyExposure
+from core.models import LiceRecord, Signal, CompanyExposure
 from core.async_db import get_async_session
 
 log = structlog.get_logger(__name__)

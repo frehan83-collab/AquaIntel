@@ -37,7 +37,12 @@ jobs:
         run: |
           uv pip install --system -r requirements.lock
 
-      # 4. Run the full test suite with coverage
+      # 4. Ruff ratchet (E9/F821/F811/F401/F841) — makes the config's
+      #    "ENFORCED in CI" claim true; rule selection lives in ruff.toml.
+      - name: Ruff ratchet
+        run: uvx ruff check .
+
+      # 5. Run the full test suite with coverage
       - name: Run pytest
         run: |
           pytest tests/ -v --tb=short --cov=core --cov-report=term-missing --cov-fail-under=50

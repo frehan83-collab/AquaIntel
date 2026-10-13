@@ -15,7 +15,7 @@ import datetime as dt
 from dataclasses import dataclass, field
 
 import numpy as np
-from sqlalchemy import select, func
+from sqlalchemy import select
 
 from agents.base import BaseAgent
 from core.models import LiceRecord, CompanyExposure, AuditLog
@@ -85,7 +85,6 @@ class CorrelationEngineAgent(BaseAgent):
             # Get most recent lice records (last 4 weeks)
             now = dt.datetime.now(dt.UTC)
             year, week, _ = now.isocalendar()
-            recent_weeks = [(year, max(1, week - i)) for i in range(4)]
 
             result = await s.execute(
                 select(LiceRecord).where(

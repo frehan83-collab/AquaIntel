@@ -3,6 +3,59 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
+## [Unreleased] — RUN-1 Sprint 1: hygiene & ratchet truth (2026-10-13)
+
+### Fixed (R1 — /market honesty pass)
+- Dead Fish Pool surface removed (feed retired 2025): `FishPoolChart`,
+  `fishPool` state, the "Fish Pool Index" + old "WoW Change" KPI cards (both
+  rendered a permanent "—"), the ticker-strip entry and the header tagline
+  mention ("SSB · Futures · Equity · AIS" now).
+- Equity bindings corrected: `/api/market/equity-prices` returns `prices_nok`
+  (not `prices`) and has **no per-ticker change field** — the MOWI KPI, the
+  ticker strip (SALM/LSG/GSF/BAKKA) and the equity list were permanently
+  empty, and change deltas rendered as fabricated "+0.00%". All consumers now
+  read `prices_nok`; fabricated deltas removed; the equity card surfaces the
+  endpoint's source string ("Yahoo Finance (~15min delay) + SSB fallback").
+- "WoW Change" KPI is now real SSB week-over-week (honest "—" when
+  unavailable; percent shown via KPICard's `unit` prop because its count-up
+  strips "%" from value strings). New "SALM (Lerøy)" KPI. MOWI label
+  escaping bug fixed (JSX attribute strings don't process `\u00f8`).
+- Evidence: live headless run — KPI row all live (WoW +0.29%, MOWI 203.40,
+  SALM 544.00 NOK), 52 seasonal bars, futures card + "SSB synthetic" badge
+  intact, 0 console errors / 0 failed requests; tsc + eslint 0 errors;
+  pytest full suite 651 passed / 13 xfailed / 10 xpassed / 0 failed.
+  Independent review: no CRITICAL/HIGH; its findings applied. Visual note:
+  a fresh Linux regen via `visual-baselines.yml` produced a **byte-identical**
+  `/market` baseline — the committed screenshot encodes the first-visit wizard
+  overlay (visual.spec policy), which dims the page beneath it, so no baseline
+  commit was needed.
+
+### Fixed (R1b — the ruff ratchet had drifted AND was never enforced)
+- Cleared **all 30 ratchet violations** repo-wide (`ruff check .` clean under
+  the E9/F821/F811/F401/F841 selection): 24 unused imports (F401) + 6 dead
+  locals (F841) across `agents/`, `backtest/`, `compliance/`, `dashboard/`,
+  `tests/` and `main.py`. In `tests/test_engines.py` a side-effecting call
+  was kept as a bare statement; the pure dead assignments were deleted.
+- **`test.yml` now actually enforces the ratchet** (`uvx ruff check .`).
+  `ruff.toml` claimed "ENFORCED in CI (must pass)" but no workflow ever ran
+  ruff — which is exactly how the drift accumulated. Dead code cannot
+  silently pile up again.
+- Evidence: `ruff check .` → All checks passed; py_compile on all touched
+  modules; agent import smoke; targeted pytest over every touched test file
+  217 passed / 0 failed; full suite green.
+
+### Noted (candidates for later RUN-1 workstreams)
+- **KPICard count-up quirk**: it parses numeric-looking value strings and
+  drops their adornments — "+0.29%" renders "0.29", and in the `no` locale
+  "0,29" parses to **0** (comma stops parseFloat). ~20 pages pass
+  `%`-suffixed strings to KPICard. A component-level fix (preserve
+  prefix/suffix, locale-aware parse) deserves a dedicated workstream.
+- `/futures` `<title>` children-array and `/market` hydration warnings (R1c):
+  **closed as not-reproducible** — four dev-mode captures (both pages, fresh
+  and onboarded profiles, all console types) are clean on the R1 commit; they
+  were likely resolved incidentally by earlier work. Reopen with a
+  reproduction if they resurface.
+
 ## [Unreleased] — follow-up sweep: /market bindings + frontend CI triggers (2026-10-13, continued)
 
 ### Fixed (documented post-plan follow-ups)

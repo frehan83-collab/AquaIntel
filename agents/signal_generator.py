@@ -11,7 +11,6 @@ Signals are stored in the DB and surfaced on the dashboard for user consent.
 """
 from __future__ import annotations
 
-import datetime as dt
 
 from agents.base import BaseAgent
 from agents.correlation_engine import CorrelationEngineAgent, ImpactScore
@@ -68,8 +67,6 @@ class SignalGeneratorAgent(BaseAgent):
             strength = min(composite / STRONG_SIGNAL, 1.0)
             harvest_red = score.estimated_harvest_reduction_pct
 
-            # Rough price target (simplified model)
-            est_downside_pct = harvest_red * abs(PRICE_IMPACT_PER_PCT) / 100
             rationale = (
                 f"Elevated lice levels detected across {score.n_localities} "
                 f"{ticker} localities. Avg adult female lice: {score.avg_lice:.2f} "

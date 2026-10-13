@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import datetime as dt
 
-from sqlalchemy import select, desc, func, and_
+from sqlalchemy import select, desc, and_
 
 from agents.base import BaseAgent
 from config.settings import settings
