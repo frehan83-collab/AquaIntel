@@ -57,7 +57,10 @@ export default function ChinaDemandPage() {
   useEffect(() => { load(); }, []);
 
   const norExp = snapshot?.norway_exports_to_china || {};
-  const norwayLive = String(norExp.data_source || "").startsWith("LIVE");
+  // Structured liveness contract (review M3): the engine exposes
+  // norway_exports_to_china.is_live keyed on records actually returned —
+  // no more parsing the data_source display string for "LIVE".
+  const norwayLive = norExp.is_live === true;
   const chinaTotal = snapshot?.china_total_imports || {};
   const suppliers = snapshot?.suppliers || [];
   const monthlySeries = snapshot?.monthly_series || [];

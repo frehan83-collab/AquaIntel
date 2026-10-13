@@ -290,6 +290,7 @@ class ChinaDemandEngine:
                 "nok_millions_12m": snap.norway_to_china_nok_millions,
                 "avg_price_nok_kg": snap.norway_to_china_avg_price,
                 "yoy_trend_pct": snap.norway_to_china_trend_pct,
+                "is_live": norway_live,
                 "data_source": (
                     "LIVE — SSB table 08799" if norway_live
                     else "Unavailable — SSB 08799 returned no records"

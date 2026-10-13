@@ -98,6 +98,42 @@ class TestBurstEnforcement:
         assert client.get("/api/health", headers=b).status_code == 200
 
 
+class TestRetryAfterPreservation:
+    """slowapi's stock _inject_headers overwrites route-provided
+    Retry-After values (e.g. the 503 upstream-unavailable envelope's
+    Retry-After: 45) with the rate-limit window reset (~60) and adds a
+    meaningless Retry-After to every 2xx. AppLimiter (core/api.py) keeps
+    the X-RateLimit-* headers but never clobbers Retry-After."""
+
+    def test_no_retry_after_on_successful_responses(self, client):
+        r = client.get("/api/health")
+        assert r.status_code == 200
+        assert "retry-after" not in {k.lower() for k in r.headers}
+        # Observability headers stay
+        assert "x-ratelimit-limit" in {k.lower() for k in r.headers}
+
+    def test_upstream_503_retry_after_preserved(self, client):
+        # The envelope's Retry-After must survive the middleware stack
+        # (regression: slowapi clobbered it with the window reset).
+        from core.errors import UpstreamUnavailable
+
+        @app.get("/api/test-rate-limit-upstream")
+        async def _test_upstream_retry_after():
+            raise UpstreamUnavailable(
+                service="BarentsWatch", detail="timeout", retry_after=45
+            )
+
+        try:
+            r = client.get("/api/test-rate-limit-upstream")
+        finally:
+            app.router.routes = [
+                route for route in app.router.routes
+                if getattr(route, "path", "") != "/api/test-rate-limit-upstream"
+            ]
+        assert r.status_code == 503
+        assert r.headers["retry-after"] == "45"
+
+
 class TestRateLimitKey:
     @staticmethod
     def _request(headers: dict[str, str]) -> Request:

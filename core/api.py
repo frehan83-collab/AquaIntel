@@ -154,7 +154,41 @@ def _dynamic_limit(key: str) -> str:
 # Global default limit per key (override via env for CI / load testing).
 _DEFAULT_RATE_LIMIT = os.environ.get("FISHINTEL_RATE_LIMIT", "200/minute")
 
-limiter = Limiter(
+
+class AppLimiter(Limiter):
+    """Limiter with slowapi's Retry-After clobbering fixed (review H1).
+
+    slowapi's `_inject_headers` OVERWRITES any existing Retry-After on
+    EVERY response — e.g. the 503 upstream-unavailable envelope's
+    `Retry-After: 45` becomes the rate-limit window reset (~60) — and
+    adds a meaningless Retry-After to successful responses. This
+    subclass keeps the X-RateLimit-* observability headers but only
+    sets Retry-After itself when the response has none already AND the
+    allowance is exhausted (429 responses come from the registered
+    exception handler, which sets its own Retry-After).
+    """
+
+    def _inject_headers(self, response, current_limit):
+        if not (self.enabled and self._headers_enabled and current_limit is not None):
+            return response
+        try:
+            window_stats = self.limiter.get_window_stats(
+                current_limit[0], *current_limit[1]
+            )
+            reset_in = 1 + window_stats[0]
+            response.headers["X-RateLimit-Limit"] = str(current_limit[0].amount)
+            response.headers["X-RateLimit-Remaining"] = str(window_stats[1])
+            response.headers["X-RateLimit-Reset"] = str(reset_in)
+            if "Retry-After" not in response.headers and window_stats[1] == 0:
+                response.headers["Retry-After"] = str(reset_in)
+        except Exception:
+            # Header injection must never break a response (same posture
+            # as slowapi's swallow_errors=True for this path).
+            pass
+        return response
+
+
+limiter = AppLimiter(
     key_func=_get_rate_limit_key,
     default_limits=[_DEFAULT_RATE_LIMIT],
     strategy="moving-window",  # sliding window avoids burst-at-boundary

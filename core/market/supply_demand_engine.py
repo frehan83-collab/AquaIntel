@@ -592,8 +592,10 @@ class SupplyDemandEngine:
         out["china_signal_label"] = signals.get("signal_label")
         out["china_yoy_growth_pct"] = signals.get("yoy_growth_pct")
         snap = await china_demand_engine.get_snapshot()
-        norway = (snap or {}).get("norway_exports_to_china") or {}
-        out["china_live_data"] = bool(snap.get("monthly_series")) or bool(norway.get("tonnes_12m"))
+        # Liveness invariant (review M1): keyed on records actually
+        # returned (monthly_series) — never on a rounded tonnage that can
+        # legitimately be 0. Same (snap or {}) guard as the line above.
+        out["china_live_data"] = bool((snap or {}).get("monthly_series"))
         if prices:
             out["export_volume_trend_pct"] = SSBPriceClient.compute_export_volume_trend(prices)
         return out

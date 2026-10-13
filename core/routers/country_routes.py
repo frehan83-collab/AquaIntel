@@ -355,11 +355,12 @@ def _china_provenance(result: dict) -> DataProvenance:
     """Honest provenance for the China demand routes (R10).
 
     LIVE only when the SSB 08799 Norwegian export series actually came
-    through; otherwise the payload is built on curated GACC/Comtrade
-    estimates and must say so instead of claiming live data.
+    through — keyed on records actually returned (``monthly_series``),
+    never on a rounded tonnage that can legitimately be 0. Otherwise the
+    payload is built on curated GACC/Comtrade estimates and must say so
+    instead of claiming live data.
     """
-    norway = (result or {}).get("norway_exports_to_china") or {}
-    if result.get("monthly_series") or norway.get("tonnes_12m"):
+    if (result or {}).get("monthly_series"):
         return DataProvenance.live("SSB 08799 (Norway exports) + customs data", confidence=0.75)
     return DataProvenance.degraded(
         "GACC/Comtrade estimates (SSB 08799 unavailable)",

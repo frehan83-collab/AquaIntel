@@ -135,6 +135,53 @@ def _patch_good_sources(monkeypatch, prices: list) -> None:
     monkeypatch.setattr(sde.SupplyDemandEngine, "_demand_context", staticmethod(fake_demand))
 
 
+class TestDemandContextLiveness:
+    """M1 invariant (review): china_live_data is keyed on records actually
+    returned by the china-demand engine (monthly_series) — never on a
+    rounded tonnes_12m that can legitimately be 0."""
+
+    def test_china_live_data_false_when_only_tonnes_present(self, monkeypatch):
+        from core.market import china_demand as cd
+
+        class _FakeChinaEngine:
+            async def get_demand_signals(self):
+                return {
+                    "signal_score": 0.2,
+                    "signal_label": "Growing Demand",
+                    "yoy_growth_pct": 12.0,
+                }
+
+            async def get_snapshot(self):
+                # Positive rounded tonnage but ZERO records returned
+                return {
+                    "norway_exports_to_china": {"tonnes_12m": 21_000},
+                    "monthly_series": [],
+                }
+
+        monkeypatch.setattr(cd, "china_demand_engine", _FakeChinaEngine())
+        ctx = run_async(sde.SupplyDemandEngine._demand_context(None))
+        assert ctx["china_live_data"] is False
+        assert ctx["china_signal_label"] == "Growing Demand"
+
+    def test_china_live_data_true_when_records_returned(self, monkeypatch):
+        from core.market import china_demand as cd
+
+        class _FakeChinaEngine:
+            async def get_demand_signals(self):
+                return {
+                    "signal_score": 0.2,
+                    "signal_label": "Growing Demand",
+                    "yoy_growth_pct": 12.0,
+                }
+
+            async def get_snapshot(self):
+                return {"monthly_series": [{"month": "2026-01", "tonnes": 1200}]}
+
+        monkeypatch.setattr(cd, "china_demand_engine", _FakeChinaEngine())
+        ctx = run_async(sde.SupplyDemandEngine._demand_context(None))
+        assert ctx["china_live_data"] is True
+
+
 class TestEngineComposition:
     def test_compute_shape_and_forecast(self, monkeypatch):
         _patch_good_sources(monkeypatch, _synthetic_prices(180))

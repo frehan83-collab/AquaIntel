@@ -3,7 +3,7 @@
  * ============================================
  * The page previously printed "Norwegian export figures are shown from
  * curated estimates" in the supplier note and the "Data Sources" footer
- * even while loading or after a total fetch failure â€” i.e. claiming
+ * even while loading or after a total fetch failure — i.e. claiming
  * estimates were shown when nothing was shown at all.
  *
  * These tests pin the honest states:
@@ -21,7 +21,8 @@ const LIVE_SNAPSHOT = {
   norway_exports_to_china: {
     tonnes_12m: 42000,
     yoy_trend_pct: 5.2,
-    data_source: "LIVE â€” SSB table 08799",
+    is_live: true,
+    data_source: "LIVE — SSB table 08799",
   },
   china_total_imports: {
     tonnes_annual: 95000,
@@ -52,6 +53,7 @@ const DEGRADED_SNAPSHOT = {
   norway_exports_to_china: {
     tonnes_12m: 42000,
     yoy_trend_pct: 5.2,
+    is_live: false,
     data_source: "SSB table 08799 unavailable (upstream error)",
   },
   china_total_imports: {
@@ -138,7 +140,7 @@ test("loading: no provenance claims while the snapshot is in flight", async ({ p
   await stubChina(page, { gate });
   await page.goto("/china-demand");
   // While in flight: no provenance claim anywhere, no error banner
-  // (note: not "Data Sources" â€” the global app footer matches that too)
+  // (note: not "Data Sources" — the global app footer matches that too)
   await expect(page.getByText("curated estimates")).toHaveCount(0);
   await expect(page.getByText("The SSB table 08799 series is currently unavailable")).toHaveCount(0);
   await expect(page.getByText("are LIVE from SSB table 08799")).toHaveCount(0);

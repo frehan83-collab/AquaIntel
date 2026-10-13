@@ -27,9 +27,15 @@ class TestChinaProvenanceHelper:
         assert p.is_live is True
         assert p.confidence == 0.75
 
-    def test_live_when_tonnes_present(self):
+    def test_tonnes_without_records_is_degraded(self):
+        # Repinned (review M1): a rounded tonnes_12m alone must NOT flip
+        # the payload to LIVE — liveness is keyed on records actually
+        # returned (monthly_series), never on a rounded tonnage that can
+        # legitimately be 0.
         p = _china_provenance({"norway_exports_to_china": {"tonnes_12m": 21000}})
-        assert p.is_live is True
+        assert p.is_live is False
+        assert p.confidence == 0.5
+        assert p.fallback_reason
 
     def test_degraded_when_series_missing(self):
         p = _china_provenance(
@@ -55,6 +61,20 @@ class TestEngineNestedClaims:
         d = china_demand_engine._format_snapshot(snap)
         assert "LIVE" in d["source"]
         assert d["norway_exports_to_china"]["data_source"].startswith("LIVE")
+
+    def test_norway_is_live_field_keyed_on_records(self):
+        # Structured liveness flag (review M3, additive under schema 1.1):
+        # mirrors the records-based invariant, not the data_source text.
+        live = china_demand_engine._format_snapshot(
+            ChinaDemandSnapshot(
+                norway_monthly_series=[{"month": "2026-01", "tonnes": 1200, "value_mnok": 90.0}]
+            )
+        )
+        assert live["norway_exports_to_china"]["is_live"] is True
+        degraded = china_demand_engine._format_snapshot(
+            ChinaDemandSnapshot(norway_monthly_series=[])
+        )
+        assert degraded["norway_exports_to_china"]["is_live"] is False
 
     def test_supplier_breakdown_downgrades_norway(self):
         suppliers = china_demand_engine._build_supplier_breakdown(

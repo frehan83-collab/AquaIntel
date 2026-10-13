@@ -88,6 +88,45 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 - Visual baselines unaffected (`/china-demand` has no baseline; the
   stubbed-routes pattern matches `visual.spec.ts`).
 
+### Fixed (review M1+M3 — liveness keyed on rounded tonnage, contradicting the documented invariant)
+- `core/routers/country_routes.py::_china_provenance` and
+  `core/market/supply_demand_engine.py::_demand_context`: the
+  `or norway.get("tonnes_12m")` clauses are gone — LIVE/degraded is now
+  keyed exclusively on records actually returned (`monthly_series`),
+  never on a rounded tonnage that can legitimately be 0.
+- `tests/test_china_provenance.py::test_live_when_tonnes_present` repinned
+  to `test_tonnes_without_records_is_degraded` (tonnes alone → degraded).
+- Structured `norway_exports_to_china.is_live` field added to the engine's
+  snapshot (additive under `API_SCHEMA_VERSION` 1.1; mirrors the
+  records-based `norway_live` in `_format_snapshot`), pinned by new engine
+  tests; `docs/openapi.frozen.json` re-frozen — no diff (untyped dict).
+- `frontend/src/app/china-demand/page.tsx` now consumes the structured
+  `is_live` contract instead of parsing the display string
+  (`String(data_source).startsWith("LIVE")`); the e2e honesty stubs carry
+  the new field.
+- New `TestDemandContextLiveness` in `tests/test_supply_demand_engine.py`
+  (fake china engine, no network): tonnes-without-records →
+  `china_live_data: false`; records returned → `true`.
+
+### Fixed (review L1 — inconsistent None-guard; follow-up from M1)
+- `supply_demand_engine._demand_context` now uses the same
+  `(snap or {})` guard as the line above (the `norway` local is gone with
+  the dropped clause).
+
+### Fixed (follow-up to H1 — slowapi clobbered route-provided Retry-After)
+- Discovered by the full-suite CI-equivalent run:
+  slowapi's `_inject_headers` (active because of H1's
+  `headers_enabled=True`) OVERWRITES any existing `Retry-After` on every
+  response — the 503 upstream-unavailable envelope's `Retry-After: 45`
+  came back as the rate-limit window reset (`60`), and 2xx responses got
+  a meaningless `Retry-After`. New `AppLimiter(Limiter)` subclass in
+  `core/api.py` keeps the `X-RateLimit-*` observability headers but only
+  sets `Retry-After` when the response has none already AND the
+  allowance is exhausted (429s come from the exception handler, which
+  sets its own). `tests/test_error_envelope.py` (the failing regression)
+  is green again; new `TestRetryAfterPreservation`
+  (no `Retry-After` on 2xx + 503 envelope value preserved) pins it.
+
 ## [Unreleased] — RUN-1 Sprint 4: R9 release + R10 accessibility/honesty (2026-10-13)
 
 ### Released (R9)
