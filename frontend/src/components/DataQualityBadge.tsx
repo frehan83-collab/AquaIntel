@@ -37,23 +37,30 @@ export default function DataQualityBadge({ quality, source, reason, provenance }
     synthetic: { color: "bg-violet-500", label: "Synthetic", ring: "ring-violet-500/30" },
   };
   const c = config[q];
+  const ariaLabel = `${c.label} data${conf ? `, ${conf} confidence` : ""}${src ? `, source: ${src}` : ""}${note ? `, note: ${note}` : ""}`;
 
   return (
-    <div className="group relative inline-flex items-center gap-1.5">
-      <span className={`w-2 h-2 rounded-full ${c.color} ring-2 ${c.ring}`} />
+    <span
+      className="group relative inline-flex items-center gap-1.5"
+      role="img"
+      aria-label={ariaLabel}
+      title={ariaLabel}
+      tabIndex={0}
+    >
+      <span className={`w-2 h-2 rounded-full ${c.color} ring-2 ${c.ring}`} aria-hidden="true" />
       <span className="text-[10px] text-[var(--text-secondary)]">
         {c.label}{conf && ` · ${conf}`}
       </span>
       {(src || note) && (
-        <div className="absolute bottom-full left-0 mb-1 hidden group-hover:block z-50 w-56 p-2 rounded-md bg-[var(--surface-3)] border border-white/[0.1] text-[10px] text-[var(--text-secondary)] shadow-lg">
-          {src && <div className="mb-0.5">Source: {src}</div>}
-          {conf && <div className="mb-0.5">Confidence: {conf}</div>}
+        <span className="absolute bottom-full left-0 mb-1 hidden group-hover:block group-focus-within:block z-50 w-56 p-2 rounded-md bg-[var(--surface-3)] border border-white/[0.1] text-[10px] text-[var(--text-secondary)] shadow-lg">
+          {src && <span className="block mb-0.5">Source: {src}</span>}
+          {conf && <span className="block mb-0.5">Confidence: {conf}</span>}
           {provenance?.freshness && (
-            <div className="mb-0.5" suppressHydrationWarning>Updated: {new Date(provenance.freshness).toLocaleString()}</div>
+            <span className="block mb-0.5" suppressHydrationWarning>Updated: {new Date(provenance.freshness).toLocaleString()}</span>
           )}
-          {note && <div className="text-amber-400/80">Note: {note}</div>}
-        </div>
+          {note && <span className="block text-amber-400/80">Note: {note}</span>}
+        </span>
       )}
-    </div>
+    </span>
   );
 }

@@ -197,6 +197,7 @@ class ChinaDemandEngine:
 
         norway_tonnes = ssb.get("tonnes_12m", 0)
         norway_share = (norway_tonnes / max(total_imports, 1)) * 100 if total_imports > 0 else 0
+        norway_live = bool(ssb.get("monthly_series"))
 
         snap = ChinaDemandSnapshot(
             norway_to_china_tonnes_12m=norway_tonnes,
@@ -206,7 +207,9 @@ class ChinaDemandEngine:
             norway_monthly_series=ssb.get("monthly_series", []),
             total_china_imports_tonnes=total_imports,
             norway_share_pct=round(norway_share, 1),
-            suppliers=self._build_supplier_breakdown(norway_tonnes, est_year, total_imports),
+            suppliers=self._build_supplier_breakdown(
+                norway_tonnes, est_year, total_imports, norway_live=norway_live
+            ),
         )
 
         self._snapshot = snap
@@ -216,19 +219,27 @@ class ChinaDemandEngine:
 
     def _build_supplier_breakdown(
         self, norway_tonnes: float, est_year: int, total_imports: float,
+        norway_live: bool = True,
     ) -> list[dict]:
-        """Build origin breakdown with Norway LIVE + others estimated."""
+        """Build origin breakdown with Norway LIVE + others estimated.
+
+        `norway_live=False` (SSB returned no records) downgrades the Norway
+        entry to an estimate — never claim LIVE over missing data.
+        """
         origins = CHINA_IMPORT_ESTIMATES["origins"]
         suppliers = []
 
-        # Norway — LIVE from SSB
+        # Norway — LIVE from SSB (or estimate when the series is unavailable)
         suppliers.append({
             "origin": "Norway",
             "flag": "NO",
             "tonnes": norway_tonnes,
             "share_pct": round((norway_tonnes / max(total_imports, 1)) * 100, 1),
-            "data_source": "LIVE (SSB table 08799)",
-            "is_live": True,
+            "data_source": (
+                "LIVE (SSB table 08799)" if norway_live
+                else "Estimate (SSB 08799 returned no records)"
+            ),
+            "is_live": norway_live,
         })
 
         # Other origins — from estimates
@@ -265,15 +276,24 @@ class ChinaDemandEngine:
         return flags.get(origin, "??")
 
     def _format_snapshot(self, snap: ChinaDemandSnapshot) -> dict:
+        # Liveness signal: records actually returned (not a rounded value).
+        norway_live = bool(snap.norway_monthly_series)
         return {
-            "source": "SSB table 08799 (Norway LIVE) + GACC/Comtrade estimates",
+            "source": (
+                "SSB table 08799 (Norway LIVE) + GACC/Comtrade estimates"
+                if norway_live
+                else "GACC/Comtrade estimates (SSB table 08799 unavailable)"
+            ),
             "fetched_at": snap.fetched_at.isoformat(),
             "norway_exports_to_china": {
                 "tonnes_12m": snap.norway_to_china_tonnes_12m,
                 "nok_millions_12m": snap.norway_to_china_nok_millions,
                 "avg_price_nok_kg": snap.norway_to_china_avg_price,
                 "yoy_trend_pct": snap.norway_to_china_trend_pct,
-                "data_source": "LIVE — SSB table 08799",
+                "data_source": (
+                    "LIVE — SSB table 08799" if norway_live
+                    else "Unavailable — SSB 08799 returned no records"
+                ),
             },
             "china_total_imports": {
                 "tonnes_annual": snap.total_china_imports_tonnes,

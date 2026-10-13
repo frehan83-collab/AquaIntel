@@ -3,6 +3,51 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
+## [Unreleased] — RUN-1 Sprint 4: R9 release + R10 accessibility/honesty (2026-10-13)
+
+### Released (R9)
+- `PLATFORM_VERSION` 2.2.0 → 2.3.0; `API_SCHEMA_VERSION` 1.0 → 1.1 (the
+  additive response-contract change from R7, per the policy documented in
+  `core/version.py`); `docs/openapi.frozen.json` re-frozen (2-line diff: the
+  provenance `schema_version` default + `info.version`); `/api/health`
+  verified reporting 2.3.0 locally and green in CI; all CHANGELOG
+  `[Unreleased]` sections folded under the `[2.3.0]` release heading;
+  GitHub release published:
+  https://github.com/frehan83-collab/AquaIntel/releases/tag/v2.3.0
+
+### Changed (R10 — bounded accessibility & honesty slice)
+- `DataQualityBadge` now carries WCAG semantics: `role="status"`,
+  `aria-label` (quality, confidence, source, note) and a `title` fallback for
+  non-hover users — every existing consumer inherits the improvement.
+- Provenance badges added to the `/price-outlook` page (both header variants)
+  and `/china-demand`.
+- **Honesty fix (deep):** the three `/api/china/*` routes returned
+  `DataProvenance.live("SSB + customs data")` even when the SSB 08799 export
+  fetch fails, and the engine's own payload asserted `"LIVE — SSB table
+  08799"` / `is_live: true` in its nested Norway fields (and the
+  `/china-demand` page rendered those claims). All three layers are now
+  honest: the engine downgrades the snapshot (`source`, Norway
+  `data_source`, supplier `is_live`) whenever no export records came back,
+  the routes return `degraded` (confidence 0.5, with the reason), and the
+  page shows "SSB series unavailable — Norway shown from curated
+  estimates". Liveness is keyed on records actually returned
+  (`monthly_series`), never on a rounded tonnage that can legitimately be 0.
+- Coverage audit (reproducible): 26 of 65 page files import
+  `DataQualityBadge` (24 before this slice); the remainder are static /
+  non-data pages (login, privacy, changelog, design-system, …) or noted as
+  future candidates (bloom, causal, exposure, twin, predictions).
+
+### Verified
+- `ruff check` clean; new honesty regression suite `tests/test_china_provenance.py`
+  8 passed (helper logic + engine nested claims + live route both ways);
+  `tests/test_routers.py` + openapi contract green; `tsc --noEmit` 0 errors;
+  eslint 0 errors; live curl of `/api/china/demand` shows the honest degraded
+  provenance. Independent review of this slice applied in full (contradictory
+  nested LIVE claims, `<div>`-in-`<p>` hydration hazard fixed by moving the
+  badge root/tooltip to spans, hover-only tooltip now focusable, false
+  "Degraded" before data arrival removed).
+
+
 ## [2.3.0] — 2026-10-13 — RUN-1 release
 (Everything below under this heading was previously marked [Unreleased]:
 RUN-1 Sprints 1–3 plus the P0–P2 follow-up sweeps.)

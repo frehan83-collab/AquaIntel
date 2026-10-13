@@ -250,7 +250,7 @@ added `tests/test_migrations.py`.
     strings app-wide (~20 pages) and mis-parses nb-locale "0,29" as 0 →
     candidate component fix (see CHANGELOG "Noted").
 
-- 2026-10-13 Â· **RUN-1 Sprint 3 (R7 â€” "Holy Grail" flagship) complete:**
+- 2026-10-13 · **RUN-1 Sprint 3 (R7 â€” "Holy Grail" flagship) complete:**
   - **Engine** â€” new singleton `core/market/supply_demand_engine.py` composing
     smolt pipeline + biomass outlook (MC, seeded) + global supply +
     lice-pressure harvest-delay + China demand + SSB 03024 history into one
@@ -258,7 +258,7 @@ added `tests/test_migrations.py`.
     reversion core (half-life 4w) with **walk-forward residual p10â€“p90
     bands** (~80% measured out-of-sample coverage; in-sample fallback only
     when history is too short for a walk-forward fit). Heuristic overlays
-    labelled NOT-backtested: global supply-deficit tilt (0.5%/pt, cap Â±5%)
+    labelled NOT-backtested: global supply-deficit tilt (0.5%/pt, cap ±5%)
     and lice-delay tilt (cap 2%), ramped in over 4 weeks. The legacy smolt
     `price_pressure` is deliberately NOT used as a tilt (structurally
     â‰ˆ âˆ’80% pipeline coverage â€” a tilt from it would peg constantly, i.e.
@@ -309,5 +309,38 @@ added `tests/test_migrations.py`.
     contract, CHANGELOG [Unreleased] → [2.3.0], `gh release create`,
     `/api/health` verified locally reporting 2.3.0), then R10 if budget
     remains, per `docs/AUTONOMOUS_RUN_PLAN.md`.
+
+
+- 2026-10-13 · **RUN-1 Sprint 4 (R9 release + R10 bounded slice):**
+  - **R9 DONE** â€” `PLATFORM_VERSION` 2.2.0 â†’ **2.3.0**; `API_SCHEMA_VERSION`
+    1.0 â†’ **1.1** (the additive contract change from R7, per the policy in
+    `core/version.py`); frozen OpenAPI re-frozen (2-line diff: provenance
+    `schema_version` default + `info.version`; drift test green);
+    `/api/health` verified locally reporting 2.3.0; CHANGELOG `[Unreleased]`
+    sections folded under `[2.3.0]`; **GitHub release published**:
+    https://github.com/frehan83-collab/AquaIntel/releases/tag/v2.3.0
+    (commit e59aa57; Docker âœ… + Backend Tests âœ… on it, Frontend watched).
+  - **R10 (bounded accessibility/honesty slice)** — `DataQualityBadge` now
+    has WCAG semantics (`role=img` + `aria-label` incl. confidence/source,
+    focusable tooltip, span-based markup avoiding `<div>`-in-`<p>` hydration
+    hazards); provenance badges added to `/price-outlook` (both headers)
+    and `/china-demand`; **honesty fix (deep)**: the `/api/china/*` routes
+    AND the engine's nested Norway claims (source / data_source / supplier
+    is_live) plus the page copy all claimed LIVE while the SSB 08799 export
+    fetch was failing — all three layers now downgrade to estimates
+    (routes: `degraded`, 0.5, with reason; engine: `is_live: false`,
+    "Estimate (SSB 08799 returned no records)"; page: conditional texts).
+    Liveness keyed on records returned (`monthly_series`), never a rounded
+    tonnage. New regression suite `tests/test_china_provenance.py` (8
+    passed). Coverage audit: 26 of 65 page files import the badge (24
+    before); static pages excluded; future candidates noted (bloom, causal,
+    exposure, twin, predictions). Independent review of this slice applied
+    in full (no CRITICAL; all HIGH/MEDIUM findings fixed).
+  - Gates: ruff clean; `test_routers.py` + openapi contract **48 passed**;
+    `tsc` + eslint 0 errors; full suite + CI on this commit to be confirmed
+    in the run summary.
+  - **RUN-1 status: R1â€“R10 all delivered** (R1/R1b/R1c, R5/R6, R7, R9, R10;
+    R8 deliberately deferred per plan â€” budget). Remaining future work
+    tracked in `docs/NEXT_STEPS_PLAN.md` + this log.
 
 

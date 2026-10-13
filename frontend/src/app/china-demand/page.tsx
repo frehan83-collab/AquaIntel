@@ -10,6 +10,7 @@ import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -44,6 +45,7 @@ export default function ChinaDemandPage() {
   useEffect(() => { load(); }, []);
 
   const norExp = snapshot?.norway_exports_to_china || {};
+  const norwayLive = String(norExp.data_source || "").startsWith("LIVE");
   const chinaTotal = snapshot?.china_total_imports || {};
   const suppliers = snapshot?.suppliers || [];
   const monthlySeries = snapshot?.monthly_series || [];
@@ -77,8 +79,9 @@ export default function ChinaDemandPage() {
             <Globe2 className="w-6 h-6 text-ocean-400" />
             {t("nav.china_demand")}
           </h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">
-            Norwegian salmon exports to China &mdash; LIVE SSB data + global market estimates
+          <p className="text-sm text-[var(--text-secondary)] mt-1 flex items-center gap-2">
+            Norwegian salmon exports to China &mdash; SSB series + global market estimates
+            {snapshot?.data_provenance && <DataQualityBadge provenance={snapshot.data_provenance} />}
           </p>
         </div>
         <OcButton variant="secondary" size="sm" onClick={load} loading={loading}
@@ -179,7 +182,10 @@ export default function ChinaDemandPage() {
           )}
           <p className="text-[10px] text-[var(--text-muted)] mt-3 flex items-start gap-1">
             <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
-            Norway data is LIVE from SSB. Other origins are structured estimates from UN Comtrade/GACC.
+            {norwayLive
+              ? "Norway data is LIVE from SSB."
+              : "SSB series unavailable — Norway shown from curated estimates."}{" "}
+            Other origins are structured estimates from UN Comtrade/GACC.
           </p>
         </GlassCard>
 
@@ -409,7 +415,10 @@ export default function ChinaDemandPage() {
 
       {/* Data Source Footer */}
       <div className="text-[10px] text-[var(--text-muted)] p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-        <strong>Data Sources:</strong> Norwegian exports to China are LIVE from SSB table 08799 (Statistics Norway).
+        <strong>Data Sources:</strong>{" "}
+        {norwayLive
+          ? "Norwegian exports to China are LIVE from SSB table 08799 (Statistics Norway)."
+          : "The SSB table 08799 series is currently unavailable; Norwegian export figures are shown from curated estimates."}
         Total Chinese salmon imports and non-Norwegian origin volumes are structured estimates from
         UN Comtrade / GACC, last updated {snapshot?.china_total_imports?.data_source || "Q4 2025"}.
         All growth rates, market shares, and momentum are computed dynamically from the data.

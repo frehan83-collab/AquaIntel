@@ -350,13 +350,31 @@ async def faroe_farms():
 
 # ── China Demand Indicators ───────────────────────────────────────────
 
+
+def _china_provenance(result: dict) -> DataProvenance:
+    """Honest provenance for the China demand routes (R10).
+
+    LIVE only when the SSB 08799 Norwegian export series actually came
+    through; otherwise the payload is built on curated GACC/Comtrade
+    estimates and must say so instead of claiming live data.
+    """
+    norway = (result or {}).get("norway_exports_to_china") or {}
+    if result.get("monthly_series") or norway.get("tonnes_12m"):
+        return DataProvenance.live("SSB 08799 (Norway exports) + customs data", confidence=0.75)
+    return DataProvenance.degraded(
+        "GACC/Comtrade estimates (SSB 08799 unavailable)",
+        reason="live Norwegian export series unavailable — using curated estimates",
+        confidence=0.5,
+    )
+
+
 @router.get("/china/demand")
 async def china_demand_snapshot():
     """China demand snapshot: LIVE Norwegian exports (SSB) + structured global estimates."""
     from core.market.china_demand import china_demand_engine
     result = await china_demand_engine.get_snapshot()
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("SSB + customs data", confidence=0.75).to_dict()
+        result["data_provenance"] = _china_provenance(result).to_dict()
     return result
 
 
@@ -366,7 +384,8 @@ async def china_demand_signals():
     from core.market.china_demand import china_demand_engine
     result = await china_demand_engine.get_demand_signals()
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("SSB + customs data", confidence=0.75).to_dict()
+        snap = await china_demand_engine.get_snapshot()
+        result["data_provenance"] = _china_provenance(snap).to_dict()
     return result
 
 
@@ -376,7 +395,8 @@ async def china_demand_impact():
     from core.market.china_demand import china_demand_engine
     result = await china_demand_engine.get_supply_impact()
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("SSB + customs data", confidence=0.75).to_dict()
+        snap = await china_demand_engine.get_snapshot()
+        result["data_provenance"] = _china_provenance(snap).to_dict()
     return result
 
 

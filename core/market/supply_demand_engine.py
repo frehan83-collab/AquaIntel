@@ -593,7 +593,7 @@ class SupplyDemandEngine:
         out["china_yoy_growth_pct"] = signals.get("yoy_growth_pct")
         snap = await china_demand_engine.get_snapshot()
         norway = (snap or {}).get("norway_exports_to_china") or {}
-        out["china_live_data"] = bool(norway.get("tonnes_12m"))
+        out["china_live_data"] = bool(snap.get("monthly_series")) or bool(norway.get("tonnes_12m"))
         if prices:
             out["export_volume_trend_pct"] = SSBPriceClient.compute_export_volume_trend(prices)
         return out

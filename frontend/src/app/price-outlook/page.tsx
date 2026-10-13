@@ -12,6 +12,7 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
+import DataQualityBadge from "@/components/DataQualityBadge";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -101,8 +102,9 @@ export default function PriceOutlookPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">{t("nav.price_predictions")}</h1>
-            <p className="text-sm text-[var(--text-secondary)] mt-1">
+            <p className="text-sm text-[var(--text-secondary)] mt-1 flex items-center gap-2">
               Salmon spot price forecast driven by biological simulations
+              {outlook?.data_provenance && <DataQualityBadge provenance={outlook.data_provenance} />}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -160,8 +162,9 @@ export default function PriceOutlookPage() {
           <h1 className="text-2xl font-bold tracking-tight">
             {t("nav.price_predictions")}
           </h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">
+          <p className="text-sm text-[var(--text-secondary)] mt-1 flex items-center gap-2">
             ML ensemble forecasting — biological + market signal fusion
+            {outlook?.data_provenance && <DataQualityBadge provenance={outlook.data_provenance} />}
           </p>
         </div>
         <div className="flex items-center gap-3">
