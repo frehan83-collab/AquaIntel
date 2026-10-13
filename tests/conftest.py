@@ -7,6 +7,13 @@ Provides common fixtures used across multiple test files:
   - sample_lice_data: realistic lice record data for unit tests
 """
 import asyncio
+import os
+
+# Disable the production rate limit for the test suite BEFORE core.api is
+# first imported anywhere in the process. The suite makes hundreds of
+# requests from a single TestClient IP; rate-limit enforcement is verified
+# explicitly (with its own strict limiter) in tests/test_rate_limit.py.
+os.environ.setdefault("FISHINTEL_RATE_LIMIT", "100000/minute")
 
 import pytest
 from fastapi.testclient import TestClient

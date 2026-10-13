@@ -43,9 +43,14 @@ jobs:
         run: uvx ruff check .
 
       # 5. Run the full test suite with coverage
+      #    FISHINTEL_RATE_LIMIT: raise the global rate limit for the suite
+      #    (hundreds of requests from one TestClient IP); enforcement is
+      #    verified explicitly in tests/test_rate_limit.py.
       - name: Run pytest
         run: |
           pytest tests/ -v --tb=short --cov=core --cov-report=term-missing --cov-fail-under=50
+        env:
+          FISHINTEL_RATE_LIMIT: 100000/minute
 
       - name: Security audit (pip-audit)
         run: |

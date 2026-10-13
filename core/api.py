@@ -18,6 +18,7 @@ from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy import select, func
 
 from config.settings import settings
@@ -106,6 +107,63 @@ app = FastAPI(
     ],
 )
 
+# ── Tiered Rate Limiting (ENFORCED via SlowAPIMiddleware) ────────────
+# Limits scale by subscription tier. Free tier is generous for evaluation,
+# Pro for active users, Enterprise for production integrations.
+# Reference: Bloomberg Terminal API limits ~10K/hour for enterprise.
+# NOTE: registered before the middleware below so CORS stays outermost
+# (later add_middleware calls wrap earlier ones) — 429 responses then
+# still carry CORS + security headers for browser clients.
+
+def _get_rate_limit_key(request: Request) -> str:
+    """Build rate limit key from user tier + IP.
+
+    Looks for X-API-Key header (API key auth) or JWT tier claim.
+    Falls back to IP-based limiting for unauthenticated requests.
+    """
+    # Check API key tier from header
+    api_key = request.headers.get("X-API-Key", "")
+    if api_key:
+        return f"apikey:{api_key[:16]}"
+    # Check JWT tier
+    auth = request.headers.get("Authorization", "")
+    if auth.startswith("Bearer "):
+        try:
+            from core.auth import decode_token
+            payload = decode_token(auth[7:])
+            return f"user:{payload.user_id}:{payload.tier}"
+        except Exception:
+            pass
+    return get_remote_address(request)
+
+# Tier-based limits (requests per minute)
+TIER_LIMITS = {
+    "free": "100/minute",        # ~1.7 req/sec — evaluation tier
+    "pro": "500/minute",         # ~8.3 req/sec — active farmer/trader
+    "enterprise": "2000/minute", # ~33 req/sec — production integration
+    "admin": "5000/minute",      # internal
+}
+
+def _dynamic_limit(key: str) -> str:
+    """Return rate limit string based on user tier."""
+    for tier, limit in TIER_LIMITS.items():
+        if f":{tier}" in key:
+            return limit
+    return "200/minute"  # default for IP-based
+
+# Global default limit per key (override via env for CI / load testing).
+_DEFAULT_RATE_LIMIT = os.environ.get("FISHINTEL_RATE_LIMIT", "200/minute")
+
+limiter = Limiter(
+    key_func=_get_rate_limit_key,
+    default_limits=[_DEFAULT_RATE_LIMIT],
+    strategy="moving-window",  # sliding window avoids burst-at-boundary
+    headers_enabled=True,      # emit X-RateLimit-* response headers
+)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
+
 _allowed_origins = os.environ.get(
     "FISHINTEL_CORS_ORIGINS",
     "http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:8000,https://fishintel.io,https://app.fishintel.io",
@@ -157,55 +215,6 @@ app.add_middleware(CorrelationIDMiddleware)
 from core.cache_headers import CacheHeadersMiddleware
 
 app.add_middleware(CacheHeadersMiddleware)
-
-# ── Tiered Rate Limiting ─────────────────────────────────────────────
-# Limits scale by subscription tier. Free tier is generous for evaluation,
-# Pro for active users, Enterprise for production integrations.
-# Reference: Bloomberg Terminal API limits ~10K/hour for enterprise.
-
-def _get_rate_limit_key(request: Request) -> str:
-    """Build rate limit key from user tier + IP.
-
-    Looks for X-API-Key header (API key auth) or JWT tier claim.
-    Falls back to IP-based limiting for unauthenticated requests.
-    """
-    # Check API key tier from header
-    api_key = request.headers.get("X-API-Key", "")
-    if api_key:
-        return f"apikey:{api_key[:16]}"
-    # Check JWT tier
-    auth = request.headers.get("Authorization", "")
-    if auth.startswith("Bearer "):
-        try:
-            from core.auth import decode_token
-            payload = decode_token(auth[7:])
-            return f"user:{payload.user_id}:{payload.tier}"
-        except Exception:
-            pass
-    return get_remote_address(request)
-
-# Tier-based limits (requests per minute)
-TIER_LIMITS = {
-    "free": "100/minute",        # ~1.7 req/sec — evaluation tier
-    "pro": "500/minute",         # ~8.3 req/sec — active farmer/trader
-    "enterprise": "2000/minute", # ~33 req/sec — production integration
-    "admin": "5000/minute",      # internal
-}
-
-def _dynamic_limit(key: str) -> str:
-    """Return rate limit string based on user tier."""
-    for tier, limit in TIER_LIMITS.items():
-        if f":{tier}" in key:
-            return limit
-    return "200/minute"  # default for IP-based
-
-limiter = Limiter(
-    key_func=_get_rate_limit_key,
-    default_limits=["200/minute"],
-    strategy="moving-window",  # sliding window avoids burst-at-boundary
-)
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # ── Standardized Domain Error Handlers ─────────────────────────────────────────
 from core.errors import FishIntelError, UpstreamUnavailable, ErrorBody

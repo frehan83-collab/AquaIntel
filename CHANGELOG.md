@@ -3,6 +3,28 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
+## [Unreleased] — post-review hardening session (2026-10-13)
+
+### Fixed (review H1 — rate limiting was configured but never enforced)
+- `core/api.py` now registers `SlowAPIMiddleware`: the `Limiter` (default
+  `200/minute`, moving-window) previously existed alongside the 429
+  handler but was never wired — zero routes were actually limited.
+- The middleware is registered **before** `CORSMiddleware` (later
+  `add_middleware` calls wrap earlier ones), so CORS stays outermost and
+  429 responses still carry CORS + security + correlation headers.
+- `headers_enabled=True`: `X-RateLimit-*` + `Retry-After` are now emitted
+  so API clients can self-throttle.
+- Default limit is env-tunable (`FISHINTEL_RATE_LIMIT`, default
+  `200/minute`) — no code change needed for load testing.
+- New `tests/test_rate_limit.py` (9 tests): middleware-wiring regression
+  net, burst → 429, 429 body + rate-limit headers, 429 keeps outer
+  middleware headers, per-key bucket isolation, `_get_rate_limit_key`
+  bucketing (X-API-Key / bad-Bearer-falls-back-to-IP / anonymous IP).
+- Test-suite/CI safety: `tests/conftest.py` raises the limit before
+  `core.api` import (the suite makes ~240 requests from one TestClient
+  IP); `FISHINTEL_RATE_LIMIT` added to the `test.yml` pytest step and the
+  `frontend.yml` e2e backend. Production default stays 200/minute.
+
 ## [Unreleased] — RUN-1 Sprint 4: R9 release + R10 accessibility/honesty (2026-10-13)
 
 ### Released (R9)

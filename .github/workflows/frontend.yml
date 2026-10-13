@@ -127,6 +127,10 @@ jobs:
       # Grants admin to this email via the FISHINTEL_ADMIN_EMAILS bootstrap
       # path in core/auth.py — the api-contracts admin flow registers it.
       FISHINTEL_ADMIN_EMAILS: ci-admin@fishintel.test
+      # Raise the global rate limit for the e2e backend (the Playwright
+      # specs burst hundreds of requests from 127.0.0.1); production keeps
+      # the 200/minute default from core/api.py.
+      FISHINTEL_RATE_LIMIT: 100000/minute
 
     steps:
       - name: Checkout code
