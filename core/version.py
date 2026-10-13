@@ -9,5 +9,5 @@ Single source of truth for platform versioning.
 """
 from __future__ import annotations
 
-PLATFORM_VERSION = "2.2.0"
-API_SCHEMA_VERSION = "1.0"
+PLATFORM_VERSION = "2.3.0"
+API_SCHEMA_VERSION = "1.1"

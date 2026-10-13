@@ -3,9 +3,13 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
-## [Unreleased] — RUN-1 Sprint 3: R7 integrated supply–demand engine + 2–20w price path (2026-10-13)
+## [2.3.0] — 2026-10-13 — RUN-1 release
+(Everything below under this heading was previously marked [Unreleased]:
+RUN-1 Sprints 1–3 plus the P0–P2 follow-up sweeps.)
 
-### Added (R7 — "Holy Grail" flagship)
+### RUN-1 Sprint 3: R7 integrated supply–demand engine + 2–20w price path (2026-10-13)
+
+#### Added (R7 — "Holy Grail" flagship)
 - `core/market/supply_demand_engine.py`: singleton engine composing the smolt
   pipeline (Norway supply + baseline demand), biomass outlook (Monte Carlo,
   seeded), global supply (Chile/Scotland/Faroe), lice pressure → harvest-delay
@@ -42,7 +46,7 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   deterministic, no network/DB — including an H2 regression guard that
   horizons are referenced to the latest published week.
 
-### Fixed (independent review — all findings applied)
+#### Fixed (independent review — all findings applied)
 - **H1 (evidence provenance):** silent sub-engine degradation can no longer be
   advertised as live — `_safe` wraps every source (sync *and* async), biomass
   and global supply raise when they have no real result/anchor, and the China
@@ -63,7 +67,7 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   labelled with its source model, padStart/spot-week rendering consistency,
   stale comments removed.
 
-### Verified
+#### Verified
 - `ruff check` clean; authoritative suite (`pytest tests/`, CI-equivalent)
   **663 passed / 13 xfailed / 10 xpassed / 0 failed (231.31 s)**; `tsc --noEmit`
   and eslint 0 errors; `next build` compiled; live curl of the running route
@@ -71,9 +75,9 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   Playwright api-contracts assertion added so CI's e2e-backend proves the
   additive contract server-side on every run.
 
-## [Unreleased] — RUN-1 Sprint 2: P0-2 closed, lice read-index shipped (2026-10-13)
+### RUN-1 Sprint 2: P0-2 closed, lice read-index shipped (2026-10-13)
 
-### Closed (R5 — DuckDB P0-2, cross-platform evidence)
+#### Closed (R5 — DuckDB P0-2, cross-platform evidence)
 - Built `scripts/bench_lice_read.py`: the exact four `/api/lice/summary` queries
   vs DuckDB `sqlite_scanner` ATTACH vs extension-free row-loading; identical
   summaries enforced across candidates (`match=true`).
@@ -88,7 +92,7 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   extension blocker did not reproduce today, so the decision no longer
   depends on it. Full closure write-up in `docs/NEXT_STEPS_PLAN.md` §P0-2.
 
-### Fixed (R6 — the real read-path cost: a missing index)
+#### Fixed (R6 — the real read-path cost: a missing index)
 - `/api/lice/summary` filters `lice_records` by `(year, week)` with **no index
   for those columns** (the only index leads with `locality_no`) → **three full
   scans** of 186k rows + a temp b-tree sort per read.
@@ -100,16 +104,16 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   ~25 s) is a cold-cache EXTERNAL fetch — measured **25,695 ms cold → 9 ms
   warm** with the existing `@cached(ttl=900)`; network-bound, no DB fix.
 
-### Verified
+#### Verified
 - `tests/test_migrations.py` green (fresh-DB `alembic upgrade head` incl. 015,
   plus a new assertion that `ix_lice_year_week` exists after the chain);
   `ruff check .` clean; py_compile on touched modules; full pytest suite
   **652 passed / 13 xfailed / 10 xpassed / 0 failed (231.39 s)**;
   frontend untouched.
 
-## [Unreleased] — RUN-1 Sprint 1: hygiene & ratchet truth (2026-10-13)
+### RUN-1 Sprint 1: hygiene & ratchet truth (2026-10-13)
 
-### Fixed (R1 — /market honesty pass)
+#### Fixed (R1 — /market honesty pass)
 - Dead Fish Pool surface removed (feed retired 2025): `FishPoolChart`,
   `fishPool` state, the "Fish Pool Index" + old "WoW Change" KPI cards (both
   rendered a permanent "—"), the ticker-strip entry and the header tagline
@@ -134,7 +138,7 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   overlay (visual.spec policy), which dims the page beneath it, so no baseline
   commit was needed.
 
-### Fixed (R1b — the ruff ratchet had drifted AND was never enforced)
+#### Fixed (R1b — the ruff ratchet had drifted AND was never enforced)
 - Cleared **all 30 ratchet violations** repo-wide (`ruff check .` clean under
   the E9/F821/F811/F401/F841 selection): 24 unused imports (F401) + 6 dead
   locals (F841) across `agents/`, `backtest/`, `compliance/`, `dashboard/`,
@@ -148,7 +152,7 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   modules; agent import smoke; targeted pytest over every touched test file
   217 passed / 0 failed; full suite green.
 
-### Noted (candidates for later RUN-1 workstreams)
+#### Noted (candidates for later RUN-1 workstreams)
 - **KPICard count-up quirk**: it parses numeric-looking value strings and
   drops their adornments — "+0.29%" renders "0.29", and in the `no` locale
   "0,29" parses to **0** (comma stops parseFloat). ~20 pages pass
@@ -160,9 +164,9 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   were likely resolved incidentally by earlier work. Reopen with a
   reproduction if they resurface.
 
-## [Unreleased] — follow-up sweep: /market bindings + frontend CI triggers (2026-10-13, continued)
+### follow-up sweep: /market bindings + frontend CI triggers (2026-10-13, continued)
 
-### Fixed (documented post-plan follow-ups)
+#### Fixed (documented post-plan follow-ups)
 - **`/market` seasonal card** bound `.data` from `/api/market/ssb-seasonal`,
   but the endpoint returns `.seasonal_pattern` (week → median dict) → the card
   showed a permanent loading shimmer. Now maps the dict (keys are ISO week
@@ -194,7 +198,7 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `macro_intelligence.FRED_SERIES` registry; failures render "—" with a
   "FRED series unavailable" note.
 
-### Changed (review hardening)
+#### Changed (review hardening)
 - Seasonal card heading relabelled "Weekly Average" → **"Weekly Median"**
   (`market.weekly_avg`, only consumer) — it plots the medians the footer now
   also names.
@@ -203,7 +207,7 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   payload without flags can never be presented as live Fish Pool forwards);
   the `curve` mapping is `Array.isArray`-guarded.
 
-### Changed (CI)
+#### Changed (CI)
 - `frontend.yml` path filters now also trigger on the backend surfaces the
   `e2e-backend` job boots against (`core/**`, `agents/**`, `config/**`,
   `alembic*`, `main.py`, dependency manifests, `scripts/ci_bootstrap_db.py`,
@@ -211,7 +215,7 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   changes previously skipped the backend-backed e2e entirely (documented P0-1
   follow-up).
 
-### Verified
+#### Verified
 - Live local rig (uvicorn + `next dev` + headless chromium on /market and
   /investor): 52/52 seasonal bars from the real SSB medians ("Weekly Median",
   footer "(2020-2026)"), forward-curve chart + KPI strip render with an honest
@@ -220,9 +224,9 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 - `npx tsc --noEmit` 0 errors; eslint 0 errors (warnings tolerated);
   pytest **651 passed / 13 xfailed / 10 xpassed / 0 failed** (253 s).
 
-## [Unreleased] — P1-5/P1-6/P1-7 audits (2026-10-13, continued)
+### P1-5/P1-6/P1-7 audits (2026-10-13, continued)
 
-### Changed (P1-5 — test hygiene)
+#### Changed (P1-5 — test hygiene)
 - **Removed 12 stale `xfail` markers** from `tests/test_api_routes.py`: the 11
   "Dev SQLite may lack Alembic migration 00X…" schema-lag guards (obsolete since
   the migrations-first bootstrap everywhere — they XPASS on both dev and
@@ -234,7 +238,7 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 - Full suite evidence: **639 passed, 13 xfailed, 22 xpassed, 0 failed** on
   Windows/Python 3.14.
 
-### Verified (P1-6 / P1-7 — audits, no code changes)
+#### Verified (P1-6 / P1-7 — audits, no code changes)
 - P1-6: `docker-compose.yml` already ships the `fishintel-agents` service
   (`--agents-only`, SIGTERM-graceful); fresh-DB `alembic upgrade head` validated
   in three places (ci_bootstrap, container entrypoint — verified live — and
@@ -243,9 +247,9 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   ocean-forecast→lice decision wiring; computed ESG scores; AIS harvest
   intelligence with 72h signals).
 
-## [Unreleased] — P0-3 + P0-4: instant lock extension & uv adoption (2026-10-13)
+### P0-3 + P0-4: instant lock extension & uv adoption (2026-10-13)
 
-### Added (P0-4 — uv adoption, Python pinned to 3.12)
+#### Added (P0-4 — uv adoption, Python pinned to 3.12)
 - **`pyproject.toml`** — single dependency manifest (mirrors requirements.txt;
   optional `models` extra mirrors requirements-models.txt) with the explicit
   **Python 3.12 pin** decision (`requires-python = ">=3.12,<3.13"`,
@@ -259,7 +263,7 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   the lock via `uv` (`astral-sh/setup-uv@v5` / `ghcr.io/astral-sh/uv:0.10`);
   `requirements.txt` remains for Windows dev without uv.
 
-### Changed (P0-3 — instant-navigation lock extended, wired into CI)
+#### Changed (P0-3 — instant-navigation lock extended, wired into CI)
 - `e2e/instant.spec.ts` now locks **11 routes** (added /brief, /farmer-daily,
   /disease, /leaders, /futures, /feed-cost, /global-supply, /notifications) —
   11/11 green on the prod rig; the rig runs blocking in the `e2e-backend` job.
@@ -273,9 +277,9 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   extension-free variant measured ~5× slower (220 ms vs 47 ms) than the
   current query path. See docs/NEXT_STEPS_PLAN.md P0-2.
 
-## [Unreleased] — P0-1 backend-backed e2e (2026-10-13)
+### P0-1 backend-backed e2e (2026-10-13)
 
-### Added
+#### Added
 - **`e2e-backend` CI job** (`frontend.yml`): spins a fresh seeded SQLite DB
   (`scripts/ci_bootstrap_db.py`) + uvicorn on :8000, then runs the API contract/
   integration specs and the app specs (navigation, golden-path, interactions)
@@ -286,7 +290,7 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `openclaw_tour_completed`; the first-visit wizard otherwise intercepts pointer
   events on every fresh browser profile). Visual baselines intentionally unaffected.
 
-### Fixed
+#### Fixed
 - **`price_feed_hub._get_ssb_prices`** called non-existent
   `ssb_client.get_latest_prices` (import error) → `/api/futures/forward-curve`
   returned an empty curve forever. Now uses
@@ -319,22 +323,22 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   mixed CSS+text click, strict-mode `text=Disease`, PDF-by-text) replaced with
   role/a11y-contract locators; URL race → `toHaveURL()` auto-retry.
 
-## [Unreleased] — Session 41e (2026-10-12, autonomous run, continued)
+### Session 41e (2026-10-12, autonomous run, continued)
 
-### Added
+#### Added
 - **Blocking visual regression in frontend.yml** with Linux baselines for
   chromium AND mobile (Pixel 5); backend-free e2e scoped separately;
   visual-baselines workflow generates/verifies all projects.
 
-### Fixed
+#### Fixed
 - CI step order: Playwright runs before 
 pm run build (the documented
   .next collision corrupts dev assets); dev-server port pinned via
   webServer env; workflow_dispatch added to both frontend workflows.
 
-## [Unreleased] — Session 41d (2026-10-12, autonomous run, continued)
+### Session 41d (2026-10-12, autonomous run, continued)
 
-### Added
+#### Added
 - **Linux visual baselines** (CI-generated + committed): `visual-baselines.yml`
   workflow_dispatch (update/verify modes, ubuntu + Node 22 + chromium);
   artifact-downloaded `*-chromium-linux.png` snapshots committed; verify run
@@ -345,13 +349,13 @@ pm run build (the documented
 - `partialPrefetching: true` — App-Shell prefetch model enabled (skill's
   post-adoption step), verified by instant guard 3/3 + visual baselines 4/4.
 
-### Fixed
+#### Fixed
 - Playwright webServer port: `env: { PORT: 3001 }` pins the dev server
   cross-platform (CI previously timed out on :3000 vs :3001) + 120 s timeout.
 
-## [Unreleased] — Session 41c (2026-10-12, autonomous run, continued)
+### Session 41c (2026-10-12, autonomous run, continued)
 
-### Added
+#### Added
 - **Instant-navigation regression guard** (`e2e/instant.spec.ts` +
   `playwright.instant.config.ts`; `@next/playwright@16.4.0`): prod-rig
   `instant()` lock around initial loads of `/`, `/market`, `/traffic-light`;
@@ -365,7 +369,7 @@ pm run build (the documented
 - **ruff CI gate** (`ruff.toml`: E9/F821/F811/F401) + `tests/test_module_imports.py`
   ratchet (every `core/` module must import; empty allowlist).
 
-### Fixed
+#### Fixed
 - `_rule_based_chat_response` NameError — the LICE and SIGNAL chat answer
   branches called an unimported `get_async_session()` (found by ruff F821).
 - `core/models.py` missing `asyncio` import; `admin_routes` missing
@@ -377,9 +381,9 @@ pm run build (the documented
   `ShortTermForecast` -> real `StageForcast`).
 - 128 unused imports removed (F401), 6 availability probes annotated.
 
-## [Unreleased] — Session 41b (2026-10-12, autonomous run, continued)
+### Session 41b (2026-10-12, autonomous run, continued)
 
-### Added
+#### Added
 - **Tailwind 4.3 migration** (visually verified): `@tailwindcss/postcss`,
   `@import "tailwindcss"` + `@config` compat, v3 border-color base layer,
   class-token renames (outline-hidden ×62, rounded-xs ×12, shadow-xs ×8,
@@ -389,14 +393,14 @@ pm run build (the documented
 - `.gitignore`: repaired corrupted UTF-16 tail; ignore frontend run artifacts;
   untracked generated root `openapi.json`.
 
-### Changed
+#### Changed
 - `visual-regression` skill: Session-41 war stories (baseline-first, dry-run
   renames, dev-server/build collision, separate commits for baselines vs
   migration).
 
-## [Unreleased] — Session 41 (2026-10-12, autonomous run)
+### Session 41 (2026-10-12, autonomous run)
 
-### Added
+#### Added
 - **Next.js 16.4 upgrade** (Turbopack builds, 68/68 routes) + ESLint 9 flat
   config (eslint-config-next@16 native arrays); CI frontend job now runs
   `tsc --noEmit` + `lint` on Node 22.
@@ -414,13 +418,13 @@ pm run build (the documented
   (all `/api/**` stubbed) — the gate for the Tailwind 4 migration.
 - `docs/AUTONOMOUS_PROGRESS.md` — full session log and next priorities.
 
-### Changed
+#### Changed
 - CI: Frontend Build added type-check + lint steps; Node 20 → 22 LTS.
 - Generated TS client regenerated for 326 routes; eslint baseline 0 errors.
 
-## [Unreleased] — Session 40 (2026-10-12)
+### Session 40 (2026-10-12)
 
-### Added
+#### Added
 - **CI is green for the first time**: Backend Tests + Docker Build both pass on
   `master`. The trigger fix (main→master), dependency split, build-time DB
   bootstrapping, fastapi pinning and the metrics-path fix are all in this list;
@@ -451,7 +455,7 @@ pm run build (the documented
 - Research: `docs/summit/REPORT_SATELLITE.md` (verified quotas + cost path),
   `REPORT_STACK.md` (2026 versions), `docs/raw/` source captures.
 
-### Fixed
+#### Fixed
 - Missing-await bug class burn-down: biomass outlook/scenarios (+ scenario
   cache-key collision), GNN training data, LLM farm-network tool, federated
   benchmark (endpoints were fully dead), pairs engine overlay chain, ESG getters,
@@ -473,7 +477,7 @@ pm run build (the documented
   `/api/metrics` single-owner (Prometheus text moved to `/api/metrics/prometheus`).
 - Docker entrypoint LF-normalized; `.gitattributes` already enforces this.
 
-### Changed
+#### Changed
 - `PROJECT_STATUS.md` stats refreshed; version literals centralized.
 - `.mcp.json` project config (firecrawl/playwright/context7/planet-docs).
 

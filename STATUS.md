@@ -298,7 +298,16 @@ added `tests/test_migrations.py`.
   - Gates: ruff clean; new engine tests 11/11 (offline, deterministic);
     route + openapi-contract tests green; `tsc` + eslint 0 errors;
     `next build` compiled; full suite 663 passed / 13 xfailed / 10 xpassed / 0 failed (231.31 s).
-  - **Next: CI watch (3 workflows) â†’ Sprint 4 (R9 version bump 2.2.0 â†’
-    2.3.0 + GitHub release, then R10) per `docs/AUTONOMOUS_RUN_PLAN.md`.**
+  - **CI (a456747): all three workflows green** — Docker Build ✅;
+    Backend Tests ✅ (ruff ratchet + full suite); Frontend Build ✅
+    (build job incl. type check / lint / visual regression against the
+    unchanged baselines + **e2e-backend on a fresh DB**: API-contract specs
+    — including the new live additive-contract assertion — app specs and
+    the instant rig all passed).
+  - **R7 is CI-PROVEN.** Next: **R9 release** (executed: PLATFORM_VERSION
+    2.2.0 → 2.3.0, API_SCHEMA_VERSION 1.0 → 1.1 for the additive
+    contract, CHANGELOG [Unreleased] → [2.3.0], `gh release create`,
+    `/api/health` verified locally reporting 2.3.0), then R10 if budget
+    remains, per `docs/AUTONOMOUS_RUN_PLAN.md`.
 
 
