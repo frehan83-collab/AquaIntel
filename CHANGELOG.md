@@ -113,6 +113,17 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Fixed (review M7 + L2 — stale CHANGELOG claim + dead code)
+- CHANGELOG R10 entry corrected: the badge ships `role="img"` (not
+  `role="status"`) and the `title` fallback was removed in the M4 fix —
+  annotated as a dated correction instead of silently rewriting history.
+- `ChinaDemandEngine.get_top_suppliers` deleted (dead code, zero callers;
+  the supplier breakdown is already part of `get_snapshot` via
+  `/api/china/demand`).
+- `get_supply_impact` docstring no longer claims "Uses LIVE SSB price
+  data" unconditionally — it documents the degraded paths and that
+  honest provenance is attached by the route layer.
+
 ### Fixed (review M5 — degraded snapshots pinned the platform for the full TTL)
 - `ChinaDemandEngine.get_snapshot` split into a cache probe
   (`_cached_snapshot_if_fresh`) + `_fetch_snapshot_locked`:
@@ -195,9 +206,13 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   https://github.com/frehan83-collab/AquaIntel/releases/tag/v2.3.0
 
 ### Changed (R10 — bounded accessibility & honesty slice)
-- `DataQualityBadge` now carries WCAG semantics: `role="status"`,
-  `aria-label` (quality, confidence, source, note) and a `title` fallback for
-  non-hover users — every existing consumer inherits the improvement.
+- `DataQualityBadge` now carries WCAG semantics: `role="img"` with an
+  `aria-label` (quality, confidence, source, note) — every existing
+  consumer inherits the improvement. (Correction, 2026-10-13: this entry
+  originally said `role="status"` plus a `title` fallback; the shipped
+  implementation used `role="img"`, and the title fallback was later
+  removed as a duplicate tooltip in the M4 fix — see the post-review
+  session entry at the top of this file.)
 - Provenance badges added to the `/price-outlook` page (both header variants)
   and `/china-demand`.
 - **Honesty fix (deep):** the three `/api/china/*` routes returned

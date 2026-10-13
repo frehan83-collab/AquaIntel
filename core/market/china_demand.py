@@ -493,7 +493,13 @@ class ChinaDemandEngine:
     async def get_supply_impact(self) -> dict:
         """
         How China demand growth correlates with Norwegian spot price.
-        Uses LIVE SSB price data + export volume data.
+
+        Computed from the SSB export series and SSB price data. The
+        export series can be live or degraded (no records returned) and
+        the price data can fall back — this method does not claim
+        liveness itself; the route layer attaches honest provenance
+        (country_routes._china_provenance), which is degraded whenever
+        the export series is unavailable.
         """
         snap = await self.get_snapshot()
         signals = await self.get_demand_signals()
@@ -609,20 +615,9 @@ class ChinaDemandEngine:
             log.warning("china_demand.price_fetch_error", error=str(e)[:80])
             return []
 
-    async def get_top_suppliers(self) -> dict:
-        """Origin breakdown — Norway LIVE, others estimated."""
-        snap = await self.get_snapshot()
-        return {
-            "suppliers": snap.get("suppliers", []),
-            "total_china_imports_tonnes": snap.get("china_total_imports", {}).get("tonnes_annual", 0),
-            "estimate_year": self._get_latest_estimate_year(),
-            "notes": (
-                "Norway data is LIVE from SSB table 08799. "
-                "All other origins are structured estimates from "
-                f"{CHINA_IMPORT_ESTIMATES['meta']['source']}, "
-                f"last updated {CHINA_IMPORT_ESTIMATES['meta']['last_updated']}."
-            ),
-        }
+    # NOTE (review L2): get_top_suppliers was removed — dead code with zero
+    # callers (the supplier breakdown is already part of get_snapshot and
+    # served via /api/china/demand).
 
 
 # Singleton
