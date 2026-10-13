@@ -358,14 +358,18 @@ def _china_provenance(result: dict) -> DataProvenance:
     through — keyed on records actually returned (``monthly_series``),
     never on a rounded tonnage that can legitimately be 0. Otherwise the
     payload is built on curated GACC/Comtrade estimates and must say so
-    instead of claiming live data.
+    instead of claiming live data. Uses the shared records-based helper
+    (review L4).
     """
-    if (result or {}).get("monthly_series"):
-        return DataProvenance.live("SSB 08799 (Norway exports) + customs data", confidence=0.75)
-    return DataProvenance.degraded(
-        "GACC/Comtrade estimates (SSB 08799 unavailable)",
+    from core.market.data_provenance import from_records
+
+    return from_records(
+        (result or {}).get("monthly_series"),
+        live_source="SSB 08799 (Norway exports) + customs data",
+        degraded_source="GACC/Comtrade estimates (SSB 08799 unavailable)",
         reason="live Norwegian export series unavailable — using curated estimates",
-        confidence=0.5,
+        live_confidence=0.75,
+        degraded_confidence=0.5,
     )
 
 

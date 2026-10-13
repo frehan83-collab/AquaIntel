@@ -87,3 +87,30 @@ class DataProvenance:
                 confidence=0.3,
             )
         return DataProvenance.live(source, confidence=confidence)
+
+
+def from_records(
+    records,
+    *,
+    live_source: str,
+    degraded_source: str,
+    reason: str,
+    live_confidence: float = 0.75,
+    degraded_confidence: float = 0.5,
+) -> DataProvenance:
+    """Shared liveness helper keyed on records ACTUALLY returned (review L4).
+
+    The R10/M1 invariant as a reusable primitive: provenance is live only
+    when the upstream returned raw records — never on derived/rounded
+    values that can legitimately be 0 (e.g. a rounded tonnes figure).
+    Domains with the same "records or estimates" shape should use this
+    instead of pasting `DataProvenance.live(...)` at each call site.
+
+    See tests/test_provenance_contract.py — a degraded payload must not
+    contain "LIVE" claims anywhere (nested engine fields included).
+    """
+    if records:
+        return DataProvenance.live(live_source, confidence=live_confidence)
+    return DataProvenance.degraded(
+        degraded_source, reason=reason, confidence=degraded_confidence
+    )

@@ -113,6 +113,25 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Added (review L4 — provenance contract net for the R10 bug class)
+- Shared records-based provenance helper
+  `core.market.data_provenance.from_records(records, ...)`: live only
+  when raw records were actually returned (never on derived/rounded
+  values that can legitimately be 0) — `_china_provenance` is the first
+  consumer; future domains with the same "records or estimates" shape
+  should reuse it instead of pasting `DataProvenance.live(...)`.
+- New `tests/test_provenance_contract.py` (8 tests): recursive payload
+  walker that FAILS whenever a payload with `is_live: false` contains a
+  "LIVE" string anywhere — pinned on the degraded engine snapshot, the
+  degraded supplier-breakdown rows, and all three degraded
+  `/api/china/*` route payloads (the R10 bug left nested engine claims
+  asserting LIVE while the route said degraded) — plus the helper's
+  live/degraded/None semantics.
+
+### Fixed (review L6 — docs/PLATFORM_STATUS.md was UTF-16)
+- Renormalized to UTF-8 (no BOM, LF endings; 24,862 → 12,658 bytes) so
+  grep/diff tooling works on it. Content unchanged.
+
 ### Fixed (review M7 + L2 — stale CHANGELOG claim + dead code)
 - CHANGELOG R10 entry corrected: the badge ships `role="img"` (not
   `role="status"`) and the `title` fallback was removed in the M4 fix —
