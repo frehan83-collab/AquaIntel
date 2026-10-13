@@ -117,3 +117,118 @@ class TestChinaRouteHonesty:
         r = client.get("/api/china/demand")
         assert r.status_code == 200
         assert r.json()["data_provenance"]["is_live"] is True
+
+
+class TestChinaSubrouteHonesty:
+    """Review M2: the demand-signals and demand-impact sub-routes share
+    the snapshot-derived provenance and need degraded + live coverage of
+    their own (the snapshot route alone did not pin them)."""
+
+    @staticmethod
+    def _degraded_snapshot() -> dict:
+        return {
+            "source": "GACC/Comtrade estimates (SSB table 08799 unavailable)",
+            "norway_exports_to_china": {
+                "tonnes_12m": 0,
+                "is_live": False,
+                "data_source": "Unavailable — SSB 08799 returned no records",
+            },
+            "monthly_series": [],
+        }
+
+    @staticmethod
+    def _live_snapshot() -> dict:
+        return {
+            "source": "SSB table 08799 (Norway LIVE) + GACC/Comtrade estimates",
+            "norway_exports_to_china": {
+                "tonnes_12m": 21000,
+                "is_live": True,
+            },
+            "monthly_series": [{"month": "2026-01", "tonnes": 1200}],
+        }
+
+    # ── /api/china/demand-signals ────────────────────────────────────
+    def test_signals_route_degraded_when_ssb_fails(self, client, monkeypatch):
+        async def fake_snapshot() -> dict:
+            return self._degraded_snapshot()
+
+        async def fake_signals() -> dict:
+            return {
+                "signal_score": 0.42,
+                "signal_label": "Neutral",
+                "signal_direction": "neutral",
+                "momentum_chart": [],
+                "insights": [],
+            }
+
+        monkeypatch.setattr(china_demand_engine, "get_snapshot", fake_snapshot)
+        monkeypatch.setattr(china_demand_engine, "get_demand_signals", fake_signals)
+        r = client.get("/api/china/demand-signals")
+        assert r.status_code == 200
+        body = r.json()
+        # Payload passes through
+        assert body["signal_score"] == 0.42
+        assert body["signal_label"] == "Neutral"
+        # Provenance honestly degrades with the snapshot
+        prov = body["data_provenance"]
+        assert prov["is_live"] is False
+        assert prov["confidence"] == 0.5
+        assert prov["fallback_reason"]
+
+    def test_signals_route_live_when_series_present(self, client, monkeypatch):
+        async def fake_snapshot() -> dict:
+            return self._live_snapshot()
+
+        async def fake_signals() -> dict:
+            return {"signal_score": 0.8, "signal_label": "Growing Demand"}
+
+        monkeypatch.setattr(china_demand_engine, "get_snapshot", fake_snapshot)
+        monkeypatch.setattr(china_demand_engine, "get_demand_signals", fake_signals)
+        r = client.get("/api/china/demand-signals")
+        assert r.status_code == 200
+        body = r.json()
+        assert body["signal_label"] == "Growing Demand"
+        assert body["data_provenance"]["is_live"] is True
+        assert body["data_provenance"]["confidence"] == 0.75
+
+    # ── /api/china/demand-impact ─────────────────────────────────────
+    def test_impact_route_degraded_when_ssb_fails(self, client, monkeypatch):
+        async def fake_snapshot() -> dict:
+            return self._degraded_snapshot()
+
+        async def fake_impact() -> dict:
+            return {
+                "impact_label": "Neutral",
+                "estimated_price_impact_pct": 0.0,
+                "correlation": 0.1,
+            }
+
+        monkeypatch.setattr(china_demand_engine, "get_snapshot", fake_snapshot)
+        monkeypatch.setattr(china_demand_engine, "get_supply_impact", fake_impact)
+        r = client.get("/api/china/demand-impact")
+        assert r.status_code == 200
+        body = r.json()
+        assert body["impact_label"] == "Neutral"
+        prov = body["data_provenance"]
+        assert prov["is_live"] is False
+        assert prov["confidence"] == 0.5
+        assert prov["fallback_reason"]
+
+    def test_impact_route_live_when_series_present(self, client, monkeypatch):
+        async def fake_snapshot() -> dict:
+            return self._live_snapshot()
+
+        async def fake_impact() -> dict:
+            return {
+                "impact_label": "Upward pressure",
+                "estimated_price_impact_pct": 3.2,
+            }
+
+        monkeypatch.setattr(china_demand_engine, "get_snapshot", fake_snapshot)
+        monkeypatch.setattr(china_demand_engine, "get_supply_impact", fake_impact)
+        r = client.get("/api/china/demand-impact")
+        assert r.status_code == 200
+        body = r.json()
+        assert body["impact_label"] == "Upward pressure"
+        assert body["data_provenance"]["is_live"] is True
+        assert body["data_provenance"]["confidence"] == 0.75

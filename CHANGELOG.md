@@ -113,6 +113,14 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Added (review M2 — untested china sub-routes)
+- `tests/test_china_provenance.py` now covers
+  `/api/china/demand-signals` and `/api/china/demand-impact` with both
+  degraded (SSB 08799 fails → `is_live: false`, confidence 0.5,
+  `fallback_reason`, payload passes through) and live (records returned →
+  `is_live: true`, confidence 0.75) states — previously only the
+  `/api/china/demand` snapshot route was pinned.
+
 ### Fixed (follow-up to H1 — slowapi clobbered route-provided Retry-After)
 - Discovered by the full-suite CI-equivalent run:
   slowapi's `_inject_headers` (active because of H1's
