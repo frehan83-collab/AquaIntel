@@ -346,6 +346,13 @@ def check_tier_access(user: TokenPayload | None, path: str) -> bool:
     """
     Check if user's tier allows access to a given API path.
     None user = free tier.
+
+    NOT yet wired into request handling: route-level tier gating is not
+    enforced (the public site is intentionally browsable anonymously);
+    this is the tested predicate a future paywall middleware will use.
+    The enforced half of TIERS today is api_calls_per_day — see
+    core/tier_quota.py (authenticated requests) and the
+    `route_gating_enforced: false` flags on the tier listing endpoints.
     """
     tier = _resolve_tier(user.tier) if user else "free"
     tier_config = TIERS.get(tier, TIERS["free"])
@@ -355,34 +362,6 @@ def check_tier_access(user: TokenPayload | None, path: str) -> bool:
         return True
 
     return any(path.startswith(route) for route in allowed)
-
-
-def require_tier(minimum_tier: str):
-    """
-    FastAPI dependency that enforces minimum tier access.
-    Usage: @app.get("/api/premium", dependencies=[Depends(require_tier("professional"))])
-    """
-    tier_order = ["free", "professional", "enterprise", "investor"]
-
-    async def _check(
-        credentials: HTTPAuthorizationCredentials | None = Depends(security),
-    ):
-        if not credentials:
-            raise HTTPException(401, "Authentication required")
-
-        payload = decode_token(credentials.credentials)
-        resolved = _resolve_tier(payload.tier)
-        user_level = tier_order.index(resolved) if resolved in tier_order else 0
-        required_level = tier_order.index(minimum_tier) if minimum_tier in tier_order else 0
-
-        if user_level < required_level:
-            raise HTTPException(
-                403,
-                f"Requires {minimum_tier} tier or higher. Your tier: {resolved}"
-            )
-        return payload
-
-    return _check
 
 
 # ── Admin access ───────────────────────────────────────────────────────────────

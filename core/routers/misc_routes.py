@@ -17,7 +17,21 @@ router = APIRouter(tags=["misc"])
 # ══════════════════════════════════════════════════════════════════════
 @router.get("/api/tiers")
 async def list_tiers():
-    """List available subscription tiers and pricing."""
+    """List available subscription tiers and pricing.
+
+    Honest enforcement status per tier (review H2):
+    - `daily_quota_enforced`: the daily API allowance IS enforced for
+      authenticated API usage (Bearer JWT / X-API-Key) by
+      core/tier_quota.py. The source of truth is core/auth.py
+      TIERS.api_calls_per_day — mirrored here as
+      `enforced_api_calls_per_day` because this module's legacy
+      `api_calls_limit` is a monthly figure that is NOT what is
+      enforced. Tiers unknown to core/auth.py fall back to the free
+      quota.
+    - `route_gating_enforced`: tier route allow-lists are NOT enforced
+      yet (the public site is browsable anonymously).
+    """
+    from core.auth import TIERS as AUTH_TIERS
     from core.valuechain.subscription import TIERS
     return {
         name: {
@@ -25,6 +39,11 @@ async def list_tiers():
             "monthly_price_nok": t.monthly_price_nok,
             "api_calls_limit": t.api_calls_limit,
             "features": t.features,
+            "daily_quota_enforced": True,
+            "enforced_api_calls_per_day": AUTH_TIERS.get(
+                name, AUTH_TIERS["free"]
+            )["api_calls_per_day"],
+            "route_gating_enforced": False,
         }
         for name, t in TIERS.items()
     }

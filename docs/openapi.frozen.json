@@ -2422,7 +2422,7 @@
     },
     "/api/auth/tiers": {
       "get": {
-        "description": "Get available subscription tiers and pricing.",
+        "description": "Get available subscription tiers and pricing.\n\nHonest enforcement status per tier (review H2):\n- `daily_quota_enforced`: api_calls_per_day IS enforced for\n  authenticated API usage (Bearer JWT / X-API-Key) by\n  core/tier_quota.py.\n- `route_gating_enforced`: tier route allow-lists are NOT enforced\n  yet (the public site is browsable anonymously).",
         "operationId": "auth_tiers_api_auth_tiers_get",
         "responses": {
           "200": {
@@ -10665,7 +10665,7 @@
     },
     "/api/tiers": {
       "get": {
-        "description": "List available subscription tiers and pricing.",
+        "description": "List available subscription tiers and pricing.\n\nHonest enforcement status per tier (review H2):\n- `daily_quota_enforced`: the daily API allowance IS enforced for\n  authenticated API usage (Bearer JWT / X-API-Key) by\n  core/tier_quota.py. The source of truth is core/auth.py\n  TIERS.api_calls_per_day \u2014 mirrored here as\n  `enforced_api_calls_per_day` because this module's legacy\n  `api_calls_limit` is a monthly figure that is NOT what is\n  enforced. Tiers unknown to core/auth.py fall back to the free\n  quota.\n- `route_gating_enforced`: tier route allow-lists are NOT enforced\n  yet (the public site is browsable anonymously).",
         "operationId": "list_tiers_api_tiers_get",
         "responses": {
           "200": {

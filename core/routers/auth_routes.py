@@ -133,7 +133,15 @@ async def auth_me():
 
 @router.get("/tiers")
 async def auth_tiers():
-    """Get available subscription tiers and pricing."""
+    """Get available subscription tiers and pricing.
+
+    Honest enforcement status per tier (review H2):
+    - `daily_quota_enforced`: api_calls_per_day IS enforced for
+      authenticated API usage (Bearer JWT / X-API-Key) by
+      core/tier_quota.py.
+    - `route_gating_enforced`: tier route allow-lists are NOT enforced
+      yet (the public site is browsable anonymously).
+    """
     from core.auth import TIERS
     return [
         {
@@ -142,6 +150,8 @@ async def auth_tiers():
             "price_nok": t["price_nok"],
             "api_calls_per_day": t["api_calls_per_day"],
             "features": _tier_features(tid),
+            "daily_quota_enforced": True,
+            "route_gating_enforced": False,
         }
         for tid, t in TIERS.items()
     ]

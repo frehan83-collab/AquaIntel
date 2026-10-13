@@ -131,6 +131,9 @@ jobs:
       # specs burst hundreds of requests from 127.0.0.1); production keeps
       # the 200/minute default from core/api.py.
       FISHINTEL_RATE_LIMIT: 100000/minute
+      # Tier daily quotas (core/tier_quota.py) enforced in production for
+      # authenticated API usage; disabled for the anonymous e2e flows.
+      FISHINTEL_ENFORCE_QUOTAS: "0"
 
     steps:
       - name: Checkout code

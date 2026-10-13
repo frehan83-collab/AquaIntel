@@ -51,6 +51,9 @@ jobs:
           pytest tests/ -v --tb=short --cov=core --cov-report=term-missing --cov-fail-under=50
         env:
           FISHINTEL_RATE_LIMIT: 100000/minute
+          # Quota enforcement is verified explicitly (monkeypatched quotas)
+          # in tests/test_tier_quota.py; keep the suite unlimited.
+          FISHINTEL_ENFORCE_QUOTAS: "0"
 
       - name: Security audit (pip-audit)
         run: |

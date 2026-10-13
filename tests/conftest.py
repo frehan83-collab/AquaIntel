@@ -14,6 +14,9 @@ import os
 # requests from a single TestClient IP; rate-limit enforcement is verified
 # explicitly (with its own strict limiter) in tests/test_rate_limit.py.
 os.environ.setdefault("FISHINTEL_RATE_LIMIT", "100000/minute")
+# Same pattern for the tier daily quota: disabled suite-wide; enforcement
+# is verified explicitly (monkeypatched quotas) in tests/test_tier_quota.py.
+os.environ.setdefault("FISHINTEL_ENFORCE_QUOTAS", "0")
 
 import pytest
 from fastapi.testclient import TestClient

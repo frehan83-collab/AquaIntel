@@ -253,6 +253,11 @@ export default function SettingsPage() {
         Data: BarentsWatch (NLOD 2.0), SSB (CC BY 4.0), FRED (public domain), Copernicus (open access).
         All calculations use learned-principles model with live data only.
       </p>
+      <p className="text-[10px] text-[var(--text-secondary)] text-center opacity-60 mt-2">
+        Enforcement note: daily API quotas are enforced for authenticated API
+        usage (JWT / API key). Route-level tier gating is not yet enforced
+        during beta &mdash; all pages remain publicly browsable.
+      </p>
     </div>
   );
 }

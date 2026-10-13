@@ -164,6 +164,19 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
+# ── Tier daily-quota enforcement (review H2) ─────────────────────────
+# Enforces TIERS[tier]["api_calls_per_day"] for authenticated requests
+# (Bearer JWT or X-API-Key). Anonymous public-demo traffic is NOT
+# quota-gated (the public site stays browsable under the global rate
+# limiter above). Route-level tier gating (TIERS route allow-lists) is
+# not enforced yet — see core/auth.check_tier_access and the
+# route_gating_enforced flags on the tier endpoints.
+# Registered after SlowAPIMiddleware so rate-limited requests never
+# consume quota (SlowAPI stays inside this middleware).
+from core.tier_quota import TierQuotaMiddleware
+
+app.add_middleware(TierQuotaMiddleware)
+
 _allowed_origins = os.environ.get(
     "FISHINTEL_CORS_ORIGINS",
     "http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:8000,https://fishintel.io,https://app.fishintel.io",

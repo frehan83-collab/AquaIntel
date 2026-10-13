@@ -264,6 +264,12 @@ export default function BillingPage() {
         })}
       </div>
 
+      <p className="text-[10px] text-[var(--text-secondary)] opacity-60 mt-2">
+        Enforcement note: daily API quotas are enforced for authenticated API
+        usage (JWT / API key). Route-level tier gating is not yet enforced
+        during beta &mdash; all pages remain publicly browsable.
+      </p>
+
       {/* Invoice History */}
       <GlassCard delay={0.4} accent="none">
         <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-3">

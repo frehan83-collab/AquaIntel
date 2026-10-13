@@ -25,6 +25,43 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   IP); `FISHINTEL_RATE_LIMIT` added to the `test.yml` pytest step and the
   `frontend.yml` e2e backend. Production default stays 200/minute.
 
+### Fixed (review H2 — tier/paywall claims without enforcement)
+- New `core/tier_quota.py` + `TierQuotaMiddleware` (registered in
+  `core/api.py`): `TIERS[tier]["api_calls_per_day"]` is now actually
+  enforced for authenticated API usage (Bearer JWT or X-API-Key) with a
+  structured 429 (`tier_quota_exceeded`, tier, quota, `Retry-After`) once
+  the per-UTC-day allowance is exhausted. Per-user buckets;
+  `/api/auth/*`, `/api/health`, `/api/billing/*` never consume quota;
+  unknown/`<= 0` quotas mean unlimited; kill-switch
+  `FISHINTEL_ENFORCE_QUOTAS=0` (on by default in production).
+- Honest scope, explicitly documented everywhere: anonymous "public
+  demo" traffic is NOT quota-gated (the site stays publicly browsable
+  under the global rate limiter), and route-level tier gating (TIERS
+  route allow-lists) is NOT enforced yet.
+- Honest tier surfaces: `/api/auth/tiers` and `/api/tiers` now report
+  `daily_quota_enforced: true` and `route_gating_enforced: false` per
+  tier (additive; `/api/tiers` also mirrors the actually-enforced figure
+  as `enforced_api_calls_per_day` — its legacy `api_calls_limit` is a
+  monthly figure from `core/valuechain/subscription.py` that is NOT what
+  is enforced, and tiers unknown to `core/auth.py` fall back to the free
+  quota). `docs/openapi.frozen.json` re-frozen (2-line description diff
+  only; no paths/schemas changed).
+- Frontend `/settings` and `/billing` pages now carry an explicit
+  enforcement note (quotas enforced for authenticated API usage;
+  route-level gating not yet enforced during beta).
+- Dead code removed: `core/auth.require_tier` (zero callers, minimum-tier
+  semantics superseded by the documented allow-list model);
+  `check_tier_access` kept and pinned with unit tests as the predicate
+  the future paywall middleware will use.
+- New `tests/test_tier_quota.py` (20 tests): wiring, free/professional
+  quotas, per-user buckets, tier-alias resolution, anonymous
+  pass-through, auth/health/billing exemption, invalid-credential
+  pass-through, env kill-switch, tier-surface honesty flags, and the
+  `check_tier_access` allow-list logic.
+- CI/test-suite safety: `FISHINTEL_ENFORCE_QUOTAS=0` in
+  `tests/conftest.py` + both CI workflows (same pattern as the rate
+  limit); enforcement verified explicitly in the new tests.
+
 ## [Unreleased] — RUN-1 Sprint 4: R9 release + R10 accessibility/honesty (2026-10-13)
 
 ### Released (R9)
