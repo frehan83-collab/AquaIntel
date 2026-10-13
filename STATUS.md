@@ -203,16 +203,25 @@ added `tests/test_migrations.py`.
     findings applied). Visual: Linux regen via `visual-baselines.yml` came
     back **byte-identical** — the /market baseline encodes the first-visit
     wizard overlay (dimmed page below), so no baseline commit was needed.
-  - **R1b (commit pending)** — the ruff ratchet had **drifted (30 violations
-    repo-wide) and was never CI-enforced** despite ruff.toml's "ENFORCED in
-    CI" claim. Cleared all 30 (24 F401 + 6 F841; side-effecting test call
-    kept as bare statement); `test.yml` now runs `uvx ruff check .`.
-    Evidence: `ruff check .` clean; py_compile + agent imports OK;
-    targeted tests over every touched file 217 passed; full suite green.
+  - **R1b DONE (commit c6107c8, CI-PROVEN)** — the ruff ratchet had
+    **drifted (30 violations repo-wide) and was never CI-enforced** despite
+    ruff.toml's "ENFORCED in CI" claim. Cleared all 30 (24 F401 + 6 F841;
+    side-effecting test call kept as bare statement); `test.yml` now runs
+    `uvx ruff check .`. Evidence: `ruff check .` clean; py_compile + agent
+    imports OK; targeted tests over every touched file 217 passed; full
+    suite green; CI Backend Tests green **with the new ruff step**.
   - R1c closed: /futures `<title>` + /market hydration warnings are **not
     reproducible** (4 dev captures: both pages × fresh/onboarded, all
     console types — clean); likely resolved incidentally. Reopen only with
     a reproduction.
+  - **RUN-1 Sprint 1 (R1 / R1b / R1c) COMPLETE & CI-PROVEN** — all six
+    workflow runs green across the two commits (48c743b: Frontend 7m26s,
+    Backend 2m59s, Docker 1m57s; c6107c8: Frontend 7m19s — triggered via
+    the extended paths on agents/** — Backend 3m12s **including the new
+    ruff step**, Docker 1m50s). Visual regression passed against the
+    unchanged committed baselines (byte-identical regen verified).
+    **Next: Sprint 2 — R5 (DuckDB bench on Linux via Docker) → R6
+    (latency sweep / migration 015), per `docs/AUTONOMOUS_RUN_PLAN.md`.**
   - Noted for later workstreams: KPICard count-up strips "%" from value
     strings app-wide (~20 pages) and mis-parses nb-locale "0,29" as 0 →
     candidate component fix (see CHANGELOG "Noted").
