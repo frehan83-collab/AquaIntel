@@ -18,10 +18,15 @@ interface Props {
 }
 
 function qualityFromProvenance(p: DataProvenanceDTO): Quality {
-  if (p.confidence >= 0.7 && p.is_live) return "live";
-  if (p.confidence >= 0.4) return "degraded";
+  // Map by provenance STATE (review M4), never by confidence thresholds:
+  // the old rule mislabelled degraded payloads with confidence < 0.4 as
+  // "Synthetic" — a low-confidence degraded fallback is still degraded.
+  // Server states (core/market/data_provenance.py): live (is_live),
+  // simulated (source === "simulated"), everything else degraded.
+  // "synthetic" stays reachable only via the explicit `quality` prop.
+  if (p.is_live) return "live";
   if (p.source === "simulated") return "simulated";
-  return "synthetic";
+  return "degraded";
 }
 
 export default function DataQualityBadge({ quality, source, reason, provenance }: Props) {
@@ -41,10 +46,9 @@ export default function DataQualityBadge({ quality, source, reason, provenance }
 
   return (
     <span
-      className="group relative inline-flex items-center gap-1.5"
+      className={`group relative inline-flex items-center gap-1.5 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ocean-400/60`}
       role="img"
       aria-label={ariaLabel}
-      title={ariaLabel}
       tabIndex={0}
     >
       <span className={`w-2 h-2 rounded-full ${c.color} ring-2 ${c.ring}`} aria-hidden="true" />

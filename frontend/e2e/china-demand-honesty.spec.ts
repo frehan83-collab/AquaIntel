@@ -77,7 +77,9 @@ const DEGRADED_SNAPSHOT = {
     source: "SSB table 08799 unavailable",
     is_live: false,
     freshness: "2026-10-13T00:00:00+00:00",
-    confidence: 0.5,
+    // Confidence < 0.4 deliberately: the old badge mapping mislabelled
+    // this state as "Synthetic" (review M4).
+    confidence: 0.3,
   },
 };
 
@@ -176,6 +178,9 @@ test("live snapshot: honest LIVE claims when data is shown", async ({ page }) =>
   ).toBeVisible();
   await expect(page.getByText("Norway data is LIVE from SSB.")).toBeVisible();
   await expect(page.getByText("curated estimates")).toHaveCount(0);
+  // Badge state mapping (review M4): is_live payload -> "Live" badge
+  await expect(page.getByText("Live").first()).toBeVisible();
+  await expect(page.getByText("Synthetic")).toHaveCount(0);
 });
 
 test("degraded snapshot: honest estimate claims when data is shown", async ({ page }) => {
@@ -187,4 +192,14 @@ test("degraded snapshot: honest estimate claims when data is shown", async ({ pa
   await expect(page.getByText("curated estimates").first()).toBeVisible();
   await expect(page.getByText("are LIVE from SSB")).toHaveCount(0);
   await expect(page.getByText("Norway data is LIVE from SSB.")).toHaveCount(0);
+  // Badge mapping (review M4): confidence 0.3 + degraded state must show
+  // "Degraded", never "Synthetic" (the old threshold-based mislabel)
+  await expect(page.getByText("Degraded").first()).toBeVisible();
+  await expect(page.getByText("Synthetic")).toHaveCount(0);
+  // The native title tooltip is gone (review M4): the custom
+  // group-hover/group-focus-within tooltip is the single tooltip
+  await expect(page.locator('span[role="img"][title]')).toHaveCount(0);
+  // Keyboard focus gets a visible ring (review M4)
+  const badge = page.locator("span.group.inline-flex").first();
+  await expect(badge).toHaveClass(/focus-visible:ring-2/);
 });

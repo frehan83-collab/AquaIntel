@@ -113,6 +113,23 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Fixed (review M4 — DataQualityBadge mislabels + tooltip duplication)
+- `qualityFromProvenance` now maps by provenance STATE, never by
+  confidence thresholds: `is_live` → "Live", `source === "simulated"` →
+  "Simulated", everything else → "Degraded". Previously a degraded
+  payload with confidence < 0.4 was falsely labelled "Synthetic" (violet
+  badge); low-confidence degraded fallbacks now say "Degraded" (server
+  states: `core/market/data_provenance.py`). "Synthetic" stays reachable
+  only via the explicit `quality` prop.
+- Removed the native `title` attribute that duplicated the custom
+  group-hover/group-focus-within tooltip (one tooltip, keyboard
+  accessible); `role="img"` + `aria-label` WCAG semantics kept.
+- Visible `focus-visible` ring added for the keyboard-focusable badge.
+- Regression-pinned in `frontend/e2e/china-demand-honesty.spec.ts`
+  (degraded stub deliberately uses confidence 0.3: badge must read
+  "Degraded", never "Synthetic"; no `span[role="img"][title]` elements;
+  focus-ring class present; live stub → "Live").
+
 ### Added (review M2 — untested china sub-routes)
 - `tests/test_china_provenance.py` now covers
   `/api/china/demand-signals` and `/api/china/demand-impact` with both
