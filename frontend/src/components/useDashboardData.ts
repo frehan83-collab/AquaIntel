@@ -9,7 +9,7 @@ import type { Locale } from "@/lib/i18n";
 import type {
   LiceSummary, AnomalyScores, RegimeAlert, AlertItem, AlertsResponse,
   SSBPriceHistory, MacroSnapshot, GlobalSupply, DiseaseByCompany,
-  AISHarvestIntel, PairsSignal, Signal,
+  AISHarvestSignalRow, PairsSignal, Signal,
 } from "@/types/api";
 
 export interface DashboardLeader {
@@ -24,19 +24,17 @@ export interface DashboardLeader {
   [key: string]: unknown;
 }
 
-export interface DashboardMacro extends MacroSnapshot {
-  indices?: Record<string, { value: number; label?: string }>;
-  benchmarks?: Record<string, number>;
-  yoy_changes?: Record<string, number>;
+export type DashboardMacro = MacroSnapshot;
+
+export interface DashboardAIS {
+  signals?: AISHarvestSignalRow[];
+  total_vessels?: number;
+  summary?: Record<string, number>;
 }
 
 export interface DashboardSupply extends GlobalSupply {
   balance?: string;
   supply_deficit_pct?: number;
-}
-
-export interface DashboardAIS extends AISHarvestIntel {
-  signals?: Array<{ vessel: string; activity: string; location: string; timestamp: string }>;
 }
 
 export interface ProductionSummary {
@@ -61,7 +59,7 @@ export interface DashboardData {
   supplyData: Array<{ week: string; volume: number }>;
   regimeAlerts: RegimeAlert[];
   pairsSignals: PairsSignal[];
-  aisData: DashboardAIS | null;
+  aisData: DashboardAIS | AISHarvestSignalRow[] | null;
   macro: DashboardMacro | null;
   supply: DashboardSupply | null;
   diseaseCount: number;
@@ -117,8 +115,8 @@ export function useDashboardData(locale: Locale): DashboardData {
     ["regime-alerts"], () => api.regimeAlerts() as unknown as Promise<RegimeAlert[]>, "regime_alerts");
   const pairsQ = useDashboardQuery<PairsSignal[]>(
     ["pairs-signals", 7], () => api.pairsSignals(7) as unknown as Promise<PairsSignal[]>, "pairs_signals");
-  const aisQ = useDashboardQuery<DashboardAIS>(
-    ["ais-harvest", 72], () => api.aisHarvestSignals(72) as unknown as Promise<DashboardAIS>, "ais_data");
+  const aisQ = useDashboardQuery<DashboardAIS | AISHarvestSignalRow[]>(
+    ["ais-harvest", 72], () => api.aisHarvestSignals(72), "ais_data");
   const macroQ = useDashboardQuery<DashboardMacro>(
     ["macro-snapshot"], () => api.macroSnapshot() as unknown as Promise<DashboardMacro>, "macro_snapshot");
   const supplyQ = useDashboardQuery<DashboardSupply>(
@@ -210,7 +208,7 @@ export function useDashboardData(locale: Locale): DashboardData {
     supplyData,
     regimeAlerts: (regimeQ.data as RegimeAlert[]) ?? [],
     pairsSignals: (pairsQ.data as PairsSignal[]) ?? [],
-    aisData: (aisQ.data as DashboardAIS) ?? null,
+    aisData: (aisQ.data as DashboardAIS | AISHarvestSignalRow[]) ?? null,
     macro: (macroQ.data as DashboardMacro) ?? null,
     supply: (supplyQ.data as DashboardSupply) ?? null,
     diseaseCount,

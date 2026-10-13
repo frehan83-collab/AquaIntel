@@ -5,15 +5,16 @@ import { formatNumber } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 import type { RegimeAlert, PairsSignal } from "@/types/api";
 import type { DashboardAIS } from "@/components/useDashboardData";
+import type { AISHarvestSignalRow } from "@/types/api";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 interface DashboardLiveIntelligenceProps {
   isVisible: boolean;
   order: number;
   regimeAlerts: RegimeAlert[];
   pairsSignals: PairsSignal[];
-  aisData: DashboardAIS | null;
+  aisData: DashboardAIS | AISHarvestSignalRow[] | null;
   locale: Locale;
   t: (key: string) => string;
 }
@@ -95,7 +96,7 @@ export default function DashboardLiveIntelligence({
                 const vessels = Array.isArray(aisData) ? aisData : (aisData?.signals || []);
                 const topVessel = vessels[0];
                 return topVessel
-                  ? `${topVessel.vessel_name || "Wellboat"} near ${topVessel.locality_name || topVessel.farm_name || "farm"} (${topVessel.signal_type || "harvest"})`
+                  ? `${topVessel.vessel || "Wellboat"} near ${topVessel.farm_name || topVessel.farm_locality || "farm"} (${topVessel.signal_type || "harvest"})`
                   : "Active vessel signals detected";
               })()}
             </p>

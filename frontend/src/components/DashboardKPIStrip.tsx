@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
-import { formatNumber, formatCurrency } from "@/lib/i18n";
+import { formatNumber } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
 import type { LiceSummary } from "@/types/api";
 import type { DashboardMacro, DashboardSupply, DashboardLeader } from "@/components/useDashboardData";

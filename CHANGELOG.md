@@ -113,6 +113,45 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Fixed (NEW finding — /market page contract fiction, same class as the supply fix)
+- `frontend/src/app/market/page.tsx` was consuming **six** endpoints
+  through invented shapes; each mismatch produced a silent-empty widget
+  or a permanently-skeletoned section:
+  - `/api/market/hedger-signals` returns a LIST → page read
+    `{signals:[…]}` (always empty). Now consumes the list; the badge maps
+    the real `direction` (HEDGE/UNHEDGE) and the bar shows real
+    `strength` (0-1).
+  - `/api/market/export-destinations` returns `destinations` as a DICT
+    keyed by country code → page read a list (`.length` undefined →
+    eternal skeleton). Converted at the boundary with computed share_pct
+    from real `total_tonnes`/`total_nok_millions`.
+  - `/api/ais/harvest-intelligence` real shape is
+    `total_vessels/summary/harvest_signals_72h/…` → the old
+    `AISHarvestIntel` type (active_vessels/recent_signals) was fiction and
+    the whole AIS card rendered empty. Type corrected to
+    `AISHarvestIntelligence`; card now shows Vessels Tracked, Harvesting
+    Now, Treating Now, Supply Pressure + real 72h signal rows.
+  - `/api/sentiment/summary` real shape (`avg_sentiment_24h`,
+    `sentiment_trend`, `articles_24h`) → `SentimentSummary` type was
+    fiction; card showed "Neutral / 0 articles" forever. Fixed type + card
+    (score, trend, article count).
+  - `/api/macro/snapshot` and `/api/macro/series/{name}`: `MacroSnapshot`
+    (series/unit/source) and `MacroSeries` types were fiction; corrected
+    to the real `{indices, benchmarks, yoy_changes, alerts: string[]}`
+    and `{name, data:[{date,value}]}` shapes; the market Macro widget and
+    dashboard types now compile against reality.
+  - `SSBPriceHistory` type said `price_nok_kg/week:number` while the route
+    emits `price_nok/week:"W13"` — corrected.
+- AIS dashboard consumers updated: `DashboardAIS` no longer extends the
+  fictional type (real `AISHarvestSignalRow[]` union, honest
+  `vessel`/`farm_name` fields in the top-vessel line).
+- Regression nets: 6 new backend-backed `api-contracts.spec.ts`
+  assertions pin every corrected shape (price_nok rows, destinations
+  dict, hedger list, AIS keys, sentiment keys, macro keys incl. the
+  documented 404 degraded path).
+- Local verification: tsc clean, eslint 0 errors, visual baselines
+  re-verified (the /market baseline renders unchanged under the stubs).
+
 ### Fixed (NEW finding during the L5 migration — supply-forecast contract fiction)
 - `/api/supply/smolt-forecast` returned a **bare list** (the old
   `isinstance(result, dict)` provenance guard could never fire) while the

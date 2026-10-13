@@ -6,17 +6,17 @@ import {
 import GlassCard from "@/components/GlassCard";
 import { formatNumber } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
-import type { RegimeAlert, PairsSignal } from "@/types/api";
+import type { RegimeAlert, PairsSignal, AISHarvestSignalRow } from "@/types/api";
 import type { DashboardAIS, ProductionSummary } from "@/components/useDashboardData";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 interface DashboardProductionProps {
   isVisible: boolean;
   order: number;
   regimeAlerts: RegimeAlert[];
   pairsSignals: PairsSignal[];
-  aisData: DashboardAIS | null;
+  aisData: DashboardAIS | AISHarvestSignalRow[] | null;
   production: ProductionSummary | null;
   counties: Array<{ county: string; harvest_tonnes: number }>;
   locale: Locale;

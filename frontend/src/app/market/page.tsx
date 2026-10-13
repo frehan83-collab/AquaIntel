@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
@@ -9,7 +8,16 @@ import KPICard from "@/components/KPICard";
 import DataQualityBadge from "@/components/DataQualityBadge";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
-import type { FuturesForwardCurve } from "@/types/api";
+import type {
+  AISHarvestIntelligence,
+  ExportDestinationsResponse,
+  FuturesForwardCurve,
+  HedgerSignalRow,
+  MacroSeriesHistory,
+  MacroSnapshot,
+  SentimentArticle,
+  SentimentSummary,
+} from "@/types/api";
 import { useApiError } from "@/lib/useApiError";
 import dynamic from "next/dynamic";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -30,7 +38,6 @@ interface SsbPoint { week: string; price_nok_kg: number }
 interface SeasonalPoint { week_of_year: number; median_price: number }
 interface ExportDest { country: string; volume_tonnes: number; value_nok_mill: number; share_pct: number }
 interface FuturesPoint { month: string; price: number }
-interface HedgeSignal { type: string; ticker: string; rationale: string; confidence: number }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
@@ -182,12 +189,12 @@ export default function MarketTerminalPage() {
   const [futures, setFutures] = useState<FuturesPoint[]>([]);
   const [futuresSynthetic, setFuturesSynthetic] = useState(false);
   const [seasonalYears, setSeasonalYears] = useState<string | null>(null);
-  const [signals, setSignals] = useState<HedgeSignal[]>([]);
-  const [sentimentArticles, setSentimentArticles] = useState<any[]>([]);
-  const [harvestIntel, setHarvestIntel] = useState<any>(null);
-  const [sentSummary, setSentSummary] = useState<any>(null);
-  const [macroNOK, setMacroNOK] = useState<any>(null);
-  const [macroOil, setMacroOil] = useState<any>(null);
+  const [signals, setSignals] = useState<HedgerSignalRow[]>([]);
+  const [sentimentArticles, setSentimentArticles] = useState<SentimentArticle[]>([]);
+  const [harvestIntel, setHarvestIntel] = useState<AISHarvestIntelligence | null>(null);
+  const [sentSummary, setSentSummary] = useState<SentimentSummary | null>(null);
+  const [macroNOK, setMacroNOK] = useState<MacroSeriesHistory | null>(null);
+  const [macroOil, setMacroOil] = useState<MacroSeriesHistory | null>(null);
   const [nokUsd, setNokUsd] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -209,7 +216,7 @@ export default function MarketTerminalPage() {
       // /api/market/ssb-price-history returns {spot_nok, history:[{week, price_nok,…}]}
       // — map to the SsbPoint contract the price chart + sparkline consume.
       if (ssbRes.status === "fulfilled") {
-        const hist = ((ssbRes.value as any).history ?? []) as Array<Record<string, unknown>>;
+        const hist = ssbRes.value.history ?? [];
         setSsbHistory(
           hist.map((h) => ({ week: String(h.week ?? ""), price_nok_kg: Number(h.price_nok) })),
         );
@@ -228,7 +235,27 @@ export default function MarketTerminalPage() {
         );
         setSeasonalYears(sv?.data_years ?? null);
       }
-      if (expRes.status === "fulfilled") setExports((expRes.value as any).destinations ?? []);
+      // /api/market/export-destinations returns `destinations` as a DICT
+      // keyed by country code (SSB 08799) — convert at the boundary and
+      // compute the share the UI displays (the raw rows have no share_pct).
+      if (expRes.status === "fulfilled") {
+        const dests: ExportDestinationsResponse["destinations"] =
+          expRes.value.destinations ?? {};
+        const rows: Omit<ExportDest, "share_pct">[] = Object.entries(dests).map(
+          ([code, d]) => ({
+            country: d?.name || code,
+            volume_tonnes: d?.total_tonnes ?? 0,
+            value_nok_mill: d?.total_nok_millions ?? 0,
+          }),
+        );
+        const totalVol = rows.reduce((s, r) => s + r.volume_tonnes, 0);
+        setExports(
+          rows.map((r) => ({
+            ...r,
+            share_pct: totalVol > 0 ? (r.volume_tonnes / totalVol) * 100 : 0,
+          })),
+        );
+      }
       // /api/futures/forward-curve: Fish Pool live forwards → SSB synthetic fallback
       if (futRes.status === "fulfilled") {
         const fv = futRes.value as Partial<FuturesForwardCurve>;
@@ -237,7 +264,9 @@ export default function MarketTerminalPage() {
         setFuturesSynthetic(fv.is_synthetic !== false);
         setFutures((Array.isArray(fv.curve) ? fv.curve : []).map((c) => ({ month: c.month, price: c.price_nok_kg })));
       }
-      if (sigRes.status === "fulfilled") setSignals((sigRes.value as any).signals ?? []);
+      // /api/market/hedger-signals returns the Signal rows as a LIST
+      // (previously read as {signals:[…]} — always empty).
+      if (sigRes.status === "fulfilled") setSignals(sigRes.value);
       // Fetch NOK/USD, sentiment, AIS
       try {
         const macro = await api.macroSnapshot();
@@ -245,7 +274,7 @@ export default function MarketTerminalPage() {
       } catch (e) { handleError("market_macro_snapshot")(e); }
       try {
         const articles = await api.sentimentArticles(24);
-        setSentimentArticles((articles as any)?.articles || (Array.isArray(articles) ? articles : []));
+        setSentimentArticles(Array.isArray(articles) ? articles : []);
       } catch (e) { handleError("market_sentiment_articles")(e); }
       try {
         const harvest = await api.aisHarvestIntelligence();
@@ -280,6 +309,15 @@ export default function MarketTerminalPage() {
 
   const equityTickers = ["MOWI", "SALM", "LSG", "GSF", "BAKKA"] as const;
 
+  // Map a hedger Signal row's direction to the badge vocabulary
+  // (the /hedger-signals payload carries `direction`, not a `type`).
+  const hedgeKind = (direction?: string) => {
+    const d = (direction || "").toLowerCase();
+    if (d.includes("buy") || d.includes("long")) return "HEDGE";
+    if (d.includes("sell") || d.includes("short")) return "UNHEDGE";
+    return d ? d.toUpperCase() : "SIGNAL";
+  };
+
   // ── Market Narrative Summary ────────────────────────────────────────────────
   const narrative = useMemo(() => {
     if (!ssbHistory.length) return null;
@@ -290,17 +328,18 @@ export default function MarketTerminalPage() {
     const parts: string[] = [`Salmon spot at NOK ${latest.price_nok_kg?.toFixed(1)}/kg`];
     if (prev) parts.push(`${priceDelta > 0 ? "+" : ""}${priceDelta.toFixed(1)}% WoW`);
 
-    // Sentiment context
+    // Sentiment context (real fields: avg_sentiment_24h + sentiment_trend)
     if (sentSummary) {
-      const dir = (sentSummary.direction || sentSummary.sentiment || "").toLowerCase();
-      if (dir.includes("bull")) parts.push("Sentiment bullish");
-      else if (dir.includes("bear")) parts.push("Sentiment bearish");
-      else if (dir) parts.push("Sentiment mixed");
+      const sentAvg = sentSummary.avg_sentiment_24h ?? 0;
+      const trend = (sentSummary.sentiment_trend || "").toLowerCase();
+      if (sentAvg > 0.2 || trend === "improving") parts.push("Sentiment bullish");
+      else if (sentAvg < -0.2 || trend === "deteriorating") parts.push("Sentiment bearish");
+      else parts.push("Sentiment mixed");
     }
 
     // Feed cost / macro context
     if (macroOil) {
-      const oilVal = macroOil.latest_value || macroOil.value || macroOil.data?.[macroOil.data?.length - 1]?.value;
+      const oilVal = macroOil.latest_value ?? macroOil.value ?? macroOil.data?.[macroOil.data.length - 1]?.value;
       if (oilVal != null) parts.push(`Brent $${Number(oilVal).toFixed(0)}`);
     }
 
@@ -646,8 +685,8 @@ export default function MarketTerminalPage() {
                 transition={{ delay: 0.35 + i * 0.06 }}
                 className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.08] transition-colors"
               >
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border flex-shrink-0 mt-0.5 ${signalBadgeColor(sig.type)}`}>
-                  {sig.type}
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border flex-shrink-0 mt-0.5 ${signalBadgeColor(hedgeKind(sig.direction))}`}>
+                  {hedgeKind(sig.direction)}
                 </span>
                 <span className="text-xs font-bold text-[var(--text-primary)] w-14 flex-shrink-0 font-mono mt-0.5">
                   {sig.ticker}
@@ -656,17 +695,17 @@ export default function MarketTerminalPage() {
                   {sig.rationale}
                 </p>
                 <div className="flex flex-col items-end gap-1 flex-shrink-0 w-20">
-                  <span className="text-[10px] text-white/30">Confidence</span>
+                  <span className="text-[10px] text-white/30">Strength</span>
                   <div className="w-full h-1.5 rounded-full bg-white/[0.06]">
                     <motion.div
                       className="h-full rounded-full bg-gradient-to-r from-ocean-500 to-cyan-400"
                       initial={{ width: 0 }}
-                      animate={{ width: `${formatNumber(sig.confidence * 100, locale, 0)}%` }}
+                      animate={{ width: `${formatNumber((sig.strength ?? 0) * 100, locale, 0)}%` }}
                       transition={{ delay: 0.5 + i * 0.06, duration: 0.6 }}
                     />
                   </div>
                   <span className="text-[10px] font-semibold text-ocean-400">
-                    {formatNumber(sig.confidence * 100, locale, 0)}%
+                    {formatNumber((sig.strength ?? 0) * 100, locale, 0)}%
                   </span>
                 </div>
               </motion.div>
@@ -689,7 +728,7 @@ export default function MarketTerminalPage() {
             </span>
           </h3>
           <div className="space-y-1.5 max-h-48 overflow-y-auto">
-            {sentimentArticles.slice(0, 10).map((a: any, i: number) => {
+            {sentimentArticles.slice(0, 10).map((a, i: number) => {
               const score = a.sentiment_score ?? a.score ?? 0;
               return (
                 <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
@@ -717,38 +756,38 @@ export default function MarketTerminalPage() {
             {t("market.harvest_intel")}
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {harvestIntel.active_vessels != null && (
+            {harvestIntel.total_vessels != null && (
               <div className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06] text-center">
-                <p className="text-lg font-bold text-ocean-400 tabular-nums">{harvestIntel.active_vessels}</p>
-                <p className="text-[9px] text-[var(--text-secondary)]">Active Vessels</p>
+                <p className="text-lg font-bold text-ocean-400 tabular-nums">{harvestIntel.total_vessels}</p>
+                <p className="text-[9px] text-[var(--text-secondary)]">Vessels Tracked</p>
               </div>
             )}
-            {harvestIntel.harvest_signals != null && (
+            {harvestIntel.summary?.harvesting != null && (
               <div className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06] text-center">
-                <p className="text-lg font-bold text-amber-400 tabular-nums">{harvestIntel.harvest_signals}</p>
-                <p className="text-[9px] text-[var(--text-secondary)]">Harvest Signals</p>
+                <p className="text-lg font-bold text-amber-400 tabular-nums">{harvestIntel.summary.harvesting}</p>
+                <p className="text-[9px] text-[var(--text-secondary)]">Harvesting Now</p>
               </div>
             )}
-            {harvestIntel.treatment_signals != null && (
+            {harvestIntel.summary?.treating != null && (
               <div className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06] text-center">
-                <p className="text-lg font-bold text-violet-400 tabular-nums">{harvestIntel.treatment_signals}</p>
-                <p className="text-[9px] text-[var(--text-secondary)]">Treatment Signals</p>
+                <p className="text-lg font-bold text-violet-400 tabular-nums">{harvestIntel.summary.treating}</p>
+                <p className="text-[9px] text-[var(--text-secondary)]">Treating Now</p>
               </div>
             )}
-            {harvestIntel.estimated_supply_impact && (
+            {harvestIntel.supply_pressure && (
               <div className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06] text-center">
-                <p className="text-[11px] font-bold text-[var(--text-primary)]">{harvestIntel.estimated_supply_impact}</p>
-                <p className="text-[9px] text-[var(--text-secondary)]">Supply Impact</p>
+                <p className="text-[11px] font-bold text-[var(--text-primary)]">{harvestIntel.supply_pressure}</p>
+                <p className="text-[9px] text-[var(--text-secondary)]">Supply Pressure</p>
               </div>
             )}
           </div>
-          {harvestIntel.signals && Array.isArray(harvestIntel.signals) && harvestIntel.signals.length > 0 && (
+          {Array.isArray(harvestIntel.harvest_signals_72h) && harvestIntel.harvest_signals_72h.length > 0 && (
             <div className="mt-3 space-y-1">
-              {harvestIntel.signals.slice(0, 5).map((s: any, i: number) => (
+              {harvestIntel.harvest_signals_72h.slice(0, 5).map((s, i: number) => (
                 <div key={i} className="flex items-center gap-2 text-[10px] p-1.5 rounded bg-white/[0.02]">
-                  <span className="text-ocean-400">{s.vessel_name || "Vessel"}</span>
-                  <span className="text-[var(--text-secondary)]">{s.signal_type || s.type || ""}</span>
-                  <span className="ml-auto text-[var(--text-secondary)]">{s.time || ""}</span>
+                  <span className="text-ocean-400">{s.vessel || "Vessel"}</span>
+                  <span className="text-[var(--text-secondary)]">{s.farm || ""}</span>
+                  <span className="ml-auto text-[var(--text-secondary)]">{s.confidence || ""}</span>
                 </div>
               ))}
             </div>
@@ -767,12 +806,14 @@ export default function MarketTerminalPage() {
               <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
                 <div className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-1">Market Sentiment</div>
                 <div className={`text-lg font-bold ${
-                  (sentSummary.direction || sentSummary.sentiment || "").toLowerCase().includes("bull") ? "text-emerald-400" :
-                  (sentSummary.direction || sentSummary.sentiment || "").toLowerCase().includes("bear") ? "text-rose-400" : "text-amber-400"
+                  (sentSummary.avg_sentiment_24h ?? 0) > 0.2 ? "text-emerald-400" :
+                  (sentSummary.avg_sentiment_24h ?? 0) < -0.2 ? "text-rose-400" : "text-amber-400"
                 }`}>
-                  {sentSummary.score != null ? formatNumber(sentSummary.score, locale, 2) : (sentSummary.sentiment || "Neutral")}
+                  {formatNumber(sentSummary.avg_sentiment_24h ?? 0, locale, 2)}
                 </div>
-                <div className="text-[10px] text-[var(--text-secondary)] mt-0.5">{sentSummary.articles_analyzed || 0} articles</div>
+                <div className="text-[10px] text-[var(--text-secondary)] mt-0.5">
+                  {sentSummary.articles_24h ?? 0} articles · {sentSummary.sentiment_trend || "stable"}
+                </div>
               </div>
             )}
             {macroNOK && (
@@ -811,7 +852,7 @@ export default function MarketTerminalPage() {
 // ── Collapsible Macro Intelligence Widget ────────────────────────────────────
 function MacroWidget() {
   const handleError = useApiError();
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<MacroSnapshot | null>(null);
   const [open, setOpen] = useState(true);
 
   useEffect(() => {
@@ -861,7 +902,7 @@ function MacroWidget() {
         >
           {/* Composite Indices — compact row */}
           <div className="grid grid-cols-3 gap-2">
-            {Object.entries(idx).map(([key, val]: [string, any]) => (
+            {Object.entries(idx).map(([key, val]) => (
               <div key={key} className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center">
                 <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider mb-1">
                   {val.label}

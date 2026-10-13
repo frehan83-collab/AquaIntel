@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 /**
  * FishIntel Backend API Client
  * ============================
@@ -15,7 +15,9 @@ import type {
   MorningBrief, RegimeAlert, DiseaseNorway, DiseaseByCompany,
   ResistanceMap, ASCReadiness, ForecastResponse, EnsembleForecast,
   AlertsResponse, OceanForecast, ClimateRiskScores, HeatwaveRisk,
-  SentimentSummary, AISHarvestIntel, CausalSummary, GlobalSupply,
+  SentimentSummary, AISHarvestIntelligence, AISHarvestSignalRow, SentimentArticle,
+  HedgerSignalRow, ExportDestinationsResponse, MacroSnapshot, MacroSeriesHistory,
+  CausalSummary, GlobalSupply,
   WaveRisk,
   WaveForecast,
   SmoltForecastResponse, SmoltCohortTimeline, SupplySummary, SupplyDemandBalance,
@@ -95,7 +97,7 @@ export const api = {
     fetchAPI(`/api/market/price-outlook?horizon=${horizon || 4}&scenarios=${scenarios || 1000}`),
   priceOutlookMulti: () => fetchAPI("/api/market/price-outlook/multi"),
   futuresCurve: () => fetchAPI("/api/market/futures-curve"),
-  hedgerSignals: () => fetchAPI("/api/market/hedger-signals"),
+  hedgerSignals: () => fetchAPI<HedgerSignalRow[]>("/api/market/hedger-signals"),
   predictionHistory: (horizon?: number, days?: number) =>
     fetchAPI(`/api/market/prediction-history?horizon=${horizon || 4}&days=${days || 30}`),
   priceOutlookExplain: (horizon?: number) =>
@@ -107,7 +109,7 @@ export const api = {
     fetchAPI<SSBPriceHistory>(`/api/market/ssb-price-history?weeks=${weeks || 52}`),
   ssbSeasonal: () => fetchAPI("/api/market/ssb-seasonal"),
   exportDestinations: (months?: number) =>
-    fetchAPI(`/api/market/export-destinations?months=${months || 12}`),
+    fetchAPI<ExportDestinationsResponse>(`/api/market/export-destinations?months=${months || 12}`),
 
   // Top 100 Leaders — auto-unwrapped by fetchAPI
   leadersTop30: (): Promise<LeaderEntry[]> => fetchAPI<LeaderEntry[]>("/api/leaders/top100"),
@@ -137,8 +139,7 @@ export const api = {
 
   // AIS Vessel Tracking
   aisTracks: () => fetchAPI("/api/ais/tracks"),
-  aisHarvestSignals: (hours?: number) =>
-    fetchAPI(`/api/ais/harvest-signals?hours=${hours || 72}`),
+  aisHarvestSignals: (hours?: number) => fetchAPI<AISHarvestSignalRow[]>(`/api/ais/harvest-signals?hours=${hours || 72}`),
   aisTreatmentSignals: (hours?: number) =>
     fetchAPI(`/api/ais/treatment-signals?hours=${hours || 72}`),
   aisSupplyIntel: () => fetchAPI("/api/ais/supply-intelligence"),
@@ -146,7 +147,7 @@ export const api = {
   // Sentiment Engine
   sentimentSignals: () => fetchAPI("/api/sentiment/signals"),
   sentimentArticles: (hours?: number, ticker?: string) =>
-    fetchAPI(`/api/sentiment/articles?hours=${hours || 24}${ticker ? `&ticker=${ticker}` : ""}`),
+    fetchAPI<SentimentArticle[]>(`/api/sentiment/articles?hours=${hours || 24}${ticker ? `&ticker=${ticker}` : ""}`),
   sentimentSummary: () => fetchAPI<SentimentSummary>("/api/sentiment/summary"),
 
   // Farm Network Graph
@@ -231,8 +232,8 @@ export const api = {
   productionByCounty: () => fetchAPI("/api/production/by-county"),
 
   // Macro Intelligence (FRED)
-  macroSnapshot: () => fetchAPI("/api/macro/snapshot"),
-  macroSeries: (name: string, months?: number) => fetchAPI(`/api/macro/series/${name}?months=${months || 60}`),
+  macroSnapshot: () => fetchAPI<MacroSnapshot>("/api/macro/snapshot"),
+  macroSeries: (name: string, months?: number) => fetchAPI<MacroSeriesHistory>(`/api/macro/series/${name}?months=${months || 60}`),
 
   // ESG Sustainability Scores
   esgScores: () => fetchAPI("/api/esg/scores"),
@@ -250,7 +251,7 @@ export const api = {
   wavesStatus: () => fetchAPI<Record<string, unknown>>("/api/ocean/waves/status"),
 
   // AIS Harvest Intelligence
-  aisHarvestIntelligence: () => fetchAPI<AISHarvestIntel>("/api/ais/harvest-intelligence"),
+  aisHarvestIntelligence: () => fetchAPI<AISHarvestIntelligence>("/api/ais/harvest-intelligence"),
 
   // Advanced Biomass Prediction
   biomassOutlook: (horizon?: number, scenarios?: number, regulatory?: string) =>

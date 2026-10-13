@@ -172,6 +172,72 @@ test.describe("Supply Chain", () => {
     expect(body).toHaveProperty("data_provenance");
   });
 
+  test("GET /api/market/ssb-price-history returns price_nok rows", async ({ request }) => {
+    const res = await request.get(`${API}/api/market/ssb-price-history?weeks=8`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(body).toHaveProperty("spot_nok");
+    expect(Array.isArray(body.history)).toBeTruthy();
+    if (body.history.length > 0) {
+      // The row key is price_nok (page mapping used to read it via `as any`)
+      expect(body.history[0]).toHaveProperty("price_nok");
+    }
+  });
+
+  test("GET /api/market/export-destinations returns a destinations dict", async ({ request }) => {
+    const res = await request.get(`${API}/api/market/export-destinations?months=12`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    // DICT keyed by country code (was consumed as a list -> eternal skeleton)
+    expect(typeof body.destinations).toBe("object");
+    expect(Array.isArray(body.destinations)).toBeFalsy();
+  });
+
+  test("GET /api/market/hedger-signals returns the Signal rows as a list", async ({ request }) => {
+    const res = await request.get(`${API}/api/market/hedger-signals`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    // LIST of Signal rows (was consumed as {signals:[...]} -> always empty)
+    expect(Array.isArray(body)).toBeTruthy();
+    if (body.length > 0) expect(body[0]).toHaveProperty("ticker");
+  });
+
+  test("GET /api/ais/harvest-intelligence matches the corrected contract", async ({ request }) => {
+    const res = await request.get(`${API}/api/ais/harvest-intelligence`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    for (const key of [
+      "total_vessels", "summary", "supply_pressure",
+      "treatment_pressure", "harvest_signals_72h", "treatment_signals_72h", "price_signal",
+    ]) {
+      expect(body, `missing ${key}`).toHaveProperty(key);
+    }
+  });
+
+  test("GET /api/sentiment/summary matches the corrected contract", async ({ request }) => {
+    const res = await request.get(`${API}/api/sentiment/summary`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    for (const key of ["articles_24h", "avg_sentiment_24h", "sentiment_trend"]) {
+      expect(body, `missing ${key}`).toHaveProperty(key);
+    }
+  });
+
+  test("GET /api/macro/snapshot returns indices + benchmarks", async ({ request }) => {
+    const res = await request.get(`${API}/api/macro/snapshot`);
+    if (res.status() === 404) {
+      // Documented degraded path: FRED data unavailable -> explicit 404
+      // (never an empty 200 pretending to be a snapshot).
+      const body = await res.json();
+      expect(JSON.stringify(body)).toContain("not available");
+      return;
+    }
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(body).toHaveProperty("indices");
+    expect(body).toHaveProperty("benchmarks");
+  });
+
   test("GET /api/supply/demand-balance keeps the additive R7 contract", async ({ request }) => {
     const res = await request.get(`${API}/api/supply/demand-balance`);
     expect(res.ok()).toBeTruthy();

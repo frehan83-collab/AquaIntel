@@ -145,10 +145,12 @@ export interface SSBPriceHistory {
   source: string;
   license: string;
   history: Array<{
-    week: number;
+    /** "W13" style week code (SSBPriceClient.get_price_history) */
+    week: string;
     year: number;
+    /** NOK per kg (key is price_nok in the route payload) */
+    price_nok: number;
     label?: string;
-    price_nok_kg: number;
     volume_tonnes?: number;
   }>;
 }
@@ -197,16 +199,22 @@ export interface PriceSignals {
 
 /** /api/macro/snapshot */
 export interface MacroSnapshot {
-  series: MacroSeries[];
-  alerts: MacroAlert[];
+  timestamp?: string;
+  indices: Record<string, { value: number; label?: string; scale?: string }>;
+  benchmarks: Record<string, number>;
+  yoy_changes?: Record<string, number>;
+  /** Plain-language alert strings (macro_intelligence.MacroSnapshotData.alerts) */
+  alerts?: string[];
 }
 
-export interface MacroSeries {
+/** /api/macro/series/{name} — history response */
+export interface MacroSeriesHistory {
   name: string;
-  value: number;
-  unit: string;
-  source: string;
-  change_pct?: number;
+  months?: number;
+  data: Array<{ date: string; value: number }>;
+  /** Legacy aliases tolerated by pages. */
+  latest_value?: number;
+  value?: number;
 }
 
 export interface MacroAlert {
@@ -637,36 +645,87 @@ export interface CountrySnapshot {
 // ── Sentiment & AIS Types ────────────────────────────────────────────
 
 /** /api/sentiment/summary */
+/** /api/sentiment/summary (contract corrected post-review — was typed
+ *  against fictional `overall_score`/`sentiment` keys) */
 export interface SentimentSummary {
-  overall_score: number;
-  sentiment: "positive" | "neutral" | "negative";
+  generated_at?: string;
   articles_24h: number;
-  top_headline?: string;
-  data_provenance: DataProvenance;
+  articles_6h?: number;
+  avg_sentiment_24h: number;
+  avg_sentiment_6h?: number;
+  sentiment_trend?: "improving" | "deteriorating" | "stable" | string;
+  categories?: Record<string, number>;
+  sources?: Record<string, number>;
+  high_impact_articles?: number;
+  last_poll?: string | null;
+  /** Legacy alias tolerated by existing pages. */
+  overall_score?: number;
 }
 
 /** /api/sentiment/articles */
 export interface SentimentArticle {
+  id?: string;
   title: string;
+  summary?: string;
   source: string;
-  url: string;
-  published_at: string;
-  sentiment_score: number;
+  url?: string;
+  published_at?: string | null;
   sentiment: string;
+  sentiment_score: number;
+  category?: string;
+  companies?: string[];
+  tickers?: string[];
+  production_areas?: number[];
+  market_impact?: number;
+  keywords?: string[];
+  /** Legacy display aliases some pages read defensively. */
+  headline?: string;
+  score?: number;
 }
 
-/** /api/ais/harvest-intelligence */
-export interface AISHarvestIntel {
-  active_vessels: number;
-  harvest_activity: string;
-  supply_impact: string;
-  recent_signals: Array<{
+/** One harvest-detection row (/api/ais/harvest-signals) */
+export interface AISHarvestSignalRow {
+  detected_at: string;
+  vessel: string;
+  mmsi?: string;
+  farm_locality?: string;
+  farm_name?: string;
+  destination?: string;
+  estimated_tonnes?: number;
+  company?: string;
+  production_area?: number | string;
+  confidence?: string;
+  signal_type?: string;
+}
+
+/** /api/ais/harvest-intelligence (macro_routes — contract corrected
+ *  post-review; the old type described a different, nonexistent shape) */
+export interface AISHarvestIntelligence {
+  generated_at?: string;
+  total_vessels: number;
+  summary?: {
+    at_farm?: number;
+    harvesting?: number;
+    treating?: number;
+    transiting?: number;
+  };
+  supply_pressure?: string;
+  treatment_pressure?: string;
+  harvest_signals_72h?: Array<{
     vessel: string;
-    activity: string;
-    location: string;
-    timestamp: string;
+    farm: string | null;
+    detected_at: string;
+    confidence: string;
   }>;
-  data_provenance: DataProvenance;
+  treatment_signals_72h?: Array<{
+    vessel: string;
+    farm: string | null;
+    detected_at: string;
+    type: string;
+  }>;
+  price_signal?: string;
+  signal_rationale?: string;
+  data_provenance?: DataProvenance;
 }
 
 // ── Causal & Graph Types ─────────────────────────────────────────────
@@ -959,6 +1018,40 @@ export interface SupplyDemandBalance {
   demand_breakdown?: Record<string, number | string | null>;
   price_forecast?: SupplyDemandForecast | null;
   data_provenance?: DataProvenance;
+}
+
+// ── Market page contracts (post-review corrections) ──────────────────
+
+/** One Market Hedger Agent row (/api/market/hedger-signals — a LIST) */
+export interface HedgerSignalRow {
+  id?: number;
+  ticker: string;
+  direction: string;
+  strength?: number;
+  rationale?: string;
+  status?: string;
+  created_at?: string | null;
+}
+
+/** /api/market/export-destinations — destinations is a DICT keyed by
+ *  country code (SSB 08799), not a list */
+export interface ExportDestinationsResponse {
+  months_analyzed?: number;
+  n_destinations?: number;
+  destinations: Record<
+    string,
+    {
+      name?: string;
+      total_tonnes?: number;
+      total_nok_millions?: number;
+      avg_price_nok_kg?: number;
+      trend_pct?: number;
+      months_with_data?: number;
+    }
+  >;
+  monthly_series?: Array<Record<string, unknown>>;
+  source?: string;
+  license?: string;
 }
 
 // ── China Demand (review L5 typing slice) ────────────────────────────
