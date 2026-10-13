@@ -154,7 +154,11 @@ added `tests/test_migrations.py`.
   models_used/models_fallback). No code gaps found.
 - 2026-10-13 · CI final state: 8fca76b (P0-1) all three workflows green;
   686a93c (P0-3+P0-4) all three green incl. uv installs + instant rig on CI;
-  26eb194 (P1-5) Backend+Docker green.
+  26eb194 (P1-5) Backend+Docker green; 9bf6760 (follow-up sweep)
+  Frontend+Backend+Docker all green — visual regression passed against the
+  committed Linux baselines (unchanged: the fixed cards sit below the
+  viewport fold), e2e-backend 39 api + 49 app specs + instant rig green on
+  the fresh DB (run 38372300505).
 - 2026-10-13 · **Full plan exhausted — every workstream DONE or
   BLOCKED-with-evidence.**
 - 2026-10-13 · **Follow-up sweep (post-plan):** /market card bindings fixed —
