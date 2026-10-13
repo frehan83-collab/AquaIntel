@@ -4,8 +4,9 @@
 > resuming after an interrupted session. Update the "Session log" section at the
 > bottom with every completed (or blocked) workstream.
 
-Repository: `C:\Users\freha\AquaIntel` · Branch: `master` · Baseline commit: `0ba29e3`
-Plan: `docs/NEXT_STEPS_PLAN.md` · Rules: `AGENTS.md` (authoritative)
+Repository: `C:\Users\freha\AquaIntel` · Branch: `master` · Baseline commit: `919855c`
+Plan: `docs/AUTONOMOUS_RUN_PLAN.md` (**RUN-1**, active) · Prior plan:
+`docs/NEXT_STEPS_PLAN.md` (exhausted) · Rules: `AGENTS.md` (authoritative)
 
 ---
 
@@ -183,4 +184,10 @@ added `tests/test_migrations.py`.
   Windows app-control policy; revisit on a Linux env) and the noted /futures
   `<title>` children-array + /market hydration warnings (non-fatal, no
   assertions on them).
+- 2026-10-13 · **RUN-1 planned**: `docs/AUTONOMOUS_RUN_PLAN.md` created — a
+  long autonomous run in 4 sprints with 10 workstreams R1–R10 (Sprint 1
+  hygiene/contract hardening → Sprint 2 DuckDB-on-Linux + latency → Sprint 3
+  Holy-Grail supply–demand flagship → Sprint 4 release/polish). The 11-step
+  "delta loop" is the per-change protocol; stop conditions and a run-complete
+  checklist are included. Next agent starts at Sprint 0 of RUN-1.
 
