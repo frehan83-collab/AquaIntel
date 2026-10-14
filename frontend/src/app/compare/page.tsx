@@ -6,6 +6,7 @@ import {
   Factory, BarChart3, Zap, TrendingUp, TrendingDown, Minus,
   ChevronDown, AlertTriangle,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
@@ -14,8 +15,12 @@ import RadarChart, { RadarDataset } from "@/components/RadarChart";
 import { api } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import { useApiError } from "@/lib/useApiError";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type {
+  DiseaseByCompany,
+  DiseaseCompanyCounts,
+  EsgCompanyScore,
+  LeaderEntry,
+} from "@/types/api";
 
 const COMPANY_COLORS = ["#00D4C8", "#F59E0B", "#A78BFA"];
 const MAX_COMPANIES = 3;
@@ -36,7 +41,7 @@ function MetricRow({
   lowerIsBetter = false,
 }: {
   label: string;
-  icon: any;
+  icon: LucideIcon;
   values: (number | null | undefined)[];
   format: (v: number) => string;
   lowerIsBetter?: boolean;
@@ -77,9 +82,9 @@ function CompanySelector({
   color,
 }: {
   index: number;
-  selected: any | null;
-  companies: any[];
-  onSelect: (co: any) => void;
+  selected: LeaderEntry | null;
+  companies: LeaderEntry[];
+  onSelect: (co: LeaderEntry) => void;
   onClear: () => void;
   color: string;
 }) {
@@ -222,10 +227,10 @@ function normalize(val: number, min: number, max: number, invert = false): numbe
 export default function ComparePage() {
   const { t } = useTranslation();
   const handleError = useApiError();
-  const [allCompanies, setAllCompanies] = useState<any[]>([]);
-  const [diseaseMap, setDiseaseMap] = useState<Record<string, any>>({});
-  const [esgCache, setEsgCache] = useState<Record<string, any>>({});
-  const [selected, setSelected] = useState<(any | null)[]>([null, null, null]);
+  const [allCompanies, setAllCompanies] = useState<LeaderEntry[]>([]);
+  const [diseaseMap, setDiseaseMap] = useState<Record<string, DiseaseCompanyCounts>>({});
+  const [esgCache, setEsgCache] = useState<Record<string, EsgCompanyScore>>({});
+  const [selected, setSelected] = useState<(LeaderEntry | null)[]>([null, null, null]);
   const [loading, setLoading] = useState(true);
 
   // Load companies + disease data
@@ -235,30 +240,29 @@ export default function ComparePage() {
       api.leadersTop30(),
       api.diseaseByCompany(),
     ]).then(([cRes, dRes]) => {
-      if (cRes.status === "fulfilled") setAllCompanies(cRes.value || []);
-      if (dRes.status === "fulfilled" && dRes.value && typeof dRes.value === "object")
-        setDiseaseMap(dRes.value);
+      if (cRes.status === "fulfilled") setAllCompanies(cRes.value ?? []);
+      if (dRes.status === "fulfilled") setDiseaseMap(dRes.value?.companies ?? {});
       setLoading(false);
     });
   }, []);
 
   // Load ESG data for selected companies
   useEffect(() => {
-    const names = selected.filter(Boolean).map((c: any) => c.name);
-    const missing = names.filter((n: string) => !esgCache[n]);
+    const names = selected.filter(Boolean).map((c) => (c as LeaderEntry).name);
+    const missing = names.filter((n) => !esgCache[n]);
     if (missing.length === 0) return;
-    missing.forEach((name: string) => {
-      api.esgCompany(name).then((data: any) => {
+    missing.forEach((name) => {
+      api.esgCompany(name).then((data) => {
         setEsgCache((prev) => ({ ...prev, [name]: data }));
       }).catch(handleError("compare_esg_company"));
     });
   }, [selected]);
 
-  const activeCompanies = selected.filter(Boolean);
+  const activeCompanies = selected.filter(Boolean) as LeaderEntry[];
   const companyCount = activeCompanies.length;
 
   // Available companies (exclude already selected)
-  const selectedNames = new Set(selected.filter(Boolean).map((c: any) => c.name));
+  const selectedNames = new Set(activeCompanies.map((c) => c.name));
   const availableCompanies = allCompanies.filter((c) => !selectedNames.has(c.name));
 
   // Compute ranges for normalization
@@ -284,15 +288,15 @@ export default function ComparePage() {
   const radarLabels = ["Lice Control", "ESG Score", "Production", "Disease Resilience", "Treatment Eff."];
   const radarDatasets: RadarDataset[] = useMemo(() => {
     if (!ranges || companyCount < 2) return [];
-    return activeCompanies.map((co: any, i: number) => {
+    return activeCompanies.map((co, i: number) => {
       const esg = esgCache[co.name];
       const disease = diseaseMap[co.name];
       const diseaseTotal = disease?.total || 0;
 
       // Lice: lower is better, invert
       const liceScore = normalize(co.avg_lice || 0, ranges.lice.min, ranges.lice.max, true);
-      // ESG: higher is better
-      const esgScore = esg?.total_score ? normalize(esg.total_score, 0, 100) : 0.5;
+      // ESG: higher is better (real key is `total`, not `total_score`)
+      const esgScore = esg?.total ? normalize(esg.total, 0, 100) : 0.5;
       // Production: higher is better
       const prodScore = normalize(co.production_volume_tonnes || 0, ranges.production.min, ranges.production.max);
       // Disease resilience: fewer disease events is better, invert
@@ -308,7 +312,7 @@ export default function ComparePage() {
     });
   }, [activeCompanies, ranges, esgCache, diseaseMap, companyCount]);
 
-  const setCompanyAt = (index: number, co: any | null) => {
+  const setCompanyAt = (index: number, co: LeaderEntry | null) => {
     setSelected((prev) => {
       const next = [...prev];
       next[index] = co;
@@ -345,7 +349,7 @@ export default function ComparePage() {
           label="Best Lice Score"
           value={
             companyCount > 0
-              ? Math.min(...activeCompanies.map((c: any) => c.avg_lice || 99)).toFixed(3)
+              ? Math.min(...activeCompanies.map((c) => c.avg_lice || 99)).toFixed(3)
               : "--"
           }
           icon={Bug}
@@ -355,7 +359,7 @@ export default function ComparePage() {
           label="Best Overall"
           value={
             companyCount > 0
-              ? Math.max(...activeCompanies.map((c: any) => c.performance_score || 0)).toFixed(0)
+              ? Math.max(...activeCompanies.map((c) => c.performance_score || 0)).toFixed(0)
               : "--"
           }
           icon={Trophy}
@@ -423,7 +427,7 @@ export default function ComparePage() {
               <div className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold">
                 Metric
               </div>
-              {activeCompanies.map((co: any, i: number) => (
+              {activeCompanies.map((co, i: number) => (
                 <div key={co.name} className="flex items-center gap-2">
                   <span
                     className="w-2.5 h-2.5 rounded-full flex-shrink-0"
@@ -442,28 +446,28 @@ export default function ComparePage() {
               <MetricRow
                 label="Avg Lice (adult female)"
                 icon={Bug}
-                values={activeCompanies.map((c: any) => c.avg_lice)}
+                values={activeCompanies.map((c) => c.avg_lice)}
                 format={(v) => v.toFixed(3)}
                 lowerIsBetter
               />
               <MetricRow
                 label="Performance Score"
                 icon={Trophy}
-                values={activeCompanies.map((c: any) => c.performance_score)}
+                values={activeCompanies.map((c) => c.performance_score)}
                 format={(v) => v.toFixed(1)}
               />
               <MetricRow
                 label="12-Week Outlook"
                 icon={TrendingUp}
-                values={activeCompanies.map((c: any) => c.outlook_index)}
+                values={activeCompanies.map((c) => c.outlook_index)}
                 format={(v) => v.toFixed(0)}
               />
               <MetricRow
                 label="Risk Level Score"
                 icon={AlertTriangle}
-                values={activeCompanies.map((c: any) => {
+                values={activeCompanies.map((c) => {
                   const riskMap: Record<string, number> = { LOW: 25, MEDIUM: 50, HIGH: 75, CRITICAL: 100 };
-                  return riskMap[c.risk_level] || 50;
+                  return riskMap[c.risk_level ?? ""] || 50;
                 })}
                 format={(v) => {
                   if (v <= 25) return "LOW";
@@ -483,25 +487,25 @@ export default function ComparePage() {
               <MetricRow
                 label="Environmental (E)"
                 icon={Leaf}
-                values={activeCompanies.map((c: any) => esgCache[c.name]?.environmental)}
+                values={activeCompanies.map((c) => esgCache[c.name]?.environmental)}
                 format={(v) => v.toFixed(1)}
               />
               <MetricRow
                 label="Social (S)"
                 icon={Shield}
-                values={activeCompanies.map((c: any) => esgCache[c.name]?.social)}
+                values={activeCompanies.map((c) => esgCache[c.name]?.social)}
                 format={(v) => v.toFixed(1)}
               />
               <MetricRow
                 label="Governance (G)"
                 icon={Shield}
-                values={activeCompanies.map((c: any) => esgCache[c.name]?.governance)}
+                values={activeCompanies.map((c) => esgCache[c.name]?.governance)}
                 format={(v) => v.toFixed(1)}
               />
               <MetricRow
                 label="Total ESG Score"
                 icon={BarChart3}
-                values={activeCompanies.map((c: any) => esgCache[c.name]?.total_score)}
+                values={activeCompanies.map((c) => esgCache[c.name]?.total)}
                 format={(v) => v.toFixed(1)}
               />
             </div>
@@ -514,7 +518,7 @@ export default function ComparePage() {
               <MetricRow
                 label="Production Volume"
                 icon={Factory}
-                values={activeCompanies.map((c: any) => c.production_volume_tonnes)}
+                values={activeCompanies.map((c) => c.production_volume_tonnes)}
                 format={(v) =>
                   v >= 1000 ? `${(v / 1000).toFixed(1)}k t` : `${v.toFixed(0)} t`
                 }
@@ -522,19 +526,19 @@ export default function ComparePage() {
               <MetricRow
                 label="Farm Count"
                 icon={Factory}
-                values={activeCompanies.map((c: any) => c.n_localities)}
+                values={activeCompanies.map((c) => c.n_localities)}
                 format={(v) => v.toFixed(0)}
               />
               <MetricRow
                 label="Lice Records"
                 icon={BarChart3}
-                values={activeCompanies.map((c: any) => c.n_lice_records)}
+                values={activeCompanies.map((c) => c.n_lice_records)}
                 format={(v) => v.toLocaleString()}
               />
               <MetricRow
                 label="Production Areas"
                 icon={BarChart3}
-                values={activeCompanies.map((c: any) => c.production_areas?.length || 0)}
+                values={activeCompanies.map((c) => c.production_areas?.length || 0)}
                 format={(v) => v.toFixed(0)}
               />
             </div>
@@ -547,21 +551,21 @@ export default function ComparePage() {
               <MetricRow
                 label="Total Disease Events"
                 icon={Shield}
-                values={activeCompanies.map((c: any) => diseaseMap[c.name]?.total || 0)}
+                values={activeCompanies.map((c) => diseaseMap[c.name]?.total || 0)}
                 format={(v) => v.toFixed(0)}
                 lowerIsBetter
               />
               <MetricRow
                 label="ISA Cases"
                 icon={AlertTriangle}
-                values={activeCompanies.map((c: any) => diseaseMap[c.name]?.isa || 0)}
+                values={activeCompanies.map((c) => diseaseMap[c.name]?.isa || 0)}
                 format={(v) => v.toFixed(0)}
                 lowerIsBetter
               />
               <MetricRow
                 label="PD Cases"
                 icon={AlertTriangle}
-                values={activeCompanies.map((c: any) => diseaseMap[c.name]?.pd || 0)}
+                values={activeCompanies.map((c) => diseaseMap[c.name]?.pd || 0)}
                 format={(v) => v.toFixed(0)}
                 lowerIsBetter
               />
@@ -570,7 +574,7 @@ export default function ComparePage() {
 
           {/* Company Detail Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {activeCompanies.map((co: any, i: number) => {
+            {activeCompanies.map((co, i: number) => {
               const esg = esgCache[co.name];
               const disease = diseaseMap[co.name];
               return (

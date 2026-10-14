@@ -348,16 +348,32 @@ export interface FuturesBasis {
 // ── Leaders & Analytics Types ────────────────────────────────────────
 
 /** Element of /api/leaders/top100 data array */
+/** One row of /api/leaders/top100 (top50_engine.to_api_response) */
 export interface LeaderEntry {
   rank: number;
-  company_name: string;
-  production_area: number;
-  lice_percentile: number;
-  production_tonnes: number;
-  lice_avg: number;
-  disease_status: string;
-  esg_score: number;
-  verdict: string;
+  name: string;
+  ticker?: string | null;
+  is_public?: boolean;
+  parent_group?: string | null;
+  n_localities: number;
+  production_areas: number[];
+  production_volume_tonnes: number;
+  performance_score: number;
+  score_components?: Record<string, number>;
+  outlook_index?: number;
+  outlook_direction?: string;
+  price_impact_pct?: number;
+  price_impact_direction?: string;
+  risk_level?: string;
+  risk_factors?: string[];
+  avg_lice: number;
+  max_lice?: number;
+  pct_above_threshold?: number;
+  lice_trend?: string;
+  n_lice_records?: number;
+  lice_sparkline?: number[];
+  lice_prediction?: number[];
+  peer_percentile?: number;
 }
 
 /** /api/anomaly/scores */
@@ -452,15 +468,22 @@ export interface DiseaseCase {
 }
 
 /** /api/disease/by-company */
+/** Per-company active disease counts (real keys from
+ *  mattilsynet_client.get_company_disease_counts) */
+export interface DiseaseCompanyCounts {
+  total: number;
+  isa: number;
+  pd: number;
+  other: number;
+  localities: number[];
+}
+
+/** /api/disease/by-company (envelope corrected post-review — provenance
+ *  used to be mixed into the company map itself) */
 export interface DiseaseByCompany {
-  [companyName: string]: {
-    total: number;
-    active_cases: number;
-    isa_cases: number;
-    pd_cases: number;
-    other_cases: number;
-    affected_localities: number[];
-  };
+  companies: Record<string, DiseaseCompanyCounts>;
+  count: number;
+  data_provenance?: DataProvenance;
 }
 
 /** /api/disease/resistance-map */
@@ -999,6 +1022,26 @@ export interface TreatmentOutcomeRequest {
   notes?: string;
   resistance_observed?: boolean;
 }
+
+/** /api/esg/company/{name} (esg_scorer._to_dict) */
+export interface EsgCompanyScore {
+  rank: number;
+  company_name: string;
+  ticker?: string | null;
+  /** 0-100 composite (the "total_score" alias does not exist) */
+  total: number;
+  grade: string;
+  environmental: number;
+  social: number;
+  governance: number;
+  breakdown?: Record<string, number>;
+  n_localities?: number;
+  production_areas?: number[];
+  computed_at?: string;
+}
+
+/** /api/esg/scores (list of the same rows) */
+export type EsgCompanyScores = EsgCompanyScore[];
 
 // ── Pairs Trading Types ──────────────────────────────────────────────
 

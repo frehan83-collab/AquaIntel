@@ -156,7 +156,7 @@ export function useDashboardData(locale: Locale): DashboardData {
   }, [ssbQ.data]);
 
   const diseaseCount = useMemo(
-    () => Object.values(diseaseQ.data || {}).reduce((sum, c) => sum + (c?.total || 0), 0),
+    () => Object.values(diseaseQ.data?.companies ?? {}).reduce((sum, c) => sum + (c?.total || 0), 0),
     [diseaseQ.data]
   );
 

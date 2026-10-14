@@ -18,6 +18,7 @@ import type {
   SentimentSummary, AISHarvestIntelligence, AISHarvestSignalRow, SentimentArticle,
   HedgerSignalRow, ExportDestinationsResponse, MacroSnapshot, MacroSeriesHistory,
   PriceOutlook, PriceOutlookMulti, PriceOutlookExplain, PricePredictionRow, SSBPriceCurve,
+  EsgCompanyScore,
   CausalSummary, GlobalSupply,
   WaveRisk,
   WaveForecast,
@@ -240,7 +241,7 @@ export const api = {
   // ESG Sustainability Scores
   esgScores: () => fetchAPI("/api/esg/scores"),
   esgSummary: () => fetchAPI("/api/esg/summary"),
-  esgCompany: (name: string) => fetchAPI(`/api/esg/company/${encodeURIComponent(name)}`),
+  esgCompany: (name: string): Promise<EsgCompanyScore> => fetchAPI<EsgCompanyScore>(`/api/esg/company/${encodeURIComponent(name)}`),
 
   // Ocean Forecast (MET.no)
   oceanForecast: (lat: number, lon: number) => fetchAPI(`/api/ocean/forecast?lat=${lat}&lon=${lon}`),

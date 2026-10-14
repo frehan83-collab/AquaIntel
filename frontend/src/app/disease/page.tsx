@@ -20,6 +20,7 @@ import FreshnessIndicator from "@/components/FreshnessIndicator";
 import DataQualityBadge from "@/components/DataQualityBadge";
 import dynamic from "next/dynamic";
 import type { PADataPoint } from "@/components/RegionalHeatmap";
+import type { DiseaseByCompany } from "@/types/api";
 
 const RegionalHeatmap = dynamic(() => import("@/components/RegionalHeatmap"), {
   loading: () => <div className="h-[300px] bg-slate-800/50 rounded-xl animate-pulse flex items-center justify-center"><span className="text-slate-400">Loading heatmap...</span></div>,
@@ -40,7 +41,7 @@ export default function DiseasePage() {
   const [alerts, setAlerts] = useState<any>(null);
   const [norway, setNorway] = useState<any>(null);
   const [treatments, setTreatments] = useState<any>(null);
-  const [byCompany, setByCompany] = useState<any>(null);
+  const [byCompany, setByCompany] = useState<DiseaseByCompany | null>(null);
   const [loading, setLoading] = useState(true);
   const [yoyDisease, setYoyDisease] = useState<any>(null);
   const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
@@ -82,7 +83,10 @@ export default function DiseasePage() {
   const pdCount = norwayCases.filter((c: any) => c.disease === "PD" || c.disease_type?.includes("PANKREAS")).length;
   const treatmentReports = treatments?.reports || [];
   const resistanceCount = treatments?.with_resistance_suspicions || 0;
-  const companyList = Array.isArray(byCompany) ? byCompany : byCompany?.companies || [];
+  const companyList = Object.entries(byCompany?.companies ?? {}).map(([name, c]) => ({
+    name,
+    ...c,
+  }));
   const alertList = alerts?.alerts || (Array.isArray(alerts) ? alerts : []);
 
   return (
@@ -157,7 +161,7 @@ export default function DiseasePage() {
         />
         <KPICard
           label={t("disease.companies_affected")}
-          value={companyList.filter((c: any) => (c.total || c.isa + c.pd + (c.other || 0)) > 0).length || "\u2014"}
+          value={companyList.filter((c) => (c.total || c.isa + c.pd + (c.other || 0)) > 0).length || "\u2014"}
           delta="With active cases"
           deltaType="neutral"
           icon={Building2}
@@ -372,12 +376,12 @@ export default function DiseasePage() {
             {t("disease.company_exposure")}
           </h3>
           <div className="space-y-1.5 max-h-72 overflow-y-auto">
-            {companyList.length > 0 ? companyList.map((c: any, i: number) => {
+            {companyList.length > 0 ? companyList.map((c, i: number) => {
               const total = c.total || (c.isa || 0) + (c.pd || 0) + (c.other || 0);
               if (total === 0) return null;
               return (
                 <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-                  <span className="text-[11px] font-medium text-[var(--text-primary)]">{c.company || c.name}</span>
+                  <span className="text-[11px] font-medium text-[var(--text-primary)]">{c.name}</span>
                   <div className="flex items-center gap-2">
                     {(c.isa || 0) > 0 && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">

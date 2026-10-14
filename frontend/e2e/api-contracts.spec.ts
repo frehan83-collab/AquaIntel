@@ -287,6 +287,18 @@ test.describe("Supply Chain", () => {
     if (body.history.length > 0) expect(body.history[0]).toHaveProperty("price_nok");
   });
 
+  test("GET /api/disease/by-company returns the companies envelope", async ({ request }) => {
+    const res = await request.get(`${API}/api/disease/by-company`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    // Envelope corrected post-review: provenance used to be mixed into the map
+    expect(typeof body.companies).toBe("object");
+    expect(Array.isArray(body.companies)).toBeFalsy();
+    expect(body).toHaveProperty("count");
+    expect(body).toHaveProperty("data_provenance");
+    expect(body.companies).not.toHaveProperty("data_provenance");
+  });
+
   test("GET /api/supply/demand-balance keeps the additive R7 contract", async ({ request }) => {
     const res = await request.get(`${API}/api/supply/demand-balance`);
     expect(res.ok()).toBeTruthy();

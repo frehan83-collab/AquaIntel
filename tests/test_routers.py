@@ -271,6 +271,15 @@ class TestDiseaseRoutes:
     def test_disease_by_company(self, client):
         r = client.get("/api/disease/by-company")
         assert r.status_code == 200
+        body = r.json()
+        # Contract corrected post-review: provenance used to be mixed INTO
+        # the company map (appearing as if it were a company).
+        assert "companies" in body
+        assert isinstance(body["companies"], dict)
+        assert body["count"] == len(body["companies"])
+        assert body["data_provenance"]["is_live"] is True
+        # No provenance object masquerading as a company
+        assert "data_provenance" not in body["companies"]
 
 
 # ---------------------------------------------------------------------------

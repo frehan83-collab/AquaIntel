@@ -113,6 +113,33 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Fixed (NEW finding — disease/leaders/compare contract fiction, slice 4)
+- **`/api/disease/by-company` envelope corrected** (same class as
+  smolt-forecast): `data_provenance` used to be injected INTO the
+  per-company map — a provenance object appearing as if it were a company
+  (and consumers summing over it). Now
+  `{companies: {name: {total, isa, pd, other, localities}}, count,
+  data_provenance}`. Consumers updated: dashboard count, `/disease`
+  (its company list was silently EMPTY — it read `byCompany.companies` as
+  an array and `c.company` which never existed), `/leaders`, `/investor`,
+  `/compare`.
+- **`LeaderEntry` type corrected**: it described a nonexistent shape
+  (`company_name`/`lice_avg`/`production_tonnes`/`lice_percentile`/
+  `esg_score`/`verdict`) while the real `/api/leaders/top100` rows are
+  `name`/`avg_lice`/`performance_score`/`production_volume_tonnes`/… —
+  `/compare` now consumes the real typed rows.
+- **`/compare` fully typed** (29 `any`s → 0, eslint-disable removed):
+  typed company selector props, ESG cache (`EsgCompanyScore`), disease map
+  (`DiseaseCompanyCounts`), radar datasets; fixed the ESG radar/score
+  reading `total_score` (the real key is `total` — the ESG radar dimension
+  silently fell back to 0.5 for every company).
+- New `EsgCompanyScore` type + typed `api.esgCompany`.
+- Regression nets: backend test pins the disease envelope (incl. "no
+  provenance object masquerading as a company") + e2e assertion against
+  the real backend.
+- Local verification: tsc clean, eslint 0 errors, visual baselines 4/4,
+  test_routers 48 passed, ruff clean.
+
 ### Fixed (NEW finding — /price-outlook + /scenarios contract fiction, same class as A1/A2)
 - `/price-outlook` sub-sections read invented fields; typed the page and
   corrected them:

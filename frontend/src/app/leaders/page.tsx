@@ -15,8 +15,7 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import DataQualityBadge from "@/components/DataQualityBadge";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { DiseaseCompanyCounts } from "@/types/api";
 
 type SortKey = "rank" | "performance_score" | "outlook_index" | "production_volume_tonnes" | "avg_lice" | "risk_level";
 type FilterType = "all" | "public" | "private";
@@ -150,7 +149,7 @@ function LeadersPageInner() {
 
   const [companies, setCompanies] = useState<any[]>([]);
   const [paLeaderboard, setPaLeaderboard] = useState<any[]>([]);
-  const [diseaseMap, setDiseaseMap] = useState<Record<string, any>>({});
+  const [diseaseMap, setDiseaseMap] = useState<Record<string, DiseaseCompanyCounts>>({});
   const [loading, setLoading] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
   const [showOptIn, setShowOptIn] = useState(false);
@@ -164,7 +163,7 @@ function LeadersPageInner() {
     ]).then(([c, pa, disease]) => {
       setCompanies(c);
       setPaLeaderboard(pa);
-      setDiseaseMap(disease && typeof disease === "object" ? disease : {});
+      setDiseaseMap(disease?.companies ?? {});
     }).finally(() => setLoading(false));
   }, []);
 

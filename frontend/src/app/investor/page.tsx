@@ -59,7 +59,7 @@ export default function InvestorPage() {
     if (r5.status === "fulfilled") setLice(r5.value);
     if (r6.status === "fulfilled") setSupply(r6.value);
     if (r7.status === "fulfilled") setDisease(r7.value);
-    if (r8.status === "fulfilled") setDiseaseByCompany(r8.value || {});
+    if (r8.status === "fulfilled") setDiseaseByCompany(r8.value?.companies ?? {});
     if (r9.status === "fulfilled") setAnomaly(r9.value);
     if (r10.status === "fulfilled") setMacro(r10.value);
     api.macroSeries("nok_usd", 24).then(setMacroNok).catch(handleError("investor_macro_nok"));

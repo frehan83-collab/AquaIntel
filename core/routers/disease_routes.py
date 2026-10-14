@@ -131,13 +131,27 @@ async def disease_treatments(year: int = 2026, limit: int = Query(50, ge=1, le=1
 
 @router.get("/by-company")
 async def disease_by_company():
-    """Active disease cases aggregated per company. Used by Leaders, ESG, Benchmark."""
+    """Active disease cases aggregated per company. Used by Leaders, ESG, Benchmark.
+
+    Contract correction (post-review, same class as smolt-forecast /
+    cohort-timeline): ``data_provenance`` used to be injected INTO the
+    per-company map — a provenance object appearing as if it were a
+    company (and consumers summing over it). Now:
+
+        {"companies": {name: {total, isa, pd, other, localities}},
+         "count": n, "data_provenance": {...}}
+    """
     from core.market.mattilsynet_client import mattilsynet_client
     cases = await mattilsynet_client.fetch_disease_cases(limit=200)
     result = await mattilsynet_client.get_company_disease_counts(cases)
-    if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("Mattilsynet + WOAH + Sernapesca", confidence=0.90).to_dict()
-    return result
+    companies = result if isinstance(result, dict) else {}
+    return {
+        "companies": companies,
+        "count": len(companies),
+        "data_provenance": DataProvenance.live(
+            "Mattilsynet + WOAH + Sernapesca", confidence=0.90
+        ).to_dict(),
+    }
 
 
 @router.get("/alerts")
