@@ -299,6 +299,55 @@ test.describe("Supply Chain", () => {
     expect(body.companies).not.toHaveProperty("data_provenance");
   });
 
+  test("GET /api/disease/norway returns by_disease + active_outbreaks", async ({ request }) => {
+    const res = await request.get(`${API}/api/disease/norway`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(body).toHaveProperty("by_disease");
+    expect(Array.isArray(body.active_outbreaks)).toBeTruthy();
+    if (body.active_outbreaks.length > 0) {
+      // Real outbreak keys (the page used to read disease_type/production_area)
+      for (const key of ["locality_no", "locality_name", "disease", "status"]) {
+        expect(body.active_outbreaks[0], `missing ${key}`).toHaveProperty(key);
+      }
+    }
+  });
+
+  test("GET /api/disease/alerts returns alert rows with report_date", async ({ request }) => {
+    const res = await request.get(`${API}/api/disease/alerts`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(Array.isArray(body.alerts)).toBeTruthy();
+    if (body.alerts.length > 0) {
+      expect(body.alerts[0]).toHaveProperty("disease");
+      expect(body.alerts[0]).toHaveProperty("report_date");
+    }
+  });
+
+  test("GET /api/disease/treatments returns report rows", async ({ request }) => {
+    const res = await request.get(`${API}/api/disease/treatments?year=2026`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(Array.isArray(body.reports)).toBeTruthy();
+    expect(body).toHaveProperty("with_resistance_suspicions");
+    if (body.reports.length > 0) {
+      expect(body.reports[0]).toHaveProperty("locality_no");
+    }
+  });
+
+  test("GET /api/analytics/yoy-comparison emits week+value series", async ({ request }) => {
+    const res = await request.get(`${API}/api/analytics/yoy-comparison?metric=disease&production_area=0`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    for (const key of ["current_year", "previous_year", "two_years_ago"]) {
+      expect(Array.isArray(body[key]), `missing ${key}`).toBeTruthy();
+    }
+    if (body.current_year.length > 0) {
+      expect(body.current_year[0]).toHaveProperty("week");
+      expect(body.current_year[0]).toHaveProperty("value");
+    }
+  });
+
   test("GET /api/supply/demand-balance keeps the additive R7 contract", async ({ request }) => {
     const res = await request.get(`${API}/api/supply/demand-balance`);
     expect(res.ok()).toBeTruthy();

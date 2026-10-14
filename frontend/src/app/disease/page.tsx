@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Shield, RefreshCw, AlertTriangle, Activity, Globe2,
-  Bug, Syringe, Building2, Thermometer, Download,
+  Bug, Syringe, Building2, Download,
 } from "lucide-react";
 import { exportToCSV } from "@/lib/export";
 import { useTranslation } from "@/lib/i18n";
@@ -18,15 +18,16 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import InteractiveChart, { DataPoint } from "@/components/InteractiveChart";
 import FreshnessIndicator from "@/components/FreshnessIndicator";
 import DataQualityBadge from "@/components/DataQualityBadge";
-import dynamic from "next/dynamic";
-import type { PADataPoint } from "@/components/RegionalHeatmap";
 import type { DiseaseByCompany } from "@/types/api";
-
-const RegionalHeatmap = dynamic(() => import("@/components/RegionalHeatmap"), {
-  loading: () => <div className="h-[300px] bg-slate-800/50 rounded-xl animate-pulse flex items-center justify-center"><span className="text-slate-400">Loading heatmap...</span></div>,
-});
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type {
+  DiseaseAlertRow,
+  DiseaseAlerts,
+  DiseaseNorway,
+  DiseaseOutbreak,
+  DiseaseTreatmentReport,
+  DiseaseTreatments,
+  YoYComparison,
+} from "@/types/api";
 
 const SEVERITY_STYLES: Record<string, string> = {
   critical: "bg-rose-500/10 text-rose-400 border-rose-500/20",
@@ -38,12 +39,12 @@ const SEVERITY_STYLES: Record<string, string> = {
 export default function DiseasePage() {
   const { t } = useTranslation();
   const handleError = useApiError();
-  const [alerts, setAlerts] = useState<any>(null);
-  const [norway, setNorway] = useState<any>(null);
-  const [treatments, setTreatments] = useState<any>(null);
+  const [alerts, setAlerts] = useState<DiseaseAlerts | null>(null);
+  const [norway, setNorway] = useState<DiseaseNorway | null>(null);
+  const [treatments, setTreatments] = useState<DiseaseTreatments | null>(null);
   const [byCompany, setByCompany] = useState<DiseaseByCompany | null>(null);
   const [loading, setLoading] = useState(true);
-  const [yoyDisease, setYoyDisease] = useState<any>(null);
+  const [yoyDisease, setYoyDisease] = useState<YoYComparison | null>(null);
   const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
 
   const load = async () => {
@@ -69,25 +70,25 @@ export default function DiseasePage() {
     api.yoyComparison("disease").then(setYoyDisease).catch(handleError("disease_yoy"));
   }, []);
 
-  // Defensive: API returns {active_outbreaks: [...], ...} — extract the array
-  // Falls back through every possible key, then to empty array
-  const norwayCases: any[] = (() => {
-    if (!norway) return [];
-    if (Array.isArray(norway)) return norway;
-    if (Array.isArray(norway.cases)) return norway.cases;
-    if (Array.isArray(norway.active_outbreaks)) return norway.active_outbreaks;
-    if (Array.isArray(norway.data)) return norway.data;
-    return [];
-  })();
-  const isaCount = norwayCases.filter((c: any) => c.disease === "ISA" || c.disease_type?.includes("ILA") || c.disease_type?.includes("ISA")).length;
-  const pdCount = norwayCases.filter((c: any) => c.disease === "PD" || c.disease_type?.includes("PANKREAS")).length;
-  const treatmentReports = treatments?.reports || [];
-  const resistanceCount = treatments?.with_resistance_suspicions || 0;
+  // Real contract: /api/disease/norway returns {active_outbreaks: [...]} and
+  // the disease field carries DISPLAY names ("Infectious Salmon Anaemia
+  // (ISA)") — the old exact-match counters ("ISA"/"PD") were always 0.
+  const norwayCases: DiseaseOutbreak[] = norway?.active_outbreaks ?? [];
+  const isaCount = norwayCases.filter((c) => {
+    const d = (c.disease ?? "").toUpperCase();
+    return d.includes("ISA") || d.includes("ILA");
+  }).length;
+  const pdCount = norwayCases.filter((c) => {
+    const d = (c.disease ?? "").toUpperCase();
+    return d.includes("PD") || d.includes("PANKREAS");
+  }).length;
+  const treatmentReports: DiseaseTreatmentReport[] = treatments?.reports ?? [];
+  const resistanceCount = treatments?.with_resistance_suspicions ?? 0;
   const companyList = Object.entries(byCompany?.companies ?? {}).map(([name, c]) => ({
     name,
     ...c,
   }));
-  const alertList = alerts?.alerts || (Array.isArray(alerts) ? alerts : []);
+  const alertList: DiseaseAlertRow[] = alerts?.alerts ?? [];
 
   return (
     <ErrorBoundary fallbackTitle="Disease Intelligence error">
@@ -185,10 +186,10 @@ export default function DiseasePage() {
             <GlassCard>
               <InteractiveChart
                 title="Disease Trend (current year)"
-                data={(yoyDisease.current_year as any[]).map((v: any, i: number): DataPoint => ({
+                data={yoyDisease.current_year.map((v, i: number): DataPoint => ({
                   x: i + 1,
-                  y: typeof v === "number" ? v : v?.value ?? 0,
-                  label: `Month ${i + 1}`,
+                  y: v.value ?? 0,
+                  label: `M${v.week}`,
                 }))}
                 unit="cases"
                 color="#fb7185"
@@ -200,59 +201,60 @@ export default function DiseasePage() {
         </div>
       )}
 
-      {/* Production Area Disease Overview */}
+      {/* Disease Breakdown (real by_disease counts) */}
       <GlassCard delay={0.13}>
         <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
           <Activity className="w-4 h-4 text-ocean-400" />
-          Norway Production Areas — Disease Status
+          Active Cases by Disease
           <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-ocean-500/10 text-ocean-400 border border-ocean-500/20 ml-auto">
-            PA 1&ndash;13 overview
+            Mattilsynet classification
           </span>
         </h3>
-        <div className="grid grid-cols-13 gap-1.5 mb-3">
-          {Array.from({ length: 13 }, (_, i) => i + 1).map(pa => {
-            const cases = norwayCases.filter((c: any) => {
-              const cpa = c.production_area ?? c.pa ?? c.zone;
-              return cpa === pa || cpa === String(pa);
-            });
-            const hasISA = cases.some((c: any) => {
-              const d = c.disease || c.disease_type || "";
-              return d.includes("ISA") || d.includes("ILA");
-            });
-            const hasPD = cases.some((c: any) => {
-              const d = c.disease || c.disease_type || "";
-              return d.includes("PD") || d.includes("PANKREAS");
-            });
+        {(() => {
+          // NOTE: the API does not expose a production-area field per
+          // outbreak (only locality), so the old PA 1-13 grid could never
+          // colour a cell — it always read "Clear". This breakdown uses the
+          // real by_disease counts instead of inventing PA data.
+          const byDisease = Object.entries(norway?.by_disease ?? {}).sort(
+            ([, a], [, b]) => b - a,
+          );
+          if (byDisease.length === 0) {
             return (
-              <div
-                key={pa}
-                title={`PA ${pa}: ${hasISA ? "ISA Active" : hasPD ? "PD Active" : "Clear"} (${cases.length} case${cases.length !== 1 ? "s" : ""})`}
-                className={`aspect-square rounded-lg flex items-center justify-center text-[10px] font-bold transition-colors
-                  ${hasISA
-                    ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                    : hasPD
-                      ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                      : "bg-emerald-500/10 text-emerald-400/50 border border-emerald-500/10"
-                  }`}
-              >
-                {pa}
-              </div>
+              <p className="text-xs text-[var(--text-secondary)] py-4 text-center opacity-60">
+                {loading ? t("common.loading") : t("common.no_data")}
+              </p>
             );
-          })}
-        </div>
-        {/* Legend */}
-        <div className="flex items-center gap-4 text-[10px] text-[var(--text-secondary)]">
+          }
+          const maxCount = Math.max(...byDisease.map(([, n]) => n), 1);
+          return (
+            <div className="space-y-1.5">
+              {byDisease.map(([name, count]) => {
+                const isISA = name.toUpperCase().includes("ISA") || name.toUpperCase().includes("ILA");
+                const isPD = name.toUpperCase().includes("PD") || name.toUpperCase().includes("PANKREAS");
+                return (
+                  <div key={name} className="flex items-center gap-3">
+                    <span className="text-[11px] text-[var(--text-primary)] w-56 flex-shrink-0 truncate">{name}</span>
+                    <div className="flex-1 h-3 bg-white/[0.04] rounded overflow-hidden">
+                      <div
+                        className={`h-full rounded ${isISA ? "bg-rose-500/60" : isPD ? "bg-amber-500/60" : "bg-ocean-500/50"}`}
+                        style={{ width: `${(count / maxCount) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-[11px] font-mono font-semibold text-[var(--text-primary)] w-10 text-right">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+        <div className="flex items-center gap-4 text-[10px] text-[var(--text-secondary)] mt-3">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-xs bg-rose-500/60" />
-            <span>ISA Active</span>
+            <span>ISA (critical)</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-xs bg-amber-500/60" />
-            <span>PD Active</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500/30" />
-            <span>Clear</span>
+            <span>PD (high)</span>
           </div>
           <span className="ml-auto text-[9px] opacity-50">
             Based on {norwayCases.length} active case{norwayCases.length !== 1 ? "s" : ""} from Mattilsynet
@@ -263,30 +265,20 @@ export default function DiseasePage() {
       {/* Regional Disease Heatmap */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <GlassCard delay={0.14}>
-          <RegionalHeatmap
-            title="Disease Outbreak Density by PA"
-            metric="cases"
-            data={Array.from({ length: 13 }, (_, i) => {
-              const pa = i + 1;
-              const cases = norwayCases.filter((c: any) => {
-                const cpa = c.production_area ?? c.pa ?? c.zone;
-                return cpa === pa || cpa === String(pa);
-              });
-              const hasISA = cases.some((c: any) => {
-                const d = c.disease || c.disease_type || "";
-                return d.includes("ISA") || d.includes("ILA");
-              });
-              const hasPD = cases.some((c: any) => {
-                const d = c.disease || c.disease_type || "";
-                return d.includes("PD") || d.includes("PANKREAS");
-              });
-              return {
-                pa,
-                value: cases.length,
-                label: hasISA ? "ISA active" : hasPD ? "PD active" : cases.length > 0 ? "Other disease" : "Clear",
-              } as PADataPoint;
-            })}
-          />
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-ocean-400" />
+            PA-level Disease Density
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 ml-auto">
+              Unavailable
+            </span>
+          </h3>
+          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+            The Mattilsynet outbreak feed identifies cases per <em>locality</em> only — it
+            exposes no production-area field, so a PA 1&ndash;13 density map cannot be drawn
+            from this source (the previous grid could never colour a cell and always read
+            &ldquo;Clear&rdquo;). Use the &ldquo;Active Cases by Disease&rdquo; breakdown above and the
+            per-locality list below instead.
+          </p>
         </GlassCard>
 
         <div className="lg:col-span-2">
@@ -300,18 +292,18 @@ export default function DiseasePage() {
           </span>
         </h3>
         <div className="space-y-1.5 max-h-64 overflow-y-auto">
-          {alertList.length > 0 ? alertList.slice(0, 20).map((a: any, i: number) => (
+          {alertList.length > 0 ? alertList.slice(0, 20).map((a, i: number) => (
             <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
               <span className={`text-[9px] px-1.5 py-0.5 rounded-full border ${
-                SEVERITY_STYLES[a.severity] || SEVERITY_STYLES.medium
+                SEVERITY_STYLES[a.severity ?? "medium"] || SEVERITY_STYLES.medium
               }`}>
                 {(a.severity || "info").toUpperCase()}
               </span>
               <span className="text-[11px] text-[var(--text-primary)] flex-1">
-                {a.disease || a.type || "Alert"} {"\u2014"}{a.country || a.source || "Global"}
+                {a.disease || "Alert"} {"\u2014"}{a.country || a.source || "Global"}
               </span>
-              {a.date && (
-                <span className="text-[10px] text-[var(--text-secondary)] flex-shrink-0">{a.date}</span>
+              {a.report_date && (
+                <span className="text-[10px] text-[var(--text-secondary)] flex-shrink-0">{a.report_date}</span>
               )}
             </div>
           )) : (
@@ -335,19 +327,19 @@ export default function DiseasePage() {
             </span>
           </h3>
           <div className="space-y-1.5 max-h-72 overflow-y-auto">
-            {norwayCases.length > 0 ? norwayCases.slice(0, 25).map((c: any, i: number) => {
-              const disease = c.disease || c.disease_type || "Unknown";
-              const isCritical = disease.includes("ISA") || disease.includes("ILA");
+            {norwayCases.length > 0 ? norwayCases.slice(0, 25).map((c, i: number) => {
+              const disease = c.disease || "Unknown";
+              const isCritical = disease.toUpperCase().includes("ISA") || disease.toUpperCase().includes("ILA");
               return (
                 <div key={i} className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-medium text-[var(--text-primary)]">
-                      {c.locality_name || c.locality || `Locality ${c.locality_no || i}`}
+                      {c.locality_name || `Locality ${c.locality_no ?? i}`}
                     </span>
                     <span className={`text-[9px] px-1.5 py-0.5 rounded-full border ${
                       isCritical ? SEVERITY_STYLES.critical : SEVERITY_STYLES.high
                     }`}>
-                      {disease.replace("PANKREASSYKDOM", "PD").replace("INFEKSIØS_LAKSEANEMI", "ISA").replace("ILA", "ISA")}
+                      {disease}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 mt-1 text-[10px] text-[var(--text-secondary)]">
@@ -425,33 +417,33 @@ export default function DiseasePage() {
           exportFilename="treatment_reports"
           compact
           columns={[
-            { key: "locality_name", label: "Locality", render: (v: any, row: any) => v || row.locality_no || "—" },
+            { key: "locality_name", label: "Locality", render: (v, row) => v || row.locality_no || "\u2014" },
             { key: "company", label: "Company" },
             { key: "week", label: "Wk", align: "center", width: "50px" },
             {
               key: "lice", label: "AF Lice", align: "right", width: "70px",
-              render: (_v: any, row: any) => {
+              render: (_v, row) => {
                 const af = row.lice?.adult_female;
                 return af != null ? (
                   <span className={af > 0.5 ? "text-rose-400" : "text-emerald-400"}>{af.toFixed(2)}</span>
-                ) : "—";
+                ) : "\u2014";
               },
             },
             {
               key: "treatments", label: "Treatment", align: "center",
-              render: (v: any) => {
-                if (!v) return "—";
+              render: (v: DiseaseTreatmentReport["treatments"]) => {
+                if (!v) return "\u2014";
                 return [v.non_medicinal ? "Non-med" : null, v.medicinal ? "Medicinal" : null, v.combination ? "Combo" : null]
-                  .filter(Boolean).join(", ") || "—";
+                  .filter(Boolean).join(", ") || "\u2014";
               },
             },
             {
               key: "resistance_suspicions", label: "Resistance", align: "center", width: "80px",
-              render: (v: any) => v
+              render: (v: number | undefined) => v
                 ? <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400">YES</span>
-                : <span className="text-[9px] text-[var(--text-secondary)]">—</span>,
+                : <span className="text-[9px] text-[var(--text-secondary)]">\u2014</span>,
             },
-          ] as Column[]}
+          ] as Column<DiseaseTreatmentReport>[]}
         />
       </GlassCard>
 

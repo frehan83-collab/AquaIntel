@@ -113,6 +113,35 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Fixed (NEW finding — /disease contract fiction + permanently-green PA displays, slice 5)
+- `/disease` typed and corrected against the real Mattilsynet payloads:
+  - The **ISA/PD KPI counters were always 0** — they matched `disease ===
+    "ISA"`/`"PD"` while the API sends display names ("Infectious Salmon
+    Anaemia (ISA)"). Now matched on the display names (case-insensitive).
+  - **The PA 1–13 status grid and the PA heatmap could never colour a
+    cell**: the outbreak payload identifies cases per *locality* and
+    exposes no production-area field, so both rendered a permanently
+    "Clear"/0 picture. The grid is replaced by a real **"Active Cases by
+    Disease"** breakdown (from the payload's `by_disease` counts) and the
+    heatmap by an explicit *Unavailable* card that states why (no PA field
+    in the source) — no invented PA data.
+  - Global alert rows read `a.date` (real key `report_date`) — the date
+    never rendered; also `a.type` (nonexistent) removed.
+  - Outbreak rows read `c.disease_type`/`c.locality`/`production_area`
+    (none exist) — now the real `disease`/`locality_name`.
+  - Types corrected/added: `DiseaseNorway`, `DiseaseOutbreak`,
+    `DiseaseAlerts`/`DiseaseAlertRow`, `DiseaseTreatments`/
+    `DiseaseTreatmentReport`; the `YoYComparison` type was fiction
+    (`{current: number[], delta_pct}`) → real per-week
+    `{current_year: [{week, value}], previous_year, two_years_ago}`.
+  - `api.diseaseAlerts/diseaseTreatments/yoyComparison` now typed; page
+    eslint-disable removed (0 `any`).
+- Regression nets: 4 new backend-backed `api-contracts.spec.ts`
+  assertions (norway `by_disease`+outbreak keys, alerts `report_date`,
+  treatments rows, yoy week/value series).
+- Local verification: tsc clean, eslint 0 errors, visual baselines 4/4,
+  routers + api_routes green, build 68/68.
+
 ### Fixed (NEW finding — disease/leaders/compare contract fiction, slice 4)
 - **`/api/disease/by-company` envelope corrected** (same class as
   smolt-forecast): `data_provenance` used to be injected INTO the

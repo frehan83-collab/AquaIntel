@@ -410,15 +410,14 @@ export interface BriefSection {
 }
 
 /** /api/analytics/yoy-comparison */
+/** /api/analytics/yoy-comparison (real shape: per-week point series) */
 export interface YoYComparison {
   metric: string;
-  production_area: number;
-  current_year: number;
-  current: number[];
-  previous: number[];
-  two_years_ago?: number[];
-  delta_pct: number;
-  data_provenance?: DataProvenance;
+  production_area?: number;
+  current_year: YoyPoint[];
+  previous_year: YoyPoint[];
+  two_years_ago: YoyPoint[];
+  years?: number[];
 }
 
 // ── Signals Types ────────────────────────────────────────────────────
@@ -449,22 +448,98 @@ export interface RegimeAlert {
 
 /** /api/disease/norway */
 export interface DiseaseNorway {
-  source: string;
+  source?: string;
+  api?: string;
+  license?: string;
+  total_cases?: number;
   active_cases: number;
-  active_outbreaks: DiseaseCase[];
-  cases_by_disease: Record<string, number>;
-  affected_companies: string[];
-  total_sites_affected: number;
-  data_provenance: DataProvenance;
+  resolved_cases?: number;
+  /** Counts keyed by DISPLAY name, e.g. "Pancreas Disease (PD)" */
+  by_disease: Record<string, number>;
+  active_outbreaks: DiseaseOutbreak[];
+  data_provenance?: DataProvenance;
 }
 
-export interface DiseaseCase {
+/** One active outbreak row (/api/disease/norway .active_outbreaks) */
+export interface DiseaseOutbreak {
+  id?: number;
   locality_no: number;
   locality_name: string;
-  disease_type: string;
-  suspicion_date: string;
-  diagnosis_date?: string;
+  company?: string;
+  /** Display name, e.g. "Infectious Salmon Anaemia (ISA)" */
+  disease: string;
+  subtype?: string;
+  species?: string;
+  suspicion_date?: string;
+  diagnosis_date?: string | null;
   status: string;
+  days_active?: number;
+}
+
+/** One global alert (/api/disease/alerts .alerts) */
+export interface DiseaseAlertRow {
+  disease: string;
+  country?: string;
+  country_code?: string;
+  report_date?: string;
+  status?: string;
+  cases?: number;
+  deaths?: number;
+  source?: string;
+  severity?: string;
+  trade_impact?: string;
+  supply_impact_pct?: number;
+}
+
+/** /api/disease/alerts */
+export interface DiseaseAlerts {
+  generated_at?: string;
+  active_outbreaks?: number;
+  countries_affected?: number;
+  risk_level?: string;
+  insights?: string[];
+  alerts: DiseaseAlertRow[];
+  data_provenance?: DataProvenance;
+}
+
+/** One lice treatment report (/api/disease/treatments .reports) */
+export interface DiseaseTreatmentReport {
+  locality_no: number;
+  locality_name?: string;
+  company?: string;
+  week?: number;
+  year?: number;
+  sea_temp?: number | null;
+  lice?: {
+    adult_female?: number | null;
+    mobile?: number | null;
+    sessile?: number | null;
+  };
+  treatments?: {
+    non_medicinal?: number;
+    medicinal?: number;
+    combination?: number;
+  };
+  resistance_suspicions?: number;
+  sensitivity_tests?: number;
+}
+
+/** /api/disease/treatments */
+export interface DiseaseTreatments {
+  source?: string;
+  year?: number;
+  total_reports: number;
+  with_treatments?: number;
+  with_resistance_suspicions: number;
+  reports: DiseaseTreatmentReport[];
+  data_provenance?: DataProvenance;
+}
+
+/** One point of a yoy-comparison series (every metric emits week+value;
+ *  for metric="disease" the "week" is the month number 1-12) */
+export interface YoyPoint {
+  week: number;
+  value: number;
 }
 
 /** /api/disease/by-company */

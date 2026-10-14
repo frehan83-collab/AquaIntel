@@ -23,6 +23,7 @@ import type {
   WaveRisk,
   WaveForecast,
   SmoltForecastResponse, SmoltCohortTimeline, SupplySummary, SupplyDemandBalance,
+  DiseaseAlerts, DiseaseTreatments,
   LoginResponse, SubscriptionStatus, EfficacyBenchmarks,
   TrafficLightCurrent, TrafficLightSimulation, TreatmentCostComparison,
   YoYComparison,
@@ -295,13 +296,14 @@ export const api = {
     fetchAPI("/api/competitiveness/tariff-scenario", { method: "POST", body: JSON.stringify(tariffs) }),
 
   // Disease Alerts
-  diseaseAlerts: () => fetchAPI("/api/disease/alerts"),
+  diseaseAlerts: (): Promise<DiseaseAlerts> => fetchAPI<DiseaseAlerts>("/api/disease/alerts"),
   diseaseNorway: (): Promise<DiseaseNorway> => fetchAPI<DiseaseNorway>("/api/disease/norway").then((r) => {
     // Ensure active_outbreaks is always an array for .filter() safety
     if (r && !Array.isArray(r.active_outbreaks)) r.active_outbreaks = [];
     return r;
   }),
-  diseaseTreatments: (year?: number) => fetchAPI(`/api/disease/treatments?year=${year || 2026}`),
+  diseaseTreatments: (year?: number): Promise<DiseaseTreatments> =>
+    fetchAPI<DiseaseTreatments>(`/api/disease/treatments?year=${year || 2026}`),
   diseaseByCompany: () => fetchAPI<DiseaseByCompany>("/api/disease/by-company"),
   resistanceMap: () => fetchAPI<ResistanceMap>("/api/disease/resistance-map"),
   resistanceByPA: (pa: number) => fetchAPI(`/api/disease/resistance/pa/${pa}`),
@@ -543,7 +545,7 @@ export const api = {
   sentimentPoll: () => fetchAPI("/api/sentiment/poll"),
 
   // YoY Analytics
-  yoyComparison: (metric: string, pa?: number) =>
+  yoyComparison: (metric: string, pa?: number): Promise<YoYComparison> =>
     fetchAPI<YoYComparison>(`/api/analytics/yoy-comparison?metric=${metric}&production_area=${pa || 0}`),
 
   // Market Price Feed Hub
