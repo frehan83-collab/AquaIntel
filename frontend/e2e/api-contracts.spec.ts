@@ -368,6 +368,44 @@ test.describe("Supply Chain", () => {
     }
   });
 
+  test("GET /api/brief matches the response-model contract", async ({ request }) => {
+    const res = await request.get(`${API}/api/brief`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(Array.isArray(body.sections)).toBeTruthy();
+    expect(body).toHaveProperty("generated_at");
+    // Real keys (the frontend type used to claim title/key_risks/market_sentiment)
+    expect(body).toHaveProperty("market_mood");
+    expect(body).toHaveProperty("greeting");
+    expect(body).toHaveProperty("top_insight");
+    if (body.sections.length > 0) {
+      for (const key of ["title", "headline", "detail", "sentiment", "value"]) {
+        expect(body.sections[0], `missing ${key}`).toHaveProperty(key);
+      }
+    }
+  });
+
+  test("GET /api/anomaly/scores returns composite + component_scores", async ({ request }) => {
+    const res = await request.get(`${API}/api/anomaly/scores`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(body).toHaveProperty("composite_score");
+    expect(body).toHaveProperty("risk_level");
+    // Real breakdown key (the page used to read a nonexistent `breakdown`)
+    expect(body).toHaveProperty("component_scores");
+    expect(Array.isArray(body.anomalies)).toBeTruthy();
+  });
+
+  test("GET /api/feed-cost/latest uses margin_trend", async ({ request }) => {
+    const res = await request.get(`${API}/api/feed-cost/latest`);
+    if (res.status() === 404) return; // documented degraded path
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(body).toHaveProperty("margin_pct");
+    expect(body).toHaveProperty("margin_trend");
+    expect(body).toHaveProperty("fcr");
+  });
+
   test("GET /api/supply/demand-balance keeps the additive R7 contract", async ({ request }) => {
     const res = await request.get(`${API}/api/supply/demand-balance`);
     expect(res.ok()).toBeTruthy();

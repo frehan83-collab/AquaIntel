@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import {
   Newspaper, RefreshCw, TrendingUp, TrendingDown, Bug, Shield,
   Wheat, Ship, Leaf, DollarSign, Fish, BarChart3, Zap, Sun,
-  AlertTriangle, Activity, Thermometer, ArrowUpRight, ArrowDownRight, Download,
+  AlertTriangle, Activity, ArrowUpRight, ArrowDownRight, Download,
 } from "lucide-react";
 import GlassCard from "@/components/GlassCard";
 import KPICard from "@/components/KPICard";
@@ -13,10 +13,15 @@ import DataQualityBadge from "@/components/DataQualityBadge";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { colors } from "@/lib/design-tokens";
+import type { LucideIcon } from "lucide-react";
+import type {
+  AnomalyScores,
+  BriefSection,
+  FeedCostLatest,
+  MorningBrief,
+} from "@/types/api";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-const ICON_MAP: Record<string, any> = {
+const ICON_MAP: Record<string, LucideIcon> = {
   fish: Fish, chart: BarChart3, bug: Bug, shield: Shield,
   wheat: Wheat, ship: Ship, leaf: Leaf, currency: DollarSign,
   alert: AlertTriangle, activity: Activity,
@@ -29,7 +34,7 @@ const SENTIMENT_STYLE: Record<string, { bg: string; border: string; dot: string 
   neutral: { bg: "bg-white/[0.03]", border: "border-white/[0.06]", dot: "bg-white/30" },
 };
 
-const MOOD_CONFIG: Record<string, { label: string; color: string; icon: any; gradient: string }> = {
+const MOOD_CONFIG: Record<string, { label: string; color: string; icon: LucideIcon; gradient: string }> = {
   bullish:  { label: "Bullish",  color: "text-emerald-400", icon: TrendingUp,   gradient: "from-emerald-500/[0.12] to-emerald-500/[0.02]" },
   bearish:  { label: "Bearish",  color: "text-rose-400",    icon: TrendingDown,  gradient: "from-rose-500/[0.12] to-rose-500/[0.02]" },
   mixed:    { label: "Mixed",    color: "text-amber-400",   icon: Zap,           gradient: "from-amber-500/[0.10] to-amber-500/[0.02]" },
@@ -72,8 +77,12 @@ function parseEsgMovers(detail: string): { name: string; delta: number; score: n
   }).filter(Boolean) as { name: string; delta: number; score: number }[];
 }
 
+/** Brief section plus the page's locally computed ordering priority */
+type ScoredSection = BriefSection & { _priority: number };
+
 /** Extract a numeric value from a section value or headline */
-function extractNumber(sec: any): number | null {
+function extractNumber(sec: BriefSection | undefined): number | null {
+  if (!sec) return null;
   if (sec.value) {
     const n = parseFloat(sec.value.replace(/[^0-9.\-]/g, ""));
     if (!isNaN(n)) return n;
@@ -84,10 +93,10 @@ function extractNumber(sec: any): number | null {
 
 export default function BriefPage() {
   const { t } = useTranslation();
-  const [brief, setBrief] = useState<any>(null);
+  const [brief, setBrief] = useState<MorningBrief | null>(null);
   const [loading, setLoading] = useState(true);
-  const [anomalyData, setAnomalyData] = useState<any>(null);
-  const [feedData, setFeedData] = useState<any>(null);
+  const [anomalyData, setAnomalyData] = useState<AnomalyScores | null>(null);
+  const [feedData, setFeedData] = useState<FeedCostLatest | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -106,26 +115,26 @@ export default function BriefPage() {
 
   useEffect(() => { load(); }, []);
 
-  const mood = MOOD_CONFIG[brief?.market_mood] || MOOD_CONFIG.neutral;
+  const mood = MOOD_CONFIG[brief?.market_mood ?? "neutral"] || MOOD_CONFIG.neutral;
   const MoodIcon = mood.icon;
 
   // Extract KPI values from brief sections
-  const priceSec = brief?.sections?.find((s: any) => s.title === "Salmon Price");
-  const liceSec = brief?.sections?.find((s: any) => s.title === "Lice Pressure");
-  const feedSec = brief?.sections?.find((s: any) => s.title === "Feed & Margins");
-  const esgSec = brief?.sections?.find((s: any) => s.title === "ESG Movers");
-  const warningSec = brief?.sections?.find((s: any) => s.title === "Early Warning");
+  const priceSec = brief?.sections?.find((s) => s.title === "Salmon Price");
+  const liceSec = brief?.sections?.find((s) => s.title === "Lice Pressure");
+  const feedSec = brief?.sections?.find((s) => s.title === "Feed & Margins");
+  const esgSec = brief?.sections?.find((s) => s.title === "ESG Movers");
+  const warningSec = brief?.sections?.find((s) => s.title === "Early Warning");
 
   // Separate special sections from regular ones
   const rawRegularSections = brief?.sections?.filter(
-    (s: any) => s.title !== "ESG Movers" && s.title !== "Early Warning"
+    (s) => s.title !== "ESG Movers" && s.title !== "Early Warning"
   ) || [];
 
   // ── Priority scoring for dynamic section ordering ───────────────────────────
   const regularSections = useMemo(() => {
     if (!rawRegularSections.length) return rawRegularSections;
 
-    const scoreSectionPriority = (sec: any): number => {
+    const scoreSectionPriority = (sec: BriefSection): number => {
       let score = 10; // default neutral
       const headline = (sec.headline || "").toUpperCase();
       const title = (sec.title || "").toUpperCase();
@@ -169,9 +178,9 @@ export default function BriefPage() {
     };
 
     return [...rawRegularSections]
-      .map((sec: any) => ({ ...sec, _priority: scoreSectionPriority(sec) }))
-      .sort((a: any, b: any) => b._priority - a._priority);
-  }, [rawRegularSections]);
+      .map((sec) => ({ ...sec, _priority: scoreSectionPriority(sec) }))
+      .sort((a, b) => b._priority - a._priority);
+  }, [rawRegularSections]) as ScoredSection[];
 
   // KPI values
   const spotPrice = priceSec ? extractNumber(priceSec) : null;
@@ -260,7 +269,7 @@ export default function BriefPage() {
             label="Anomaly Score"
             value={anomalyScore != null ? `${anomalyScore}/100` : "--"}
             delta={anomalyLevel || undefined}
-            deltaType={anomalyScore >= 70 ? "negative" : anomalyScore >= 30 ? "neutral" : "positive"}
+            deltaType={anomalyScore != null && anomalyScore >= 70 ? "negative" : anomalyScore != null && anomalyScore >= 30 ? "neutral" : "positive"}
             icon={Activity}
             pulse={anomalyScore != null && anomalyScore >= 70}
             delay={0.1}
@@ -301,9 +310,9 @@ export default function BriefPage() {
       {/* Regular Brief Sections */}
       {regularSections.length > 0 ? (
         <div className="space-y-3">
-          {regularSections.map((sec: any, i: number) => {
-            const Icon = ICON_MAP[sec.icon] || Zap;
-            const style = SENTIMENT_STYLE[sec.sentiment] || SENTIMENT_STYLE.neutral;
+          {regularSections.map((sec, i: number) => {
+            const Icon = ICON_MAP[sec.icon ?? ""] || Zap;
+            const style = SENTIMENT_STYLE[sec.sentiment ?? "neutral"] || SENTIMENT_STYLE.neutral;
 
             return (
               <motion.div
@@ -394,15 +403,19 @@ export default function BriefPage() {
 }
 
 /* ─── Early Warning Card ──────────────────────────────────────────── */
-function EarlyWarningCard({ section, anomalyData }: { section: any; anomalyData: any }) {
+function EarlyWarningCard({ section, anomalyData }: { section: BriefSection; anomalyData: AnomalyScores | null }) {
   const { t } = useTranslation();
-  const severity = extractSeverity(section.headline);
+  const severity = extractSeverity(section.headline ?? "");
   const badge = SEVERITY_BADGE[severity] || SEVERITY_BADGE.LOW;
 
-  // Parse anomaly breakdown from anomalyData if available
-  const breakdown = anomalyData?.breakdown || {};
+  // Parse the anomaly component breakdown (real key: component_scores —
+  // the old code read `breakdown`, so the Key Risks bars never rendered).
+  const breakdown: Record<string, number> = anomalyData?.component_scores ?? {};
   const categories = Object.entries(breakdown).filter(
-    ([, val]: [string, any]) => typeof val === "object" && val !== null && (val as any).score != null
+    ([, val]) => typeof val === "number" && val > 0
+  );
+  const sources = Array.from(
+    new Set((anomalyData?.anomalies ?? []).map((a) => a.source).filter(Boolean) as string[])
   );
 
   return (
@@ -449,8 +462,7 @@ function EarlyWarningCard({ section, anomalyData }: { section: any; anomalyData:
       {categories.length > 0 && (
         <div className="space-y-2 pt-2 border-t border-white/[0.06]">
           <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider">{t("brief.key_risks")}</p>
-          {categories.map(([key, val]: [string, any]) => {
-            const score = (val as any).score ?? 0;
+          {categories.map(([key, score]) => {
             const barColor = score >= 70 ? "bg-rose-500" : score >= 50 ? "bg-orange-500" : score >= 30 ? "bg-amber-500" : "bg-emerald-500";
             return (
               <div key={key} className="flex items-center gap-2">
@@ -472,10 +484,11 @@ function EarlyWarningCard({ section, anomalyData }: { section: any; anomalyData:
         </div>
       )}
 
-      {/* Source attribution */}
-      {anomalyData?.sources && (
+      {/* Source attribution (real key: anomalies[].source — the old code
+          read a nonexistent `sources` array) */}
+      {sources.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {(Array.isArray(anomalyData.sources) ? anomalyData.sources : []).map((src: string) => (
+          {sources.map((src) => (
             <span key={src} className="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.04] text-[var(--text-secondary)]">
               {src}
             </span>
@@ -487,8 +500,8 @@ function EarlyWarningCard({ section, anomalyData }: { section: any; anomalyData:
 }
 
 /* ─── ESG Movers Card ─────────────────────────────────────────────── */
-function EsgMoversCard({ section }: { section: any }) {
-  const movers = parseEsgMovers(section.detail);
+function EsgMoversCard({ section }: { section: BriefSection }) {
+  const movers = parseEsgMovers(section.detail ?? "");
   const isStable = section.sentiment === "neutral" && movers.length === 0;
 
   return (

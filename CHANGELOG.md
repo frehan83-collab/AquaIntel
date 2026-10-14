@@ -113,6 +113,32 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Fixed (NEW finding — /brief + anomaly contract fiction, slice 7)
+- `MorningBrief` / `BriefSection` types were fiction (`title`, `key_risks`,
+  `market_sentiment`, `sections[].items[]`, `section_num`) while the real
+  response model is `{generated_at, greeting, market_mood, top_insight,
+  sections[{title, icon, headline, detail, sentiment, value}]}`. The page
+  itself already read the real keys — now the types match it.
+- `AnomalyScores` type was fiction (`lice_zscore`/`lice_risk`/
+  `mortality_risk`/`sst_anomaly`) — the real payload is
+  `{composite_score, risk_level, n_anomalies, summary, anomalies[],
+  component_scores{}}` (no consumer read the fictional keys).
+- `/brief` page fixes that fell out of typing:
+  - the Early Warning card read `anomalyData.breakdown` (nonexistent) →
+    the **Key Risks bars never rendered**; now uses the real
+    `component_scores`;
+  - source attribution read a nonexistent `anomalyData.sources` array →
+    now derives from the real `anomalies[].source`;
+  - `FeedCostLatest` type said `trend` while the payload emits
+    `margin_trend` (the Feed Pressure delta never showed) — corrected.
+- `/brief` fully typed (21 `any`s → 0, eslint-disable removed);
+  `ScoredSection` documents the page-local `_priority` field.
+- Regression nets: 2 backend tests (brief response-model keys, anomaly
+  component breakdown) + 3 e2e contract assertions (brief, anomaly,
+  feed-cost incl. documented 404).
+- Local verification: tsc clean, eslint 0 errors, visual baselines 4/4,
+  test_routers 51 passed, ruff clean, build 68/68.
+
 ### Fixed (NEW finding — /feed-supply-chain typing + hand-rolled provenance, slice 6)
 - `/api/feed-supply-chain/summary` now carries the platform
   **DataProvenance** shape: it used to hand-roll

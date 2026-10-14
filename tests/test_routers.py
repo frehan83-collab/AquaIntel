@@ -348,3 +348,33 @@ class TestFeedSupplyChainContract:
         assert isinstance(body["sankey"]["nodes"], list)
         assert isinstance(body["sankey"]["links"], list)
         assert body["eudr_risk"]["status"]
+
+
+class TestBriefAndAnomalyContract:
+    def test_brief_uses_response_model_keys(self, client):
+        """Post-review: the frontend type claimed title/key_risks/
+        market_sentiment — the real (response_model) keys are
+        greeting/market_mood/top_insight and sections carry
+        headline/detail/sentiment/value."""
+        r = client.get("/api/brief")
+        assert r.status_code == 200
+        body = r.json()
+        assert "greeting" in body
+        assert "market_mood" in body
+        assert "top_insight" in body
+        assert isinstance(body["sections"], list)
+        if body["sections"]:
+            section = body["sections"][0]
+            for key in ("title", "headline", "detail", "sentiment", "value"):
+                assert key in section
+
+    def test_anomaly_scores_component_breakdown(self, client):
+        """The real payload exposes component_scores (0-100 per component);
+        the page used to read a nonexistent `breakdown` object."""
+        r = client.get("/api/anomaly/scores")
+        assert r.status_code == 200
+        body = r.json()
+        assert "composite_score" in body
+        assert "risk_level" in body
+        assert isinstance(body["component_scores"], dict)
+        assert isinstance(body["anomalies"], list)

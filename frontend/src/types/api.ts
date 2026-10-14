@@ -282,13 +282,25 @@ export interface MacroAlert {
 }
 
 /** /api/feed-cost/latest */
+/** /api/feed-cost/latest (real shape from feed_cost_engine.get_latest) */
 export interface FeedCostLatest {
-  production_cost_nok_per_kg_salmon: number;
+  timestamp?: string;
+  feed_cost_usd_per_kg?: number;
   feed_cost_nok_per_kg: number;
-  fcr: number;
+  feed_cost_nok_per_kg_salmon?: number;
+  non_feed_costs_nok?: number;
+  production_cost_nok_per_kg_salmon: number;
+  salmon_spot_nok?: number;
+  margin_nok_per_kg?: number;
   margin_pct: number;
-  trend: string;
-  ingredients: Record<string, {
+  /** improving / stable / squeezing (the old type said `trend`) */
+  margin_trend?: string;
+  usd_nok?: number;
+  fcr: number;
+  cost_breakdown?: Record<string, number>;
+  calculation_method?: string;
+  data_freshness?: Record<string, string>;
+  ingredients?: Record<string, {
     price_usd: number;
     weight: number;
     source: string;
@@ -377,36 +389,49 @@ export interface LeaderEntry {
 }
 
 /** /api/anomaly/scores */
+/** One detected anomaly (/api/anomaly/scores .anomalies) */
+export interface AnomalyRow {
+  category: string;
+  source?: string;
+  severity?: string;
+  z_score?: number;
+  value?: number;
+  baseline?: number;
+  message?: string;
+  timestamp?: string;
+}
+
+/** /api/anomaly/scores (real shape: composite score + component breakdown) */
 export interface AnomalyScores {
-  lice_zscore: number;
-  lice_risk: string;
-  disease_risk: string;
-  mortality_risk: string;
-  sst_anomaly: number;
+  generated_at?: string;
   composite_score: number;
-  risk_level: "LOW" | "ELEVATED" | "HIGH" | "CRITICAL";
-  generated_at: string;
-  data_provenance: DataProvenance;
+  risk_level: "LOW" | "ELEVATED" | "HIGH" | "CRITICAL" | string;
+  n_anomalies?: number;
+  summary?: string;
+  anomalies?: AnomalyRow[];
+  /** Weighted per-component risk scores (0-100) */
+  component_scores?: Record<string, number>;
+  data_provenance?: DataProvenance;
 }
 
 /** /api/brief */
+/** /api/brief (mirrors the OpenAPI MorningBriefResponse schema) */
 export interface MorningBrief {
-  title: string;
   generated_at: string;
+  greeting?: string;
+  market_mood?: "bullish" | "neutral" | "bearish" | string;
+  top_insight?: string;
   sections: BriefSection[];
-  market_sentiment: "bullish" | "neutral" | "bearish";
-  key_risks: string[];
-  data_provenance: DataProvenance;
+  data_provenance?: DataProvenance;
 }
 
 export interface BriefSection {
-  section_num: number;
   title: string;
-  items: Array<{
-    headline: string;
-    detail: string;
-    severity?: string;
-  }>;
+  icon?: string;
+  headline?: string;
+  detail?: string;
+  sentiment?: string;
+  value?: string;
 }
 
 /** /api/analytics/yoy-comparison */
