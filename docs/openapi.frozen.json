@@ -4242,7 +4242,7 @@
     },
     "/api/disease/by-company": {
       "get": {
-        "description": "Active disease cases aggregated per company. Used by Leaders, ESG, Benchmark.",
+        "description": "Active disease cases aggregated per company. Used by Leaders, ESG, Benchmark.\n\nContract correction (post-review, same class as smolt-forecast /\ncohort-timeline): ``data_provenance`` used to be injected INTO the\nper-company map \u2014 a provenance object appearing as if it were a\ncompany (and consumers summing over it). Now:\n\n    {\"companies\": {name: {total, isa, pd, other, localities}},\n     \"count\": n, \"data_provenance\": {...}}",
         "operationId": "disease_by_company_api_disease_by_company_get",
         "responses": {
           "200": {
