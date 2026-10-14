@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -14,37 +13,48 @@ import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { exportToCSV } from "@/lib/export";
 import { useTranslation } from "@/lib/i18n";
+import type { PriceOutlook } from "@/types/api";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-interface OutlookResult {
+interface OutlookResult extends PriceOutlook {
   current_price: number;
-  current_spot_nok?: number;
   predicted_price: number;
-  predicted_nok?: number;
   change_pct: number;
   confidence_interval: [number, number];
-  scenarios: number[] | Record<string, number>;
-  distribution: { p10: number; p25: number; p50: number; p75: number; p90: number };
+  distribution: { p10: number; p25?: number; p50: number; p75?: number; p90: number };
 }
 
 interface HorizonPoint {
-  horizon_weeks: number;
-  horizon?: number;
-  predicted_price: number;
-  predicted?: number;
-  predicted_nok?: number;
+  horizon: number;
+  predicted: number;
   change_pct: number;
   confidence_interval: [number, number];
-  lo80?: number;
-  hi80?: number;
-  lo95?: number;
-  hi95?: number;
-  [key: string]: any;
+  direction?: string;
 }
 
 interface MultiResult {
+  current_spot_nok?: number;
   horizons: HorizonPoint[];
+}
+
+/** /api/biomass/scenarios — current + regulatory scenario comparison */
+interface BiomassScenarioRow {
+  national_mab?: number;
+  utilization_pct?: number;
+  forecast_biomass?: number;
+  forecast_harvest?: number;
+  current_biomass_tonnes?: number;
+  scenario_green_impact_pct?: number;
+  scenario_red_impact_pct?: number;
+  [key: string]: unknown;
+}
+
+interface BiomassScenarios {
+  current?: BiomassScenarioRow;
+  all_green?: BiomassScenarioRow;
+  all_red?: BiomassScenarioRow;
+  data_provenance?: { source: string; is_live: boolean; confidence: number };
 }
 
 interface ScenarioCol {
@@ -59,7 +69,7 @@ function HistogramChart({ result }: { result: OutlookResult }) {
   const { current_price, distribution } = result;
   const scenarios: number[] = Array.isArray(result.scenarios)
     ? result.scenarios
-    : Object.values(result.scenarios).filter((v): v is number => typeof v === "number");
+    : Object.values(result.scenarios ?? {}).filter((v): v is number => typeof v === "number");
   const BUCKETS = Math.min(20, Math.max(3, scenarios.length));
 
   if (scenarios.length < 2) return null;
@@ -191,19 +201,19 @@ function FanChart({ multi }: { multi: MultiResult }) {
   const chartW = W - PAD_L - PAD_R;
   const chartH = H - PAD_T - PAD_B;
 
-  const allPrices = horizons.flatMap((h) => [((h as any).predicted_price || (h as any).predicted || (h as any).predicted_nok || 0) || h.predicted || h.predicted_nok || 0, ...(h.confidence_interval || [h.lo80 || 0, h.hi80 || 0])]);
+  const allPrices = horizons.flatMap((h) => [h.predicted, h.confidence_interval[0], h.confidence_interval[1]]);
   const minP = Math.min(...allPrices) * 0.98;
   const maxP = Math.max(...allPrices) * 1.02;
 
   const toX = (i: number) => PAD_L + (i / (horizons.length - 1)) * chartW;
   const toY = (p: number) => PAD_T + chartH - ((p - minP) / (maxP - minP)) * chartH;
 
-  const upperPoints = horizons.map((h, i) => `${toX(i)},${toY(((h as any).confidence_interval?.[1] || (h as any).hi80 || 0))}`).join(" ");
-  const lowerPoints = horizons.map((h, i) => `${toX(i)},${toY(((h as any).confidence_interval?.[0] || (h as any).lo80 || 0))}`).join(" ");
-  const medianPoints = horizons.map((h, i) => `${toX(i)},${toY(((h as any).predicted_price || (h as any).predicted || (h as any).predicted_nok || 0))}`).join(" ");
+  const upperPoints = horizons.map((h, i) => `${toX(i)},${toY(h.confidence_interval[1])}`).join(" ");
+  const lowerPoints = horizons.map((h, i) => `${toX(i)},${toY(h.confidence_interval[0])}`).join(" ");
+  const medianPoints = horizons.map((h, i) => `${toX(i)},${toY(h.predicted)}`).join(" ");
 
-  const upperArr = horizons.map((h, i) => `${toX(i)},${toY(((h as any).confidence_interval?.[1] || (h as any).hi80 || 0))}`);
-  const lowerArr = [...horizons].reverse().map((h, i) => `${toX(horizons.length - 1 - i)},${toY(((h as any).confidence_interval?.[0] || (h as any).lo80 || 0))}`);
+  const upperArr = horizons.map((h, i) => `${toX(i)},${toY(h.confidence_interval[1])}`);
+  const lowerArr = [...horizons].reverse().map((h, i) => `${toX(horizons.length - 1 - i)},${toY(h.confidence_interval[0])}`);
   const fanPolygon = [...upperArr, ...lowerArr].join(" ");
 
   const yTicks = 4;
@@ -260,13 +270,13 @@ function FanChart({ multi }: { multi: MultiResult }) {
 
       {/* Dots at horizon points */}
       {horizons.map((h, i) => (
-        <circle key={i} cx={toX(i)} cy={toY(((h as any).predicted_price || (h as any).predicted || (h as any).predicted_nok || 0))} r={3} fill="#00D4C8" />
+        <circle key={i} cx={toX(i)} cy={toY(h.predicted)} r={3} fill="#00D4C8" />
       ))}
 
       {/* X-axis labels */}
       {horizons.map((h, i) => (
         <text key={i} x={toX(i)} y={H - 6} fontSize={9} fill="rgba(255,255,255,0.4)" textAnchor="middle">
-          {h.horizon_weeks}W
+          {h.horizon}W
         </text>
       ))}
 
@@ -307,7 +317,7 @@ export default function ScenariosPage() {
     { label: "Bear Case", result: null, loading: false },
     { label: "Bull Case", result: null, loading: false },
   ]);
-  const [bioScenarios, setBioScenarios] = useState<any>(null);
+  const [bioScenarios, setBioScenarios] = useState<BiomassScenarios | null>(null);
 
   const runSimulation = useCallback(async () => {
     setLoading(true);
@@ -315,17 +325,19 @@ export default function ScenariosPage() {
     try {
       const raw = await api.priceOutlook(horizon, numScenarios);
       // Normalize API field names to match component expectations
+      // (typed PriceOutlook: current_spot_nok / predicted_nok / bands.p80 /
+      // scenarios{p10..p90} — the fictional aliases are gone).
       const data = {
         ...raw,
-        current_price: raw.current_price || raw.current_spot_nok || 0,
-        predicted_price: raw.predicted_price || raw.predicted_nok || 0,
-        change_pct: raw.change_pct || ((raw.predicted_nok || 0) - (raw.current_spot_nok || 0)) / Math.max(raw.current_spot_nok || 1, 1) * 100,
-        confidence_interval: raw.confidence_interval || [raw.bands?.p80?.[0] || 0, raw.bands?.p80?.[1] || 0],
-        distribution: raw.distribution || (raw.scenarios && !Array.isArray(raw.scenarios) ? raw.scenarios : { p10: 0, p25: 0, p50: 0, p75: 0, p90: 0 }),
+        current_price: raw.current_spot_nok ?? 0,
+        predicted_price: raw.predicted_nok ?? 0,
+        change_pct: ((raw.predicted_nok || 0) - (raw.current_spot_nok || 0)) / Math.max(raw.current_spot_nok || 1, 1) * 100,
+        confidence_interval: [raw.bands?.p80?.[0] ?? 0, raw.bands?.p80?.[1] ?? 0] as [number, number],
+        distribution: raw.scenarios ?? { p10: 0, p25: 0, p50: 0, p75: 0, p90: 0 },
       };
       setResult(data);
-    } catch (e: any) {
-      setError(e?.message || "Simulation failed");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Simulation failed");
     } finally {
       setLoading(false);
     }
@@ -335,7 +347,19 @@ export default function ScenariosPage() {
     setMultiLoading(true);
     try {
       const data = await api.priceOutlookMulti();
-      setMulti(data);
+      // Normalize to the view model (real rows: horizon / predicted /
+      // lo80 / hi80 / direction — the fictional aliases are gone).
+      const spot = data.current_spot_nok || 0;
+      setMulti({
+        current_spot_nok: data.current_spot_nok,
+        horizons: (data.horizons ?? []).map((h) => ({
+          horizon: h.horizon,
+          predicted: h.predicted,
+          change_pct: spot > 0 ? ((h.predicted - spot) / spot) * 100 : 0,
+          confidence_interval: [h.lo80 ?? h.predicted, h.hi80 ?? h.predicted] as [number, number],
+          direction: h.direction,
+        })),
+      });
     } catch (e) {
       handleError("scenarios_multi_horizon")(e);
     } finally {
@@ -360,19 +384,18 @@ export default function ScenariosPage() {
 
     setScenarioCols(
       configs.map((c, i) => {
-        const raw = results[i].status === "fulfilled"
-          ? (results[i] as PromiseFulfilledResult<any>).value
-          : null;
+        const settled = results[i];
+        const raw = settled.status === "fulfilled" ? settled.value : null;
         return {
           label: c.label,
           loading: false,
           result: raw ? {
             ...raw,
-            current_price: raw.current_price || raw.current_spot_nok || 0,
-            predicted_price: raw.predicted_price || raw.predicted_nok || 0,
-            change_pct: raw.change_pct || ((raw.predicted_nok || 0) - (raw.current_spot_nok || 0)) / Math.max(raw.current_spot_nok || 1, 1) * 100,
-            confidence_interval: raw.confidence_interval || [raw.bands?.p80?.[0] || 0, raw.bands?.p80?.[1] || 0],
-            distribution: raw.distribution || (raw.scenarios && !Array.isArray(raw.scenarios) ? raw.scenarios : { p10: 0, p25: 0, p50: 0, p75: 0, p90: 0 }),
+            current_price: raw.current_spot_nok ?? 0,
+            predicted_price: raw.predicted_nok ?? 0,
+            change_pct: ((raw.predicted_nok || 0) - (raw.current_spot_nok || 0)) / Math.max(raw.current_spot_nok || 1, 1) * 100,
+            confidence_interval: [raw.bands?.p80?.[0] ?? 0, raw.bands?.p80?.[1] ?? 0] as [number, number],
+            distribution: raw.scenarios ?? { p10: 0, p25: 0, p50: 0, p75: 0, p90: 0 },
           } : null,
         };
       })
@@ -388,7 +411,7 @@ export default function ScenariosPage() {
   }, []);
 
   // Derived KPIs — map API fields to expected names
-  const dist = result?.distribution || (result?.scenarios && !Array.isArray(result.scenarios) ? result.scenarios as any : null);
+  const dist = result?.distribution ?? result?.scenarios ?? null;
   const probGain = result?.scenarios
     ? (() => {
         const vals = Array.isArray(result.scenarios)
@@ -778,16 +801,18 @@ export default function ScenariosPage() {
             </p>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            {[
-              { key: "all_red", label: "All Red", color: "rose", desc: "Maximum regulatory restriction" },
-              { key: "current", label: "Current Mix", color: "ocean", desc: "Actual traffic light status" },
-              { key: "all_green", label: "All Green", color: "emerald", desc: "Maximum growth allowance" },
-            ].map(({ key, label, color, desc }) => {
-              const sc = bioScenarios[key] || bioScenarios;
+            {([
+              { key: "all_red" as const, label: "All Red", color: "rose", desc: "Maximum regulatory restriction" },
+              { key: "current" as const, label: "Current Mix", color: "ocean", desc: "Actual traffic light status" },
+              { key: "all_green" as const, label: "All Green", color: "emerald", desc: "Maximum growth allowance" },
+            ]).map(({ key, label, color, desc }) => {
+              const sc = bioScenarios[key];
               if (!sc || typeof sc !== "object") return null;
-              const mab = sc.national_mab || sc.mab || 0;
-              const util = sc.utilization || sc.utilization_pct || 0;
-              const delta = sc.harvest_delta || sc.delta_pct || 0;
+              // Real keys (biomass_predictor.get_outlook_dict):
+              // national_mab (tonnes), utilization_pct (0-100), forecast_biomass (tonnes).
+              const mab = sc.national_mab ?? 0;
+              const util = sc.utilization_pct ?? 0;
+              const forecastT = sc.forecast_biomass ?? 0;
               return (
                 <div key={key} className={`rounded-xl border p-4 space-y-3 border-${color}-500/20 bg-${color}-500/[0.04]`}>
                   <div>
@@ -797,16 +822,16 @@ export default function ScenariosPage() {
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between">
                       <span className="text-[var(--text-secondary)]">National MAB</span>
-                      <span className="font-semibold text-[var(--text-primary)]">{typeof mab === "number" ? `${(mab / 1000).toFixed(0)}k t` : String(mab)}</span>
+                      <span className="font-semibold text-[var(--text-primary)]">{mab ? `${(mab / 1000).toFixed(0)}k t` : "\u2014"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[var(--text-secondary)]">Utilization</span>
-                      <span className="font-semibold text-[var(--text-primary)]">{typeof util === "number" ? `${(util * 100).toFixed(1)}%` : String(util)}</span>
+                      <span className="font-semibold text-[var(--text-primary)]">{util ? `${util.toFixed(1)}%` : "\u2014"}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[var(--text-secondary)]">Harvest Impact</span>
-                      <span className={typeof delta === "number" && delta >= 0 ? "text-emerald-400" : "text-rose-400"}>
-                        {typeof delta === "number" ? `${delta >= 0 ? "+" : ""}${(delta * 100).toFixed(1)}%` : String(delta)}
+                      <span className="text-[var(--text-secondary)]">Forecast Biomass</span>
+                      <span className="font-semibold text-[var(--text-primary)]">
+                        {forecastT ? `${(forecastT / 1000).toFixed(0)}k t` : "\u2014"}
                       </span>
                     </div>
                   </div>

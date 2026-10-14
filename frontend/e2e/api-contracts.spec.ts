@@ -238,6 +238,55 @@ test.describe("Supply Chain", () => {
     expect(body).toHaveProperty("benchmarks");
   });
 
+  test("GET /api/market/price-outlook/multi returns horizon rows", async ({ request }) => {
+    const res = await request.get(`${API}/api/market/price-outlook/multi`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(Array.isArray(body.horizons)).toBeTruthy();
+    expect(body).toHaveProperty("current_spot_nok");
+    if (body.horizons.length > 0) {
+      for (const key of ["horizon", "predicted", "lo80", "hi80", "direction"]) {
+        expect(body.horizons[0], `missing ${key}`).toHaveProperty(key);
+      }
+    }
+  });
+
+  test("GET /api/market/prediction-history returns a list", async ({ request }) => {
+    const res = await request.get(`${API}/api/market/prediction-history?horizon=4&days=30`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(Array.isArray(body)).toBeTruthy();
+    if (body.length > 0) {
+      // Real row keys (the page used to read date/actual — always 0)
+      expect(body[0]).toHaveProperty("predicted_nok");
+      expect(body[0]).toHaveProperty("created_at");
+    }
+  });
+
+  test("GET /api/market/price-outlook/explain uses top_drivers", async ({ request }) => {
+    const res = await request.get(`${API}/api/market/price-outlook/explain?horizon=4`);
+    if (res.status() === 503) {
+      // Documented degraded path: TFT weights not trained -> explicit 503
+      return;
+    }
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(Array.isArray(body.top_drivers)).toBeTruthy();
+    if (body.top_drivers.length > 0) {
+      expect(body.top_drivers[0]).toHaveProperty("feature");
+      expect(body.top_drivers[0]).toHaveProperty("importance");
+    }
+  });
+
+  test("GET /api/market/futures-curve returns SSB price_nok rows", async ({ request }) => {
+    const res = await request.get(`${API}/api/market/futures-curve`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(body).toHaveProperty("spot_nok");
+    expect(Array.isArray(body.history)).toBeTruthy();
+    if (body.history.length > 0) expect(body.history[0]).toHaveProperty("price_nok");
+  });
+
   test("GET /api/supply/demand-balance keeps the additive R7 contract", async ({ request }) => {
     const res = await request.get(`${API}/api/supply/demand-balance`);
     expect(res.ok()).toBeTruthy();

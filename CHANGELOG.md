@@ -113,6 +113,39 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Fixed (NEW finding — /price-outlook + /scenarios contract fiction, same class as A1/A2)
+- `/price-outlook` sub-sections read invented fields; typed the page and
+  corrected them:
+  - Prediction Track Record read `date`/`actual`/`error_pct` — real rows
+    (`PricePrediction`) have `created_at`/`current_spot_nok`, so every row
+    showed "Actual: 0" and a garbage error %. Now reads the real keys and
+    computes the error against the real actual.
+  - "Price Drivers Explained" read `explanation`/`factors`/`drivers` — the
+    TFT route returns `top_drivers[{feature, importance}]`, so the block
+    never rendered. Now wired to the real keys (attention importance).
+  - Multi-horizon table read `change_pct`/`predicted_price` — rows carry
+    neither; the Change column showed 0.0% for every horizon. Now derived
+    from the payload's `current_spot_nok`.
+  - `PriceOutlook.scenarios` type said `Record<string, number[]>` while the
+    engine emits percentile floats (p10…p90) — corrected; scenario bar
+    width now comes from a typed helper.
+  - `PriceOutlook` direction is `"up"|"down"|"flat"` — the page compared
+    against `"bullish"`/`"bearish"` (dead branches) and passed the numeric
+    `signals.combined` where a string was expected; both corrected.
+- `/scenarios` local view models (`OutlookResult`/`HorizonPoint`) described
+  the same fictional fields with `(h as any)` casts throughout; rebuilt on
+  the real typed payloads with boundary normalisation (multi rows mapped to
+  a typed view model; `confidence_interval` derived from real `bands.p80`).
+  Also fixed: the biomass scenario cards read `mab`/`utilization`/
+  `harvest_delta` (fiction) and multiplied the already-percentage
+  `utilization_pct` by 100 (would have shown 8210%); now shows National MAB,
+  Utilization and Forecast Biomass from the real keys.
+- Regression nets: 4 new backend-backed `api-contracts.spec.ts` assertions
+  (multi horizon rows, prediction-history list + real row keys, explain
+  `top_drivers` incl. the documented 503 degraded path, futures-curve
+  `price_nok` rows).
+- Local verification: tsc clean, eslint 0 errors, visual baselines 4/4.
+
 ### Fixed (NEW finding — /market page contract fiction, same class as the supply fix)
 - `frontend/src/app/market/page.tsx` was consuming **six** endpoints
   through invented shapes; each mismatch produced a silent-empty widget

@@ -11,24 +11,26 @@ import InteractiveChart from "@/components/InteractiveChart";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
-import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
+import { useTranslation, formatNumber } from "@/lib/i18n";
 import DataQualityBadge from "@/components/DataQualityBadge";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type {
+  HedgerSignalRow,
+  PriceOutlook,
+  PriceOutlookExplain,
+  PriceOutlookMulti,
+  PricePredictionRow,
+  SSBPriceCurve,
+} from "@/types/api";
 
 export default function PriceOutlookPage() {
   const { t, locale } = useTranslation();
   const handleError = useApiError();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [outlook, setOutlook] = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [multiHorizon, setMultiHorizon] = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [curve, setCurve] = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [hedgerSignals, setHedgerSignals] = useState<any[]>([]);
-  const [predHistory, setPredHistory] = useState<any>(null);
-  const [priceExplain, setPriceExplain] = useState<any>(null);
+  const [outlook, setOutlook] = useState<PriceOutlook | null>(null);
+  const [multiHorizon, setMultiHorizon] = useState<PriceOutlookMulti | null>(null);
+  const [curve, setCurve] = useState<SSBPriceCurve | null>(null);
+  const [hedgerSignals, setHedgerSignals] = useState<HedgerSignalRow[]>([]);
+  const [predHistory, setPredHistory] = useState<PricePredictionRow[] | null>(null);
+  const [priceExplain, setPriceExplain] = useState<PriceOutlookExplain | null>(null);
   const [horizon, setHorizon] = useState(4);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<"simple" | "terminal">("terminal");
@@ -42,10 +44,10 @@ export default function PriceOutlookPage() {
         api.futuresCurve().catch(handleError("futures_curve")),
         api.hedgerSignals().catch(handleError("hedger_signals")),
       ]);
-      setOutlook(o);
-      setMultiHorizon(m);
-      setCurve(c);
-      setHedgerSignals(h as any[]);
+      setOutlook(o ?? null);
+      setMultiHorizon(m ?? null);
+      setCurve(c ?? null);
+      setHedgerSignals(h ?? []);
       api.predictionHistory(horizon, 30).then(setPredHistory).catch(handleError("prediction_history"));
       api.priceOutlookExplain(horizon).then(setPriceExplain).catch(handleError("price_outlook_explain"));
     } finally {
@@ -67,20 +69,29 @@ export default function PriceOutlookPage() {
     return map[signal] || map.neutral;
   };
 
-  const directionIcon = (dir: string) => {
-    if (dir === "bullish") return <TrendingUp className="w-4 h-4 text-emerald-400" />;
-    if (dir === "bearish") return <TrendingDown className="w-4 h-4 text-rose-400" />;
+  const directionIcon = (dir?: string) => {
+    if (dir === "up" || dir === "bullish") return <TrendingUp className="w-4 h-4 text-emerald-400" />;
+    if (dir === "down" || dir === "bearish") return <TrendingDown className="w-4 h-4 text-rose-400" />;
     return <Minus className="w-4 h-4 text-amber-400" />;
   };
 
+  // Width % for a scenario percentile bar (p10-5 … p90+5 window, clamped).
+  const scenarioWidth = (value: number | undefined, scenarios?: PriceOutlook["scenarios"]) => {
+    if (value == null || !scenarios) return 5;
+    const lo = scenarios.p10 - 5;
+    const hi = scenarios.p90 + 5;
+    if (hi <= lo) return 5;
+    return Math.min(100, Math.max(5, ((value - lo) / (hi - lo)) * 100));
+  };
+
   // Build forecast cone data from multi-horizon response
-  const coneData = multiHorizon?.horizons?.map((h: { horizon: number; predicted: number; lo80: number; hi80: number; lo95: number; hi95: number }) => ({
+  const coneData = multiHorizon?.horizons?.map((h) => ({
     label: `W+${h.horizon}`,
     forecast: h.predicted,
     upper80: h.hi80,
     lower80: h.lo80,
-    upper95: h.hi95,
-    lower95: h.lo95,
+    upper95: h.hi95 ?? h.hi80,
+    lower95: h.lo95 ?? h.lo80,
   })) || [];
 
   // Prepend current spot
@@ -208,8 +219,8 @@ export default function PriceOutlookPage() {
           <KPICard
             label={`${horizon}w Forecast`}
             value={outlook.predicted_nok != null ? `${formatNumber(outlook.predicted_nok, locale, 1)} NOK` : "\u2014"}
-            delta={outlook.signals?.combined}
-            deltaType={outlook.direction === "bullish" ? "positive" : outlook.direction === "bearish" ? "negative" : "neutral"}
+            delta={outlook.signals?.combined != null ? `combined ${formatNumber(outlook.signals.combined, locale, 2)}` : undefined}
+            deltaType={outlook.direction === "up" ? "positive" : outlook.direction === "down" ? "negative" : "neutral"}
             icon={Target}
             delay={0.03}
           />
@@ -289,8 +300,8 @@ export default function PriceOutlookPage() {
                     <Icon className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
                     <span className="text-xs text-[var(--text-secondary)]">{label}</span>
                   </div>
-                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${signalBadge(value || "neutral")}`}>
-                    {(value || "neutral").toUpperCase()}
+                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${signalBadge(value != null ? String(value) : "neutral")}`}>
+                    {(value != null ? String(value) : "neutral").toUpperCase()}
                   </span>
                 </div>
               ))}
@@ -300,8 +311,8 @@ export default function PriceOutlookPage() {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-[var(--text-primary)]">Combined Signal</span>
                   <span className={`text-sm font-bold ${
-                    outlook.signals?.combined?.includes("BULLISH") ? "text-emerald-400" :
-                    outlook.signals?.combined?.includes("BEARISH") ? "text-rose-400" :
+                    (outlook.signals?.combined ?? 0) > 0.2 ? "text-emerald-400" :
+                    (outlook.signals?.combined ?? 0) < -0.2 ? "text-rose-400" :
                     "text-amber-400"
                   }`}>
                     {outlook.signals?.combined}
@@ -339,7 +350,7 @@ export default function PriceOutlookPage() {
                     <div className="w-24 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-ocean-600 to-ocean-400"
-                        style={{ width: `${Math.min(100, Math.max(5, ((value - (outlook.scenarios.p10 - 5)) / ((outlook.scenarios.p90 + 5) - (outlook.scenarios.p10 - 5))) * 100))}%` }}
+                        style={{ width: `${scenarioWidth(value, outlook.scenarios)}%` }}
                       />
                     </div>
                     <span className={`text-sm font-mono font-semibold tabular-nums ${color}`}>
@@ -365,10 +376,10 @@ export default function PriceOutlookPage() {
 
             {/* Interactive price chart */}
             <InteractiveChart
-              data={curve.history.slice(-16).map((h: { label: string; price_nok: number; volume_tonnes: number }, i: number) => ({
+              data={curve.history.slice(-16).map((h, i: number) => ({
                 x: i,
                 y: h.price_nok,
-                label: h.label,
+                label: h.label ?? h.week,
               }))}
               title=""
               unit=" NOK/kg"
@@ -382,9 +393,9 @@ export default function PriceOutlookPage() {
                 <span className="text-xs font-semibold text-ocean-400">CURRENT SPOT</span>
                 <span className="text-sm font-bold text-[var(--text-primary)]">{curve.spot_nok != null ? formatNumber(curve.spot_nok, locale, 1) : "\u2014"} NOK/kg</span>
               </div>
-              {curve.history.slice(-8).map((h: { label: string; price_nok: number; volume_tonnes: number }) => (
-                <div key={h.label} className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                  <span className="text-xs font-mono text-[var(--text-secondary)]">{h.label}</span>
+              {curve.history.slice(-8).map((h) => (
+                <div key={h.label ?? h.week} className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  <span className="text-xs font-mono text-[var(--text-secondary)]">{h.label ?? h.week}</span>
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] text-[var(--text-secondary)]">{h.volume_tonnes != null ? formatNumber(h.volume_tonnes, locale) : "\u2014"}t</span>
                     <span className="text-sm font-mono font-semibold tabular-nums">{h.price_nok != null ? formatNumber(h.price_nok, locale, 1) : "\u2014"} NOK</span>
@@ -418,7 +429,14 @@ export default function PriceOutlookPage() {
                 </tr>
               </thead>
               <tbody>
-                {multiHorizon.horizons.map((h: any, i: number) => (
+                {multiHorizon.horizons.map((h, i: number) => {
+                  // /price-outlook/multi rows carry no change_pct — derive it
+                  // against the payload's current spot (the column used to
+                  // render 0.0% for every horizon).
+                  const changePct = multiHorizon.current_spot_nok > 0
+                    ? ((h.predicted - multiHorizon.current_spot_nok) / multiHorizon.current_spot_nok) * 100
+                    : 0;
+                  return (
                   <tr
                     key={h.horizon || i}
                     className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${
@@ -431,14 +449,14 @@ export default function PriceOutlookPage() {
                       </span>
                     </td>
                     <td className="py-2.5 px-3 font-mono font-semibold text-[var(--text-primary)]">
-                      {formatNumber(h.predicted || h.predicted_price || 0, locale, 1)} NOK
+                      {formatNumber(h.predicted || 0, locale, 1)} NOK
                     </td>
                     <td className="py-2.5 px-3">
                       <span className={`text-xs font-semibold ${
-                        (h.change_pct || 0) > 0 ? "text-emerald-400" :
-                        (h.change_pct || 0) < 0 ? "text-rose-400" : "text-[var(--text-secondary)]"
+                        changePct > 0 ? "text-emerald-400" :
+                        changePct < 0 ? "text-rose-400" : "text-[var(--text-secondary)]"
                       }`}>
-                        {(h.change_pct || 0) > 0 ? "+" : ""}{formatNumber(h.change_pct || 0, locale, 1)}%
+                        {changePct > 0 ? "+" : ""}{formatNumber(changePct, locale, 1)}%
                       </span>
                     </td>
                     <td className="py-2.5 px-3 text-xs text-[var(--text-secondary)] font-mono">
@@ -450,11 +468,12 @@ export default function PriceOutlookPage() {
                         (h.direction || "").includes("down") ? "bg-rose-500/10 text-rose-400" :
                         "bg-white/5 text-[var(--text-secondary)]"
                       }`}>
-                        {h.direction || h.combined_signal || "\u2014"}
+                        {h.direction || h.combined || "\u2014"}
                       </span>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -529,22 +548,32 @@ export default function PriceOutlookPage() {
             </span>
           </h3>
           <div className="space-y-1.5">
-            {(predHistory.records || predHistory.predictions || predHistory || []).slice(0, 10).map((r: any, i: number) => (
+            {predHistory.slice(0, 10).map((r, i: number) => {
+              // Real PricePrediction row keys: created_at / predicted_nok /
+              // current_spot_nok (the old code read date/actual -> "Actual: 0").
+              const actual = r.current_spot_nok ?? 0;
+              const errorPct = actual > 0
+                ? Math.abs((r.predicted_nok - actual) / actual) * 100
+                : 0;
+              return (
               <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-                <span className="text-[11px] font-mono text-[var(--text-secondary)]">{r.date || r.week || `Record ${i + 1}`}</span>
+                <span className="text-[11px] font-mono text-[var(--text-secondary)]">
+                  {r.created_at ? r.created_at.slice(0, 16).replace("T", " ") : `Record ${i + 1}`}
+                </span>
                 <div className="flex items-center gap-4">
                   <span className="text-[11px] text-[var(--text-secondary)]">
-                    Pred: <span className="text-ocean-400 font-semibold">{formatNumber(r.predicted || r.predicted_nok || 0, locale, 1)}</span>
+                    Pred: <span className="text-ocean-400 font-semibold">{formatNumber(r.predicted_nok ?? 0, locale, 1)}</span>
                   </span>
                   <span className="text-[11px] text-[var(--text-secondary)]">
-                    Actual: <span className="text-[var(--text-primary)] font-semibold">{formatNumber(r.actual || r.actual_nok || 0, locale, 1)}</span>
+                    Actual: <span className="text-[var(--text-primary)] font-semibold">{formatNumber(actual, locale, 1)}</span>
                   </span>
-                  <span className={`text-[10px] font-mono ${Math.abs(r.error_pct || ((r.predicted || 0) - (r.actual || 0)) / Math.max(r.actual || 1, 1) * 100) < 5 ? "text-emerald-400" : "text-amber-400"}`}>
-                    {(r.error_pct || ((r.predicted || 0) - (r.actual || 0)) / Math.max(r.actual || 1, 1) * 100).toFixed(1)}%
+                  <span className={`text-[10px] font-mono ${errorPct < 5 ? "text-emerald-400" : "text-amber-400"}`}>
+                    {errorPct.toFixed(1)}%
                   </span>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </GlassCard>
       )}
@@ -557,22 +586,22 @@ export default function PriceOutlookPage() {
             Price Drivers Explained
           </h3>
           <p className="text-xs text-[var(--text-secondary)] leading-relaxed mb-4">
-            {priceExplain.explanation || priceExplain.summary || "Analyzing price drivers..."}
+            Top model attention drivers for the selected horizon (TFT encoder importance).
           </p>
-          {(priceExplain.factors || priceExplain.drivers || []).length > 0 && (
+          {priceExplain.top_drivers.length > 0 && (
             <div className="space-y-2">
-              {(priceExplain.factors || priceExplain.drivers || []).map((f: any, i: number) => (
+              {priceExplain.top_drivers.map((f, i: number) => (
                 <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-                  <span className="text-[11px] text-[var(--text-primary)] font-medium">{f.name || f.factor || f.label}</span>
+                  <span className="text-[11px] text-[var(--text-primary)] font-medium">{f.feature}</span>
                   <div className="flex items-center gap-3">
                     <div className="w-20 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-amber-600 to-amber-400"
-                        style={{ width: `${Math.min(100, Math.abs(f.weight || f.impact || 0) * 100)}%` }}
+                        style={{ width: `${Math.min(100, Math.abs(f.importance) * 100)}%` }}
                       />
                     </div>
-                    <span className={`text-[10px] font-mono font-semibold ${(f.direction || "").includes("up") || (f.impact || 0) > 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                      {(f.weight || f.impact || 0) > 0 ? "+" : ""}{formatNumber((f.weight || f.impact || 0) * 100, locale)}%
+                    <span className="text-[10px] font-mono font-semibold text-amber-400">
+                      {formatNumber(f.importance * 100, locale)}%
                     </span>
                   </div>
                 </div>

@@ -144,15 +144,26 @@ export interface SSBPriceHistory {
   n_weeks: number;
   source: string;
   license: string;
-  history: Array<{
-    /** "W13" style week code (SSBPriceClient.get_price_history) */
-    week: string;
-    year: number;
-    /** NOK per kg (key is price_nok in the route payload) */
-    price_nok: number;
-    label?: string;
-    volume_tonnes?: number;
-  }>;
+  history: SSBPriceWeekRow[];
+}
+
+/** One SSB 03024 week row (shared by /ssb-price-history and /futures-curve) */
+export interface SSBPriceWeekRow {
+  /** "W13" style week code (SSBPriceClient.get_price_history) */
+  week: string;
+  year: number;
+  /** NOK per kg (key is price_nok in the route payload) */
+  price_nok: number;
+  label?: string;
+  volume_tonnes?: number;
+}
+
+/** /api/market/futures-curve — SSB price history used as the curve */
+export interface SSBPriceCurve {
+  spot_nok: number;
+  source?: string;
+  license?: string;
+  history: SSBPriceWeekRow[];
 }
 
 /** /api/market/price-outlook */
@@ -167,7 +178,13 @@ export interface PriceOutlook {
     p80: [number, number];
     p50: [number, number];
   };
-  scenarios?: Record<string, number[]>;
+  scenarios?: {
+    p10: number;
+    p25?: number;
+    p50: number;
+    p75?: number;
+    p90: number;
+  };
   signals: PriceSignals;
   model: {
     version: string;
@@ -195,6 +212,48 @@ export interface PriceSignals {
   export?: number;
   futures?: number;
   combined: number;
+}
+
+// ── Price outlook extras (post-review corrections) ───────────────────
+
+/** /api/market/price-outlook/multi */
+export interface PriceOutlookHorizonRow {
+  horizon: number;
+  predicted: number;
+  lo80: number;
+  hi80: number;
+  lo95?: number;
+  hi95?: number;
+  direction: string;
+  mape?: number | null;
+  combined?: string;
+}
+
+export interface PriceOutlookMulti {
+  current_spot_nok: number;
+  generated_at?: string;
+  horizons: PriceOutlookHorizonRow[];
+}
+
+/** /api/market/price-outlook/explain (TFT interpretability) */
+export interface PriceOutlookExplain {
+  horizon_weeks: number;
+  predicted_nok: number;
+  model: string;
+  attention?: Record<string, unknown> | null;
+  /** Sorted feature importances from encoder attention (real key!) */
+  top_drivers: Array<{ feature: string; importance: number }>;
+}
+
+/** /api/market/prediction-history — a LIST of PricePrediction rows */
+export interface PricePredictionRow {
+  created_at?: string | null;
+  predicted_nok: number;
+  current_spot_nok?: number | null;
+  direction?: string | null;
+  combined_signal?: string | null;
+  horizon_weeks?: number;
+  model_version?: string | null;
 }
 
 /** /api/macro/snapshot */

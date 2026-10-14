@@ -17,6 +17,7 @@ import type {
   AlertsResponse, OceanForecast, ClimateRiskScores, HeatwaveRisk,
   SentimentSummary, AISHarvestIntelligence, AISHarvestSignalRow, SentimentArticle,
   HedgerSignalRow, ExportDestinationsResponse, MacroSnapshot, MacroSeriesHistory,
+  PriceOutlook, PriceOutlookMulti, PriceOutlookExplain, PricePredictionRow, SSBPriceCurve,
   CausalSummary, GlobalSupply,
   WaveRisk,
   WaveForecast,
@@ -93,15 +94,16 @@ export const api = {
   farmerAdvisory: (localityNo: number) => fetchAPI(`/api/farmer-advisory/${localityNo}`),
 
   // ML Price Predictions
-  priceOutlook: (horizon?: number, scenarios?: number) =>
-    fetchAPI(`/api/market/price-outlook?horizon=${horizon || 4}&scenarios=${scenarios || 1000}`),
-  priceOutlookMulti: () => fetchAPI("/api/market/price-outlook/multi"),
-  futuresCurve: () => fetchAPI("/api/market/futures-curve"),
+  priceOutlook: (horizon?: number, scenarios?: number): Promise<PriceOutlook> =>
+    fetchAPI<PriceOutlook>(`/api/market/price-outlook?horizon=${horizon || 4}&scenarios=${scenarios || 1000}`),
+  priceOutlookMulti: (): Promise<PriceOutlookMulti> =>
+    fetchAPI<PriceOutlookMulti>("/api/market/price-outlook/multi"),
+  futuresCurve: (): Promise<SSBPriceCurve> => fetchAPI<SSBPriceCurve>("/api/market/futures-curve"),
   hedgerSignals: () => fetchAPI<HedgerSignalRow[]>("/api/market/hedger-signals"),
-  predictionHistory: (horizon?: number, days?: number) =>
-    fetchAPI(`/api/market/prediction-history?horizon=${horizon || 4}&days=${days || 30}`),
-  priceOutlookExplain: (horizon?: number) =>
-    fetchAPI(`/api/market/price-outlook/explain?horizon=${horizon || 4}`),
+  predictionHistory: (horizon?: number, days?: number): Promise<PricePredictionRow[]> =>
+    fetchAPI<PricePredictionRow[]>(`/api/market/prediction-history?horizon=${horizon || 4}&days=${days || 30}`),
+  priceOutlookExplain: (horizon?: number): Promise<PriceOutlookExplain> =>
+    fetchAPI<PriceOutlookExplain>(`/api/market/price-outlook/explain?horizon=${horizon || 4}`),
   selfImprovementProposals: () => fetchAPI("/api/self-improvement/proposals"),
 
   // SSB Real Data
