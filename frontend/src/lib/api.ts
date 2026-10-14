@@ -24,6 +24,7 @@ import type {
   WaveForecast,
   SmoltForecastResponse, SmoltCohortTimeline, SupplySummary, SupplyDemandBalance,
   DiseaseAlerts, DiseaseTreatments,
+  FeedSupplyChainSummary, FeedCompositionRow, FeedScenarioRow, FeedSankey,
   LoginResponse, SubscriptionStatus, EfficacyBenchmarks,
   TrafficLightCurrent, TrafficLightSimulation, TreatmentCostComparison,
   YoYComparison,
@@ -699,7 +700,8 @@ export const api = {
   ensemblePriceForecast: (horizon: number = 4) => fetchAPI<EnsembleForecast>(`/api/ml/ensemble/price-forecast?horizon=${horizon}`),
 
   // Feed Supply Chain
-  feedSupplyChainSummary: () => fetchAPI("/api/feed-supply-chain/summary"),
+  feedSupplyChainSummary: (): Promise<FeedSupplyChainSummary> =>
+    fetchAPI<FeedSupplyChainSummary>("/api/feed-supply-chain/summary"),
   feedSupplyChainEudrRisk: () => fetchAPI("/api/feed-supply-chain/eudr-risk"),
   feedSupplyChainScenarios: () => fetchAPI("/api/feed-supply-chain/scenarios"),
   feedSupplyChainLive: () => fetchAPI("/api/feed-supply-chain/live"),

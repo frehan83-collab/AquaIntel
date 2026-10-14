@@ -1197,6 +1197,71 @@ export interface SupplyDemandBalance {
   data_provenance?: DataProvenance;
 }
 
+// ── Feed supply chain (post-review corrections) ──────────────────────
+
+/** One ingredient row (/api/feed-supply-chain/summary .composition) */
+export interface FeedCompositionRow {
+  name: string;
+  origin?: string;
+  supplier?: string;
+  weight_pct: number;
+  cost_nok_per_kg: number;
+  cost_nok_per_tonne?: number;
+  carbon_kg_co2_per_kg?: number;
+  eudr_risk: string;
+}
+
+export interface FeedEudrRisk {
+  status?: string;
+  level?: string;
+  deforestation_pct?: number;
+  risk_factors?: string[];
+  recommendation?: string;
+}
+
+/** One modeled sourcing scenario (.scenarios) */
+export interface FeedScenarioRow {
+  scenario: string;
+  label: string;
+  cost_nok_per_tonne: number;
+  carbon_kg_co2_per_tonne?: number;
+  cost_delta_pct?: number;
+  carbon_delta_pct?: number;
+  eudr_status?: string;
+  eudr_risk_level?: string;
+  description?: string;
+}
+
+export interface FeedSankeyNode {
+  id: string;
+  label: string;
+  column: number;
+  value?: number;
+}
+
+export interface FeedSankeyLink {
+  source: string;
+  target: string;
+  value: number;
+}
+
+export interface FeedSankey {
+  nodes: FeedSankeyNode[];
+  links: FeedSankeyLink[];
+}
+
+/** /api/feed-supply-chain/summary */
+export interface FeedSupplyChainSummary {
+  timestamp?: string;
+  composition: FeedCompositionRow[];
+  total_cost_nok_per_tonne: number;
+  total_carbon_kg_co2_per_tonne: number;
+  eudr_risk: FeedEudrRisk;
+  scenarios: FeedScenarioRow[];
+  sankey?: FeedSankey;
+  data_provenance?: DataProvenance;
+}
+
 // ── Market page contracts (post-review corrections) ──────────────────
 
 /** One Market Hedger Agent row (/api/market/hedger-signals — a LIST) */

@@ -327,3 +327,24 @@ class TestMiscRoutes:
     def test_disclaimer(self, client):
         r = client.get("/api/disclaimer")
         assert r.status_code == 200
+
+
+class TestFeedSupplyChainContract:
+    def test_summary_uses_standard_provenance(self, client):
+        """Post-review: the summary used to hand-roll a provenance dict
+        (source/freshness:"model_based"/confidence/note). It now carries the
+        platform DataProvenance shape and is honestly DEGRADED (model-based
+        composition with approximate prices — never live)."""
+        r = client.get("/api/feed-supply-chain/summary")
+        assert r.status_code == 200
+        body = r.json()
+        prov = body["data_provenance"]
+        assert prov["is_live"] is False
+        assert prov["fallback_reason"]
+        assert "schema_version" in prov
+        # Real payload keys the page consumes
+        assert isinstance(body["composition"], list)
+        assert isinstance(body["scenarios"], list)
+        assert isinstance(body["sankey"]["nodes"], list)
+        assert isinstance(body["sankey"]["links"], list)
+        assert body["eudr_risk"]["status"]

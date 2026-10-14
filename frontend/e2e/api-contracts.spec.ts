@@ -348,6 +348,26 @@ test.describe("Supply Chain", () => {
     }
   });
 
+  test("GET /api/feed-supply-chain/summary matches the corrected contract", async ({ request }) => {
+    const res = await request.get(`${API}/api/feed-supply-chain/summary`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(Array.isArray(body.composition)).toBeTruthy();
+    expect(Array.isArray(body.scenarios)).toBeTruthy();
+    expect(body).toHaveProperty("eudr_risk");
+    expect(body).toHaveProperty("sankey");
+    expect(Array.isArray(body.sankey?.nodes)).toBeTruthy();
+    // Standard platform provenance (was a hand-rolled dict: honestly degraded)
+    expect(body.data_provenance).toHaveProperty("is_live");
+    expect(body.data_provenance.is_live).toBe(false);
+    expect(body.data_provenance).toHaveProperty("fallback_reason");
+    if (body.composition.length > 0) {
+      for (const key of ["name", "weight_pct", "cost_nok_per_kg", "eudr_risk"]) {
+        expect(body.composition[0], `missing ${key}`).toHaveProperty(key);
+      }
+    }
+  });
+
   test("GET /api/supply/demand-balance keeps the additive R7 contract", async ({ request }) => {
     const res = await request.get(`${API}/api/supply/demand-balance`);
     expect(res.ok()).toBeTruthy();

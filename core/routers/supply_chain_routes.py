@@ -21,7 +21,21 @@ async def feed_supply_chain_summary():
     cost scenarios, and Sankey flow data.
     """
     from core.market.feed_supply_chain import feed_supply_chain
-    return feed_supply_chain.get_supply_chain_summary()
+    from core.market.data_provenance import DataProvenance
+
+    result = feed_supply_chain.get_supply_chain_summary()
+    if isinstance(result, dict):
+        # Contract note (post-review): the engine used to hand-roll a
+        # provenance dict ({"source", "freshness": "model_based",
+        # "confidence", "note"}) — not the platform DataProvenance shape.
+        # This is a documented model with approximate commodity prices, so
+        # it is honestly DEGRADED (never live), with the reason attached.
+        result["data_provenance"] = DataProvenance.degraded(
+            "BioMar/Skretting sustainability reports + IFFO + EUDR Reg 2023/1115",
+            reason="model-based composition with approximate commodity prices — not a live feed",
+            confidence=0.6,
+        ).to_dict()
+    return result
 
 
 @router.get("/eudr-risk")

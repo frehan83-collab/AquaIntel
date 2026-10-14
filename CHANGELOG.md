@@ -113,6 +113,30 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Fixed (NEW finding — /feed-supply-chain typing + hand-rolled provenance, slice 6)
+- `/api/feed-supply-chain/summary` now carries the platform
+  **DataProvenance** shape: it used to hand-roll
+  `{source, freshness: "model_based", confidence, note}` — no `is_live`,
+  no `fallback_reason`. It is honestly **degraded** (model-based
+  composition with approximate commodity prices — never live), with the
+  reason attached; the page footer keeps reading source/confidence.
+- `/feed-supply-chain` fully typed (24 `any`s → 0, eslint-disable
+  removed): new `FeedSupplyChainSummary` / `FeedCompositionRow` /
+  `FeedScenarioRow` / `FeedEudrRisk` / `FeedSankey{Node,Link}` types;
+  `api.feedSupplyChainSummary` typed.
+- Two real display bugs fixed while typing:
+  - the cost-breakdown list called `.sort()` **on the state array**
+    during render, mutating the payload and re-ordering the stacked bar /
+    legend above it — now sorts a copy;
+  - the Sankey component read a nonexistent `data.stages` array (so stage
+    labels never rendered) — labels now derive from the backend's
+    documented staging (origin → ingredient → feed mill → farm).
+- Regression nets: backend test pins the standardized provenance
+  (`is_live: false` + `fallback_reason` + `schema_version`) and the
+  payload keys; e2e assertion against the real backend.
+- Local verification: tsc clean, eslint 0 errors, visual baselines 4/4,
+  test_routers 49 passed, ruff clean, build 68/68.
+
 ### Fixed (NEW finding — /disease contract fiction + permanently-green PA displays, slice 5)
 - `/disease` typed and corrected against the real Mattilsynet payloads:
   - The **ISA/PD KPI counters were always 0** — they matched `disease ===

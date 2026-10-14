@@ -11,8 +11,14 @@ import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
 import ErrorBoundary from "@/components/ErrorBoundary";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type {
+  FeedCompositionRow,
+  FeedSankey,
+  FeedSankeyLink,
+  FeedSankeyNode,
+  FeedScenarioRow,
+  FeedSupplyChainSummary,
+} from "@/types/api";
 
 /* ── Colour palette for ingredients ────────────────────────────────────── */
 const ING_COLORS: Record<string, string> = {
@@ -67,7 +73,7 @@ export default function FeedSupplyChainPage() {
   const { t, locale } = useTranslation();
   const handleError = useApiError();
 
-  const [summary, setSummary] = useState<any>(null);
+  const [summary, setSummary] = useState<FeedSupplyChainSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -83,21 +89,21 @@ export default function FeedSupplyChainPage() {
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const composition: any[] = summary?.composition || [];
-  const eudr = summary?.eudr_risk || {};
-  const scenarios: any[] = summary?.scenarios || [];
+  const composition: FeedCompositionRow[] = summary?.composition ?? [];
+  const eudr = summary?.eudr_risk ?? {};
+  const scenarios: FeedScenarioRow[] = summary?.scenarios ?? [];
 
   /* KPI derived values */
-  const totalCost = summary?.total_cost_nok_per_tonne || 0;
-  const totalCarbon = summary?.total_carbon_kg_co2_per_tonne || 0;
-  const soyPct = composition.find((c: any) => c.name?.includes("Soy"))?.weight_pct || 0;
+  const totalCost = summary?.total_cost_nok_per_tonne ?? 0;
+  const totalCarbon = summary?.total_carbon_kg_co2_per_tonne ?? 0;
+  const soyPct = composition.find((c) => c.name?.includes("Soy"))?.weight_pct ?? 0;
   const marinePct = composition
-    .filter((c: any) => c.name?.includes("Fish"))
-    .reduce((s: number, c: any) => s + (c.weight_pct || 0), 0);
+    .filter((c) => c.name?.includes("Fish"))
+    .reduce((s, c) => s + (c.weight_pct || 0), 0);
 
   /* ── Stacked bar width calc ──────────────────────────────────────── */
   const totalWeight = useMemo(
-    () => composition.reduce((s: number, c: any) => s + (c.weight_pct || 0), 0),
+    () => composition.reduce((s, c) => s + (c.weight_pct || 0), 0),
     [composition],
   );
 
@@ -163,7 +169,7 @@ export default function FeedSupplyChainPage() {
 
             {/* Stacked horizontal bar */}
             <div className="relative h-10 rounded-lg overflow-hidden flex mb-4">
-              {composition.map((ing: any) => {
+              {composition.map((ing) => {
                 const widthPct = totalWeight > 0
                   ? (ing.weight_pct / totalWeight) * 100
                   : 0;
@@ -189,7 +195,7 @@ export default function FeedSupplyChainPage() {
 
             {/* Legend + detail table */}
             <div className="space-y-2">
-              {composition.map((ing: any) => (
+              {composition.map((ing) => (
                 <div
                   key={ing.name}
                   className="flex items-center justify-between text-sm"
@@ -284,13 +290,13 @@ export default function FeedSupplyChainPage() {
             {t("feed_chain.cost_breakdown")}
           </h2>
           <div className="space-y-3">
-            {composition
-              .sort((a: any, b: any) => {
+            {[...composition]
+              .sort((a, b) => {
                 const aCost = a.cost_nok_per_kg * (a.weight_pct / 100) * 1000;
                 const bCost = b.cost_nok_per_kg * (b.weight_pct / 100) * 1000;
                 return bCost - aCost;
               })
-              .map((ing: any) => {
+              .map((ing) => {
                 const ingCost = ing.cost_nok_per_kg * (ing.weight_pct / 100) * 1000;
                 const pct = totalCost > 0 ? (ingCost / totalCost) * 100 : 0;
                 return (
@@ -325,7 +331,7 @@ export default function FeedSupplyChainPage() {
             {t("feed_chain.scenarios")}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            {scenarios.map((s: any) => {
+            {scenarios.map((s) => {
               const isBaseline = s.scenario === "current";
               const costUp = (s.cost_delta_pct || 0) > 0;
               const carbonDown = (s.carbon_delta_pct || 0) < 0;
@@ -342,7 +348,7 @@ export default function FeedSupplyChainPage() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-semibold text-white">{s.label}</h3>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${riskBadge(s.eudr_risk_level)}`}>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${riskBadge(s.eudr_risk_level ?? "medium")}`}>
                       EUDR: {s.eudr_status?.toUpperCase()}
                     </span>
                   </div>
@@ -363,7 +369,7 @@ export default function FeedSupplyChainPage() {
                           <Minus className="h-3 w-3 text-gray-400" />
                         )}
                         <span className={costUp ? "text-rose-400" : "text-emerald-400"}>
-                          {s.cost_delta_pct > 0 ? "+" : ""}{formatNumber(s.cost_delta_pct, locale, 1)}% cost
+                          {(s.cost_delta_pct ?? 0) > 0 ? "+" : ""}{formatNumber(s.cost_delta_pct ?? 0, locale, 1)}% cost
                         </span>
                       </div>
                       <div className="flex items-center gap-1 text-xs">
@@ -373,7 +379,7 @@ export default function FeedSupplyChainPage() {
                           <TrendingUp className="h-3 w-3 text-rose-400" />
                         )}
                         <span className={carbonDown ? "text-emerald-400" : "text-rose-400"}>
-                          {s.carbon_delta_pct > 0 ? "+" : ""}{formatNumber(s.carbon_delta_pct, locale, 1)}% CO2
+                          {(s.carbon_delta_pct ?? 0) > 0 ? "+" : ""}{formatNumber(s.carbon_delta_pct ?? 0, locale, 1)}% CO2
                         </span>
                       </div>
                     </div>
@@ -407,10 +413,13 @@ export default function FeedSupplyChainPage() {
 }
 
 /* ── Simplified Sankey for feed flow ─────────────────────────────────── */
-function FeedSankey({ data }: { data: any }) {
-  const stages: string[] = data.stages || [];
-  const nodes: any[] = data.nodes || [];
-  const links: any[] = data.links || [];
+function FeedSankey({ data }: { data: FeedSankey }) {
+  // The backend stages the flow as origin -> ingredient -> feed mill -> farm
+  // (feed_supply_chain._build_sankey_data); the payload itself has no stage
+  // labels, so they are derived from that documented staging.
+  const STAGE_LABELS = ["Origin", "Ingredient", "Feed mill", "Farm"];
+  const nodes: FeedSankeyNode[] = data.nodes ?? [];
+  const links: FeedSankeyLink[] = data.links ?? [];
 
   if (!nodes.length) return null;
 
@@ -418,11 +427,12 @@ function FeedSankey({ data }: { data: any }) {
   const H = 360;
   const PAD = 40;
   const NODE_W = 18;
-  const colCount = stages.length || 4;
+  const colCount = Math.max(...nodes.map((n) => n.column ?? 0), 0) + 1;
+  const stages = STAGE_LABELS.slice(0, colCount);
   const colSpacing = (W - 2 * PAD - NODE_W) / Math.max(colCount - 1, 1);
 
   /* Group nodes by column */
-  const columns: Record<number, any[]> = {};
+  const columns: Record<number, FeedSankeyNode[]> = {};
   for (const n of nodes) {
     const col = n.column ?? 0;
     if (!columns[col]) columns[col] = [];
@@ -435,17 +445,17 @@ function FeedSankey({ data }: { data: any }) {
     const col = Number(colStr);
     const x = PAD + col * colSpacing;
     const totalVal = colNodes.reduce(
-      (s: number, n: any) => s + (n.value || links.filter((l: any) =>
+      (s, n) => s + (n.value || links.filter((l) =>
         l.source === n.id || l.target === n.id
-      ).reduce((a: number, l: any) => Math.max(a, l.value || 0), 10)),
+      ).reduce((a, l) => Math.max(a, l.value || 0), 10)),
       0,
     );
     const usableH = H - 2 * PAD;
     let yOff = PAD;
     for (const n of colNodes) {
-      const val = n.value || links.filter((l: any) =>
+      const val = n.value || links.filter((l) =>
         l.source === n.id || l.target === n.id
-      ).reduce((a: number, l: any) => Math.max(a, l.value || 0), 10);
+      ).reduce((a, l) => Math.max(a, l.value || 0), 10);
       const h = Math.max((val / Math.max(totalVal, 1)) * usableH, 16);
       nodePos[n.id] = { x, y: yOff, h };
       yOff += h + 4;
@@ -472,7 +482,7 @@ function FeedSankey({ data }: { data: any }) {
       ))}
 
       {/* Links */}
-      {links.map((link: any, i: number) => {
+      {links.map((link, i: number) => {
         const src = nodePos[link.source];
         const tgt = nodePos[link.target];
         if (!src || !tgt) return null;
@@ -495,7 +505,7 @@ function FeedSankey({ data }: { data: any }) {
       })}
 
       {/* Nodes */}
-      {nodes.map((n: any) => {
+      {nodes.map((n) => {
         const pos = nodePos[n.id];
         if (!pos) return null;
         const col = n.column ?? 0;
