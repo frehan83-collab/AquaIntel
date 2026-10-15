@@ -467,6 +467,42 @@ test.describe("Supply Chain", () => {
     }
   });
 
+  test("GET /api/competitiveness/origin-index carries real origin rows", async ({ request }) => {
+    const res = await request.get(`${API}/api/competitiveness/origin-index`);
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      origins: Array<Record<string, unknown>>;
+      us_spot_usd_kg: number;
+      data_quality: string;
+      fallback_value: boolean;
+    };
+    expect(body).toHaveProperty("us_spot_usd_kg");
+    expect(body).toHaveProperty("data_quality");
+    expect(body).toHaveProperty("fallback_value");
+    if (body.origins.length > 0) {
+      const origin = body.origins[0];
+      // Old fiction keys must not reappear
+      expect(origin["production_cost_nok_kg"]).toBeUndefined();
+      expect(origin["total_cif_usd_kg"]).toBeUndefined();
+      expect(origin["total_delivered_usd"]).toBeDefined();
+      expect(origin["margin_pct"]).toBeDefined();
+    }
+  });
+
+  test("POST /api/competitiveness/tariff-scenario returns re-ranking", async ({ request }) => {
+    await request.get(`${API}/api/competitiveness/origin-index`); // warm cache
+    const res = await request.post(`${API}/api/competitiveness/tariff-scenario`, {
+      data: { Norway: 10 },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      scenario_origins: Array<Record<string, unknown>>;
+      tariff_overrides: Record<string, unknown>;
+    };
+    expect(body["scenario_origins"]).toBeInstanceOf(Array);
+    expect(body["tariff_overrides"]).toBeDefined();
+  });
+
   test("GET /api/supply/demand-balance keeps the additive R7 contract", async ({ request }) => {
     const res = await request.get(`${API}/api/supply/demand-balance`);
     expect(res.ok()).toBeTruthy();

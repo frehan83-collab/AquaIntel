@@ -30,6 +30,7 @@ import type {
   YoYComparison,
   ChinaDemandSnapshot, ChinaDemandSignals, ChinaDemandImpact,
   RegimeState, EquityPriceResponse, EsgCompanyScores,
+  CompetitivenessScenarioResponse,
 } from "@/types/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -295,7 +296,7 @@ export const api = {
   // Competitiveness Index
   competitivenessIndex: () => fetchAPI<CompetitivenessIndex>("/api/competitiveness/origin-index"),
   competitivenessTariffScenario: (tariffs: Record<string, number>) =>
-    fetchAPI("/api/competitiveness/tariff-scenario", { method: "POST", body: JSON.stringify(tariffs) }),
+    fetchAPI<CompetitivenessScenarioResponse>("/api/competitiveness/tariff-scenario", { method: "POST", body: JSON.stringify(tariffs) }),
 
   // Disease Alerts
   diseaseAlerts: (): Promise<DiseaseAlerts> => fetchAPI<DiseaseAlerts>("/api/disease/alerts"),

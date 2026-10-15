@@ -16,14 +16,13 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import DataQualityBadge from "@/components/DataQualityBadge";
 const InteractiveChart = dynamic(() => import("@/components/InteractiveChart"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
 import type { DataPoint } from "@/components/InteractiveChart";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { CompetitivenessIndex, CompetitivenessOrigin, CompetitivenessScenarioResponse } from "@/types/api";
 
 export default function CompetitivenessPage() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<CompetitivenessIndex | null>(null);
   const [loading, setLoading] = useState(true);
   const [tariffOverrides, setTariffOverrides] = useState<Record<string, number>>({});
-  const [scenarioResult, setScenarioResult] = useState<any>(null);
+  const [scenarioResult, setScenarioResult] = useState<CompetitivenessScenarioResponse | null>(null);
   const [scenarioLoading, setScenarioLoading] = useState(false);
   const { t, locale } = useTranslation();
 
@@ -48,10 +47,10 @@ export default function CompetitivenessPage() {
 
   useEffect(() => { load(); }, []);
 
-  const origins = data?.origins || [];
+  const origins = data?.origins ?? [];
   const cheapest = origins[0];
-  const norway = origins.find((o: any) => o.country === "Norway");
-  const bestMargin = [...origins].sort((a: any, b: any) => b.margin_pct - a.margin_pct)[0];
+  const norway = origins.find((o) => o.country === "Norway");
+  const bestMargin = [...origins].sort((a, b) => b.margin_pct - a.margin_pct)[0];
 
   return (
     <ErrorBoundary fallbackTitle="Competitiveness Index error">
@@ -166,7 +165,7 @@ export default function CompetitivenessPage() {
         <GlassCard delay={0.11}>
           <InteractiveChart
             title="Delivered Cost by Origin (USD/kg)"
-            data={origins.map((o: any): DataPoint => ({
+            data={origins.map((o): DataPoint => ({
               x: o.rank ?? 0,
               y: o.total_delivered_usd ?? 0,
               label: `${o.flag || ""} ${o.country || ""}`.trim(),
@@ -191,7 +190,7 @@ export default function CompetitivenessPage() {
           columns={[
             {
               key: "rank", label: t("competitiveness.rank"), sortable: true, align: "center" as const, width: "40px",
-              render: (val: any) => (
+              render: (val) => (
                 <span className={`text-xs font-bold ${
                   val === 1 ? "text-emerald-400" : val === 2 ? "text-ocean-400" : val === 3 ? "text-amber-400" : "text-[var(--text-secondary)]"
                 }`}>
@@ -201,7 +200,7 @@ export default function CompetitivenessPage() {
             },
             {
               key: "country", label: t("competitiveness.country"), sortable: true,
-              render: (_val: any, row: any) => (
+              render: (_v, row) => (
                 <span className="font-semibold text-[var(--text-primary)]">
                   {row.flag} {row.country}
                 </span>
@@ -209,7 +208,7 @@ export default function CompetitivenessPage() {
             },
             {
               key: "local_cost_per_kg", label: t("competitiveness.cost_nok"), sortable: true, align: "right" as const,
-              render: (val: any, row: any) => (
+              render: (val, row) => (
                 <span className="tabular-nums text-[var(--text-secondary)]">
                   {val?.toLocaleString()} {row.currency}
                 </span>
@@ -217,7 +216,7 @@ export default function CompetitivenessPage() {
             },
             {
               key: "fx_rate_to_usd", label: "FX Rate", sortable: true, align: "right" as const,
-              render: (val: any) => (
+              render: (val) => (
                 <span className="tabular-nums text-[var(--text-secondary)] font-mono text-[10px]">
                   {val != null ? (val < 0.01 ? formatNumber(val, locale, 5) : formatNumber(val, locale, 4)) : "\u2014"}
                 </span>
@@ -225,11 +224,11 @@ export default function CompetitivenessPage() {
             },
             {
               key: "production_cost_usd", label: "USD Cost", sortable: true, align: "right" as const,
-              render: (val: any) => <span className="tabular-nums">{val != null ? `$${formatNumber(val, locale, 2)}` : "\u2014"}</span>,
+              render: (val) => <span className="tabular-nums">{val != null ? `$${formatNumber(val, locale, 2)}` : "\u2014"}</span>,
             },
             {
               key: "tariff_pct", label: t("competitiveness.tariff"), sortable: true, align: "right" as const,
-              render: (val: any, row: any) => (
+              render: (val, row) => (
                 val > 0 ? (
                   <span className="text-rose-400 tabular-nums">
                     {formatNumber(val * 100, locale, 0)}% ({row.tariff_cost_usd != null ? `$${formatNumber(row.tariff_cost_usd, locale, 2)}` : "\u2014"})
@@ -241,21 +240,21 @@ export default function CompetitivenessPage() {
             },
             {
               key: "freight_usd", label: "Freight", sortable: true, align: "right" as const,
-              render: (val: any) => <span className="tabular-nums text-[var(--text-secondary)]">{val != null ? `$${formatNumber(val, locale, 2)}` : "\u2014"}</span>,
+              render: (val) => <span className="tabular-nums text-[var(--text-secondary)]">{val != null ? `$${formatNumber(val, locale, 2)}` : "\u2014"}</span>,
             },
             {
               key: "total_delivered_usd", label: "Delivered", sortable: true, align: "right" as const,
-              render: (val: any) => <span className="tabular-nums font-bold text-[var(--text-primary)]">{val != null ? `$${formatNumber(val, locale, 2)}` : "\u2014"}</span>,
+              render: (val) => <span className="tabular-nums font-bold text-[var(--text-primary)]">{val != null ? `$${formatNumber(val, locale, 2)}` : "\u2014"}</span>,
             },
             {
               key: "margin_pct", label: "Margin", sortable: true, align: "right" as const,
-              render: (val: any, row: any) => (
+              render: (val, row) => (
                 <span className={`tabular-nums ${row.margin_usd > 0 ? "text-emerald-400" : "text-rose-400"}`}>
                   {val > 0 ? "+" : ""}{val}%
                 </span>
               ),
             },
-          ] as Column[]}
+          ] as Column<CompetitivenessOrigin>[]}
         />
       </GlassCard>
 
@@ -268,7 +267,7 @@ export default function CompetitivenessPage() {
               {t("competitiveness.fx_rates")}
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {Object.entries(data.fx_rates).map(([currency, rate]: [string, any]) => (
+              {Object.entries(data.fx_rates).map(([currency, rate]) => (
                 <div key={currency} className="p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-center">
                   <p className="text-[10px] text-[var(--text-secondary)] uppercase">{currency}/USD</p>
                   <p className="text-sm font-bold font-mono text-[var(--text-primary)] mt-0.5">
@@ -281,7 +280,7 @@ export default function CompetitivenessPage() {
         )}
 
         {/* Insights */}
-        {data?.insights?.length > 0 && (
+        {data && data.insights && data.insights.length > 0 && (
           <GlassCard delay={0.28} accent="ocean">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
               <Activity className="w-4 h-4 text-ocean-400" />
@@ -329,19 +328,19 @@ export default function CompetitivenessPage() {
 
         {scenarioResult?.scenario_origins && (
           <div className="mt-4 space-y-1.5">
-            {scenarioResult.scenario_origins.map((o: any, i: number) => (
+            {scenarioResult.scenario_origins.map((o, i: number) => (
               <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-bold text-[var(--text-primary)] w-4">#{o.scenario_rank}</span>
-                  <span className="text-[11px] text-[var(--text-primary)]">{o.origin || o.country}</span>
+                  <span className="text-[11px] text-[var(--text-primary)]">{o.country}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] text-[var(--text-secondary)]">
                     {o.delivered_cost_usd != null ? `$${formatNumber(o.delivered_cost_usd, locale, 2)}/kg` : "\u2014"}
                   </span>
-                  {o.rank_change !== 0 && (
-                    <span className={`text-[10px] font-semibold ${o.rank_change > 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                      {o.rank_change > 0 ? "\u2191" : "\u2193"}{Math.abs(o.rank_change)}
+                  {(o.rank_change ?? 0) !== 0 && (
+                    <span className={`text-[10px] font-semibold ${(o.rank_change ?? 0) > 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      {(o.rank_change ?? 0) > 0 ? "\u2191" : "\u2193"}{Math.abs(o.rank_change ?? 0)}
                     </span>
                   )}
                 </div>

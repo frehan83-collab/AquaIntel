@@ -113,6 +113,30 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Fixed (NEW finding — /competitiveness type fiction, slice 9)
+- `CompetitivenessIndex`/`CompetitivenessOrigin` were fiction
+  (`production_cost_nok_kg`, `freight_cost`, `tariff_usd_percent`,
+  `total_cif_usd_kg`, `competitiveness_vs_norway`, `insights` on the
+  origin row — none of these exist). The real payload (from
+  `competitiveness_engine._to_dict`) carries `us_spot_usd_kg`,
+  `data_quality: "live" | "stale_fallback"`, `fallback_value`,
+  `source_date` and origins with `rank/flag/currency/local_cost_per_kg/
+  fx_rate_to_usd/production_cost_usd/tariff_pct/tariff_cost_usd/
+  freight_usd/total_delivered_usd/margin_usd/margin_pct`. Rewritten.
+- `competitivenessTariffScenario` was untyped; added
+  `CompetitivenessScenarioResponse` (`scenario_origins` with
+  scenario_rank/delivered_cost_usd/rank_change/baseline_rank) and
+  annotated the client.
+- Scenario row also read a nonexistent `o.origin` (falling back to
+  `o.country`) — now reads `o.country` directly.
+- `/competitiveness` fully typed (15 `any`s → 0, eslint-disable removed;
+  `DataTable` columns typed as `Column<CompetitivenessOrigin>`).
+- Regression nets: 2 backend tests (`TestCompetitivenessContract`) + 2 e2e
+  contract assertions (origin-index real keys incl. old-fiction
+  must-not-exist, tariff-scenario re-ranking). Local verification:
+  tsc clean, eslint 0 errors, visual 4/4, targeted tests 7 passed,
+  ruff clean, build green. Warnings are pre-existing only.
+
 ### Fixed (NEW finding — /investor typing + GlobalSupply fiction, slice 8)
 - The `GlobalSupply` type was fiction (`countries[].production_2025_kt`,
   `total_global_kt` — neither exists in the payload) while the page and

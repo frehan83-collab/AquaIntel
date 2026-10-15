@@ -453,3 +453,44 @@ class TestInvestorContracts:
             for key in ("company_name", "total", "grade", "environmental",
                         "social", "governance"):
                 assert key in row, key
+
+
+class TestCompetitivenessContract:
+    """Post-review (slice 9): the typed CompetitivenessOrigin was fiction
+    (production_cost_nok_kg/freight_cost/tariff_usd_percent/
+    total_cif_usd_kg/competitiveness_vs_norway) — the real rows carry
+    rank/flag/currency/local_cost_per_kg/fx_rate_to_usd/*_usd/tariff_pct/
+    margin_*."""
+
+    def test_origin_index_uses_real_keys(self, client):
+        r = client.get("/api/competitiveness/origin-index")
+        assert r.status_code == 200
+        body = r.json()
+        for key in ("us_spot_usd_kg", "fx_rates", "data_quality",
+                    "fallback_value", "origins", "insights", "generated_at"):
+            assert key in body, key
+        if body["origins"]:
+            origin = body["origins"][0]
+            for key in ("rank", "country", "flag", "currency",
+                        "local_cost_per_kg", "fx_rate_to_usd",
+                        "production_cost_usd", "tariff_pct",
+                        "tariff_cost_usd", "freight_usd",
+                        "total_delivered_usd", "margin_usd", "margin_pct"):
+                assert key in origin, key
+            for key in ("production_cost_nok_kg", "total_cif_usd_kg",
+                        "tariff_usd_percent", "competitiveness_vs_norway"):
+                assert key not in origin, key
+
+    def test_tariff_scenario_shape(self, client):
+        # Warm the engine cache so the scenario returns a real re-ranking
+        client.get("/api/competitiveness/origin-index")
+        r = client.post("/api/competitiveness/tariff-scenario", json={"Norway": 10})
+        assert r.status_code == 200
+        body = r.json()
+        assert isinstance(body["scenario_origins"], list)
+        assert "tariff_overrides" in body
+        assert isinstance(body["baseline_origins"], list)
+        if body["scenario_origins"]:
+            for key in ("scenario_rank", "delivered_cost_usd",
+                        "rank_change", "baseline_rank"):
+                assert key in body["scenario_origins"][0], key

@@ -323,22 +323,52 @@ export interface FeedCostLatest {
   data_provenance?: DataProvenance;
 }
 
-/** /api/competitiveness/origin-index */
-export interface CompetitivenessIndex {
-  origins: CompetitivenessOrigin[];
-  fx_rates: Record<string, number>;
-  generated_at: string;
+/** /api/competitiveness/origin-index — one origin row
+ *  (competitiveness_engine.OriginCost serialization). The old type claimed
+ *  production_cost_nok_kg/freight_cost/tariff_usd_percent/total_cif_usd_kg —
+ *  none exist; the real keys are *_usd + tariff_pct + margin_*. */
+export interface CompetitivenessOrigin {
+  rank: number;
+  country: string;
+  flag: string;
+  currency: string;
+  local_cost_per_kg: number;
+  fx_rate_to_usd: number;
+  production_cost_usd: number;
+  tariff_pct: number;
+  tariff_cost_usd: number;
+  freight_usd: number;
+  total_delivered_usd: number;
+  margin_usd: number;
+  margin_pct: number;
+  notes?: string;
 }
 
-export interface CompetitivenessOrigin {
-  country: string;
-  production_cost_nok_kg: number;
-  freight_cost: number;
-  tariff_usd_percent: number;
-  total_cif_usd_kg: number;
-  rank: number;
-  competitiveness_vs_norway: number;
-  insights: string;
+export interface CompetitivenessIndex {
+  generated_at: string;
+  us_spot_usd_kg: number;
+  fx_rates: Record<string, number>;
+  /** "live" unless the Norway cost model fell back to the 2024 snapshot */
+  data_quality: "live" | "stale_fallback";
+  fallback_value: boolean;
+  source_date?: string | null;
+  origins: CompetitivenessOrigin[];
+  insights: string[];
+}
+
+/** /api/competitiveness/tariff-scenario (POST) */
+export interface CompetitivenessScenarioOrigin extends CompetitivenessOrigin {
+  delivered_cost_usd?: number;
+  tariff_change?: number;
+  scenario_rank?: number;
+  baseline_rank?: number;
+  rank_change?: number;
+}
+
+export interface CompetitivenessScenarioResponse {
+  scenario_origins: CompetitivenessScenarioOrigin[];
+  tariff_overrides: Record<string, number | string>;
+  baseline_origins: CompetitivenessOrigin[];
 }
 
 /** /api/futures/forward-curve */
