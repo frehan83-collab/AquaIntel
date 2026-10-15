@@ -281,6 +281,20 @@ export interface MacroAlert {
   message: string;
 }
 
+/** /api/market/equity-prices */
+export interface EquityPriceResponse {
+  generated_at: string;
+  source: string;
+  exchange: string;
+  /** Ticker -> latest price NOK (e.g. "MOWI.OL") */
+  prices_nok: Record<string, number>;
+  benchmarks: {
+    fpi_eur_per_kg?: number | null;
+    ssb_nok_per_kg?: number | null;
+  };
+  all_prices?: Record<string, number | null>;
+}
+
 /** /api/feed-cost/latest */
 /** /api/feed-cost/latest (real shape from feed_cost_engine.get_latest) */
 export interface FeedCostLatest {
@@ -457,6 +471,19 @@ export interface Signal {
   rationale: string;
   created_at: string;
   confirmed: boolean;
+}
+
+/** /api/regime/states (regime_detector.get_all_states rows) */
+export interface RegimeState {
+  production_area: number;
+  current_color: "green" | "yellow" | "red";
+  predicted_color: "green" | "yellow" | "red";
+  probabilities: { green: number; yellow: number; red: number };
+  confidence: number;
+  key_drivers?: string[];
+  lice_pressure_score?: number;
+  trend?: string;
+  color_change: boolean;
 }
 
 /** /api/regime/alerts */
@@ -931,19 +958,38 @@ export interface CausalSummary {
 
 // ── Global Supply Types ──────────────────────────────────────────────
 
-/** /api/global-supply */
+/** /api/global-supply (global_supply_engine.to_dict) */
+export interface GlobalSupplyCountry {
+  country: string;
+  share_pct: number;
+  annual_tonnes_2026e: number;
+  annual_tonnes_2025: number;
+  source_2025: string;
+  yoy_growth_pct: number;
+  status: string;
+  disruption_pct?: number;
+  disruption_reason?: string;
+  lice_pressure?: number;
+  disease_events?: number;
+  price_impact_pct?: number;
+  currency: string;
+  est_source?: string;
+}
+
 export interface GlobalSupply {
-  countries: Array<{
-    country: string;
-    production_2025_kt: number;
-    production_2026e_kt: number;
-    yoy_growth_pct: number;
-    disruption: string;
-    source: string;
-    currency: string;
-  }>;
-  total_global_kt: number;
-  data_provenance: DataProvenance;
+  generated_at: string;
+  total_production_2025: number;
+  total_production_2026e: number;
+  effective_production_tonnes: number;
+  supply_deficit_pct: number;
+  balance: string;
+  price_pressure: string;
+  global_salmon_usd_kg?: number;
+  norway_spot_nok_kg?: number;
+  norway_premium_pct: number;
+  insights?: string[];
+  countries: GlobalSupplyCountry[];
+  data_provenance?: DataProvenance;
 }
 
 /** /api/supply/smolt-forecast */

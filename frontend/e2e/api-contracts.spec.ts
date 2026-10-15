@@ -406,6 +406,67 @@ test.describe("Supply Chain", () => {
     expect(body).toHaveProperty("fcr");
   });
 
+  test("GET /api/global-supply matches the real to_dict shape", async ({ request }) => {
+    const res = await request.get(`${API}/api/global-supply`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(body).toHaveProperty("balance");
+    expect(body).toHaveProperty("supply_deficit_pct");
+    expect(body).toHaveProperty("norway_premium_pct");
+    expect(body).toHaveProperty("global_salmon_usd_kg");
+    expect(body).toHaveProperty("price_pressure");
+    expect(body).toHaveProperty("countries");
+  });
+
+  test("GET /api/disease/by-company uses lowercase isa/pd", async ({ request }) => {
+    const res = await request.get(`${API}/api/disease/by-company`);
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as { companies?: Record<string, Record<string, unknown>> };
+    const rows = Object.values(body.companies ?? {});
+    if (rows.length > 0) {
+      const counts = rows[0];
+      expect(counts["total"]).toBeDefined();
+      expect(counts["isa"]).toBeDefined();
+      expect(counts["pd"]).toBeDefined();
+      // The investor page used to read uppercase ISA/PD (always "Clear")
+      expect(Object.keys(counts)).not.toContain("ISA");
+      expect(Object.keys(counts)).not.toContain("PD");
+    }
+  });
+
+  test("GET /api/regime/states rows carry current_color", async ({ request }) => {
+    const res = await request.get(`${API}/api/regime/states`);
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as Array<Record<string, unknown>>;
+    expect(Array.isArray(body)).toBeTruthy();
+    if (body.length > 0) {
+      expect(body[0]).toHaveProperty("production_area");
+      expect(body[0]).toHaveProperty("current_color");
+      expect(body[0]).toHaveProperty("probabilities");
+    }
+  });
+
+  test("GET /api/market/equity-prices exposes prices_nok benchmarks", async ({ request }) => {
+    const res = await request.get(`${API}/api/market/equity-prices`);
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(body).toHaveProperty("prices_nok");
+    expect(body).toHaveProperty("benchmarks");
+  });
+
+  test("GET /api/esg/scores rows carry grade + total", async ({ request }) => {
+    const res = await request.get(`${API}/api/esg/scores`);
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as Record<string, unknown> | unknown[];
+    const rows = Array.isArray(body) ? body : ((body?.data ?? body?.companies) as unknown[] | undefined) ?? [];
+    if (rows.length > 0) {
+      const row = rows[0] as Record<string, unknown>;
+      expect(row["company_name"]).toBeDefined();
+      expect(row["total"]).toBeDefined();
+      expect(row["grade"]).toBeDefined();
+    }
+  });
+
   test("GET /api/supply/demand-balance keeps the additive R7 contract", async ({ request }) => {
     const res = await request.get(`${API}/api/supply/demand-balance`);
     expect(res.ok()).toBeTruthy();

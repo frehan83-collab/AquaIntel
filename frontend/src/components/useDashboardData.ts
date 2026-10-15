@@ -32,10 +32,9 @@ export interface DashboardAIS {
   summary?: Record<string, number>;
 }
 
-export interface DashboardSupply extends GlobalSupply {
-  balance?: string;
-  supply_deficit_pct?: number;
-}
+/** /api/global-supply is now fully typed; the dashboard layer used to
+ *  re-declare balance/supply_deficit_pct as optional to patch a fiction. */
+export type DashboardSupply = GlobalSupply;
 
 export interface ProductionSummary {
   year?: number;

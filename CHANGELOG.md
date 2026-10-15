@@ -113,6 +113,29 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Fixed (NEW finding — /investor typing + GlobalSupply fiction, slice 8)
+- The `GlobalSupply` type was fiction (`countries[].production_2025_kt`,
+  `total_global_kt` — neither exists in the payload) while the page and
+  KPI strip read the real `balance`, `supply_deficit_pct`,
+  `norway_premium_pct`, `global_salmon_usd_kg`. Rewritten to match
+  `global_supply_engine.to_dict` (incl. `GlobalSupplyCountry`).
+- `DiseaseCompanyCounts` keys are lowercase (`isa`/`pd`) but the investor
+  page read uppercase `ISA`/`PD` — **disease counters always rendered
+  "Clear"** even when outbreaks existed. Page now reads `isa`/`pd`.
+- `equityPrices`, `regimeStates`, `esgScores` were untyped; added
+  `EquityPriceResponse` and `RegimeState` types (real shapes from the
+  routes) and annotated the client; `esgScores` now returns
+  `EsgCompanyScores`.
+- `/investor` fully typed (18 `any`s → 0, eslint-disable removed);
+  `DashboardSupply` is now an alias of the corrected `GlobalSupply`
+  (the dashboard layer used to re-patch the fiction with optional
+  overrides).
+- Regression nets: 5 backend tests (`TestInvestorContracts`) + 5 e2e
+  contract assertions (global-supply, disease by-company lowercase keys,
+  regime states, equity prices, esg scores).
+- Local verification: tsc clean, eslint 0 errors, visual 4/4,
+  test_routers 56 passed, ruff clean, build green.
+
 ### Fixed (NEW finding — /brief + anomaly contract fiction, slice 7)
 - `MorningBrief` / `BriefSection` types were fiction (`title`, `key_risks`,
   `market_sentiment`, `sections[].items[]`, `section_num`) while the real

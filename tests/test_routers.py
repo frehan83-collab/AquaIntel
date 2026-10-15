@@ -378,3 +378,78 @@ class TestBriefAndAnomalyContract:
         assert "risk_level" in body
         assert isinstance(body["component_scores"], dict)
         assert isinstance(body["anomalies"], list)
+
+
+class TestInvestorContracts:
+    """Post-review (slice 8): the frontend used to read fictional fields
+    on the investor page — GlobalSupply (no total_global_kt /
+    production_2025_kt) and uppercase DiseaseCompanyCounts keys (ISA/PD
+    never existed, so outbreaks always rendered "Clear")."""
+
+    def test_global_supply_is_the_to_dict_shape(self, client):
+        r = client.get("/api/global-supply")
+        assert r.status_code == 200
+        body = r.json()
+        # Real keys (page + KPI strip consumers)
+        for key in (
+            "balance", "supply_deficit_pct", "norway_premium_pct",
+            "global_salmon_usd_kg", "price_pressure", "countries",
+            "total_production_2025", "total_production_2026e",
+            "effective_production_tonnes", "generated_at",
+        ):
+            assert key in body, key
+        # The old fiction keys must not suddenly reappear
+        assert "total_global_kt" not in body
+        if body["countries"]:
+            country = body["countries"][0]
+            for key in (
+                "country", "share_pct", "annual_tonnes_2026e",
+                "annual_tonnes_2025", "yoy_growth_pct", "status", "currency",
+            ):
+                assert key in country, key
+
+    def test_disease_by_company_count_keys_are_lowercase(self, client):
+        """isa/pd/other/locality — the investor page used to read ISA/PD."""
+        r = client.get("/api/disease/by-company")
+        assert r.status_code == 200
+        body = r.json()
+        companies = body["companies"]
+        if companies:
+            company = next(iter(companies.values()))
+            for key in ("total", "isa", "pd", "other", "localities"):
+                assert key in company, key
+            assert "ISA" not in company
+            assert "PD" not in company
+
+    def test_regime_states_shape(self, client):
+        r = client.get("/api/regime/states")
+        assert r.status_code == 200
+        body = r.json()
+        assert isinstance(body, list)
+        if body:
+            state = body[0]
+            for key in ("production_area", "current_color", "predicted_color",
+                        "probabilities", "confidence", "color_change"):
+                assert key in state, key
+            assert state["current_color"] in ("green", "yellow", "red")
+
+    def test_equity_prices_shape(self, client):
+        r = client.get("/api/market/equity-prices")
+        assert r.status_code == 200
+        body = r.json()
+        assert isinstance(body["prices_nok"], dict)
+        for key in ("benchmarks", "generated_at", "source", "exchange"):
+            assert key in body, key
+        assert "fpi_eur_per_kg" in body["benchmarks"]
+
+    def test_esg_scores_rows(self, client):
+        r = client.get("/api/esg/scores")
+        assert r.status_code == 200
+        body = r.json()
+        # May be a plain list or a wrapped list; the rows expose grade/total
+        rows = body if isinstance(body, list) else (body.get("data") or body.get("companies") or [])
+        if rows:
+            row = rows[0]
+            for key in ("company_name", "total", "grade", "environmental",
+                        "social", "governance"):
+                assert key in row, key

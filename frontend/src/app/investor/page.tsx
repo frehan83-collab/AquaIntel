@@ -11,27 +11,38 @@ import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import { useTranslation } from "@/lib/i18n";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type {
+  LeaderEntry,
+  EsgCompanyScore,
+  EquityPriceResponse,
+  RegimeState,
+  LiceSummary,
+  GlobalSupply,
+  DiseaseNorway,
+  DiseaseCompanyCounts,
+  AnomalyScores,
+  MacroSnapshot,
+  MacroSeriesHistory,
+} from "@/types/api";
 
 const TICKERS = ["MOWI", "SALM", "LSG", "GSF", "BAKKA"];
 
 export default function InvestorPage() {
   const { t } = useTranslation();
   const handleError = useApiError();
-  const [companies, setCompanies] = useState<any[]>([]);
-  const [esg, setEsg] = useState<any[]>([]);
-  const [equity, setEquity] = useState<any>(null);
-  const [regime, setRegime] = useState<any[]>([]);
-  const [lice, setLice] = useState<any>(null);
-  const [supply, setSupply] = useState<any>(null);
-  const [disease, setDisease] = useState<any>(null);
-  const [diseaseByCompany, setDiseaseByCompany] = useState<any>({});
-  const [anomaly, setAnomaly] = useState<any>(null);
-  const [macro, setMacro] = useState<any>(null);
-  const [macroNok, setMacroNok] = useState<any>(null);
-  const [macroOilInv, setMacroOilInv] = useState<any>(null);
-  const [macroSoy, setMacroSoy] = useState<any>(null);
+  const [companies, setCompanies] = useState<LeaderEntry[]>([]);
+  const [esg, setEsg] = useState<EsgCompanyScore[]>([]);
+  const [equity, setEquity] = useState<EquityPriceResponse | null>(null);
+  const [regime, setRegime] = useState<RegimeState[]>([]);
+  const [lice, setLice] = useState<LiceSummary | null>(null);
+  const [supply, setSupply] = useState<GlobalSupply | null>(null);
+  const [disease, setDisease] = useState<DiseaseNorway | null>(null);
+  const [diseaseByCompany, setDiseaseByCompany] = useState<Record<string, DiseaseCompanyCounts>>({});
+  const [anomaly, setAnomaly] = useState<AnomalyScores | null>(null);
+  const [macro, setMacro] = useState<MacroSnapshot | null>(null);
+  const [macroNok, setMacroNok] = useState<MacroSeriesHistory | null>(null);
+  const [macroOilInv, setMacroOilInv] = useState<MacroSeriesHistory | null>(null);
+  const [macroSoy, setMacroSoy] = useState<MacroSeriesHistory | null>(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -50,8 +61,8 @@ export default function InvestorPage() {
       api.macroSnapshot(),
     ]);
     if (r1.status === "fulfilled") {
-      const v: any = r1.value;
-      setCompanies(Array.isArray(v) ? v : Array.isArray(v?.data) ? v.data : []);
+      // fetchAPI auto-unwraps the {data, data_provenance} envelope.
+      setCompanies(r1.value);
     }
     if (r2.status === "fulfilled") setEsg(r2.value || []);
     if (r3.status === "fulfilled") setEquity(r3.value);
@@ -71,17 +82,17 @@ export default function InvestorPage() {
   useEffect(() => { load(); }, []);
 
   // Filter to public companies only
-  const publicCos = companies.filter((c: any) =>
-    c.ticker && TICKERS.some(t => c.ticker?.includes(t))
+  const publicCos = companies.filter((c) =>
+    c.ticker && TICKERS.some((tick) => c.ticker?.includes(tick))
   );
 
   // Match ESG scores
-  const esgMap = new Map(esg.map((e: any) => [e.company_name, e]));
+  const esgMap = new Map(esg.map((e) => [e.company_name, e] as const));
   const prices = equity?.prices_nok || {};
 
   // Regime risk: count red/yellow PAs
-  const redPAs = regime.filter((s: any) => s.current_color === "red").length;
-  const yellowPAs = regime.filter((s: any) => s.current_color === "yellow").length;
+  const redPAs = regime.filter((s) => s.current_color === "red").length;
+  const yellowPAs = regime.filter((s) => s.current_color === "yellow").length;
 
   return (
     <div className="space-y-6">
@@ -110,7 +121,7 @@ export default function InvestorPage() {
         <KPICard label="Avg Lice (National)"
           value={lice ? `${Number(lice.avg_adult_female_lice).toFixed(3)}` : "\u2014"}
           delta={lice ? `${lice.sites_above_threshold} sites >0.5` : undefined}
-          deltaType={lice?.avg_adult_female_lice > 0.3 ? "negative" : "positive"}
+          deltaType={(lice?.avg_adult_female_lice ?? 0) > 0.3 ? "negative" : "positive"}
           icon={Bug} delay={0} />
         <KPICard label="Regime Risk"
           value={`${redPAs}R / ${yellowPAs}Y`}
@@ -120,7 +131,7 @@ export default function InvestorPage() {
         <KPICard label="Global Supply"
           value={supply ? supply.balance.replace("_", " ") : "\u2014"}
           delta={supply ? `Deficit: ${supply.supply_deficit_pct}%` : undefined}
-          deltaType={supply?.supply_deficit_pct > 2 ? "negative" : "positive"}
+          deltaType={(supply?.supply_deficit_pct ?? 0) > 2 ? "negative" : "positive"}
           icon={Globe2} delay={0.08} />
         <KPICard label="Norway Premium"
           value={supply ? `${supply.norway_premium_pct > 0 ? "+" : ""}${supply.norway_premium_pct}%` : "\u2014"}
@@ -215,7 +226,7 @@ export default function InvestorPage() {
           </span>
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {publicCos.map((co: any, i: number) => {
+          {publicCos.map((co: LeaderEntry, i: number) => {
             const ticker = co.ticker || "";
             const price = prices[`${ticker}.OL`] || prices[ticker] || prices[ticker.replace(".OL", "")];
             const esgScore = esgMap.get(co.name);
@@ -289,7 +300,7 @@ export default function InvestorPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[var(--text-secondary)]">% Above Threshold</span>
-                      <span className={co.pct_above_threshold > 20 ? "text-rose-400" : "text-emerald-400"}>
+                      <span className={(co.pct_above_threshold ?? 0) > 20 ? "text-rose-400" : "text-emerald-400"}>
                         {co.pct_above_threshold?.toFixed(1)}%
                       </span>
                     </div>
@@ -308,8 +319,8 @@ export default function InvestorPage() {
                     {(() => {
                       const dbc = diseaseByCompany[co.name];
                       const total = dbc?.total ?? 0;
-                      const isa = dbc?.ISA ?? 0;
-                      const pd = dbc?.PD ?? 0;
+                      const isa = dbc?.isa ?? 0;
+                      const pd = dbc?.pd ?? 0;
                       return (
                         <div className="flex justify-between">
                           <span className="text-[var(--text-secondary)]">Disease Outbreaks</span>
@@ -365,7 +376,7 @@ export default function InvestorPage() {
                   </span>
                 </div>
               )}
-              {supply?.global_salmon_usd_kg > 0 && (
+              {supply && (supply.global_salmon_usd_kg ?? 0) > 0 && (
                 <div className="flex justify-between p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                   <span className="text-[11px] text-[var(--text-secondary)]">Global Salmon (FRED)</span>
                   <span className="text-[11px] font-mono font-bold text-violet-300">
@@ -383,9 +394,9 @@ export default function InvestorPage() {
             </h3>
             <div className="space-y-2">
               {esg
-                .filter((e: any) => e.ticker && TICKERS.some(t => e.ticker?.includes(t)))
+                .filter((e) => e.ticker && TICKERS.some((tick) => e.ticker?.includes(tick)))
                 .slice(0, 5)
-                .map((e: any) => (
+                .map((e) => (
                   <div key={e.company_name} className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] font-mono font-bold">{e.ticker}</span>

@@ -29,6 +29,7 @@ import type {
   TrafficLightCurrent, TrafficLightSimulation, TreatmentCostComparison,
   YoYComparison,
   ChinaDemandSnapshot, ChinaDemandSignals, ChinaDemandImpact,
+  RegimeState, EquityPriceResponse, EsgCompanyScores,
 } from "@/types/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -165,7 +166,7 @@ export const api = {
   farmGraphFarm: (localityNo: number) => fetchAPI(`/api/farm-graph/farm/${localityNo}`),
 
   // Regulatory Regime
-  regimeStates: () => fetchAPI("/api/regime/states"),
+  regimeStates: () => fetchAPI<RegimeState[]>("/api/regime/states"),
   regimeAlerts: () => fetchAPI<RegimeAlert[]>("/api/regime/alerts"),
   regimePaDetail: (pa: number) => fetchAPI(`/api/regime/pa/${pa}`),
   regimeCompanyRisk: () => fetchAPI("/api/regime/company-risk"),
@@ -195,7 +196,7 @@ export const api = {
 
   // Market data — Fish Pool Index + equity prices
   // fishPoolIndex removed — fishpool.eu dead since 2025
-  equityPrices: () => fetchAPI("/api/market/equity-prices"),
+  equityPrices: () => fetchAPI<EquityPriceResponse>("/api/market/equity-prices"),
 
   // Lice GNN
   gnnStatus: () => fetchAPI("/api/gnn/status"),
@@ -241,7 +242,7 @@ export const api = {
   macroSeries: (name: string, months?: number) => fetchAPI<MacroSeriesHistory>(`/api/macro/series/${name}?months=${months || 60}`),
 
   // ESG Sustainability Scores
-  esgScores: () => fetchAPI("/api/esg/scores"),
+  esgScores: () => fetchAPI<EsgCompanyScores>("/api/esg/scores"),
   esgSummary: () => fetchAPI("/api/esg/summary"),
   esgCompany: (name: string): Promise<EsgCompanyScore> => fetchAPI<EsgCompanyScore>(`/api/esg/company/${encodeURIComponent(name)}`),
 
