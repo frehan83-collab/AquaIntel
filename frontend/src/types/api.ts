@@ -295,6 +295,57 @@ export interface EquityPriceResponse {
   all_prices?: Record<string, number | null>;
 }
 
+/** /api/market/spot-price (price_feed_hub.get_spot_price) */
+export interface MarketSpotPrice {
+  source: string;
+  price_nok_kg: number | null;
+  year?: number | null;
+  week?: number | null;
+  volume_tonnes?: number | null;
+  fetched_at?: string;
+  error?: string;
+}
+
+/** /api/market/forward-curve (price_feed_hub.get_forward_curve) */
+export interface ForwardCurvePoint {
+  month: string;
+  projected_nok_kg: number;
+  seasonal_factor: number;
+  months_ahead: number;
+}
+
+export interface MarketForwardCurve {
+  source: string;
+  is_synthetic: boolean;
+  data_quality: string;
+  methodology: string;
+  current_spot_nok: number;
+  annual_average_nok: number;
+  curve: ForwardCurvePoint[];
+  generated_at: string;
+  /** Legacy alias tolerated by the trader page */
+  points?: ForwardCurvePoint[];
+  error?: string;
+  months?: number;
+}
+
+/** /api/feed-cost/composite-index (feed_cost_engine.compute_composite_index) */
+export interface FeedCostCompositeIndex {
+  source: string;
+  base_year: string;
+  current_index: number;
+  current_date: string;
+  current_usd_tonne_weighted: number;
+  change_ytd_pct: number;
+  volatility_12m: number;
+  volatility_baseline: number;
+  volatility_alert: boolean;
+  weights: Record<string, number>;
+  series: Array<{ date: string; index: number; usd_tonne_weighted: number }>;
+  n_data_points: number;
+  error?: string;
+}
+
 /** /api/feed-cost/latest */
 /** /api/feed-cost/latest (real shape from feed_cost_engine.get_latest) */
 export interface FeedCostLatest {
@@ -886,6 +937,19 @@ export interface CountrySnapshot {
 /** /api/sentiment/summary */
 /** /api/sentiment/summary (contract corrected post-review — was typed
  *  against fictional `overall_score`/`sentiment` keys) */
+/** One row of /api/sentiment/summary .signals (and /api/sentiment/signals) */
+export interface SentimentSignalRow {
+  generated_at: string;
+  ticker: string;
+  sentiment: string;
+  score: number;
+  n_articles: number;
+  dominant_category: string;
+  top_headlines: string[];
+  signal_strength: number;
+  rationale: string;
+}
+
 export interface SentimentSummary {
   generated_at?: string;
   articles_24h: number;
@@ -897,6 +961,8 @@ export interface SentimentSummary {
   sources?: Record<string, number>;
   high_impact_articles?: number;
   last_poll?: string | null;
+  /** Per-ticker sentiment signals (sentiment_engine.get_signals rows) */
+  signals?: SentimentSignalRow[];
   /** Legacy alias tolerated by existing pages. */
   overall_score?: number;
 }
@@ -1274,6 +1340,7 @@ export interface SupplyDemandForecast {
   backtest: SupplyDemandBacktest | null;
 }
 
+/** /api/supply/demand-balance */
 export interface SupplyDemandBalance {
   // Legacy smolt-model fields (unchanged by R7)
   horizon_months: number;
@@ -1296,6 +1363,49 @@ export interface SupplyDemandBalance {
   demand_breakdown?: Record<string, number | string | null>;
   price_forecast?: SupplyDemandForecast | null;
   data_provenance?: DataProvenance;
+}
+
+
+/** /api/investor/event-impact/* (event_impact_model) */
+export interface EventCompanyImpact {
+  ticker: string;
+  company_name: string;
+  exposure_pct: number;
+  production_impact_tonnes: number;
+  revenue_impact_mnok: number;
+  ebit_impact_mnok: number;
+  ebit_impact_pct: number;
+  expected_stock_move_pct: number;
+  expected_stock_move_nok: number;
+  confidence?: number;
+  notes?: string;
+}
+
+export interface EventImpactResult {
+  event_type: string;
+  event_description: string;
+  timestamp: string;
+  severity: string;
+  affected_production_area?: number | null;
+  national_production_impact_pct: number;
+  total_revenue_impact_mnok: number;
+  price_impact_pct: number;
+  company_impacts: EventCompanyImpact[];
+  cascade_narrative: string;
+  disclaimer: string;
+  /** Local UI fallback when the model call fails */
+  error?: string;
+}
+
+/** /api/scenarios/list rows (SavedScenario record) */
+export interface SavedScenario {
+  id: number;
+  scenario_type: string;
+  scenario_name: string;
+  parameters: Record<string, unknown>;
+  results: EventImpactResult;
+  notes?: string;
+  created_at: string | null;
 }
 
 // ── Feed supply chain (post-review corrections) ──────────────────────

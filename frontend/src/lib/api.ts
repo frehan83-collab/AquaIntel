@@ -31,6 +31,8 @@ import type {
   ChinaDemandSnapshot, ChinaDemandSignals, ChinaDemandImpact,
   RegimeState, EquityPriceResponse, EsgCompanyScores,
   CompetitivenessScenarioResponse,
+  MarketSpotPrice, MarketForwardCurve, FeedCostCompositeIndex,
+  EventImpactResult, SavedScenario, Signal,
 } from "@/types/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -81,7 +83,7 @@ async function fetchAPI<T = any>(
 
 export const api = {
   health: () => fetchAPI<HealthResponse>("/api/health"),
-  signals: (status?: string) => fetchAPI(`/api/signals${status ? `?status=${status}` : ""}`),
+  signals: (status?: string) => fetchAPI<Signal[]>(`/api/signals${status ? `?status=${status}` : ""}`),
   confirmSignal: (id: number) =>
     fetchAPI("/api/signals/confirm", { method: "POST", body: JSON.stringify({ signal_id: id }) }),
   rejectSignal: (id: number) =>
@@ -225,7 +227,7 @@ export const api = {
   anomalyScores: () => fetchAPI<AnomalyScores>("/api/anomaly/scores"),
   anomalyAlerts: () => fetchAPI("/api/anomaly/alerts"),
 
-  feedCostCompositeIndex: (years?: number) => fetchAPI(`/api/feed-cost/composite-index?years=${years || 5}`),
+  feedCostCompositeIndex: (years?: number) => fetchAPI<FeedCostCompositeIndex>(`/api/feed-cost/composite-index?years=${years || 5}`),
   feedCostPeruAnchovy: () => fetchAPI("/api/feed-cost/peru-anchovy"),
   // Feed Intelligence
   enhancedAnchovyWatch: () => fetchAPI("/api/feed-cost/enhanced-anchovy"),
@@ -525,20 +527,26 @@ export const api = {
     fetchAPI("/api/billing/invoice-history"),
 
   // Event Impact Model (Investor/Trader)
-  eventImpactISA: (pa?: number) =>
-    fetchAPI(`/api/investor/event-impact/isa?production_area=${pa || 3}`),
-  eventImpactTrafficLight: (pa?: number, color?: string) =>
-    fetchAPI(`/api/investor/event-impact/traffic-light?pa=${pa || 3}&color=${color || "red"}`),
-  eventImpactFeedShock: (pct?: number) =>
-    fetchAPI(`/api/investor/event-impact/feed-shock?fishmeal_change_pct=${pct || 15}`),
+  eventImpactISA: (pa?: number): Promise<EventImpactResult> =>
+    fetchAPI<EventImpactResult>(`/api/investor/event-impact/isa?production_area=${pa || 3}`),
+  eventImpactTrafficLight: (pa?: number, color?: string): Promise<EventImpactResult> =>
+    fetchAPI<EventImpactResult>(`/api/investor/event-impact/traffic-light?pa=${pa || 3}&color=${color || "red"}`),
+  eventImpactFeedShock: (pct?: number): Promise<EventImpactResult> =>
+    fetchAPI<EventImpactResult>(`/api/investor/event-impact/feed-shock?fishmeal_change_pct=${pct || 15}`),
 
   // Saved Scenarios
-  saveScenario: (data: any) =>
-    fetchAPI("/api/scenarios/save", { method: "POST", body: JSON.stringify(data), headers: { "Content-Type": "application/json" } }),
-  listScenarios: (email?: string) =>
-    fetchAPI(`/api/scenarios/list?user_email=${email || "anonymous"}`),
-  deleteScenario: (id: number) =>
-    fetchAPI(`/api/scenarios/${id}`, { method: "DELETE" }),
+  saveScenario: (data: {
+    scenario_type: string;
+    scenario_name: string;
+    parameters: Record<string, unknown>;
+    results: EventImpactResult;
+    user_email?: string;
+  }): Promise<{ id: number; status: string; name: string }> =>
+    fetchAPI<{ id: number; status: string; name: string }>("/api/scenarios/save", { method: "POST", body: JSON.stringify(data), headers: { "Content-Type": "application/json" } }),
+  listScenarios: (email?: string): Promise<SavedScenario[]> =>
+    fetchAPI<SavedScenario[]>(`/api/scenarios/list?user_email=${email || "anonymous"}`),
+  deleteScenario: (id: number): Promise<{ status: string; id: number }> =>
+    fetchAPI<{ status: string; id: number }>(`/api/scenarios/${id}`, { method: "DELETE" }),
 
   // Compound Scenario Engine
   runCompoundScenario: (events: any[]) =>
@@ -552,10 +560,10 @@ export const api = {
     fetchAPI<YoYComparison>(`/api/analytics/yoy-comparison?metric=${metric}&production_area=${pa || 0}`),
 
   // Market Price Feed Hub
-  spotPrice: (source?: string) =>
-    fetchAPI(`/api/market/spot-price${source ? `?source=${source}` : ""}`),
-  forwardCurve: (months?: number) =>
-    fetchAPI(`/api/market/forward-curve?months=${months || 12}`),
+  spotPrice: (source?: string): Promise<MarketSpotPrice> =>
+    fetchAPI<MarketSpotPrice>(`/api/market/spot-price${source ? `?source=${source}` : ""}`),
+  forwardCurve: (months?: number): Promise<MarketForwardCurve> =>
+    fetchAPI<MarketForwardCurve>(`/api/market/forward-curve?months=${months || 12}`),
 
   // Euronext Salmon Futures (ESF)
   futuresForwardCurve: (months?: number) =>

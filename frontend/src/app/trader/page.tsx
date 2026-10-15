@@ -14,12 +14,27 @@ import { api } from "@/lib/api";
 import { useApiError } from "@/lib/useApiError";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useTranslation, formatNumber, formatCurrency, formatDate } from "@/lib/i18n";
+import type {
+  MarketSpotPrice,
+  FeedCostCompositeIndex,
+  SupplyDemandBalance,
+  SentimentSummary,
+  Signal,
+  MarketForwardCurve,
+  PriceOutlookMulti,
+  EventImpactResult,
+  SavedScenario,
+} from "@/types/api";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-// Curve points arrive in different shapes across endpoints
-// (price_feed_hub: projected_nok_kg; others: price_nok_kg/price_nok/price).
-const priceOf = (pt: any): number | null =>
+/* Curve points land in one canonical shape (projected_nok_kg); the others
+ * are legacy aliases tolerated from older market/forward endpoints. */
+interface CurvePointLike {
+  projected_nok_kg?: number | null;
+  price_nok_kg?: number | null;
+  price_nok?: number | null;
+  price?: number | null;
+}
+const priceOf = (pt: CurvePointLike): number | null =>
   pt?.projected_nok_kg ?? pt?.price_nok_kg ?? pt?.price_nok ?? pt?.price ?? null;
 
 const TABS = ["ISA Outbreak", "Traffic Light", "Feed Shock"] as const;
@@ -33,13 +48,13 @@ type Tab = (typeof TABS)[number];
 export default function TraderPage() {
   const { t, locale } = useTranslation();
   const handleError = useApiError();
-  const [spotPrice, setSpotPrice] = useState<any>(null);
-  const [feedIndex, setFeedIndex] = useState<any>(null);
-  const [supplyBalance, setSupplyBalance] = useState<any>(null);
-  const [sentimentData, setSentimentData] = useState<any>(null);
-  const [signals, setSignals] = useState<any[]>([]);
-  const [forwardCurve, setForwardCurve] = useState<any>(null);
-  const [priceOutlook, setPriceOutlook] = useState<any>(null);
+  const [spotPrice, setSpotPrice] = useState<MarketSpotPrice | null>(null);
+  const [feedIndex, setFeedIndex] = useState<FeedCostCompositeIndex | null>(null);
+  const [supplyBalance, setSupplyBalance] = useState<SupplyDemandBalance | null>(null);
+  const [sentimentData, setSentimentData] = useState<SentimentSummary | null>(null);
+  const [signals, setSignals] = useState<Signal[]>([]);
+  const [forwardCurve, setForwardCurve] = useState<MarketForwardCurve | null>(null);
+  const [priceOutlook, setPriceOutlook] = useState<PriceOutlookMulti | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Event Impact Simulator state
@@ -48,9 +63,9 @@ export default function TraderPage() {
   const [tlPA, setTlPA] = useState(3);
   const [tlColor, setTlColor] = useState("red");
   const [feedPct, setFeedPct] = useState(15);
-  const [impactResult, setImpactResult] = useState<any>(null);
+  const [impactResult, setImpactResult] = useState<EventImpactResult | { error: string } | null>(null);
   const [modeling, setModeling] = useState(false);
-  const [savedScenarios, setSavedScenarios] = useState<any[]>([]);
+  const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([]);
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
@@ -68,12 +83,9 @@ export default function TraderPage() {
     if (r2.status === "fulfilled") setFeedIndex(r2.value);
     if (r3.status === "fulfilled") setSupplyBalance(r3.value);
     if (r4.status === "fulfilled") setSentimentData(r4.value);
-    if (r5.status === "fulfilled") {
-      const sigs = Array.isArray(r5.value) ? r5.value : r5.value?.signals || [];
-      setSignals(sigs);
-    }
+    if (r5.status === "fulfilled") setSignals(r5.value);
     if (r6.status === "fulfilled") setForwardCurve(r6.value);
-    if (r7.status === "fulfilled") setPriceOutlook(r7.value);
+    if (r7.status === "fulfilled" && r7.value) setPriceOutlook(r7.value);
     setLoading(false);
   };
 
@@ -102,7 +114,7 @@ export default function TraderPage() {
   };
 
   const saveCurrentScenario = async () => {
-    if (!impactResult) return;
+    if (!impactResult || "error" in impactResult) return;
     setSaving(true);
     const params = activeTab === "ISA Outbreak" ? { pa: isaPA }
       : activeTab === "Traffic Light" ? { pa: tlPA, color: tlColor }
@@ -172,13 +184,13 @@ export default function TraderPage() {
         <KPICard
           label="SSB Spot Price"
           value={spotPrice?.price_nok_kg != null ? formatCurrency(spotPrice.price_nok_kg, locale) : "--"}
-          delta={spotPrice?.week || "Latest"}
+          delta={spotPrice?.week != null ? `Week ${spotPrice.week}` : "Latest"}
           icon={BarChart3}
         />
         <KPICard
           label="Feed Cost Index"
-          value={feedIndex?.composite_index != null ? formatNumber(feedIndex.composite_index, locale, 1) : "--"}
-          delta={feedIndex?.alert || "Composite"}
+          value={feedIndex?.current_index != null ? formatNumber(feedIndex.current_index, locale, 1) : "--"}
+          delta={feedIndex?.volatility_alert ? "Volatility alert" : "FRED composite index"}
           icon={Activity}
         />
         <KPICard
@@ -291,7 +303,7 @@ export default function TraderPage() {
         </div>
 
         {/* Impact Results */}
-        {impactResult && !impactResult.error && (
+        {impactResult && !("error" in impactResult) && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -348,7 +360,7 @@ export default function TraderPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {impactResult.company_impacts.map((ci: any, idx: number) => (
+                    {impactResult.company_impacts.map((ci, idx: number) => (
                       <tr key={idx} className="border-b border-white/5 hover:bg-white/5">
                         <td className="py-2 px-2 font-medium text-white">{ci.ticker}</td>
                         <td className="py-2 px-2 text-right text-white/70">{ci.exposure_pct}%</td>
@@ -383,7 +395,7 @@ export default function TraderPage() {
             </p>
           </motion.div>
         )}
-        {impactResult?.error && (
+        {impactResult && "error" in impactResult && (
           <p className="text-rose-400 text-sm">{impactResult.error}</p>
         )}
       </GlassCard>
@@ -402,11 +414,11 @@ export default function TraderPage() {
             <p className="text-white/40 text-sm">{t("common.no_data")}</p>
           ) : (
             <div className="space-y-2 max-h-72 overflow-y-auto">
-              {signals.slice(0, 8).map((sig: any, i: number) => (
+              {signals.slice(0, 8).map((sig, i: number) => (
                 <div key={i} className="flex items-center justify-between bg-white/5 rounded-lg p-3">
                   <div className="flex items-center gap-2">
                     <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                      sig.direction === "SHORT" || sig.direction === "short"
+                      sig.direction?.toUpperCase() === "SHORT"
                         ? "bg-rose-500/20 text-rose-400"
                         : "bg-emerald-500/20 text-emerald-400"
                     }`}>
@@ -434,11 +446,11 @@ export default function TraderPage() {
             </div>
             <h2 className="text-lg font-semibold text-white">Market Sentiment</h2>
           </div>
-          {sentimentData?.articles_24h > 0 || sentimentData?.articles ? (
+          {sentimentData && (sentimentData.articles_24h ?? 0) > 0 ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-white/50">24h Articles</span>
-                <span className="text-white font-medium">{sentimentData.articles_24h ?? sentimentData.articles ?? 0}</span>
+                <span className="text-white font-medium">{sentimentData.articles_24h}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-white/50">Trend</span>
@@ -450,7 +462,7 @@ export default function TraderPage() {
                   {sentimentData.sentiment_trend || "stable"}
                 </span>
               </div>
-              {sentimentData.high_impact_articles > 0 && (
+              {(sentimentData.high_impact_articles ?? 0) > 0 && (
                 <div className="flex items-center gap-2 bg-amber-500/10 rounded-lg p-2">
                   <AlertTriangle className="w-4 h-4 text-amber-400" />
                   <span className="text-xs text-amber-300">
@@ -458,7 +470,7 @@ export default function TraderPage() {
                   </span>
                 </div>
               )}
-              {sentimentData.signals?.slice(0, 3).map((s: any, i: number) => (
+              {sentimentData.signals?.slice(0, 3).map((s, i: number) => (
                 <div key={i} className="bg-white/5 rounded p-2">
                   <div className="flex items-center justify-between">
                     <span className="text-white text-sm font-medium">{s.ticker}</span>
@@ -500,22 +512,22 @@ export default function TraderPage() {
             </p>
           </div>
 
-          {forwardCurve?.curve?.length > 0 ? (
+          {forwardCurve && forwardCurve.curve && forwardCurve.curve.length > 0 ? (
             <div className="space-y-1 max-h-56 overflow-y-auto">
-              {forwardCurve.curve.map((pt: any, i: number) => (
+              {forwardCurve.curve.map((pt, i: number) => (
                 <div key={i} className="flex justify-between text-sm py-1 border-b border-white/5">
-                  <span className="text-white/60">{pt.month || pt.label || `M+${i + 1}`}</span>
+                  <span className="text-white/60">{pt.month || `M+${i + 1}`}</span>
                   <span className="text-white font-medium">
                     {priceOf(pt) != null ? formatCurrency(priceOf(pt)!, locale) : "--"}
                   </span>
                 </div>
               ))}
             </div>
-          ) : forwardCurve?.points?.length > 0 ? (
+          ) : forwardCurve && forwardCurve.points && forwardCurve.points.length > 0 ? (
             <div className="space-y-1 max-h-56 overflow-y-auto">
-              {forwardCurve.points.map((pt: any, i: number) => (
+              {forwardCurve.points.map((pt, i: number) => (
                 <div key={i} className="flex justify-between text-sm py-1 border-b border-white/5">
-                  <span className="text-white/60">{pt.month || pt.label || `M+${i + 1}`}</span>
+                  <span className="text-white/60">{pt.month || `M+${i + 1}`}</span>
                   <span className="text-white font-medium">
                     {priceOf(pt) != null ? formatCurrency(priceOf(pt)!, locale) : "--"}
                   </span>
@@ -531,9 +543,9 @@ export default function TraderPage() {
             // Build confidence band data from price outlook (has p80/p95 bands)
             const horizons = priceOutlook?.horizons;
             if (horizons && horizons.length >= 2) {
-              const bandData = horizons.map((h: any, i: number) => ({
+              const bandData = horizons.map((h, i: number) => ({
                 x: h.horizon ?? i + 1,
-                y: h.predicted ?? h.predicted_price ?? 0,
+                y: h.predicted ?? 0,
                 lo80: h.lo80,
                 hi80: h.hi80,
                 lo95: h.lo95,
@@ -564,7 +576,7 @@ export default function TraderPage() {
             // Fallback: build from forward curve points (no bands)
             const pts = forwardCurve?.curve || forwardCurve?.points || [];
             if (pts.length >= 2) {
-              const curveData = pts.map((pt: any, i: number) => ({
+              const curveData = pts.map((pt, i: number) => ({
                 x: i + 1,
                 y: priceOf(pt) ?? 0,
               }));
@@ -596,7 +608,7 @@ export default function TraderPage() {
             {t("trader.saved_scenarios")} ({savedScenarios.length})
           </h3>
           <div className="space-y-2">
-            {savedScenarios.slice(0, 10).map((sc: any) => (
+            {savedScenarios.slice(0, 10).map((sc) => (
               <div key={sc.id} className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-medium text-[var(--text-primary)] truncate">{sc.scenario_name}</p>

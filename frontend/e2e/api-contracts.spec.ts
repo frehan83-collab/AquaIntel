@@ -503,6 +503,40 @@ test.describe("Supply Chain", () => {
     expect(body["tariff_overrides"]).toBeDefined();
   });
 
+  test("GET /api/market/spot-price + forward-curve carry real keys", async ({ request }) => {
+    const spot = await (await request.get(`${API}/api/market/spot-price`)).json();
+    expect(spot).toHaveProperty("source");
+    expect(spot).toHaveProperty("price_nok_kg");
+    const fwd = await (await request.get(`${API}/api/market/forward-curve`)).json();
+    expect(fwd).toHaveProperty("methodology");
+    expect(fwd).toHaveProperty("curve");
+    if ((fwd as { curve?: unknown }).curve) {
+      expect((fwd.curve[0] as Record<string, unknown>)["projected_nok_kg"]).toBeDefined();
+    }
+  });
+
+  test("GET /api/feed-cost/composite-index uses current_index not composite_index", async ({ request }) => {
+    const res = await request.get(`${API}/api/feed-cost/composite-index`);
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as Record<string, unknown>;
+    if (body["error"]) return; // degraded path
+    expect(body["current_index"]).toBeDefined();
+    expect(body["composite_index"]).toBeUndefined(); // old fiction key
+  });
+
+  test("GET /api/investor/event-impact/isa returns the impact envelope", async ({ request }) => {
+    const res = await request.get(`${API}/api/investor/event-impact/isa`);
+    expect(res.ok()).toBeTruthy();
+    const body = (await res.json()) as {
+      company_impacts: Array<Record<string, unknown>>;
+      severity: string;
+      cascade_narrative: string;
+    };
+    expect(body["severity"]).toBeDefined();
+    expect(body["cascade_narrative"]).toBeDefined();
+    expect(body["company_impacts"]).toBeInstanceOf(Array);
+  });
+
   test("GET /api/supply/demand-balance keeps the additive R7 contract", async ({ request }) => {
     const res = await request.get(`${API}/api/supply/demand-balance`);
     expect(res.ok()).toBeTruthy();

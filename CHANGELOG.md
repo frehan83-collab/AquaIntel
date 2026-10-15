@@ -113,6 +113,29 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `(snap or {})` guard as the line above (the `norway` local is gone with
   the dropped clause).
 
+### Fixed (NEW finding — /trader typing + feed composite fiction, slice 10)
+- `/trader` was fully `any` (16); typed against the real endpoints.
+  `priceOf` gained a small structural `CurvePointLike` type.
+- **Feed-cost composite KPI was dead**: the page read
+  `feedIndex.composite_index` / `.alert` — the real payload
+  (`feed_cost_engine.compute_composite_index`) emits `current_index` /
+  `current_date` / `volatility_alert` / `volatility_12m`. KPI now renders
+  `current_index` + a volatility-alert delta.
+- New client types for five previously-untyped APIs:
+  `MarketSpotPrice`, `MarketForwardCurve` (+`ForwardCurvePoint`),
+  `FeedCostCompositeIndex`, `EventImpactResult` (+`EventCompanyImpact`),
+  `SavedScenario`; `signals()` now returns `Signal[]` (a dead
+  `{signals}` fallback removed from the trader + chat pages).
+- `SentimentSummary` gained the real `signals` key (`SentimentSignalRow`).
+- `/trader` fully typed (16 `any`s → 0, eslint-disable removed);
+  error rendering uses an `"error" in result` discriminator; dead
+  `predicted_price` / `pt.label` aliases removed.
+- Regression nets: 5 backend tests (`TestTraderContracts` incl. a
+  save/list/delete scenario round-trip) + 4 e2e contract assertions
+  (spot-price, forward-curve, composite-index real keys,
+  event-impact/isa envelope). tsc clean, eslint 0 errors (6 pre-existing
+  warnings), visual 4/4, targeted tests 12 passed, ruff clean, build green.
+
 ### Fixed (NEW finding — /competitiveness type fiction, slice 9)
 - `CompetitivenessIndex`/`CompetitivenessOrigin` were fiction
   (`production_cost_nok_kg`, `freight_cost`, `tariff_usd_percent`,

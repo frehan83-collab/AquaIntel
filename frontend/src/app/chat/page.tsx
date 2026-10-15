@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -185,7 +184,7 @@ async function getAIResponse(message: string): Promise<string> {
 
     if (isSignal) {
       const data = await api.signals();
-      const signals: any[] = Array.isArray(data) ? data : (data?.signals ?? []);
+      const signals: any[] = Array.isArray(data) ? data : [];
       const active = signals.filter(
         (s: any) => s.status === "active" || s.status === "pending" || !s.status
       );

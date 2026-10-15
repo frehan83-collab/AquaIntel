@@ -494,3 +494,75 @@ class TestCompetitivenessContract:
             for key in ("scenario_rank", "delivered_cost_usd",
                         "rank_change", "baseline_rank"):
                 assert key in body["scenario_origins"][0], key
+
+
+class TestTraderContracts:
+    """Post-review (slice 10): /trader was fully `any`; several reads were
+    fiction (feed composite `composite_index`/`alert` — the real keys are
+    `current_index`/`volatility_alert`), and the event-impact / scenario
+    endpoints had no client types at all."""
+
+    def test_spot_price_shape(self, client):
+        r = client.get("/api/market/spot-price")
+        assert r.status_code == 200
+        body = r.json()
+        for key in ("source", "price_nok_kg", "fetched_at"):
+            assert key in body, key
+
+    def test_forward_curve_shape(self, client):
+        r = client.get("/api/market/forward-curve")
+        assert r.status_code == 200
+        body = r.json()
+        curve = body.get("curve") or []
+        for key in ("source", "methodology", "curve"):
+            assert key in body, key
+        if curve:
+            for key in ("month", "projected_nok_kg", "seasonal_factor",
+                        "months_ahead"):
+                assert key in curve[0], key
+
+    def test_feed_cost_composite_index_real_keys(self, client):
+        r = client.get("/api/feed-cost/composite-index")
+        assert r.status_code == 200
+        body = r.json()
+        if "error" in body:
+            return  # degraded path (FRED unavailable)
+        for key in ("current_index", "current_date", "volatility_alert",
+                    "volatility_12m", "series"):
+            assert key in body, key
+        # The trader KPI used to read these fictional aliases
+        assert "composite_index" not in body
+        assert "alert" not in body
+
+    def test_event_impact_isa_shape(self, client):
+        r = client.get("/api/investor/event-impact/isa")
+        assert r.status_code == 200
+        body = r.json()
+        for key in ("event_type", "severity", "cascade_narrative",
+                    "disclaimer", "price_impact_pct", "company_impacts"):
+            assert key in body, key
+        if body["company_impacts"]:
+            ci = body["company_impacts"][0]
+            for key in ("ticker", "exposure_pct", "revenue_impact_mnok",
+                        "ebit_impact_mnok", "expected_stock_move_pct"):
+                assert key in ci, key
+
+    def test_saved_scenario_roundtrip(self, client):
+        email = "test_trader_slice_10"
+        r = client.post("/api/scenarios/save", json={
+            "user_email": email,
+            "scenario_type": "isa_outbreak",
+            "scenario_name": "slice10-test",
+            "parameters": {"pa": 3},
+            "results": {"severity": "high"},
+        })
+        assert r.status_code == 200
+        sid = r.json()["id"]
+        try:
+            rows = client.get(f"/api/scenarios/list?user_email={email}").json()
+            assert any(s["id"] == sid for s in rows)
+            for key in ("scenario_type", "scenario_name", "parameters",
+                        "results", "created_at"):
+                assert key in rows[0], key
+        finally:
+            client.delete(f"/api/scenarios/{sid}")
