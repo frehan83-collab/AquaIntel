@@ -37,14 +37,25 @@ async def ocean_temperature(lat: float, lon: float):
 
 @router.get("/api/ocean/forecast")
 async def ocean_forecast(lat: float = 65.0, lon: float = 12.0):
+    from core.market.data_provenance import from_records
     from core.market.met_ocean import met_ocean_client
     forecast = await met_ocean_client.get_ocean_forecast(lat, lon)
     if not forecast:
         raise HTTPException(status_code=503, detail=f"Ocean forecast unavailable for lat={lat}, lon={lon}")
-    return {"lat": lat, "lon": lon, "forecasts": [
-        {"time": f.forecast_time.isoformat(), "temperature_c": f.temperature_c, "hours_ahead": f.hours_ahead}
-        for f in forecast
-    ]}
+    return {
+        "lat": lat,
+        "lon": lon,
+        "forecasts": [
+            {"time": f.forecast_time.isoformat(), "temperature_c": f.temperature_c, "hours_ahead": f.hours_ahead}
+            for f in forecast
+        ],
+        "data_provenance": from_records(
+            forecast,
+            live_source="MET.no OceanForecast 2.0",
+            degraded_source="MET.no OceanForecast 2.0",
+            reason="MET.no returned no forecast points for this location",
+        ).to_dict(),
+    }
 
 
 @router.get("/api/ocean/forecast/pa/{pa}")

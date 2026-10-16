@@ -87,6 +87,21 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   (Counts also move with network availability — 57 rows timed out this run.)
 
 
+### Changed (provenance sweep, increment 3 — global / parametric / investor / ocean)
+- 10 more dict-returning routes now carry provenance. `/api/global/{farms,lice,
+  bloom-risk,disease-geo}` share a `_global_geo_provenance` helper (live only when
+  at least one country monitor actually contributed a GeoJSON feature — these
+  routes swallow per-source failures). `/api/ocean/forecast` is live only when
+  MET.no returned forecast points. `/api/parametric/{dashboard,risk-profile}` and
+  the three `/api/investor/event-impact/*` routes are `degraded` with explicit
+  reasons (derived trigger/payout models and modelled counterfactuals are
+  estimates, not quoted prices or observed market moves).
+- `not covered here`: `/api/parametric/triggers` turns out to return a bare
+  **list** (the probe had classified it as a dict), so it joins the list-shaped
+  backlog along with `/api/ocean/currents/status` and `/api/ocean/waves/status`
+  (client-status metadata, where a provenance envelope would be meaningless).
+- Measured: `no_provenance` 72 → 65, `live` 46 → 53, `degraded` 27 → 30.
+
 ### Changed (docs truth pass)
 - `PROJECT_STATUS.md`: measured counts (322 operations / 316 unique paths, 762
   tests) and real frontend versions (Next 16.4, React 19.1).

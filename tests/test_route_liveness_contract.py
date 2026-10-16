@@ -132,6 +132,16 @@ def test_efficacy_routes_work_on_sqlite(client, path):
     "/api/sentiment/summary",
     "/api/sentiment/poll",
     "/api/production/summary",
+    "/api/global/farms",
+    "/api/global/lice",
+    "/api/global/bloom-risk",
+    "/api/global/disease-geo",
+    "/api/parametric/dashboard",
+    "/api/parametric/risk-profile",
+    "/api/investor/event-impact/isa",
+    "/api/investor/event-impact/traffic-light",
+    "/api/investor/event-impact/feed-shock",
+    "/api/ocean/forecast",
 ])
 def test_intel_routes_carry_provenance(client, path):
     """Rule 3: every number surfaced to users must be traceable. These routes

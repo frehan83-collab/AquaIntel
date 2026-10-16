@@ -13,6 +13,21 @@ from core.async_db import get_async_session
 router = APIRouter(prefix="/api", tags=["investor", "scenarios"])
 
 
+def _event_impact_provenance():
+    """Event-impact output is a modelled counterfactual, not an observed market
+    move (AGENTS.md rule 1/3)."""
+    from core.market.data_provenance import DataProvenance
+
+    return DataProvenance.degraded(
+        "Event impact model (scenario simulation)",
+        reason=(
+            "modelled impact of a hypothetical event — a scenario estimate, not an "
+            "observed market move"
+        ),
+        confidence=0.4,
+    )
+
+
 # ══════════════════════════════════════════════════════════════════════
 # EVENT IMPACT MODEL (Investor/Trader Edge)
 # ══════════════════════════════════════════════════════════════════════
@@ -21,21 +36,30 @@ router = APIRouter(prefix="/api", tags=["investor", "scenarios"])
 async def event_impact_isa(production_area: int = 3):
     """Model financial impact of ISA outbreak in a production area."""
     from core.predictors.event_impact_model import event_impact_model
-    return await event_impact_model.model_isa_outbreak(production_area)
+    result = await event_impact_model.model_isa_outbreak(production_area)
+    if isinstance(result, dict):
+        result.setdefault("data_provenance", _event_impact_provenance().to_dict())
+    return result
 
 
 @router.get("/investor/event-impact/traffic-light")
 async def event_impact_traffic_light(pa: int = 3, color: str = "red"):
     """Model financial impact of traffic light color change."""
     from core.predictors.event_impact_model import event_impact_model
-    return await event_impact_model.model_traffic_light_change(pa, color)
+    result = await event_impact_model.model_traffic_light_change(pa, color)
+    if isinstance(result, dict):
+        result.setdefault("data_provenance", _event_impact_provenance().to_dict())
+    return result
 
 
 @router.get("/investor/event-impact/feed-shock")
 async def event_impact_feed_shock(fishmeal_change_pct: float = 15.0):
     """Model financial impact of fishmeal price spike."""
     from core.predictors.event_impact_model import event_impact_model
-    return await event_impact_model.model_feed_price_shock(fishmeal_change_pct)
+    result = await event_impact_model.model_feed_price_shock(fishmeal_change_pct)
+    if isinstance(result, dict):
+        result.setdefault("data_provenance", _event_impact_provenance().to_dict())
+    return result
 
 
 @router.post("/investor/event-impact/custom")

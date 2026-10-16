@@ -70,6 +70,21 @@ async def update_alert_preferences(request: Request):
 
 # ── Parametric Insurance ──────────────────────────────────────────────
 
+def _parametric_provenance():
+    """Parametric insurance output is a derived trigger/payout model over internal
+    lice/bloom data — never a quoted insurance price (rule 1/3)."""
+    from core.market.data_provenance import DataProvenance
+
+    return DataProvenance.degraded(
+        "Parametric insurance engine (lice / bloom / temperature triggers)",
+        reason=(
+            "derived trigger and payout model over internal lice/bloom data — an "
+            "estimate, not a quoted insurance price"
+        ),
+        confidence=0.4,
+    )
+
+
 @router.get("/api/parametric/products")
 async def parametric_products():
     from core.market.parametric_insurance import parametric_insurance_engine
@@ -86,16 +101,25 @@ async def parametric_scan():
 @router.get("/api/parametric/triggers")
 async def parametric_triggers(product: str = None, confirmed_only: bool = False):
     from core.market.parametric_insurance import parametric_insurance_engine
-    return parametric_insurance_engine.get_active_triggers(product=product, confirmed_only=confirmed_only)
+    result = parametric_insurance_engine.get_active_triggers(product=product, confirmed_only=confirmed_only)
+    if isinstance(result, dict):
+        result.setdefault("data_provenance", _parametric_provenance().to_dict())
+    return result
 
 
 @router.get("/api/parametric/dashboard")
 async def parametric_dashboard():
     from core.market.parametric_insurance import parametric_insurance_engine
-    return parametric_insurance_engine.get_dashboard()
+    result = parametric_insurance_engine.get_dashboard()
+    if isinstance(result, dict):
+        result.setdefault("data_provenance", _parametric_provenance().to_dict())
+    return result
 
 
 @router.get("/api/parametric/risk-profile")
 async def parametric_risk_profile(locality_no: int = None, pa: int = None):
     from core.market.parametric_insurance import parametric_insurance_engine
-    return await parametric_insurance_engine.compute_risk_profile(locality_no=locality_no, production_area=pa)
+    result = await parametric_insurance_engine.compute_risk_profile(locality_no=locality_no, production_area=pa)
+    if isinstance(result, dict):
+        result.setdefault("data_provenance", _parametric_provenance().to_dict())
+    return result

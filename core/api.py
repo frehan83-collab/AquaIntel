@@ -1319,6 +1319,25 @@ async def _rule_based_chat_response(message: str) -> dict:
 
 
 
+def _global_geo_provenance(features: list, source: str):
+    """Provenance for the aggregated global GeoJSON layers (rule 1/3).
+
+    These routes merge features from several country monitors and swallow
+    per-source failures, so "live" is only honest when at least one monitor
+    actually contributed a feature.
+    """
+    from core.market.data_provenance import from_records
+
+    return from_records(
+        features,
+        live_source=source,
+        degraded_source=source,
+        reason="no country monitor returned features — this layer is empty",
+        live_confidence=0.7,
+        degraded_confidence=0.2,
+    )
+
+
 @app.get("/api/global/farms")
 async def global_farms():
     """All country farm locations merged into one GeoJSON — always returns data."""
@@ -1358,7 +1377,13 @@ async def global_farms():
         features.extend(geo.get("features", []))
     except Exception:
         pass
-    return {"type": "FeatureCollection", "features": features}
+    return {
+        "type": "FeatureCollection",
+        "features": features,
+        "data_provenance": _global_geo_provenance(
+            features, "Iceland / Scotland / Faroe / Canada farm registries"
+        ).to_dict(),
+    }
 
 
 @app.get("/api/global/bloom-risk")
@@ -1523,7 +1548,13 @@ async def global_bloom_risk():
     except Exception:
         pass
 
-    return {"type": "FeatureCollection", "features": features}
+    return {
+        "type": "FeatureCollection",
+        "features": features,
+        "data_provenance": _global_geo_provenance(
+            features, "Norway BloomRiskAssessment DB + Copernicus CMEMS chlorophyll"
+        ).to_dict(),
+    }
 
 
 @app.get("/api/global/disease-geo")
@@ -1698,7 +1729,13 @@ async def global_disease_geo():
     except Exception:
         pass
 
-    return {"type": "FeatureCollection", "features": features}
+    return {
+        "type": "FeatureCollection",
+        "features": features,
+        "data_provenance": _global_geo_provenance(
+            features, "Mattilsynet + WOAH + Sernapesca disease notifications"
+        ).to_dict(),
+    }
 
 
 @app.get("/api/global/lice")
@@ -1733,6 +1770,12 @@ async def global_lice():
     except Exception:
         pass
 
-    return {"type": "FeatureCollection", "features": features}
+    return {
+        "type": "FeatureCollection",
+        "features": features,
+        "data_provenance": _global_geo_provenance(
+            features, "BarentsWatch lice (Norway) + DFO Canada"
+        ).to_dict(),
+    }
 
 
