@@ -658,3 +658,47 @@ class IndexObservation(Base):
         ),
     )
 
+
+
+
+class DesignPartner(Base):
+    """A paid 90-day pilot customer (design partner).
+
+    Pilots are time-boxed grants of an existing canonical plan — deliberately NOT a
+    separate tier, so `core/entitlements.py` stays the single plan table. The row
+    tracks the grant, its expiry, the success metrics it is judged on and the
+    data-reciprocity terms.
+    """
+    __tablename__ = "design_partners"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    company = Column(String(256), nullable=False)
+    contact_email = Column(String(256))
+    contact_name = Column(String(256))
+    icp = Column(String(64))            # desk | processor | producer | insurer | other
+    sector = Column(String(128))
+    country = Column(String(8))
+    plan_granted = Column(String(32))   # canonical plan key from entitlements
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    starts_at = Column(DateTime)
+    ends_at = Column(DateTime)
+    status = Column(String(24), default="prospect")
+    is_paid = Column(Boolean, default=False)
+    monthly_price_nok = Column(Float, default=0)
+    reciprocity_json = Column(Text)     # what the partner shares back, and cadence
+    notes = Column(Text)
+    created_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC))
+
+
+class PartnerMetric(Base):
+    """A success metric recorded during a pilot (target vs observed)."""
+    __tablename__ = "partner_metrics"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    partner_id = Column(Integer, ForeignKey("design_partners.id"), nullable=False, index=True)
+    name = Column(String(128), nullable=False)
+    value = Column(Float)
+    target = Column(Float)
+    unit = Column(String(32))
+    note = Column(Text)
+    recorded_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC))

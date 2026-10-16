@@ -5,7 +5,38 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
-### Step 5 — production truth: the gaps are now detectable and mostly closed
+### Step 6 — design-partner infrastructure (paid 90-day pilots)
+- **Pilots are real entitlements, not flags.** `POST /api/admin/partners/{id}/onboard`
+  grants a canonical plan through `core.billing.entitlement_sync.activate()` for a
+  90-day window, so what a design partner sees is exactly what a paying customer
+  gets. No new tier was added — `core/entitlements.py` stays the single plan table
+  (rule 8).
+- **Two new tables** (Alembic 018): `design_partners` (company, ICP, country, plan
+  granted, window, status, paid/monthly price, reciprocity terms) and
+  `partner_metrics` (name/value/target/unit/note).
+- **Admin surfaces** (`Depends(require_admin)`): create, list (with `by_status` and
+  `by_icp` funnel counts and the 5–8 pilot target), detail with the full metric
+  history and the allowed status transitions, onboard, metrics, reciprocity, status.
+- **Success-metric scorecards**: latest observation vs latest target per metric with
+  a computed `achieved` flag — the evidence a pilot conversion is argued from.
+- **Status machine enforced** (`prospect → onboarded → active → converted`, with
+  `churned` and re-onboarding paths); an illegal transition is a 409, an unknown
+  status a 422, and onboarding without an owning user a 422.
+- **Data reciprocity** is captured *before* onboarding (dataset names, cadence,
+  agreement reference, restrictions) — the mechanism that turns partner data into
+  a moat rather than a one-way giveaway.
+- **Tests:** `tests/test_partner_pilots.py` (18) — admin gating (anonymous and
+  non-admin rejected), create validation, plan-alias normalisation (`pilot` →
+  `professional`), onboarding without an owner rejected, onboarding granting a
+  *real* entitlement (asserts `User.tier` changed), metric scoring, reciprocity
+  requirements, and the status state machine.
+- **A real bug found by the tests:** `days_remaining` was always `None` because
+  SQLite returns datetimes naive, so the awareness check failed — fixed with a
+  coercion helper (same class of bug that hit the freshness monitor).
+- Docs: `docs/DESIGN_PARTNERS.md` — the runbook, the status machine and the
+  per-ICP success metrics that decide conversion.
+
+
 - **Agents are a first-class production service.** `docker-compose.prod.yml`
   declares `api` + `agents` (`python main.py --agents-only`) + `db` (TimescaleDB)
   + `web`, with required-secret guards (`:?`) so a misconfigured deploy fails at

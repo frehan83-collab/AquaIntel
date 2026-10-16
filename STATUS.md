@@ -430,6 +430,20 @@ added `tests/test_migrations.py`.
   DB's `ssb_weekly_prices` is correctly flagged `synthetic_only` (52 demo rows).
 - **Gates:** `test_production_truth.py` 17 passed; ruff clean; `alembic_head` OK.
 
+## Commercial hardening — Step 6 (design-partner pilots) — 2026-10-16
+
+- **Shipped** the pilot runbook as code: `design_partners` + `partner_metrics`
+  (Alembic 018) and admin-gated surfaces to create → set reciprocity → onboard →
+  score metrics → convert/churn.
+- **Pilots grant real entitlements** through `core.billing.entitlement_sync`, so a
+  partner sees exactly what a paying customer gets; no new tier (rule 8 intact).
+- **Scorecard** computes latest value vs latest target with an `achieved` flag;
+  status machine is enforced (illegal transition 409).
+- **Real bug found:** `days_remaining` was always None (SQLite returns naive
+  datetimes) — fixed.
+- **Gates:** `test_partner_pilots.py` 18 passed; ruff clean.
+
+
 
 
 

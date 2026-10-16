@@ -1789,6 +1789,284 @@
         ]
       }
     },
+    "/api/admin/partners": {
+      "get": {
+        "description": "All design partners with their metric scorecards.",
+        "operationId": "list_partners_api_admin_partners_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Partners",
+        "tags": [
+          "partner-pilots"
+        ]
+      },
+      "post": {
+        "description": "Create a design partner (pilot not yet granted).",
+        "operationId": "create_partner_api_admin_partners_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Partner",
+        "tags": [
+          "partner-pilots"
+        ]
+      }
+    },
+    "/api/admin/partners/{partner_id}": {
+      "get": {
+        "description": "One partner with its full metric history.",
+        "operationId": "get_partner_api_admin_partners__partner_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "partner_id",
+            "required": true,
+            "schema": {
+              "title": "Partner Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Partner",
+        "tags": [
+          "partner-pilots"
+        ]
+      }
+    },
+    "/api/admin/partners/{partner_id}/metrics": {
+      "post": {
+        "description": "Record a pilot success metric (value vs target).",
+        "operationId": "record_metric_api_admin_partners__partner_id__metrics_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "partner_id",
+            "required": true,
+            "schema": {
+              "title": "Partner Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Record Metric",
+        "tags": [
+          "partner-pilots"
+        ]
+      }
+    },
+    "/api/admin/partners/{partner_id}/onboard": {
+      "post": {
+        "description": "Grant the pilot plan for the window and start the 90-day clock.",
+        "operationId": "onboard_partner_api_admin_partners__partner_id__onboard_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "partner_id",
+            "required": true,
+            "schema": {
+              "title": "Partner Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Onboard Partner",
+        "tags": [
+          "partner-pilots"
+        ]
+      }
+    },
+    "/api/admin/partners/{partner_id}/reciprocity": {
+      "post": {
+        "description": "Record data-reciprocity terms (what the partner shares back, how often).",
+        "operationId": "record_reciprocity_api_admin_partners__partner_id__reciprocity_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "partner_id",
+            "required": true,
+            "schema": {
+              "title": "Partner Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Record Reciprocity",
+        "tags": [
+          "partner-pilots"
+        ]
+      }
+    },
+    "/api/admin/partners/{partner_id}/status": {
+      "post": {
+        "description": "Transition a pilot's status (enforces the allowed state machine).",
+        "operationId": "set_status_api_admin_partners__partner_id__status_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "partner_id",
+            "required": true,
+            "schema": {
+              "title": "Partner Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Set Status",
+        "tags": [
+          "partner-pilots"
+        ]
+      }
+    },
     "/api/admin/status": {
       "get": {
         "description": "Platform health: engine count, route count, DB tables, cache, uptime.",
