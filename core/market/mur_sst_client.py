@@ -202,7 +202,7 @@ class MURSSTClient:
         always available without credentials.
         """
         url = "https://api.met.no/weatherapi/oceanforecast/2.0/complete"
-        headers = {"User-Agent": "FishIntel/2.0 github.com/frehan83-collab/OpenClaw"}
+        headers = {"User-Agent": "FishIntel/2.0 github.com/frehan83-collab/AquaIntel"}
         params = {"lat": round(lat, 4), "lon": round(lon, 4)}
 
         try:

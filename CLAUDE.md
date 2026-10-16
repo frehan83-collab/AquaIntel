@@ -1,6 +1,6 @@
-# FishIntel Aquaculture Intelligence Platform
+# FishIntel / AquaIntel Aquaculture Intelligence Platform
 
-> **Repository:** [github.com/frehan83-collab/OpenClaw](https://github.com/frehan83-collab/OpenClaw) (private)
+> **Repository:** [github.com/frehan83-collab/AquaIntel](https://github.com/frehan83-collab/AquaIntel) (public)
 > **Created:** April 6, 2026 — Initial commit with all Sessions 1-28 work.
 
 ## What This Is

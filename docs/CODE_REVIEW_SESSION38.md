@@ -1,12 +1,12 @@
-OpenClaw / FishIntel
+FishIntel / AquaIntel
 Full Code Review — Session 38
-Repository: github.com/frehan83-collab/OpenClaw (private)
+Repository: github.com/frehan83-collab/AquaIntel (public)
 Baseline: End of Session 37 (commit aa330e1)
 Reviewer: Claude (5 parallel specialist agents)
 Date: 2026-04-14
 
 Executive Summary
-OpenClaw is a mature, well-instrumented aquaculture intelligence platform — 340 API endpoints, 75 engines, 63 pages, 447 tests, and 14 Alembic migrations. The architectural decisions shipped over the last 30+ sessions are sound: async DB pool, tenacity retries on the biggest upstream (BarentsWatch), Pydantic schemas, design tokens, and a mature CI pipeline.
+AquaIntel is a mature, well-instrumented aquaculture intelligence platform — 340 API endpoints, 75 engines, 63 pages, 447 tests, and 14 Alembic migrations. The architectural decisions shipped over the last 30+ sessions are sound: async DB pool, tenacity retries on the biggest upstream (BarentsWatch), Pydantic schemas, design tokens, and a mature CI pipeline.
 This review surfaced 33 prioritised findings across five dimensions. Four are CRITICAL and need same-week attention: (1) live credentials committed to .env, (2) unauthenticated admin endpoints, (3) unauthenticated webhook CRUD with IDOR, and (4) the agent subsystem runs on a daemon thread with no graceful shutdown. None are architectural dead ends — all are solvable with focused work inside the existing structure.
 The other findings fall into four themes: (1) test quality drift (37 xfail markers and 32 smoke-only tests mask regressions), (2) the misc_routes.py junk drawer and a 600-line dashboard page that need decomposition, (3) graceful-degradation gaps when SSB/MET.no go down, and (4) frontend type safety eroded by a single eslint-disable in the API client. Recommended path: one week to close the four CRITICAL items, then a three-week quality sprint across the HIGH findings.
 Platform Baseline (End of Session 37)
@@ -133,7 +133,7 @@ Issue: openclaw_token sits in localStorage — accessible to any script that run
 Fix: Move auth tokens to an HttpOnly, Secure, SameSite=Lax cookie set by the backend. Add a strict Content-Security-Policy header.
   MEDIUM     No webhook signature on outbound dispatch
 File: core/market/webhook_dispatcher.py
-Issue: Webhook receivers can't verify that payloads came from OpenClaw. MITM or replay attacks are possible.
+Issue: Webhook receivers can't verify that payloads came from AquaIntel. MITM or replay attacks are possible.
 Fix: HMAC-sign each payload with a per-hook shared secret; include X-Signature and X-Timestamp headers; document verification for receivers.
 Architecture
   CRITICAL     Insecure default secret_key in config
@@ -271,7 +271,7 @@ Accessibility pass: ARIA/keyboard on the 40+ interactive regions flagged.
 Add 5 Playwright E2E tests for the critical user flows.
 
 Appendix — Review Methodology
-Five specialist exploration agents ran in parallel over the full C:\Users\freha\OpenClaw tree. Each was given a focused charter and asked for at most 15 prioritised findings with file paths, line numbers where relevant, concrete evidence, and fixes. Findings were then de-duplicated, cross-checked against the PROJECT_STATUS.md baseline, and grouped by area.
+Five specialist exploration agents ran in parallel over the full C:\Users\freha\FishIntel tree. Each was given a focused charter and asked for at most 15 prioritised findings with file paths, line numbers where relevant, concrete evidence, and fixes. Findings were then de-duplicated, cross-checked against the PROJECT_STATUS.md baseline, and grouped by area.
 Agents and their charters:
 Architecture & code organisation — 855 Python files, 66.5K LOC, 25 routers, 40+ engines.
 Security — auth, authz, secrets, CORS, rate limiting, XSS, SSRF, webhook, frontend storage.

@@ -1,15 +1,15 @@
-# Contributing to OpenClaw / FishIntel
+# Contributing to FishIntel / AquaIntel
 
-> **Repository:** [github.com/frehan83-collab/OpenClaw](https://github.com/frehan83-collab/OpenClaw) (private)
+> **Repository:** [github.com/frehan83-collab/AquaIntel](https://github.com/frehan83-collab/AquaIntel) (public)
 
-Welcome to the OpenClaw Aquaculture Intelligence Platform. This guide covers
+Welcome to the AquaIntel aquaculture intelligence platform. This guide covers
 the architecture, conventions, and workflows you need to contribute effectively.
 
 ## Getting the Code
 
 ```bash
-git clone https://github.com/frehan83-collab/OpenClaw.git
-cd OpenClaw
+git clone https://github.com/frehan83-collab/AquaIntel.git
+cd AquaIntel
 pip install -r requirements.txt
 cd frontend && npm install && cd ..
 ```
@@ -153,7 +153,7 @@ The following engines are frozen and should not receive new features or refactor
 ## Project Layout
 
 ```
-OpenClaw/
+AquaIntel/
   core/
     api.py              # FastAPI app + middleware
     routers/            # 19 router modules
@@ -180,7 +180,7 @@ OpenClaw/
 
 ```bash
 # 1. Clone and install
-git clone <repo-url> && cd OpenClaw
+git clone <repo-url> && cd AquaIntel
 pip install -r requirements.txt
 
 # 2. Set up environment

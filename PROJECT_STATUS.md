@@ -1,6 +1,6 @@
-# OpenClaw / FishIntel -- Project Status
+# FishIntel / AquaIntel -- Project Status
 
-> **Repository:** [github.com/frehan83-collab/OpenClaw](https://github.com/frehan83-collab/OpenClaw) (private)
+> **Repository:** [github.com/frehan83-collab/AquaIntel](https://github.com/frehan83-collab/AquaIntel) (public)
 
 Last updated: 2026-10-12 (Session 40)
 

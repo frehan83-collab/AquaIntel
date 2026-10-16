@@ -12,9 +12,9 @@ for Salmon"): FastAPI backend (~340 routes, ~75 engines), Next.js 15 frontend
 (63 pages), 45+ live data-source clients, 3 foundation-model forecasting
 engines (with honest seasonal-naive fallbacks), 447+ tests.
 
-- Repository: `github.com/frehan83-collab/AquaIntel` (private). `origin`
-  redirects here from the legacy `OpenClaw` name; `aqua` remote points here
-  directly.
+- Repository: `github.com/frehan83-collab/AquaIntel` (public). `origin` points
+  here directly; the legacy `openclaw-legacy` remote points at the old
+  `OpenClaw` URL, which GitHub now redirects to this repository.
 - Default branch: `master`.
 
 ## Commands
@@ -137,5 +137,5 @@ test runs with `Start-Process ... -RedirectStandardOutput` and poll the file.
    `git diff` output; fix findings before committing).
 4. Commit with a descriptive subject + body (what/why; reference CRITICAL
    items or issue ids).
-5. Push `master` to `origin` and `aqua` (both point to AquaIntel; expect a
-   redirect notice from origin).
+5. Push `master` to `origin`. (The `aqua` remote was retired; the
+   `openclaw-legacy` remote remains a read-only legacy reference.)

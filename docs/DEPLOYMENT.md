@@ -1,6 +1,6 @@
 # FishIntel Deployment Guide
 
-> **Repository:** [github.com/frehan83-collab/OpenClaw](https://github.com/frehan83-collab/OpenClaw) (private)
+> **Repository:** [github.com/frehan83-collab/AquaIntel](https://github.com/frehan83-collab/AquaIntel) (public)
 
 ## Prerequisites
 
@@ -15,8 +15,8 @@
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-org/openclaw.git
-cd openclaw
+git clone https://github.com/frehan83-collab/AquaIntel.git
+cd AquaIntel
 
 # 2. Install Python dependencies
 python -m pip install -r requirements.txt

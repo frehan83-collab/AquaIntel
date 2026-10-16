@@ -1,6 +1,6 @@
-# OpenClaw — AquaIntelligence Platform
+# AquaIntel — AquaIntelligence Platform
 
-> **Repository:** [github.com/frehan83-collab/OpenClaw](https://github.com/frehan83-collab/OpenClaw) (private)
+> **Repository:** [github.com/frehan83-collab/AquaIntel](https://github.com/frehan83-collab/AquaIntel) (public)
 
 The world's most advanced salmon aquaculture intelligence platform. Built for Norwegian fish farmers, traders, and analysts making million-NOK decisions daily.
 
@@ -40,7 +40,7 @@ python main.py --api-port 8001
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                    OpenClaw Orchestrator                      │
+│                    AquaIntel Orchestrator                     │
 │                                                              │
 │  ┌─────────────┐  ┌──────────────┐  ┌─────────────────────┐ │
 │  │ Data Ingest  │→│ Exposure     │→│ Correlation Engine  │ │
@@ -80,7 +80,7 @@ python main.py --api-port 8001
 
 ```bash
 # Clone and install
-cd OpenClaw
+cd AquaIntel
 python -m venv venv
 source venv/bin/activate  # or venv\Scripts\activate on Windows
 pip install -r requirements.txt
@@ -182,7 +182,7 @@ Or use the dashboard Backtest page for interactive analysis.
 ## Project Structure
 
 ```
-OpenClaw/
+AquaIntel/
 ├── agents/                 # Multi-agent modules
 │   ├── base.py            # Base agent class
 │   ├── data_ingest.py     # BarentsWatch polling
@@ -205,8 +205,6 @@ OpenClaw/
 ├── execution/
 │   ├── execution_agent.py # Order management
 │   └── paper_broker.py    # Paper trading simulator
-├── openclaw/
-│   └── manifest.yml       # OpenClaw deployment config
 ├── scripts/
 │   └── run_backtest.py    # Standalone backtest runner
 ├── tests/

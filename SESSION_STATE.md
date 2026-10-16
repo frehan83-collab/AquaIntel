@@ -1,8 +1,8 @@
 CURRENT: Sessions 33-37 COMPLETE
 LAST_UPDATED: 2026-04-11
 SESSIONS: 33-37 (10 commits)
-REPOSITORY: https://github.com/frehan83-collab/OpenClaw (private)
-PR: https://github.com/frehan83-collab/OpenClaw/pull/1
+REPOSITORY: https://github.com/frehan83-collab/AquaIntel (public)
+PR: https://github.com/frehan83-collab/AquaIntel/pull/1
 
 ## SESSION 33 — QUALITY ELEVATION + DESIGN COMPONENTS
 
@@ -76,8 +76,8 @@ PR: https://github.com/frehan83-collab/OpenClaw/pull/1
 - Historical data coverage: SSB 26yr, FRED 35yr, MUR SST 44yr
 
 ## RESUME INSTRUCTIONS
-1. Backend: cd C:/Users/freha/OpenClaw && python main.py
-2. Frontend: cd C:/Users/freha/OpenClaw/frontend && npx next dev
+1. Backend: cd C:/Users/freha/FishIntel && python main.py
+2. Frontend: cd C:/Users/freha/FishIntel/frontend && npx next dev
 3. Tests: python -m pytest tests/ -v --tb=short
 4. Figma sync: npm run tokens:sync (requires FIGMA_ACCESS_TOKEN)
 5. Historical data: python scripts/fetch_all_historical.py
