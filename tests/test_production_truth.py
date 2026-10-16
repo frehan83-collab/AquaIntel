@@ -61,8 +61,12 @@ class TestEnvironmentAndMigrations:
         monkeypatch.setenv("FISHINTEL_JWT_SECRET", "x" * 40)
         assert _status(pt.check_environment(), "jwt_secret")["status"] == "ok"
 
-    def test_alembic_head_matches_the_newest_migration(self):
-        assert pt._alembic_head() == "017"
+    def test_alembic_head_is_resolvable_and_matches_the_db(self):
+        """Durable form: do not pin a revision number (018, 019, ... will come)."""
+        head = pt._alembic_head()
+        assert head is not None and head.isdigit(), head
+        check = _status(pt.check_database(), "alembic_head")
+        assert check["status"] == "ok", check["detail"]
 
     def test_database_check_reports_the_head_verdict(self):
         checks = pt.check_database()
