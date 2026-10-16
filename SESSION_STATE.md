@@ -1,8 +1,27 @@
-CURRENT: Sessions 33-37 COMPLETE
-LAST_UPDATED: 2026-04-11
-SESSIONS: 33-37 (10 commits)
+CURRENT: Sessions 38+ COMPLETE — commercial hardening (10 steps) shipped
+LAST_UPDATED: 2026-10-16
+SESSIONS: 38+ (15 commits, pushed)
 REPOSITORY: https://github.com/frehan83-collab/AquaIntel (public)
-PR: https://github.com/frehan83-collab/AquaIntel/pull/1
+HANDOVER: docs/HANDOVER.md — verified state, gate commands, workstream backlog WS-1..WS-13, trap list
+VERSION: 2.6.0 · 345 paths / 353 ops · 1004 tests collected · 18 migrations (head 018)
+
+## SESSIONS 38+ — COMMERCIAL HARDENING (see docs/HANDOVER.md §3 for the per-area docs)
+
+Commits: `5bd843a` entitlements SSOT (one plan table; paywall enforced; 402 + upgrade
+payload) · `9ebb03d` money path proven end to end (catalog → checkout → webhook →
+entitlement → previously-blocked route now passes; mock mode; schema-drift fix) ·
+`7ef15e6` AI-STI + AI-LPI (method v1.0.0) + Bio→Price Weekly + immutable history ·
+`83097c7` Accuracy & Method as a tracked artifact store (refuses demo-only data) ·
+`d38f441` production truth: agents as a real service, deploy-gating verifier (found +
+fixed an empty `alembic_version`), 12-source freshness dashboard, migration-016 `%s`
+bug fixed · `03aecb9` design partners (pilots as real entitlements) · `914875a` legal:
+licence register (0 of 8 cleared, stated), advice boundary, AI Act, DPA scaffold,
+deferred perf fee · `eec190e` provenance register + ratchet + 5 routes ·
+`92cefdb` GTM kit + ROI calculator + roles · `54114ee` ratchet anchored to the frozen
+contract · `fd5ca49` first REAL accuracy artifact (MAPE 13.42%, coverage 92.1%, n=208)
++ `W42` parser fix · `f04e79a` index lineage guard (stopped a false `is_live` claim on
+unverifiable lice rows).
+
 
 ## SESSION 33 — QUALITY ELEVATION + DESIGN COMPONENTS
 

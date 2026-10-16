@@ -5,6 +5,31 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
+### Handover — takeover package for the next coding module
+- **New `docs/HANDOVER.md`** — the brief an incoming module executes from: verified
+  current state measured at `f04e79a` (2.6.0, 345 paths/353 operations, 1004 tests
+  collected, 18 migrations, 38 routers, 77 engines, 68 frontend pages), the exact gate
+  commands (including the fast 207-test slice and the two re-freeze steps), what is
+  shipped per area with the doc to read, the six non-negotiables, a **13-item
+  workstream backlog (WS-1…WS-13)** each with files / steps / testable acceptance
+  criteria / traps, a **10-row trap table** of the bugs that actually cost time here,
+  and a definition of done.
+- **`docs/NEXT_STEPS_PLAN.md` marked superseded** — it was written 2026-10-12 at
+  `0ba29e3` and its numbers (FastAPI 2.2.0, ~328 routes, ~650 tests, 14 migrations)
+  would have misled a new module. It now carries a banner with the current verified
+  figures and points at the handover.
+- **`SESSION_STATE.md` refreshed** from "Sessions 33-37 / 2026-04-11" to the
+  commercial-hardening sessions with the commit list; **`AGENTS.md`** and
+  **`PROJECT_STATUS.md`** now point an incoming agent at `docs/HANDOVER.md` first.
+- The backlog's first items are the concrete engineering follow-ups already identified:
+  a `source` column on `lice_records` so AI-LPI's lineage becomes verifiable, scheduled
+  weekly index publication, model-artifact shipping, Timescale hypertables, a durable
+  quota ledger, SSO, tenant isolation, more accuracy artifacts, freshness alerting,
+  runtime provenance measurement in CI, removing the last hardcoded tier table in the
+  frontend, and enforcing the data-licence register at runtime.
+
+
+
 ### Follow-up — the accuracy artifact is now real (via a bug the live data exposed)
 - **The first real walk-forward artifact is published**:
   `artifacts/accuracy/seasonal_naive_weekly_prices.json` — MAPE **13.42%**, MAE

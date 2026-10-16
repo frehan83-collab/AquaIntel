@@ -1,5 +1,14 @@
 # AquaIntel — Next Steps Execution Plan (handoff for coding agent)
 
+> **⚠ SUPERSEDED for handover purposes — read `docs/HANDOVER.md` first.**
+> This plan was written 2026-10-12 at commit `0ba29e3` and its figures are stale.
+> The current, verified state is: platform **2.6.0**, **345 paths / 353 operations**,
+> **1004 tests collected**, **18 Alembic migrations** (head `018`), 38 router modules,
+> 77 market engines, 68 frontend pages — verified at commit `f04e79a`.
+> The workstream backlog (WS-1 … WS-13), the gate commands and the trap list now live
+> in `docs/HANDOVER.md`. Keep this file for its historical framing; do not treat its
+> numbers as current.
+
 > Generated: 2026-10-12 · Local clone: `C:\Users\freha\FishIntel` · Branch: `master` (clean tree at `0ba29e3`)
 > This document is a self-contained brief for any coding agent. Read it together with
 > `AGENTS.md` (authoritative rules) and `docs/AUTONOMOUS_PROGRESS.md` (session history).

@@ -2,6 +2,8 @@
 
 > Agent-facing instructions for AI assistants working on this repository.
 > Humans: see `CLAUDE.md` (session log) and `CONTRIBUTING.md` (conventions).
+> **Taking over coding? Start with `docs/HANDOVER.md`** — verified current state,
+> gate commands, the prioritised workstream backlog and the traps that cost real time.
 > This file is the **authoritative source for commands, quality gates, and
 > non-negotiable rules**. If it disagrees with another doc, this file wins.
 

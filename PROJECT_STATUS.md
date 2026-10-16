@@ -4,6 +4,9 @@
 
 Last updated: 2026-10-16 (commercial hardening — see docs/ENTITLEMENTS.md)
 
+**Taking over coding? Read `docs/HANDOVER.md`** — verified state, gate commands, the
+prioritised workstream backlog (WS-1…WS-13) and the traps that cost real time.
+
 ## Commercial hardening (in progress)
 
 | Step | Status | Evidence |
