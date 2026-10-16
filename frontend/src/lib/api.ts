@@ -11,7 +11,7 @@
 import type {
   HealthResponse, LiceSummary, DecisionCard, FarmPortfolioResponse,
   BiomassNational, MarketBiomass, BillingCatalog, IndicesResponse, IndexResult, BioPriceWeekly,
-  SSBPriceHistory, FeedCostLatest, CompetitivenessIndex,
+  AccuracySummary, SSBPriceHistory, FeedCostLatest, CompetitivenessIndex,
   FuturesForwardCurve, FuturesBasis, LeaderEntry, AnomalyScores,
   MorningBrief, RegimeAlert, DiseaseNorway, DiseaseByCompany,
   ResistanceMap, ASCReadiness, ForecastResponse, EnsembleForecast,
@@ -554,6 +554,9 @@ export const api = {
       `/api/indices/${code}/history?limit=${limit}`,
     ),
   bioPriceWeekly: () => fetchAPI<BioPriceWeekly>("/api/indices/bio-price-weekly"),
+  // Published accuracy metrics backed by real artifacts (or an explicit none)
+  accuracy: () => fetchAPI<AccuracySummary>("/api/accuracy"),
+  accuracyMethod: () => fetchAPI<Record<string, unknown>>("/api/accuracy/method"),
   // Start a checkout for a canonical plan key (see /api/entitlements/plans)
   billingCheckout: (plan: string) =>
     fetchAPI<{ checkout_url: string; plan: string; demo_mode?: boolean }>(

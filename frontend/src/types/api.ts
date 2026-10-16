@@ -170,7 +170,32 @@ export interface BillingCatalog {
   licensed_tier: { plan: string; name: string; audience: string; note: string };
 }
 
-/** /api/indices — published AI-STI / AI-LPI values. */
+/** /api/accuracy — published, artifact-backed metrics (never estimated). */
+export interface AccuracyMetric {
+  artifact_id: string;
+  model: string;
+  target: string;
+  method: string;
+  window: string;
+  n_obs: number;
+  mape_pct: number;
+  coverage_pct: number | null;
+  fallback_used: boolean;
+  produced_at: string;
+  source: string;
+}
+
+export interface AccuracySummary {
+  published: boolean;
+  schema_version: string;
+  metrics: AccuracyMetric[];
+  fallback_used_count: number;
+  invalid_artifacts: Array<{ path: string; problems: string[] }>;
+  statement: string;
+  how_to_publish: string;
+  fallback_disclosure: Record<string, unknown>;
+  methodology_url: string;
+}
 export interface IndexComponent {
   name: string;
   weight: number;

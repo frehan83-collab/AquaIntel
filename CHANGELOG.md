@@ -5,7 +5,39 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
-### Step 3 — Bio→Price Weekly v1 + the two named indices
+### Step 4 — Accuracy & Method published (artifact-backed, or honestly absent)
+- **`core/ml/accuracy_registry.py`** is the artifact store that makes the honesty
+  rule operable: JSON artifacts under **`artifacts/accuracy/`** (tracked in git,
+  deliberately not under the gitignored `data/`), validated against a published
+  schema on both write *and* read — invalid artifacts are reported, never skipped.
+- **`scripts/publish_accuracy.py`** produces a genuine artifact from a real
+  walk-forward evaluation (seasonal-naive baseline on SSB weekly prices), with the
+  prediction interval calibrated on the first 70% of year-back pairs and coverage
+  measured **out-of-sample** on the remaining 30%.
+- **A real honesty trap was found and closed:** the environment could not reach
+  SSB, and the only locally persisted `ssb_weekly_prices` rows (52 of them) carry
+  `source='demo_seed'` — i.e. synthetic. Publishing a MAPE from those would have
+  fabricated an accuracy claim, so the script now filters on source, reports how
+  many synthetic rows it ignored, and **exits non-zero writing nothing** when only
+  synthetic data exists. Consequently `GET /api/accuracy` honestly returns
+  `published: false` and names the command that fixes it.
+- **New endpoints:** `GET /api/accuracy` (published metrics or an explicit
+  not-yet-published statement), `/api/accuracy/method` (the artifact contract,
+  evaluation protocol and prohibited practices), `/api/accuracy/artifacts/{id}`
+  (verbatim, for audit).
+- **Fallback disclosure is machine-readable**, not fine print: the response states
+  the seasonal-naive fallback policy, whether foundation models are actually
+  available (`torch` present) and whether a legacy gitignored `data/` artifact
+  exists — noting that only the published registry may back a public claim.
+- **Frontend:** public `/accuracy` page rendering published metrics, the
+  not-published state with the publish command, and the fallback disclosure.
+- **Tests:** `tests/test_accuracy_registry.py` (27) — schema validation (including
+  each invalid-field class), publish/read-back, invalid files reported not hidden,
+  empty registry claims nothing, the synthetic-source guard, determinism of the
+  walk-forward maths on a known series, and every endpoint's honesty behaviour.
+- Docs: `docs/ACCURACY.md`.
+
+
 - **`AI-STI` (AquaIntel Salmon Transmission Index)** and **`AI-LPI` (AquaIntel Lice
   Pressure Index)** are published, versioned (method `1.0.0`) and reproducible:
   weighted component scores with published weights and scoring formulas, explicit

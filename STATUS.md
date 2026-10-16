@@ -398,6 +398,23 @@ added `tests/test_migrations.py`.
   (`--timeout` needs pytest-timeout, not installed) — the suite is now run without
   it (see the run summary).
 
+## Commercial hardening — Step 4 (Accuracy & Method) — 2026-10-16
+
+- **Shipped** `core/ml/accuracy_registry.py` (validated, versioned artifact store
+  under tracked `artifacts/accuracy/`), `scripts/publish_accuracy.py` (real
+  walk-forward; interval calibrated in-sample, coverage measured out-of-sample),
+  endpoints `/api/accuracy`, `/method`, `/artifacts/{id}`, and the public
+  `/accuracy` page with machine-readable fallback disclosure.
+- **Honesty trap closed:** the only locally persisted SSB price rows (52) are
+  `source='demo_seed'` (synthetic). The publisher now filters on source, reports
+  the synthetic rows it ignored, and exits non-zero writing nothing — so
+  `/api/accuracy` returns `published: false` and names the fix instead of
+  publishing a fabricated MAPE. This is the honesty layer working as intended.
+- **Gates:** `test_accuracy_registry.py` 27 passed; `tsc` 0 errors; ruff clean.
+- **Open:** an artifact can only be published from a host with real price access
+  (`python scripts/publish_accuracy.py --weeks 260`).
+
+
 
 
 

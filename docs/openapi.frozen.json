@@ -1404,6 +1404,87 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/accuracy": {
+      "get": {
+        "description": "Published accuracy metrics \u2014 or an explicit 'not yet published'.",
+        "operationId": "accuracy_summary_api_accuracy_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Accuracy Summary",
+        "tags": [
+          "accuracy"
+        ]
+      }
+    },
+    "/api/accuracy/artifacts/{artifact_id}": {
+      "get": {
+        "description": "One published artifact, verbatim (dashboard/audit use).",
+        "operationId": "accuracy_artifact_api_accuracy_artifacts__artifact_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Accuracy Artifact",
+        "tags": [
+          "accuracy"
+        ]
+      }
+    },
+    "/api/accuracy/method": {
+      "get": {
+        "description": "The published artifact contract and evaluation protocol.",
+        "operationId": "accuracy_method_api_accuracy_method_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Accuracy Method",
+        "tags": [
+          "accuracy"
+        ]
+      }
+    },
     "/api/admin/audit-log": {
       "get": {
         "description": "Paginated audit log of user actions with optional filters.\n\nReturns chronological (newest first) list of audit entries.",
