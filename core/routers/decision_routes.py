@@ -256,7 +256,16 @@ async def log_treatment_outcome(request: Request, data: TreatmentOutcomeRequest)
     return result
 
 
+from core.market.provenance_envelope import with_provenance
+
+
 @router.get("/treatment/efficacy-by-method")
+@with_provenance(
+    "treatment_outcomes (producer-reported)",
+    degraded_reason=(
+        "aggregated from producer-reported treatment outcomes; not a controlled trial"
+    ),
+)
 async def treatment_efficacy_by_method():
     """Aggregate treatment efficacy comparison from real outcomes."""
     from core.market.decision_engine import decision_engine

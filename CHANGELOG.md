@@ -5,7 +5,37 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
-### Step 7 — legal sprint foundations (as code, not as promises)
+### Step 8 — rule-3 provenance program finished (register + ratchet + 5 routes)
+- **The provenance boundary is now enforced, not remembered.** New
+  `core/provenance_register.py` holds the **formal exempt register** (prefix →
+  category + written reason; 18 entries across infrastructure, auth/billing,
+  catalogue/meta, publication metadata, operational and admin) and
+  `docs/provenance_baseline.json` freezes the non-exempt `/api` GET inventory:
+  **238 routes → 31 exempt, 207 baselined, 0 unregistered**.
+- **A ratchet so nothing can ship unnoticed:** `scripts/provenance_ratchet.py`
+  (exit 1 on drift) plus `tests/test_provenance_ratchet.py`. A new data route must
+  either carry provenance or be added to `EXEMPT` with a reason — a route in neither
+  fails the gate, and the baseline is re-frozen only via an explicit `--update`.
+- **A reusable pattern instead of per-route churn:**
+  `core/market/provenance_envelope.py::with_provenance(source, degraded_reason=...)`.
+  It attaches `data_provenance` to dict payloads, forces `is_live: false` when a
+  degraded reason is given, leaves an existing (engine-set) envelope untouched, and
+  passes non-dict results through.
+- **Five more real routes carry provenance:** `/api/analytics/yoy-comparison`,
+  `/api/treatment/efficacy-by-method`, `/api/feed-supply-chain/eudr-risk` (all
+  honest degraded envelopes naming why they are not measurements) and
+  `/api/futures/basis`, `/api/futures/term-structure` — where the decorator
+  correctly *preserved* the engine's own more specific provenance
+  ("SSB Seasonal Synthesis", `is_live: false`) rather than overwriting it.
+- **Honest scope:** the register proves a decision was recorded, not that all 207
+  baselined routes carry provenance today — the runtime measurement stays in
+  `scripts/probe_liveness.py` (payload-shape classification), which the report
+  documents. The ratchet prevents silent erosion; the probe reports the live
+  residue.
+- Docs: `docs/REPORT_LIVENESS.md` now carries the exempt register table, the
+  ratchet commands and the list of routes given provenance in this step.
+
+
 - **Data-licence register** `core/legal/data_licenses.py`: one entry per source with
   `allowed_uses`, `resale_allowed`, `attribution_required`, `ai_training_allowed`
   and named risks. Eight sources registered (Fiskeridir lice, SSB prices, Copernicus,

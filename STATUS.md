@@ -456,6 +456,20 @@ added `tests/test_migrations.py`.
   and a test asserting no plan advertises one.
 - **Gates:** `test_legal.py` 18 passed; ruff clean.
 
+## Commercial hardening — Step 8 (provenance register + ratchet) — 2026-10-16
+
+- **Shipped the formal exempt register** (`core/provenance_register.py`, 18 entries
+  with category + reason) and froze the non-exempt inventory in
+  `docs/provenance_baseline.json`: **238 /api GET routes → 31 exempt, 207
+  baselined, 0 unregistered**.
+- **Ratchet:** `scripts/provenance_ratchet.py` (exit 1 on drift) +
+  `tests/test_provenance_ratchet.py` (13). A new data route must carry provenance or
+  be exempted with a reason, or the gate fails.
+- **`with_provenance` decorator** applied to 5 more routes; it preserved the
+  engine's own provenance on the futures routes instead of overwriting it.
+- **Gates:** ratchet exit 0; 13 passed; ruff clean.
+
+
 
 
 

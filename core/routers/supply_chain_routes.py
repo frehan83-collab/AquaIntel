@@ -38,8 +38,18 @@ async def feed_supply_chain_summary():
     return result
 
 
+from core.market.provenance_envelope import with_provenance
+
+
 @router.get("/eudr-risk")
 @cached(ttl=1800, key_prefix="feed_supply_chain_eudr")
+@with_provenance(
+    "BioMar/Skretting sustainability reports + IFFO + EUDR Reg 2023/1115",
+    degraded_reason=(
+        "model-based composition assessment over published reports, not a live "
+        "due-diligence feed"
+    ),
+)
 async def eudr_risk_assessment():
     """
     Assess EU Deforestation Regulation (EUDR) compliance risk.

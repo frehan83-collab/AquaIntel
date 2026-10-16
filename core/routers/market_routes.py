@@ -728,8 +728,18 @@ async def futures_forward_curve(months: int = 12):
     return await euronext_futures_engine.get_forward_curve(months=months)
 
 
+from core.market.provenance_envelope import with_provenance
+
+
 @futures_router.get("/basis")
 @cached(ttl=600, key_prefix="futures_basis")
+@with_provenance(
+    "Euronext ESF / Fish Pool (licensed exchange data)",
+    degraded_reason=(
+        "basis is derived from the forward curve and spot series available to this "
+        "deployment; a missing exchange feed degrades it, it is not a quoted price"
+    ),
+)
 async def futures_basis():
     """
     Spot vs forward basis analysis.
@@ -754,6 +764,13 @@ async def futures_settlement():
 
 @futures_router.get("/term-structure")
 @cached(ttl=600, key_prefix="futures_term_structure")
+@with_provenance(
+    "Euronext ESF / Fish Pool (licensed exchange data)",
+    degraded_reason=(
+        "term structure is derived from the forward curve available to this "
+        "deployment; a missing exchange feed degrades it"
+    ),
+)
 async def futures_term_structure():
     """
     Contango/backwardation term structure analysis.

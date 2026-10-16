@@ -19,8 +19,18 @@ router = APIRouter(tags=["analytics"])
 
 # ── Year-over-Year Analytics ─────────────────────────────────────────
 
+from core.market.provenance_envelope import with_provenance
+
+
 @router.get("/api/analytics/yoy-comparison")
 @cached(ttl=600, key_prefix="yoy")
+@with_provenance(
+    "lice_records + SSB weekly prices + treatment_outcomes",
+    degraded_reason=(
+        "computed from the ingested series for this deployment; a year-over-year "
+        "gap means the prior period is absent, not zero"
+    ),
+)
 async def yoy_comparison(metric: str = "lice", production_area: int = 0):
     """Year-over-year comparison for lice, price, or disease metrics."""
     today = dt.date.today()

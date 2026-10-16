@@ -270,3 +270,81 @@
 - Parametrised routes (path parameters) are not probed; add fixtures before
   trusting coverage.
 
+
+## Rule-3 provenance register + ratchet (added in the commercial hardening)
+
+The provenance sweep is now enforced rather than remembered. `core/provenance_register.py`
+holds the **formal exempt register** (prefix → category + written reason) and
+`docs/provenance_baseline.json` freezes the non-exempt `/api` GET route inventory.
+
+Current honest state (regenerate with `python scripts/provenance_ratchet.py`):
+
+```
+238 /api GET routes: 31 exempt, 207 baselined, 0 unregistered
+```
+
+### Exempt register (nothing here returns measured data)
+
+| Prefix | Category | Reason |
+|---|---|---|
+| `/api/health` | infrastructure | liveness probe; returns no data |
+| `/api/openapi.json` | infrastructure | schema document |
+| `/api/auth/` | auth_and_billing | identity/session plumbing |
+| `/api/billing/` | auth_and_billing | catalog and subscription state, not measured data |
+| `/api/keys` | auth_and_billing | API-key management |
+| `/api/webhooks` | auth_and_billing | webhook configuration |
+| `/api/entitlements` | catalogue_and_meta | plan catalogue (prices/quotas), not data |
+| `/api/tiers` | catalogue_and_meta | plan catalogue |
+| `/api/disclaimer` | catalogue_and_meta | static legal text |
+| `/api/meta/` | catalogue_and_meta | build/version metadata |
+| `/api/legal/` | catalogue_and_meta | licence register and policy text |
+| `/api/accuracy/method` | publication_metadata | artifact contract, not a measurement |
+| `/api/accuracy/artifacts` | publication_metadata | artifact metadata (the artifact itself is the provenance) |
+| `/api/indices/methodology` | publication_metadata | published method document |
+| `/api/data-freshness` | operational | freshness metadata about other routes |
+| `/api/admin/` | admin | admin operational endpoints (auth-gated) |
+| `/api/cache/` | admin | cache administration (auth-gated) |
+| `/api/audit` | admin | audit log (auth-gated, operational) |
+
+### The ratchet (CI-enforceable)
+
+```bash
+python scripts/provenance_ratchet.py            # verify; exit 1 on drift
+python scripts/provenance_ratchet.py --update   # freeze after a provenance decision
+python -m pytest tests/test_provenance_ratchet.py -q
+```
+
+A new data route must **either** carry provenance via the reusable decorator:
+
+```python
+from core.market.provenance_envelope import with_provenance
+
+@router.get("/api/example")
+@cached(ttl=600)
+@with_provenance("source", degraded_reason="it is a model estimate, not a measurement")
+async def example(): ...
+```
+
+**or** be added to `EXEMPT` with a written reason. A route in neither fails the
+test — so a new data route cannot ship without a deliberate provenance decision.
+
+### Routes given provenance in this step (5)
+
+| Route | Envelope |
+|---|---|
+| `/api/analytics/yoy-comparison` | degraded — computed from the ingested series; a YoY gap means the prior period is absent, not zero |
+| `/api/treatment/efficacy-by-method` | degraded — aggregated from producer-reported outcomes, not a controlled trial |
+| `/api/feed-supply-chain/eudr-risk` | degraded — model-based composition over published reports, not a live due-diligence feed |
+| `/api/futures/basis` | engine provenance preserved (SSB synthesis, `is_live: false`) |
+| `/api/futures/term-structure` | engine provenance preserved (SSB synthesis, `is_live: false`) |
+
+The last two demonstrate the decorator's safe nesting: an engine that already sets
+`data_provenance` wins, so the envelope never overwrites a more specific truth.
+
+### What is *not* claimed
+
+The register and baseline prove **a decision was recorded**, not that every one of
+the 207 routes actually carries provenance today. The runtime measurement of that
+remains `scripts/probe_liveness.py` (payload-shape classification). The ratchet
+prevents silent erosion; the probe reports the live residue.
+
