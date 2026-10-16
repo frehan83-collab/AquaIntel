@@ -102,11 +102,18 @@ async def _probe_one(client: httpx.AsyncClient, path: str, timeout: float, sem: 
         status: int | None = None
         error: str | None = None
         provs: list[dict] = []
+        payload_type = "unknown"
         try:
             resp = await asyncio.wait_for(client.get(path), timeout=timeout)
             status = resp.status_code
             try:
-                _walk_provenance(resp.json(), provs)
+                payload = resp.json()
+                _walk_provenance(payload, provs)
+                payload_type = (
+                    "list" if isinstance(payload, list)
+                    else "dict" if isinstance(payload, dict)
+                    else type(payload).__name__
+                )
             except Exception:
                 provs = []
         except asyncio.TimeoutError:
@@ -121,6 +128,7 @@ async def _probe_one(client: httpx.AsyncClient, path: str, timeout: float, sem: 
             "status": status,
             "elapsed_s": round(elapsed, 2),
             "state": _classify(status, prov, error),
+            "payload_type": payload_type,
             "source": (prov or {}).get("source"),
             "is_live": (prov or {}).get("is_live"),
             "fallback_reason": (prov or {}).get("fallback_reason"),
@@ -183,6 +191,25 @@ async def main() -> int:
     for r in rows:
         if r["state"] == "live":
             lines.append(f"| `{r['path']}` | {r.get('source') or ''} |")
+
+    # Classify the provenance-less backlog by payload shape: a dict can take an
+    # additive envelope; a bare list needs a coordinated contract change (the
+    # frontend auto-unwrap + e2e api-contracts + visual baselines).
+    shapes: dict[str, int] = {}
+    for r in rows:
+        if r["state"] == "no_provenance":
+            shapes[r.get("payload_type", "unknown")] = shapes.get(r.get("payload_type", "unknown"), 0) + 1
+    lines += [
+        "",
+        "## `no_provenance` backlog by payload shape",
+        "",
+        "| Payload | Routes | Fix path |",
+        "|---|---|---|",
+        f"| `dict` | {shapes.get('dict', 0)} | additive `data_provenance` key |",
+        f"| `list` | {shapes.get('list', 0)} | needs a coordinated contract change (frontend auto-unwrap, e2e api-contracts, visual baselines) |",
+        f"| other | {sum(v for k, v in shapes.items() if k not in ('dict', 'list'))} | inspect individually |",
+        "",
+    ]
     lines += [
         "",
         "## Known limitations & backlog",

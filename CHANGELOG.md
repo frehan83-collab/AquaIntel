@@ -70,6 +70,23 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   `docs/REPORT_LIVENESS.md`.
 
 
+### Changed (provenance coverage sweep, increment 2 — ais / sentiment / production)
+- 5 more dict-returning routes now carry provenance: `/api/ais/harvest-intelligence`
+  and `/api/ais/supply-intelligence` (live only when AIS positions were actually
+  ingested), `/api/sentiment/summary` and `/api/sentiment/poll` (live only when
+  articles were analysed), and `/api/production/summary` (Fiskeridirektoratet
+  open data). Additive keys only; a shared `_ais_provenance` helper reuses the
+  `from_records` primitive.
+- `scripts/probe_liveness.py` now records each response's payload shape, so the
+  remaining backlog is classified rather than guessed: of the 72 provenance-less
+  routes, **41 are dict-shaped** (fixable with an additive key) and **30 are
+  list-shaped** (a bare array cannot carry an envelope — that is a coordinated
+  contract change: frontend auto-unwrap, `e2e/api-contracts.spec.ts`, and the
+  Linux-generated visual baselines the repo forbids regenerating on Windows).
+- Measured: `no_provenance` 83 → 72, `live` 43 → 46, `degraded` 21 → 27.
+  (Counts also move with network availability — 57 rows timed out this run.)
+
+
 ### Changed (docs truth pass)
 - `PROJECT_STATUS.md`: measured counts (322 operations / 316 unique paths, 762
   tests) and real frontend versions (Next 16.4, React 19.1).

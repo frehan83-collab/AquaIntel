@@ -11,6 +11,24 @@ from fastapi import APIRouter, HTTPException, Request
 router = APIRouter(tags=["macro"])
 
 
+def _ais_provenance(sample: list):
+    """AIS-derived intelligence: live only when positions were actually ingested.
+
+    AGENTS.md rule 1/3 via the shared records-or-estimates primitive — these
+    routes previously returned numbers with no provenance envelope at all.
+    """
+    from core.market.data_provenance import from_records
+
+    return from_records(
+        sample,
+        live_source="BarentsWatch AIS vessel positions",
+        degraded_source="BarentsWatch AIS vessel positions",
+        reason="no AIS positions ingested — vessel-derived signals are empty",
+        live_confidence=0.7,
+        degraded_confidence=0.2,
+    )
+
+
 # ── AIS ──────────────────────────────────────────────────────────────
 @router.get("/api/ais/tracks")
 async def ais_tracks():
@@ -34,7 +52,10 @@ async def ais_treatment_signals(hours: int = 72):
 @router.get("/api/ais/supply-intelligence")
 async def ais_supply_intelligence():
     from core.market.ais_tracker import ais_tracker
-    return ais_tracker.get_supply_intelligence()
+    result = ais_tracker.get_supply_intelligence()
+    if isinstance(result, dict):
+        result.setdefault("data_provenance", _ais_provenance(ais_tracker.get_active_tracks()).to_dict())
+    return result
 
 
 @router.get("/api/ais/harvest-intelligence")
@@ -64,6 +85,7 @@ async def ais_harvest_intelligence():
         "price_signal": "bearish" if supply_pressure == "high" else "neutral",
         "signal_rationale": (f"{n_harvest} harvest vessel(s) detected -> increased supply pressure -> potential short-term price pressure"
                              if supply_pressure != "low" else "No significant harvest activity detected"),
+        "data_provenance": _ais_provenance(tracks).to_dict(),
     }
 
 

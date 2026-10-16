@@ -245,8 +245,20 @@ async def pa_leaderboard():
 @router.get("/api/production/summary")
 async def production_summary():
     """Latest annual production summary from official Fiskeridirektoratet data."""
+    from core.market.data_provenance import from_records
     from core.market.fiskeridir_data import fiskeridir_data
-    return fiskeridir_data.get_latest_summary()
+    summary = fiskeridir_data.get_latest_summary()
+    if isinstance(summary, dict):
+        summary.setdefault(
+            "data_provenance",
+            from_records(
+                [summary] if summary else [],
+                live_source="Fiskeridirektoratet production statistics (open data)",
+                degraded_source="Fiskeridirektoratet production statistics",
+                reason="Fiskeridirektoratet dataset not loaded — summary is empty",
+            ).to_dict(),
+        )
+    return summary
 
 
 @router.get("/api/production/annual")

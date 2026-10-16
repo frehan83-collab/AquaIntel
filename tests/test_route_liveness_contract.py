@@ -127,12 +127,17 @@ def test_efficacy_routes_work_on_sqlite(client, path):
     "/api/market/export-destinations",
     "/api/market/spot-price",
     "/api/market/forward-curve",
+    "/api/ais/harvest-intelligence",
+    "/api/ais/supply-intelligence",
+    "/api/sentiment/summary",
+    "/api/sentiment/poll",
+    "/api/production/summary",
 ])
-def test_market_routes_carry_provenance(client, path):
-    """Rule 3: every number surfaced to users must be traceable. These market
-    routes returned payloads with no provenance envelope at all (found by the
-    liveness audit). Their upstreams are network-bound, so only a 200 response
-    is asserted — an unavailable upstream is skipped, not failed."""
+def test_intel_routes_carry_provenance(client, path):
+    """Rule 3: every number surfaced to users must be traceable. These routes
+    returned payloads with no provenance envelope at all (found by the liveness
+    audit). Their upstreams are network-bound, so only a 200 response is
+    asserted — an unavailable upstream is skipped, not failed."""
     r = client.get(path)
     if r.status_code != 200:
         pytest.skip(f"{path} -> {r.status_code} (upstream unavailable)")

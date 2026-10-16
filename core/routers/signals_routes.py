@@ -128,16 +128,41 @@ async def sentiment_articles(hours: int = 24, ticker: str = None):
 @router.get("/api/sentiment/summary")
 async def sentiment_summary():
     """Get overall market sentiment summary."""
+    from core.market.data_provenance import DataProvenance
     from core.market.sentiment_engine import sentiment_engine
-    return sentiment_engine.get_sentiment_summary()
+    summary = sentiment_engine.get_sentiment_summary()
+    if isinstance(summary, dict):
+        n_articles = int(summary.get("articles_24h") or 0)
+        summary.setdefault(
+            "data_provenance",
+            (
+                DataProvenance.live(f"News feeds ({n_articles} articles in 24h)", confidence=0.7)
+                if n_articles > 0
+                else DataProvenance.degraded(
+                    "News feeds",
+                    "no articles analysed in the last 24h — sentiment buckets are empty",
+                    confidence=0.1,
+                )
+            ).to_dict(),
+        )
+    return summary
 
 
 @router.get("/api/sentiment/poll")
 async def sentiment_poll():
     """Trigger a manual sentiment poll and return new articles."""
+    from core.market.data_provenance import DataProvenance
     from core.market.sentiment_engine import sentiment_engine
     articles = await sentiment_engine.poll_feeds()
+    n_new = len(articles)
     return {
-        "new_articles": len(articles),
+        "new_articles": n_new,
         "titles": [a.title for a in articles[:10]],
+        "data_provenance": (
+            DataProvenance.live(f"News feeds ({n_new} new articles)", confidence=0.7)
+            if n_new
+            else DataProvenance.degraded(
+                "News feeds", "poll returned no new articles", confidence=0.2
+            )
+        ).to_dict(),
     }
