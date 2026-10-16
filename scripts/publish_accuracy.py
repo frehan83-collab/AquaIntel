@@ -40,6 +40,26 @@ def _is_real_source(source: str | None) -> bool:
     return not any(marker in lowered for marker in DEMO_SOURCE_MARKERS)
 
 
+def _week_number(raw) -> int | None:
+    """Parse an SSB week label ('W42', '42', 42) into an int.
+
+    `ssb_price_client.get_price_history` returns `"week": "W42"`, so a bare
+    `int()` raises `ValueError: invalid literal for int() with base 10: 'W42'` —
+    a latent bug that only surfaced once live SSB data actually arrived.
+    """
+    if raw is None:
+        return None
+    text = str(raw).strip()
+    if not text:
+        return None
+    if text[:1].lower() == "w":
+        text = text[1:]
+    try:
+        return int(text)
+    except ValueError:
+        return None
+
+
 async def _series(weeks: int) -> list[tuple[int, int, float]]:
     """Real SSB weekly salmon export prices (NOK/kg), oldest first."""
     from core.market.ssb_price_client import ssb_price_client
@@ -48,8 +68,10 @@ async def _series(weeks: int) -> list[tuple[int, int, float]]:
     series: list[tuple[int, int, float]] = []
     for row in history:
         price = row.get("price_nok")
-        if price and row.get("year") and row.get("week"):
-            series.append((int(row["year"]), int(row["week"]), float(price)))
+        week = _week_number(row.get("week"))
+        year = _week_number(row.get("year"))
+        if price and year and week:
+            series.append((year, week, float(price)))
     series.sort(key=lambda r: (r[0], r[1]))
     return series
 

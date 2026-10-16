@@ -56,18 +56,42 @@ Validation is enforced on write (`publish()` raises `ValueError`) *and* on read
 
 ## Current state (honest)
 
-- **No artifact is published yet in this repository**, because the environment
-  could not reach SSB and the only locally persisted price rows are synthetic
-  (`demo_seed`). `GET /api/accuracy` therefore returns
-  `published: false` with the exact command that fixes it:
+**One artifact is published** — `seasonal_naive_weekly_prices`, measured on a live
+SSB fetch:
 
-  ```bash
-  python scripts/publish_accuracy.py --weeks 260
-  ```
+| Field | Value |
+|---|---|
+| Model | seasonal-naive (same ISO week, year-1) |
+| Target | SSB weekly salmon export price (NOK/kg) |
+| Window | 2021W42 .. 2026W41 (5 years) |
+| n (year-back pairs) | 208 |
+| MAPE | **13.42%** |
+| MAE | 11.60 NOK/kg |
+| Coverage (80% nominal interval) | **92.1%** out-of-sample |
+| `fallback_used` | **true** — this *is* the honest fallback baseline |
 
-- `foundation_models_available` is `false` where `torch` is not installed, so every
-  forecast is the seasonal-naive fallback. That is disclosed in the API response
-  and on the page rather than hidden.
+Three things worth stating plainly:
+
+1. **This is the floor, not a model score.** `fallback_used: true` means it measures
+   the seasonal-naive rule the platform falls back to when no foundation-model
+   weights are available, so it is the error a real model must **beat** — useful
+   precisely because it is not flattering.
+2. **92.1% coverage against an 80% nominal interval means the interval is
+   conservative** (too wide), not that the point forecast is good. Reported as
+   measured, including the unflattering interpretation.
+3. **`foundation_models_available` is `false` where `torch` is not installed**, so
+   every live forecast is that fallback. The `/api/accuracy` response states this
+   rather than hiding it.
+
+To regenerate on a host with live data access:
+
+```bash
+python scripts/publish_accuracy.py --weeks 260   # refuses to publish on demo-only data
+```
+
+The publisher also refuses to run on the demo-seeded rows
+(`source='demo_seed'`) and reports how many synthetic rows it ignored — publishing
+a MAPE from those would fabricate a claim.
 
 ## Why this is a sales asset
 

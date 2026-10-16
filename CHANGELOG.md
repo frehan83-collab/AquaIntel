@@ -5,6 +5,26 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
+### Follow-up — the accuracy artifact is now real (via a bug the live data exposed)
+- **The first real walk-forward artifact is published**:
+  `artifacts/accuracy/seasonal_naive_weekly_prices.json` — MAPE **13.42%**, MAE
+  **11.60 NOK/kg**, out-of-sample coverage **92.1%** against an 80% nominal interval,
+  n=208 year-back pairs over **2021W42..2026W41**, produced from a live SSB fetch.
+  `GET /api/accuracy` now returns `published: true`.
+- **A latent bug in the publisher surfaced the moment live data arrived:**
+  `ssb_price_client.get_price_history` returns `"week": "W42"`, and `_series` called
+  `int(row["week"])` → `ValueError`. It had never fired because the earlier run got
+  zero observations (the fetch was failing), so the loop never executed. Fixed with
+  an explicit `_week_number()` parser plus a regression test covering `"W42"`,
+  `"w3"`, `42`, `""`, `None` and `"week"`.
+- **Honesty kept, even where it is unflattering:** the artifact is marked
+  `fallback_used: true` (it *is* the seasonal-naive baseline the platform falls back
+  to — the floor a real model must beat, not a model score), and `docs/ACCURACY.md`
+  states that 92.1% coverage against an 80% interval means the interval is
+  *conservative* rather than that the forecast is good.
+
+
+
 ### Step 10 — role definitions, usable immediately
 - **Three roles written to be posted as-is** in `docs/roles/`: **Commercial Lead
   (salmon trading networks)** — owns recruiting and converting 5–8 paid 90-day

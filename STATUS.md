@@ -487,6 +487,24 @@ added `tests/test_migrations.py`.
   explicit "what we will not ask you to do".
 - `docs/roles/README.md` indexes them with the shared pre-call reading list.
 
+## Follow-up — real accuracy artifact published — 2026-10-16
+
+- SSB became reachable again (the earlier failure was an HTTP 503, not a timeout),
+  so `scripts/publish_accuracy.py --weeks 260` produced the **first real
+  walk-forward artifact**: MAPE **13.42%**, MAE **11.60 NOK/kg**, out-of-sample
+  coverage **92.1%**, n=208 pairs, window **2021W42..2026W41**. `/api/accuracy` now
+  reports `published: true`.
+- **A latent bug was exposed by the live data:** the client returns
+  `"week": "W42"` and the publisher called `int(row["week"])` → `ValueError`. It
+  never fired before because the fetch failed and the loop never ran. Fixed with an
+  explicit parser + a regression test (`"W42"`, `"w3"`, `42`, `""`, `None`, `"week"`).
+- **Honest framing kept:** `fallback_used: true` (this is the floor a real model must
+  beat) and the docs note that 92.1% coverage vs an 80% interval means the interval
+  is conservative, not that the forecast is good.
+- **Verified:** `test_accuracy_registry.py` 34 passed; `/api/accuracy` returns the
+  metric; artifact committed under tracked `artifacts/accuracy/`.
+
+
 
 
 

@@ -109,6 +109,22 @@ class TestRegistry:
 
 class TestDemoSourceGuard:
     @pytest.mark.parametrize(
+        "raw,expected",
+        [
+            ("W42", 42),
+            ("w3", 3),
+            ("42", 42),
+            (42, 42),
+            ("", None),
+            (None, None),
+            ("week", None),
+        ],
+    )
+    def test_week_labels_are_parsed(self, raw, expected):
+        """SSB returns 'W42'; a bare int() crashed the publisher once data arrived."""
+        script = _load_publish_script()
+        assert script._week_number(raw) == expected
+    @pytest.mark.parametrize(
         "source,expected",
         [
             ("demo_seed", False),

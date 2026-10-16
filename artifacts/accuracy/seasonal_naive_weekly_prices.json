@@ -1,0 +1,19 @@
+{
+  "artifact_id": "seasonal_naive_weekly_prices",
+  "fallback_used": true,
+  "method": "walk-forward; prediction interval calibrated on the first 70% of year-back pairs, coverage measured out-of-sample on the remainder",
+  "metrics": {
+    "coverage_pct": 92.1,
+    "interval_level": 0.8,
+    "mae_nok_kg": 11.599,
+    "mape_pct": 13.42
+  },
+  "model": "seasonal-naive (same ISO week, year-1)",
+  "n_obs": 208,
+  "notes": "This IS the honest fallback baseline: when no foundation model weights are available the platform predicts with exactly this rule, so its measured error is the floor a live model must beat. Reported here instead of a model score we cannot produce.",
+  "produced_at": "2026-10-16T16:05:29.164262+00:00",
+  "schema_version": "1.0",
+  "source": "SSB via core.market.ssb_price_client (live fetch)",
+  "target": "SSB weekly salmon export price (NOK/kg)",
+  "window": "2021W42..2026W41"
+}
