@@ -116,6 +116,31 @@ def test_efficacy_routes_work_on_sqlite(client, path):
     assert client.get(path).status_code == 200
 
 
+@pytest.mark.parametrize("path", [
+    "/api/market/price-forecast",
+    "/api/market/seasonal",
+    "/api/market/exports",
+    "/api/market/price-outlook/multi",
+    "/api/market/futures-curve",
+    "/api/market/ssb-price-history",
+    "/api/market/ssb-seasonal",
+    "/api/market/export-destinations",
+    "/api/market/spot-price",
+    "/api/market/forward-curve",
+])
+def test_market_routes_carry_provenance(client, path):
+    """Rule 3: every number surfaced to users must be traceable. These market
+    routes returned payloads with no provenance envelope at all (found by the
+    liveness audit). Their upstreams are network-bound, so only a 200 response
+    is asserted — an unavailable upstream is skipped, not failed."""
+    r = client.get(path)
+    if r.status_code != 200:
+        pytest.skip(f"{path} -> {r.status_code} (upstream unavailable)")
+    body = r.json()
+    assert isinstance(body, dict), f"{path} should return an object"
+    assert "data_provenance" in body, f"{path} returned data with no provenance"
+
+
 def test_frontend_api_client_sends_the_stored_jwt():
     """The client previously sent NO Authorization header and nothing ever read
     the token stored at login, so user-scoped routes (billing, API keys,

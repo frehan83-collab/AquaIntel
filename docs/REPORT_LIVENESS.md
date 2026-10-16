@@ -1,6 +1,6 @@
 # Route Liveness Report
 
-> Generated 2026-10-16 14:13 UTC by `scripts/probe_liveness.py`.
+> Generated 2026-10-16 14:35 UTC by `scripts/probe_liveness.py`.
 > Parameterless GET routes only. The weakest nested provenance governs a
 > route's headline state, so the report is conservative.
 
@@ -8,12 +8,12 @@
 
 | State | Routes |
 |---|---|
-| `no_provenance` | 90 |
-| `error` | 58 |
-| `live` | 36 |
-| `degraded` | 17 |
+| `no_provenance` | 83 |
+| `error` | 53 |
+| `live` | 43 |
+| `degraded` | 21 |
 | `auth_401` | 11 |
-| `http_422` | 5 |
+| `http_422` | 6 |
 | `http_5xx` | 2 |
 
 **Probed:** 219 routes.
@@ -41,7 +41,11 @@
 | `/api/integrations/fishtalk/status` | degraded | 200 | Fishtalk 5 API | FISHTALK_API_KEY not configured |
 | `/api/market/eumofa/salmon-prices` | degraded | 200 | SSB Table 03024 + EU premium model | EUMOFA API unavailable, using SSB Norway price with EU market premiums |
 | `/api/market/eumofa/trade-flows` | degraded | 200 | SSB exports + EU import share model | EUMOFA API unavailable, using SSB export stats with EU share estimates |
+| `/api/market/forward-curve` | degraded | 200 | SSB Table 03024 (synthesized) | forward curve is synthesized from historical seasonal factors applied to the current SSB spot — not a traded f |
+| `/api/market/price-forecast` | degraded | 200 | SSB Table 03024 spot + salmon_price model | inputs are the SSB spot and the local lice database; the price path itself is a model estimate, not a quoted m |
 | `/api/market/price-outlook` | degraded | 200 | SSB Table 03024 + price ensemble (ensemble_v1_rule) | ML tiers unavailable — rule-based forecast |
+| `/api/market/price-outlook/multi` | degraded | 200 | SSB Table 03024 spot + price_ml ensemble | multi-horizon paths are model estimates (Monte Carlo + rule-based signals), not quoted forward prices |
+| `/api/market/seasonal` | degraded | 200 | SSB Table 03024 (seasonal medians) | seasonal expectation derived from historical SSB medians — a comparison baseline, not a quoted price |
 | `/api/ml/chronos/supply-forecast` | degraded | 200 | Amazon Chronos zero-shot | model unavailable — seasonal-naive fallback used (requested: Amazon Chronos zero-shot) |
 | `/api/ml/moirai/model-comparison` | degraded | 200 | Salesforce MOIRAI-2 zero-shot | members computed from seasonal-naive fallback: moirai |
 | `/api/ml/moirai/price-forecast` | degraded | 200 |  |  |
@@ -69,7 +73,6 @@
 | `/api/competitiveness/origin-index` | error | None |  | timeout |
 | `/api/compliance/asc/readiness-summary` | error | None |  | timeout |
 | `/api/disease/resistance-map` | error | None |  | timeout |
-| `/api/disease/treatments` | error | None |  | timeout |
 | `/api/esg/scores` | error | None |  | timeout |
 | `/api/esg/summary` | error | None |  | timeout |
 | `/api/farm-graph/clusters` | error | None |  | timeout |
@@ -80,10 +83,8 @@
 | `/api/federated/cohorts` | error | None |  | timeout |
 | `/api/feed-cost/alerts` | error | None |  | timeout |
 | `/api/feed-cost/composite-index` | error | None |  | timeout |
-| `/api/feed-cost/historical-prices` | error | None |  | timeout |
 | `/api/feed-cost/history` | error | None |  | timeout |
 | `/api/feed-cost/latest` | error | None |  | timeout |
-| `/api/feed-cost/official-history` | error | None |  | timeout |
 | `/api/feed-supply-chain/live` | error | None |  | timeout |
 | `/api/global-supply` | error | None |  | timeout |
 | `/api/iceland/exports` | error | None |  | timeout |
@@ -94,25 +95,24 @@
 | `/api/leaders/top100` | error | None |  | timeout |
 | `/api/leaders/top30` | error | None |  | timeout |
 | `/api/lice/summary` | error | None |  | timeout |
+| `/api/localities/search` | error | None |  | timeout |
 | `/api/macro/snapshot` | error | None |  | timeout |
 | `/api/market/biomass` | error | None |  | timeout |
 | `/api/market/equity-prices` | error | None |  | timeout |
 | `/api/market/ssb-seasonal` | error | None |  | timeout |
-| `/api/notifications/alerts` | error | None |  | timeout |
 | `/api/notifications/alerts/rules/evaluate` | error | None |  | timeout |
 | `/api/notifications/history` | error | None |  | timeout |
-| `/api/satellite/pace/hab-risk` | error | None |  | timeout |
-| `/api/satellite/products` | error | None |  | timeout |
-| `/api/satellite/status` | error | None |  | timeout |
 | `/api/scenarios/list` | error | None |  | timeout |
 | `/api/scotland/farms` | error | None |  | timeout |
 | `/api/scotland/snapshot` | error | None |  | timeout |
 | `/api/scotland/water-quality` | error | None |  | timeout |
+| `/api/self-improvement/proposals` | error | None |  | timeout |
 | `/api/farms/portfolio` | http_422 | 422 |  |  |
 | `/api/harvest/simulate` | http_422 | 422 |  |  |
 | `/api/ocean/norkyst/current` | http_422 | 422 |  |  |
 | `/api/ocean/temperature` | http_422 | 422 |  |  |
 | `/api/satellite/pace/chlorophyll` | http_422 | 422 |  |  |
+| `/api/satellite/pace/hab-risk` | http_422 | 422 |  |  |
 | `/api/gnn/predict-all` | http_5xx | 503 |  |  |
 | `/api/market/price-outlook/explain` | http_5xx | 503 |  |  |
 | `/api/ais/harvest-intelligence` | no_provenance | 200 |  |  |
@@ -140,6 +140,8 @@
 | `/api/farms/offshore` | no_provenance | 200 |  |  |
 | `/api/federated/privacy-info` | no_provenance | 200 |  |  |
 | `/api/feed-cost/enhanced-anchovy` | no_provenance | 200 |  |  |
+| `/api/feed-cost/historical-prices` | no_provenance | 200 |  |  |
+| `/api/feed-cost/official-history` | no_provenance | 200 |  |  |
 | `/api/feed-cost/peru-anchovy` | no_provenance | 200 |  |  |
 | `/api/feed-supply-chain/eudr-risk` | no_provenance | 200 |  |  |
 | `/api/feed-supply-chain/scenarios` | no_provenance | 200 |  |  |
@@ -153,19 +155,9 @@
 | `/api/investor/event-impact/feed-shock` | no_provenance | 200 |  |  |
 | `/api/investor/event-impact/isa` | no_provenance | 200 |  |  |
 | `/api/investor/event-impact/traffic-light` | no_provenance | 200 |  |  |
-| `/api/localities/search` | no_provenance | 200 |  |  |
-| `/api/market/export-destinations` | no_provenance | 200 |  |  |
-| `/api/market/exports` | no_provenance | 200 |  |  |
 | `/api/market/feed-status` | no_provenance | 200 |  |  |
-| `/api/market/forward-curve` | no_provenance | 200 |  |  |
-| `/api/market/futures-curve` | no_provenance | 200 |  |  |
 | `/api/market/hedger-signals` | no_provenance | 200 |  |  |
 | `/api/market/prediction-history` | no_provenance | 200 |  |  |
-| `/api/market/price-forecast` | no_provenance | 200 |  |  |
-| `/api/market/price-outlook/multi` | no_provenance | 200 |  |  |
-| `/api/market/seasonal` | no_provenance | 200 |  |  |
-| `/api/market/spot-price` | no_provenance | 200 |  |  |
-| `/api/market/ssb-price-history` | no_provenance | 200 |  |  |
 | `/api/metrics` | no_provenance | 200 |  |  |
 | `/api/metrics/prometheus` | no_provenance | 200 |  |  |
 | `/api/notifications/alerts/rules` | no_provenance | 200 |  |  |
@@ -194,7 +186,8 @@
 | `/api/regulatory/traffic-light/all-scenarios` | no_provenance | 200 |  |  |
 | `/api/regulatory/traffic-light/simulate` | no_provenance | 200 |  |  |
 | `/api/satellite/anomalies` | no_provenance | 200 |  |  |
-| `/api/self-improvement/proposals` | no_provenance | 200 |  |  |
+| `/api/satellite/products` | no_provenance | 200 |  |  |
+| `/api/satellite/status` | no_provenance | 200 |  |  |
 | `/api/sentiment/articles` | no_provenance | 200 |  |  |
 | `/api/sentiment/poll` | no_provenance | 200 |  |  |
 | `/api/sentiment/signals` | no_provenance | 200 |  |  |
@@ -228,6 +221,7 @@
 | `/api/disease/by-company` | Mattilsynet + WOAH + Sernapesca |
 | `/api/disease/norway` | Mattilsynet + WOAH + Sernapesca |
 | `/api/disease/norway/geo` | Mattilsynet + WOAH + Sernapesca |
+| `/api/disease/treatments` | Mattilsynet + WOAH + Sernapesca |
 | `/api/efficacy/benchmarks` | Crowdsourced treatment outcomes (anonymized) |
 | `/api/efficacy/by-region` | Crowdsourced outcomes, anonymized to PA level |
 | `/api/efficacy/by-season` | Crowdsourced outcomes, seasonal analysis |
@@ -235,9 +229,15 @@
 | `/api/efficacy/learned-profiles` | Crowdsourced treatment outcomes (learned profiles) |
 | `/api/gnn/status` | Lice GNN (PyTorch Geometric) |
 | `/api/market/eumofa/trade-summary` | EUMOFA + Eurostat trade data + SSB Norwegian exports |
+| `/api/market/export-destinations` | SSB Table 08799 (Statistics Norway) |
+| `/api/market/exports` | SSB export statistics (Statistics Norway) |
+| `/api/market/futures-curve` | SSB Table 03024 (Statistics Norway) |
+| `/api/market/spot-price` | SSB Table 03024 (Statistics Norway) |
+| `/api/market/ssb-price-history` | SSB Table 03024 (Statistics Norway) |
 | `/api/ml/chronos/model-comparison` | Amazon Chronos zero-shot |
 | `/api/ml/chronos/price-forecast` | Amazon Chronos zero-shot |
 | `/api/ml/ensemble/price-forecast` | Ensemble: Chronos |
+| `/api/notifications/alerts` | BarentsWatch + SSB + MET.no |
 | `/api/regulatory/traffic-light/current` | BarentsWatch lice data + PA classification rules |
 | `/api/supply-forecast` | Smolt model + Fiskeridirektoratet + BarentsWatch |
 | `/api/supply/cohort-timeline` | Smolt model + Fiskeridirektoratet + BarentsWatch |

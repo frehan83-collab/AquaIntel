@@ -14,6 +14,8 @@ import datetime as dt
 import numpy as np
 import structlog
 
+from core.market.data_provenance import DataProvenance
+
 log = structlog.get_logger(__name__)
 
 
@@ -70,6 +72,9 @@ class PriceFeedHub:
                 "source": "unavailable",
                 "price_nok_kg": None,
                 "error": "No price data available",
+                "data_provenance": DataProvenance.degraded(
+                    "SSB Table 03024", "no SSB price rows available", confidence=0.1
+                ).to_dict(),
             }
 
         latest = prices[-1] if prices else {}
@@ -80,6 +85,9 @@ class PriceFeedHub:
             "week": latest.get("week"),
             "volume_tonnes": latest.get("volume_tonnes"),
             "fetched_at": dt.datetime.now(dt.UTC).isoformat(),
+            "data_provenance": DataProvenance.live(
+                "SSB Table 03024 (Statistics Norway)", confidence=0.9
+            ).to_dict(),
         }
 
     async def get_forward_curve(self, months: int = 12) -> dict:
@@ -89,12 +97,23 @@ class PriceFeedHub:
         """
         prices = await self._get_ssb_prices()
         if len(prices) < 52:
-            return {"error": "Insufficient price history for forward curve", "months": months}
+            return {
+                "error": "Insufficient price history for forward curve",
+                "months": months,
+                "data_provenance": DataProvenance.degraded(
+                    "SSB Table 03024", "fewer than 52 weeks of history", confidence=0.1
+                ).to_dict(),
+            }
 
         # Extract price values
         price_vals = [p.get("price_nok_kg", 0) for p in prices if p.get("price_nok_kg")]
         if not price_vals:
-            return {"error": "No valid price data"}
+            return {
+                "error": "No valid price data",
+                "data_provenance": DataProvenance.degraded(
+                    "SSB Table 03024", "no usable price values", confidence=0.1
+                ).to_dict(),
+            }
 
         current_spot = price_vals[-1]
 
@@ -143,6 +162,14 @@ class PriceFeedHub:
             "annual_average_nok": round(annual_avg, 2),
             "curve": curve,
             "generated_at": now.isoformat(),
+            "data_provenance": DataProvenance.degraded(
+                "SSB Table 03024 (synthesized)",
+                reason=(
+                    "forward curve is synthesized from historical seasonal factors applied "
+                    "to the current SSB spot — not a traded forward price"
+                ),
+                confidence=0.4,
+            ).to_dict(),
         }
 
     async def list_feeds(self) -> dict:

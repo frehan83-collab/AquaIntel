@@ -13,6 +13,7 @@ from sqlalchemy import select, func
 
 from core.async_db import get_async_session
 from core.cache import cached
+from core.market.data_provenance import DataProvenance, from_records
 from core.models import LiceRecord, PricePrediction, Signal
 from core.schemas import PriceOutlookResponse
 
@@ -86,6 +87,14 @@ async def price_forecast(horizon: int = 4):
             "combined": forecast.combined_signal,
         },
         "rationale": forecast.rationale,
+        "data_provenance": DataProvenance.degraded(
+            "SSB Table 03024 spot + salmon_price model",
+            reason=(
+                "inputs are the SSB spot and the local lice database; the price path "
+                "itself is a model estimate, not a quoted market price"
+            ),
+            confidence=0.5 if real_spot else 0.2,
+        ).to_dict(),
     }
 
 
@@ -93,7 +102,20 @@ async def price_forecast(horizon: int = 4):
 async def seasonal_analysis():
     """Compare current price to seasonal expectation."""
     from core.market.salmon_price import price_engine
-    return price_engine.get_seasonal_analysis()
+    result = price_engine.get_seasonal_analysis()
+    if isinstance(result, dict):
+        result.setdefault(
+            "data_provenance",
+            DataProvenance.degraded(
+                "SSB Table 03024 (seasonal medians)",
+                reason=(
+                    "seasonal expectation derived from historical SSB medians — a "
+                    "comparison baseline, not a quoted price"
+                ),
+                confidence=0.5,
+            ).to_dict(),
+        )
+    return result
 
 
 @router.get("/biomass")
@@ -128,6 +150,16 @@ async def export_data():
         summary = await ssb.get_export_summary()
     finally:
         await ssb.close()
+    if isinstance(summary, dict):
+        summary.setdefault(
+            "data_provenance",
+            from_records(
+                [summary] if summary else [],
+                live_source="SSB export statistics (Statistics Norway)",
+                degraded_source="SSB export statistics",
+                reason="SSB returned an empty export summary",
+            ).to_dict(),
+        )
     return summary
 
 
@@ -441,6 +473,14 @@ async def price_outlook_multi():
         "current_spot_nok": round(spot, 1),
         "generated_at": dt.datetime.now(dt.UTC).isoformat(),
         "horizons": results,
+        "data_provenance": DataProvenance.degraded(
+            "SSB Table 03024 spot + price_ml ensemble",
+            reason=(
+                "multi-horizon paths are model estimates (Monte Carlo + rule-based "
+                "signals), not quoted forward prices"
+            ),
+            confidence=0.5 if spot > 0 and spot != 75.0 else 0.2,
+        ).to_dict(),
     }
 
 
@@ -455,6 +495,12 @@ async def futures_curve():
         "source": "SSB table 03024 (Statistics Norway)",
         "license": "CC BY 4.0",
         "history": history,
+        "data_provenance": from_records(
+            history,
+            live_source="SSB Table 03024 (Statistics Norway)",
+            degraded_source="SSB Table 03024",
+            reason="SSB returned no price rows",
+        ).to_dict(),
     }
 
 
@@ -525,6 +571,12 @@ async def ssb_price_history(weeks: int = 52):
         "source": "SSB table 03024 (Statistics Norway)",
         "license": "CC BY 4.0",
         "history": history,
+        "data_provenance": from_records(
+            history,
+            live_source="SSB Table 03024 (Statistics Norway)",
+            degraded_source="SSB Table 03024",
+            reason="SSB returned no price rows",
+        ).to_dict(),
     }
 
 
@@ -546,6 +598,12 @@ async def ssb_seasonal_analysis():
         "deviation_pct": round(deviation_pct, 1),
         "data_years": f"2020-{dt.datetime.now(dt.UTC).year}",
         "source": "SSB table 03024",
+        "data_provenance": from_records(
+            pattern,
+            live_source="SSB Table 03024 (Statistics Norway)",
+            degraded_source="SSB Table 03024",
+            reason="SSB returned no rows to compute a seasonal pattern from",
+        ).to_dict(),
     }
 
 
@@ -566,6 +624,12 @@ async def export_destinations(months: int = 12):
         "monthly_series": series,
         "source": "SSB table 08799 (Statistics Norway)",
         "license": "CC BY 4.0",
+        "data_provenance": from_records(
+            breakdown,
+            live_source="SSB Table 08799 (Statistics Norway)",
+            degraded_source="SSB Table 08799",
+            reason="SSB returned no destination rows",
+        ).to_dict(),
     }
 
 

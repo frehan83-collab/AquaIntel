@@ -53,6 +53,23 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 - `/market` gains a Biomass Supply Tracker card that labels its derived figures
   as estimates and renders the backend's own provenance reason.
 
+### Changed (provenance coverage sweep — AGENTS.md rule 3)
+- The liveness audit found **90 routes returning data with no provenance envelope
+  at all**. This increment fixes the highest-value cluster: **10 `/api/market/*`
+  routes** (`price-forecast`, `seasonal`, `exports`, `price-outlook/multi`,
+  `futures-curve`, `ssb-price-history`, `ssb-seasonal`, `export-destinations`,
+  `spot-price`, `forward-curve`) and the shared `core/market/price_feed_hub.py`
+  they call. Live is claimed only when SSB actually returned rows
+  (`DataProvenance.from_records`); model paths (forecasts, synthesized forward
+  curves, seasonal baselines) are `degraded` with an explicit reason.
+- `not covered here`: `hedger-signals` / `prediction-history` return bare arrays
+  pinned by e2e contracts (`api-contracts.spec.ts`), so adding an envelope needs
+  a coordinated contract change; `feed-status`, `/api/health`, `/api/metrics`,
+  `/api/auth/*`, `/api/tiers`, `/api/disclaimer` are plumbing/config where a
+  provenance envelope is not meaningful. The remaining backlog is listed in
+  `docs/REPORT_LIVENESS.md`.
+
+
 ### Changed (docs truth pass)
 - `PROJECT_STATUS.md`: measured counts (322 operations / 316 unique paths, 762
   tests) and real frontend versions (Next 16.4, React 19.1).
