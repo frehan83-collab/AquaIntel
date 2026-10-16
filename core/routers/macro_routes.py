@@ -202,4 +202,15 @@ async def contracts_portfolio(request: Request):
 @router.get("/api/contracts/hedge-signals")
 async def contracts_hedge_signals():
     from core.market.contract_risk_engine import contract_risk_engine
-    return await contract_risk_engine.get_market_context()
+    from core.market.data_provenance import DataProvenance
+    result = await contract_risk_engine.get_market_context()
+    if isinstance(result, dict):
+        result.setdefault("data_provenance", DataProvenance.degraded(
+            "Contract risk engine (forward curve + spot basis model)",
+            reason=(
+                "derived contract-risk context over the forward curve — a model "
+                "estimate, not a quoted contract price"
+            ),
+            confidence=0.4,
+        ).to_dict())
+    return result

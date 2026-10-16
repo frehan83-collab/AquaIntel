@@ -92,8 +92,19 @@ async def farmer_advisory(locality_no: int):
 @router.get("/api/farm-graph/summary")
 async def farm_graph_summary():
     """Get farm network graph statistics."""
+    from core.market.data_provenance import DataProvenance
     from core.market.farm_graph import farm_graph
-    return await farm_graph.get_graph_summary()
+    result = await farm_graph.get_graph_summary()
+    if isinstance(result, dict):
+        result.setdefault("data_provenance", DataProvenance.degraded(
+            "Farm network graph (BarentsWatch lice + locality registry)",
+            reason=(
+                "derived proximity/network graph over registered localities — a "
+                "model artefact, not a reported figure"
+            ),
+            confidence=0.5,
+        ).to_dict())
+    return result
 
 
 @router.get("/api/farm-graph/clusters")
@@ -127,8 +138,19 @@ async def farm_graph_neighbors(locality_no: int):
 @router.get("/api/farm-graph/map-data")
 async def farm_graph_map():
     """Get full map visualization data (nodes + edges + clusters)."""
+    from core.market.data_provenance import DataProvenance
     from core.market.farm_graph import farm_graph
-    return await farm_graph.get_map_data()
+    result = await farm_graph.get_map_data()
+    if isinstance(result, dict):
+        result.setdefault("data_provenance", DataProvenance.degraded(
+            "Farm network graph (BarentsWatch lice + locality registry)",
+            reason=(
+                "derived proximity/network graph over registered localities — a "
+                "model artefact, not a reported figure"
+            ),
+            confidence=0.5,
+        ).to_dict())
+    return result
 
 
 # ── Harvest Optimizer ────────────────────────────────────────────────

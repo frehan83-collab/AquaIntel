@@ -302,8 +302,20 @@ async def anomaly_scores():
 async def anomaly_alerts():
     """High-severity anomaly alerts only."""
     from core.market.anomaly_engine import anomaly_engine
+    from core.market.data_provenance import DataProvenance
     await anomaly_engine.compute()
-    return {"alerts": anomaly_engine.get_alerts()}
+    alerts = anomaly_engine.get_alerts()
+    return {
+        "alerts": alerts,
+        "data_provenance": DataProvenance.degraded(
+            "BarentsWatch lice + PyOD anomaly detection",
+            reason=(
+                "detector output — derived from the current lice series, not a "
+                "reported regulatory finding"
+            ),
+            confidence=0.5,
+        ).to_dict(),
+    }
 
 
 # ── Morning Brief ────────────────────────────────────────────────────
@@ -327,6 +339,7 @@ async def morning_brief():
 @router.get("/api/self-improvement/proposals")
 async def self_improvement_proposals():
     """Self-Improvement Agent proposals and accuracy metrics."""
+    from core.market.data_provenance import DataProvenance
     async with get_async_session() as s:
         logs = (await s.execute(
             select(AuditLog)
@@ -343,6 +356,14 @@ async def self_improvement_proposals():
             }
             for l in logs
         ],
+        "data_provenance": DataProvenance.degraded(
+            "Internal self-improvement audit log",
+            reason=(
+                "proposals are derived from the platform's own audit trail — "
+                "internal model suggestions, not external findings"
+            ),
+            confidence=0.4,
+        ).to_dict(),
     }
 
 

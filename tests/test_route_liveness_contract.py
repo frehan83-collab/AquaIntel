@@ -142,6 +142,18 @@ def test_efficacy_routes_work_on_sqlite(client, path):
     "/api/investor/event-impact/traffic-light",
     "/api/investor/event-impact/feed-shock",
     "/api/ocean/forecast",
+    "/api/farm-graph/summary",
+    "/api/farm-graph/map-data",
+    "/api/ras/summary",
+    "/api/ras/timeline",
+    "/api/regulatory/traffic-light/simulate",
+    "/api/regulatory/traffic-light/all-scenarios",
+    "/api/climate/projections",
+    "/api/contracts/hedge-signals",
+    "/api/twin/status",
+    "/api/feed-cost/official-history",
+    "/api/anomaly/alerts",
+    "/api/self-improvement/proposals",
 ])
 def test_intel_routes_carry_provenance(client, path):
     """Rule 3: every number surfaced to users must be traceable. These routes

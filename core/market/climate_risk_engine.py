@@ -417,13 +417,13 @@ class ClimateRiskEngine:
                 q = (
                     select(
                         func.strftime("%Y-%m", BloomRiskAssessment.assessed_at).label("period"),
-                        func.avg(BloomRiskAssessment.sst),
+                        func.avg(BloomRiskAssessment.sst_value),
                         func.count(BloomRiskAssessment.id),
                     )
                     .join(Locality, BloomRiskAssessment.locality_no == Locality.locality_no)
                     .where(
                         Locality.production_area == pa,
-                        BloomRiskAssessment.sst.isnot(None),
+                        BloomRiskAssessment.sst_value.isnot(None),
                     )
                     .group_by("period")
                     .order_by("period")

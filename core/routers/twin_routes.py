@@ -79,8 +79,15 @@ async def twin_sync():
 @router.get("/api/twin/status")
 async def twin_status():
     """Get current digital twin state."""
+    from core.market.data_provenance import DataProvenance
     from core.twin.digital_twin import digital_twin
-    return digital_twin.get_summary()
+    result = digital_twin.get_summary()
+    if isinstance(result, dict):
+        result.setdefault("data_provenance", DataProvenance.simulated(
+            "digital twin state is a simulation of farm cohorts, not measured "
+            "farm data — never treat it as reported biomass or mortality"
+        ).to_dict())
+    return result
 
 
 class SimulationRequest(BaseModel):

@@ -69,7 +69,18 @@ async def climate_pa(pa: int):
 @router.get("/api/climate/projections")
 async def climate_projections(pa: int = 3, years: int = 5):
     from core.market.climate_risk_engine import climate_risk_engine
-    return await climate_risk_engine.get_projections(pa, years)
+    from core.market.data_provenance import DataProvenance
+    result = await climate_risk_engine.get_projections(pa, years)
+    if isinstance(result, dict):
+        result.setdefault("data_provenance", DataProvenance.degraded(
+            "Climate risk engine (CMIP-style projection over MET.no baseline)",
+            reason=(
+                "forward projection over a warming scenario — a modelled estimate, "
+                "not an observed measurement"
+            ),
+            confidence=0.4,
+        ).to_dict())
+    return result
 
 
 @router.get("/api/climate/heatwave-risk")
@@ -130,11 +141,33 @@ async def traffic_light_current():
 
 @router.get("/api/regulatory/traffic-light/simulate")
 async def traffic_light_simulate(pa: int = 3, color: str = "red"):
+    from core.market.data_provenance import DataProvenance
     from core.market.traffic_light_simulator import traffic_light_simulator
-    return await traffic_light_simulator.simulate_color_change(pa, color)
+    result = await traffic_light_simulator.simulate_color_change(pa, color)
+    if isinstance(result, dict):
+        result.setdefault("data_provenance", DataProvenance.degraded(
+            "Traffic-light simulator (hypothetical regulatory scenario)",
+            reason=(
+                "modelled effect of a counterfactual colour change — a scenario "
+                "estimate, not an announced regulatory decision"
+            ),
+            confidence=0.4,
+        ).to_dict())
+    return result
 
 
 @router.get("/api/regulatory/traffic-light/all-scenarios")
 async def traffic_light_all_scenarios():
+    from core.market.data_provenance import DataProvenance
     from core.market.traffic_light_simulator import traffic_light_simulator
-    return await traffic_light_simulator.simulate_all_pas()
+    result = await traffic_light_simulator.simulate_all_pas()
+    if isinstance(result, dict):
+        result.setdefault("data_provenance", DataProvenance.degraded(
+            "Traffic-light simulator (hypothetical regulatory scenario)",
+            reason=(
+                "modelled effects of counterfactual colour changes — scenario "
+                "estimates, not announced regulatory decisions"
+            ),
+            confidence=0.4,
+        ).to_dict())
+    return result

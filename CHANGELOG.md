@@ -102,6 +102,26 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
   (client-status metadata, where a provenance envelope would be meaningless).
 - Measured: `no_provenance` 72 → 65, `live` 46 → 53, `degraded` 27 → 30.
 
+### Changed (provenance sweep, increment 4 — the remaining additive half + a latent bug)
+- 12 more dict-returning routes carry provenance, closing the additive half of
+  the backlog: `/api/farm-graph/{summary,map-data}`, `/api/ras/{summary,timeline}`,
+  `/api/regulatory/traffic-light/{simulate,all-scenarios}`, `/api/climate/projections`,
+  `/api/contracts/hedge-signals`, `/api/twin/status`, `/api/feed-cost/official-history`,
+  `/api/anomaly/alerts`, `/api/self-improvement/proposals`. Model artefacts
+  (networks, projections, scenarios, contract risk, detectors) are `degraded` with
+  explicit reasons; the **digital twin** is honestly `simulated` (it is a
+  simulation of farm cohorts, not measured data); official Fiskeridirektoratet
+  series use `from_records`.
+- **Bug found while probing**: `core/market/climate_risk_engine.py` queried
+  `BloomRiskAssessment.sst`, but the column is `sst_value` — every climate
+  projection silently degraded. Fixed.
+- Measured: `no_provenance` 65 → **50**, `degraded` 30 → 42, `simulated` 1.
+  (`live` reads 53 → 48 only because 60 rows timed out this run vs 52 — network
+  variance, not a regression.)
+- Known remaining dialect gap (documented, not fixed): the same function groups by
+  SQLite-only `func.strftime("%Y-%m", ...)`, which will not compile on the
+  PostgreSQL production target.
+
 ### Changed (docs truth pass)
 - `PROJECT_STATUS.md`: measured counts (322 operations / 316 unique paths, 762
   tests) and real frontend versions (Next 16.4, React 19.1).

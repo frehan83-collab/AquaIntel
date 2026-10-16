@@ -82,6 +82,17 @@ async def feed_cost_alerts():
 
 @router.get("/api/feed-cost/official-history")
 async def feed_cost_official_history():
+    from core.market.data_provenance import from_records
     from core.market.feed_cost_engine import FeedCostEngine
-    return {"source": "Fiskeridirektoratet lonnsomhetsundersokelse 2008-2024",
-            "unit": "NOK/kg (round weight)", "data": FeedCostEngine.get_official_cost_history()}
+    history = FeedCostEngine.get_official_cost_history()
+    return {
+        "source": "Fiskeridirektoratet lonnsomhetsundersokelse 2008-2024",
+        "unit": "NOK/kg (round weight)",
+        "data": history,
+        "data_provenance": from_records(
+            history,
+            live_source="Fiskeridirektoratet lonnsomhetsundersokelse 2008-2024",
+            degraded_source="Fiskeridirektoratet lonnsomhetsundersokelse",
+            reason="official feed-cost series not loaded",
+        ).to_dict(),
+    }
