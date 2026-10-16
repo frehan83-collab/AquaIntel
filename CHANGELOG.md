@@ -5,7 +5,44 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
-### Step 6 — design-partner infrastructure (paid 90-day pilots)
+### Step 7 — legal sprint foundations (as code, not as promises)
+- **Data-licence register** `core/legal/data_licenses.py`: one entry per source with
+  `allowed_uses`, `resale_allowed`, `attribution_required`, `ai_training_allowed`
+  and named risks. Eight sources registered (Fiskeridir lice, SSB prices, Copernicus,
+  NASA MUR SST, Fish Pool/Euronext futures, producer-contributed data, EUDR
+  submissions, research literature).
+- **It refuses to invent legal conclusions**: every entry defaults to
+  `classification_status="pending_legal_review"`, and `check_use()` returns
+  `allowed: false` (with `requires_legal_signoff: true`) for any use that has not
+  been signed off — even when the licence would permit it. `compliance_summary()`
+  therefore reports the honest state: **8 registered, 0 cleared**, and names exactly
+  which sources may not be resold (that list is what blocks the Data & Assurance
+  tier; `fish_pool_futures` is flagged as blocking any public futures display).
+- **Signals-vs-advice boundary** published as structured data with a reusable
+  `SIGNAL_DISCLOSER` string for every signal surface, explicit "what we are not"
+  clauses and jurisdiction notes.
+- **EU AI Act transparency notes** for the three AI systems actually in use
+  (forecasting, RAG assistant, anomaly scoring) with per-system transparency,
+  human-oversight and limitation-disclosure fields, an honest
+  "limited-risk — pending legal confirmation" classification, and the prohibited
+  practices we do not use.
+- **DPA/GDPR scaffold** (roles, data categories, sub-processors, retention,
+  transfers, rights, breach, AI-Act annex) plus the open questions for counsel.
+- **Performance-fee deferral as an enforced flag** (`core/legal/performance_fee.py`,
+  `FISHINTEL_PERFORMANCE_FEE_ENABLED` default off): the five conditions to enable it,
+  the three things prohibited while deferred, and a test asserting **no plan
+  advertises a performance fee**.
+- **New endpoints:** `/api/legal/data-licenses` (+ `/{source}`), `/use-check`,
+  `/advice-boundary`, `/ai-act`, `/performance-fee`.
+- **Tests:** `tests/test_legal.py` (18) — register completeness (no duplicate keys,
+  every use in the vocabulary, and every source behind a published index traceable
+  to a licence entry), nothing cleared without a reviewer, uncleared-but-permitted
+  uses refused, unknown source/use handling, resale conflict visibility, the
+  deferral default and switch, and all endpoint shapes.
+- Docs: `docs/ADVICE_BOUNDARY.md` (boundary, AI Act, DPA template, licences,
+  performance fee, and what still needs a human).
+
+
 - **Pilots are real entitlements, not flags.** `POST /api/admin/partners/{id}/onboard`
   grants a canonical plan through `core.billing.entitlement_sync.activate()` for a
   90-day window, so what a design partner sees is exactly what a paying customer

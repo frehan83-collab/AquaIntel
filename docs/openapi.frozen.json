@@ -7454,6 +7454,177 @@
         ]
       }
     },
+    "/api/legal/advice-boundary": {
+      "get": {
+        "description": "The signals-vs-advice boundary and the mandatory discloser string.",
+        "operationId": "advice_boundary_api_legal_advice_boundary_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Advice Boundary",
+        "tags": [
+          "legal"
+        ]
+      }
+    },
+    "/api/legal/ai-act": {
+      "get": {
+        "description": "EU AI Act transparency notes for the AI systems actually in use.",
+        "operationId": "ai_act_api_legal_ai_act_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Ai Act",
+        "tags": [
+          "legal"
+        ]
+      }
+    },
+    "/api/legal/data-licenses": {
+      "get": {
+        "description": "The data-license register: allowed uses and resale per source.",
+        "operationId": "data_licenses_api_legal_data_licenses_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Data Licenses",
+        "tags": [
+          "legal"
+        ]
+      }
+    },
+    "/api/legal/data-licenses/{source_key}": {
+      "get": {
+        "description": "One source's licence terms.",
+        "operationId": "data_license_api_legal_data_licenses__source_key__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_key",
+            "required": true,
+            "schema": {
+              "title": "Source Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Data License",
+        "tags": [
+          "legal"
+        ]
+      }
+    },
+    "/api/legal/performance-fee": {
+      "get": {
+        "description": "Performance-fee status \u2014 deferred, with the conditions to enable it.",
+        "operationId": "performance_fee_api_legal_performance_fee_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Performance Fee",
+        "tags": [
+          "legal"
+        ]
+      }
+    },
+    "/api/legal/use-check": {
+      "get": {
+        "description": "May we use `source` for `use`? (uncleared uses are refused)",
+        "operationId": "use_check_api_legal_use_check_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "source",
+            "required": true,
+            "schema": {
+              "title": "Source",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "use",
+            "required": true,
+            "schema": {
+              "title": "Use",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Use Check",
+        "tags": [
+          "legal"
+        ]
+      }
+    },
     "/api/lice/summary": {
       "get": {
         "description": "Get latest aggregated lice summary with std dev, threshold counts, and PA breakdown.",

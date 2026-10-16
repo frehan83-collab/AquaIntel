@@ -443,6 +443,20 @@ added `tests/test_migrations.py`.
   datetimes) — fixed.
 - **Gates:** `test_partner_pilots.py` 18 passed; ruff clean.
 
+## Commercial hardening — Step 7 (legal foundations) — 2026-10-16
+
+- **Shipped** the data-licence register (`core/legal/data_licenses.py`, 8 sources)
+  with an enforced honesty rule: everything defaults to `pending_legal_review` and
+  `check_use()` refuses uncleared uses even when the licence permits them. Honest
+  state exposed by the API: **8 registered, 0 cleared**; `fish_pool_futures` flagged
+  as blocking any public futures display.
+- **Signals-vs-advice boundary**, **EU AI Act transparency notes** (3 systems) and a
+  **DPA/GDPR scaffold** published as structured data at `/api/legal/*`.
+- **Performance fee deferred and enforced**: default off, five conditions to enable,
+  and a test asserting no plan advertises one.
+- **Gates:** `test_legal.py` 18 passed; ruff clean.
+
+
 
 
 

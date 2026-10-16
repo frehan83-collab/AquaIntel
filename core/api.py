@@ -349,6 +349,7 @@ from core.routers.indices_routes import router as indices_router
 from core.routers.accuracy_routes import router as accuracy_router
 from core.routers.freshness_routes import router as freshness_router
 from core.routers.partner_routes import router as partner_router
+from core.routers.legal_routes import router as legal_router
 from core.auth import require_admin
 app.include_router(auth_router)
 app.include_router(entitlements_router)
@@ -356,6 +357,7 @@ app.include_router(indices_router)
 app.include_router(accuracy_router)
 app.include_router(freshness_router)
 app.include_router(partner_router)
+app.include_router(legal_router)
 app.include_router(billing_router)
 app.include_router(disease_router)
 app.include_router(lice_router)
