@@ -48,6 +48,7 @@ class BaseAgent(ABC):
                 await self.tick()
                 self.last_run = dt.datetime.now(dt.UTC)
                 self.run_count += 1
+                self.status = AgentStatus.RUNNING  # recovered after an earlier failed tick
             except Exception as exc:
                 self.error_count += 1
                 self.status = AgentStatus.ERROR

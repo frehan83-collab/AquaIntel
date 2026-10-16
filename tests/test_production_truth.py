@@ -615,3 +615,135 @@ class TestLiceLineage:
             await engine.dispose()
 
         asyncio.run(run())
+
+
+class TestIndexPublicationCheck:
+    """WS-2: the verifier asserts the weekly index publication actually ran."""
+
+    def test_verifier_reports_whether_the_current_week_is_published(self, monkeypatch):
+        import asyncio
+
+        from core.market import index_publication as pub
+
+        verdicts = asyncio.run(pt.check_index_publication())
+        verdict = _status(verdicts, "index_publication_current_week")
+        state = asyncio.run(pub.status())
+        if state["current_week_published"]:
+            expected = "ok"
+        elif (
+            state["within_grace"]
+            and not state["reason"]
+            and all(state["indices"][c]["weeks_behind"] == 1 for c in state["missing"])
+        ):
+            expected = "info"  # a designed wait inside the grace, last week stored
+        else:
+            expected = "warn"
+        assert verdict["status"] == expected, (verdict, state)
+        assert state["week"] in verdict["detail"]
+
+        def stub(**overrides):
+            base = {
+                "week": "2026-W42", "version": "1.0.0", "current_week_published": False,
+                "missing": ["AI-STI"], "indices": {}, "interval_ok": True,
+                "skipped_weeks": [], "degraded_current": [], "reason": None,
+                "within_grace": False, "hours_into_week": 100.0, "readiness_grace_hours": 72,
+            }
+            base.update(overrides)
+
+            async def _status(now=None):
+                return base
+
+            return _status
+
+        # negative path, with the store's own reason surfaced
+        monkeypatch.setattr(pub, "status", stub(reason="index_observations unreadable: simulated"))
+        verdict = _status(asyncio.run(pt.check_index_publication()), "index_publication_current_week")
+        assert verdict["status"] == "warn", verdict
+        assert "2026-W42" in verdict["detail"] and "AI-STI" in verdict["detail"]
+        assert "simulated" in verdict["detail"]
+
+        # deterministic positive path, naming a degraded current week honestly
+        monkeypatch.setattr(
+            pub, "status", stub(current_week_published=True, missing=[], degraded_current=["AI-LPI"])
+        )
+        verdicts = asyncio.run(pt.check_index_publication())
+        verdict = _status(verdicts, "index_publication_current_week")
+        assert verdict["status"] == "ok", verdict
+        assert "2026-W42" in verdict["detail"] and "AI-STI" in verdict["detail"]
+        assert "1.0.0" in verdict["detail"] and "degraded" in verdict["detail"]
+        assert _status(verdicts, "index_publication_interval")["status"] == "ok"
+
+        # a skipped week is its own named warning
+        monkeypatch.setattr(
+            pub, "status",
+            stub(current_week_published=True, missing=[], interval_ok=False,
+                 skipped_weeks=["AI-STI 2026-W41→2026-W43"]),
+        )
+        interval = _status(asyncio.run(pt.check_index_publication()), "index_publication_interval")
+        assert interval["status"] == "warn" and "2026-W43" in interval["detail"], interval
+
+        # within the readiness grace with last week stored: a designed wait, not a fault
+        monkeypatch.setattr(
+            pub, "status",
+            stub(within_grace=True, hours_into_week=5.0,
+                 indices={"AI-STI": {"weeks_behind": 1}, "AI-LPI": {"weeks_behind": 1}}),
+        )
+        waiting = _status(asyncio.run(pt.check_index_publication()), "index_publication_current_week")
+        assert waiting["status"] == "info" and "grace" in waiting["detail"], waiting
+
+        # one index stored this week, the other withheld inside the grace: a designed
+        # partial state — info naming the stored one, never "the agent has not run"
+        monkeypatch.setattr(
+            pub, "status",
+            stub(within_grace=True, hours_into_week=5.0, missing=["AI-LPI"],
+                 indices={"AI-STI": {"weeks_behind": 0, "current_week_published": True},
+                          "AI-LPI": {"weeks_behind": 1, "current_week_published": False}}),
+        )
+        partial = _status(asyncio.run(pt.check_index_publication()), "index_publication_current_week")
+        assert partial["status"] == "info", partial
+        assert "AI-STI" in partial["detail"] and "has not run" not in partial["detail"]
+
+        # past the grace with one index stored: the agent ran — say what is withheld
+        monkeypatch.setattr(
+            pub, "status",
+            stub(within_grace=False, hours_into_week=100.0, missing=["AI-LPI"],
+                 indices={"AI-STI": {"weeks_behind": 0, "current_week_published": True},
+                          "AI-LPI": {"weeks_behind": 1, "current_week_published": False}}),
+        )
+        withheld = _status(asyncio.run(pt.check_index_publication()), "index_publication_current_week")
+        assert withheld["status"] == "warn" and "has not run" not in withheld["detail"], withheld
+        assert "AI-LPI" in withheld["detail"]
+
+        # no history at this method version, inside the grace: the store cannot tell
+        # a waiting publisher from a stopped one — and must not claim either
+        monkeypatch.setattr(
+            pub, "status",
+            stub(within_grace=True, hours_into_week=5.0, version="1.1.0",
+                 missing=["AI-STI", "AI-LPI"],
+                 indices={"AI-STI": {"weeks_behind": None, "latest_week": None},
+                          "AI-LPI": {"weeks_behind": None, "latest_week": None}}),
+        )
+        fresh = _status(asyncio.run(pt.check_index_publication()), "index_publication_current_week")
+        assert fresh["status"] == "warn" and "cannot tell" in fresh["detail"], fresh
+        assert "has not run" not in fresh["detail"] and "1.1.0" in fresh["detail"]
+
+        # a future-dated row is a named anomaly, not a silent ok
+        monkeypatch.setattr(
+            pub, "status",
+            stub(current_week_published=True, missing=[],
+                 indices={"AI-STI": {"weeks_behind": -1, "store_ahead_of_clock": True},
+                          "AI-LPI": {"weeks_behind": 0, "store_ahead_of_clock": False}}),
+        )
+        ahead = _status(asyncio.run(pt.check_index_publication()), "index_publication_store_ahead_of_clock")
+        assert ahead["status"] == "warn" and "AI-STI" in ahead["detail"], ahead
+
+        # fewer than two observations: the interval is not measurable, never "ok"
+        monkeypatch.setattr(pub, "status", stub(current_week_published=True, missing=[], interval_ok=None))
+        unmeasured = _status(asyncio.run(pt.check_index_publication()), "index_publication_interval")
+        assert unmeasured["status"] == "info" and "not measurable" in unmeasured["detail"], unmeasured
+
+    def test_run_checks_includes_the_publication_check(self):
+        import asyncio
+
+        report = asyncio.run(pt.run_checks(include_freshness=False))
+        assert any(c["check"] == "index_publication_current_week" for c in report["checks"])

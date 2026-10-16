@@ -17,6 +17,7 @@ from typing import Iterable
 import structlog
 from sqlalchemy import inspect, text
 
+from core.market.index_publication import FRESHNESS_CADENCE_HOURS, PUBLISHER
 from core.source_lineage import (
     LICE_CADENCE_HOURS,
     LICE_SOURCE_LABEL,
@@ -147,8 +148,9 @@ SOURCES: tuple[SourceSpec, ...] = (
         label="Published indices (AI-STI / AI-LPI)",
         table="index_observations",
         upstream="core.market.indices",
-        expected_cadence_hours=168,
-        refresh_hint="publish_week() via POST /api/indices/publish or the weekly job",
+        # weekly publication plus one hourly tick of phase (WS-2: one definition)
+        expected_cadence_hours=FRESHNESS_CADENCE_HOURS,
+        refresh_hint=PUBLISHER,
         critical=True,
     ),
     SourceSpec(

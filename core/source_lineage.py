@@ -108,6 +108,20 @@ def parse_timestamp(value: Any) -> dt.datetime | None:
     return None
 
 
+def to_utc(now: dt.datetime | None) -> dt.datetime:
+    """Normalise an instant to aware UTC: naive is taken as UTC, aware is converted.
+
+    Every week label the platform stamps or compares (index observations, the
+    publication status, the readiness hour) goes through this one function, so a
+    non-UTC caller can never build one week and judge another.
+    """
+    if now is None:
+        return dt.datetime.now(dt.UTC)
+    if now.tzinfo is None:
+        return now.replace(tzinfo=dt.UTC)
+    return now.astimezone(dt.UTC)
+
+
 def _pa_list(values: Iterable[Any]) -> str:
     return ", ".join("?" if v is None else str(v) for v in values)
 

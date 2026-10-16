@@ -94,7 +94,50 @@ descriptive read of leading indicators — **not** a causal claim and not advice
 | `GET /api/indices/{code}/history?limit=` | public | Versioned, stored history |
 | `GET /api/indices/methodology` | public | The published method (this document, structured) |
 | `GET /api/indices/bio-price-weekly` | public | The weekly digest |
-| `POST /api/indices/publish` | **admin** | Compute + store both indices (weekly job) |
+| `POST /api/indices/publish` | **admin** | Compute + store this week's indices behind the same readiness gate as the agent; `force=true&reason=…` overrides the grace (never the null rule) and is audited |
+
+## Publication schedule (WS-2)
+
+Two paths write the weekly observation, and both go through the same gate:
+
+- the `index_publisher` agent (started with the other agents by
+  `python main.py --agents-only`, i.e. the production `agents` service) checks
+  hourly; when an index is not yet stored for the current ISO week at the current
+  method version it builds the digest (`build()`), gates it per index
+  (`index_publication.readiness()`) and stores the ready ones (`store_digest()`);
+- `POST /api/indices/publish` (admin) calls `publish_week()`, which applies the
+  same gate and answers 409 naming the withheld indices; `force=true` with a
+  `reason` overrides the grace only, never the null rule, and writes an
+  `index_publication_forced` audit row.
+
+Restarts never double-publish (the unique constraint on `index_observations` is
+the second line of defence; losing that race is reported as a duplicate).
+`GET /api/indices` carries a `publication` block (latest stored week per index with
+its value and provenance verdict, weeks behind, the ISO-week steps between
+consecutive observations with `interval_ok` — `None` until there are two —
+`skipped_weeks`, `degraded_current`, `within_grace`; the wall-clock `gaps_days` are
+informational), and the production-truth verifier's `index_publication_current_week`
+/ `index_publication_interval` warn with the week and the missing or skipped indices
+(a wait inside the grace with last week stored is reported as info, not a fault).
+
+**When in the week, and what gets stored.** An observation is immutable for its
+(index, week, version), so the first computation of a week must not lock in an
+artefact of missing inputs. Readiness is decided per index: an index with no value
+is never stored (the store itself refuses it, whoever writes); within the first
+72 h of the ISO week only a live value is stored; after that a degraded value (a
+source still down) is stored with its provenance saying why — a source outage is
+disclosed, never hidden. A valid AI-STI is not withheld because AI-LPI's source is
+down. In practice an index is stored at the first hourly tick after Monday 00:00
+UTC at which its value is live, or at the first tick on or after Thursday 00:00 UTC
+if it has a (degraded) value by then; an index that has no value all week is never
+stored and its week appears as a skipped week (never backfilled). The observation
+therefore reflects upstream data published through the previous week. A skipped
+week is two consecutive stored observations more than one ISO week apart; the
+wall-clock gap between `as_of` stamps is reported for information only, because it
+drifts with the hourly tick. A failed or incomplete publication is an error log, an
+`index_publication` audit row and `last_failure` in the agent's health, and the
+tick raises so the orchestrator counts it — never silence. Paging a human on that
+state is WS-9.
 
 ## Honest limitations (v1.0)
 
@@ -105,9 +148,10 @@ descriptive read of leading indicators — **not** a causal claim and not advice
 - **Sea-temperature anomaly is not yet a component** of AI-LPI (v1.1).
 - Momentum components are sensitive to reporting revisions in the upstream
   source; `raw.basis` and the `period` are always published so a reader can judge.
-- The weekly digest is generated on request or by the weekly job; there is no
-  scheduler assertion yet that it *was* published this week (tracked with the
-  data-freshness dashboard work).
+- The weekly digest is published by the `index_publisher` agent; the scheduler
+  assertion is the `publication` block on `GET /api/indices` and the verifier's
+  `index_publication_current_week`. Paging a human when it is missing (webhook /
+  notification) is WS-9.
 - **AI-LPI claims live only through the lineage rule above.** On the development
   database it is degraded (0 of 6,997 rows in the window are verified and the
   newest row is six months old); on a fresh production database every row arrives

@@ -6,7 +6,7 @@ about what is not yet in place.
 ## What AquaIntel is
 
 A salmon-aquaculture intelligence platform: FastAPI backend (~330 API operations,
-~75 engines), Next.js frontend, PostgreSQL/TimescaleDB, 12 background agents for
+~75 engines), Next.js frontend, PostgreSQL/TimescaleDB, 13 background agents for
 ingest/forecast/publication, and a published-artifact accuracy system.
 
 ## Data handling

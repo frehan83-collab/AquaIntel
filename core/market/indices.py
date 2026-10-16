@@ -23,7 +23,7 @@ from typing import Any
 import structlog
 
 from core.market.data_provenance import DataProvenance
-from core.source_lineage import lineage_note
+from core.source_lineage import lineage_note, to_utc
 
 log = structlog.get_logger(__name__)
 
@@ -127,7 +127,7 @@ def _assemble(
         else:
             provenance = DataProvenance.live(f"core.market.indices::{index}", 0.85)
 
-    stamp = as_of or dt.datetime.now(dt.UTC)
+    stamp = to_utc(as_of)  # the stored week label is always the UTC ISO week
     return {
         "index": index,
         "name": INDEX_NAMES[index],
@@ -528,19 +528,31 @@ async def save_observation(result: dict) -> dict:
     import asyncio
     import json
 
+    if result.get("value") is None:
+        # An observation is immutable for its week; a value that was never computed
+        # must not occupy that slot, whoever is writing (agent, admin, test).
+        raise ValueError(
+            f"refusing to store {result.get('index')} {result.get('week')}: no value was "
+            "computed (components unavailable) — nothing to publish"
+        )
+
     def _write() -> dict:
         from sqlalchemy import select
+        from sqlalchemy.exc import IntegrityError
 
         from core.models import IndexObservation, Session as DBSession
 
-        with DBSession() as s:
-            existing = s.execute(
+        def _existing(s):
+            return s.execute(
                 select(IndexObservation).where(
                     IndexObservation.index_code == result["index"],
                     IndexObservation.week == result["week"],
                     IndexObservation.version == result["version"],
                 )
             ).scalar_one_or_none()
+
+        with DBSession() as s:
+            existing = _existing(s)
             if existing is not None:
                 return {"status": "duplicate", "id": existing.id}
             row = IndexObservation(
@@ -554,7 +566,17 @@ async def save_observation(result: dict) -> dict:
                 provenance_json=json.dumps(result["provenance"]),
             )
             s.add(row)
-            s.commit()
+            try:
+                s.commit()
+            except IntegrityError:
+                # A concurrent writer (admin POST /api/indices/publish, a second
+                # agents replica) won the race between the duplicate check and the
+                # insert. The week IS published: report the duplicate, never fail.
+                s.rollback()
+                winner = _existing(s)
+                if winner is None:
+                    raise  # not the unique race — a real integrity failure
+                return {"status": "duplicate", "id": winner.id}
             s.refresh(row)
             return {"status": "stored", "id": row.id}
 
@@ -601,12 +623,13 @@ async def history(index: str, *, limit: int = 52) -> list[dict]:
 
 
 async def publish(index: str, *, as_of: dt.datetime | None = None) -> dict:
-    """Compute AND store one observation — the weekly job calls this."""
+    """Compute AND store one observation, ungated (tests and tooling; the
+    publisher goes through ``index_publication.readiness()``)."""
     result = await compute(index, as_of=as_of)
     result["storage"] = await save_observation(result)
     return result
 
 
 async def publish_all(*, as_of: dt.datetime | None = None) -> dict[str, dict]:
-    """Publish both named indices (the weekly Bio→Price job calls this)."""
+    """Publish both named indices, ungated (tests and tooling)."""
     return {code: await publish(code, as_of=as_of) for code in (AI_STI, AI_LPI)}

@@ -6831,8 +6831,36 @@
     },
     "/api/indices/publish": {
       "post": {
-        "description": "Compute + store both indices (admin; the weekly job calls this).",
+        "description": "Compute + store this week's indices (admin).\n\nObeys the same readiness gate as the ``index_publisher`` agent: an index with\nno value is never stored and, within the readiness grace, only a live value\nis. When nothing could be stored the answer is a 409 naming why; a partial\nstore is a 200 whose ``storage`` names the withheld index. ``force=true``\n(with a ``reason``) overrides the grace only \u2014 never the null rule. The forced\nintent is written to the audit log BEFORE anything is stored (503 and no\nstore if the audit log is unavailable), so a forced row can never exist\nwithout its audit trail; a store failure is a structured 500.",
         "operationId": "publish_indices_api_indices_publish_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "force",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Force",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "reason",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Reason"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -6841,6 +6869,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "security": [

@@ -36,6 +36,7 @@ from agents.bloom_agent import BloomAgent
 from agents.market_hedger_agent import MarketHedgerAgent
 from core.twin.self_evolve import SelfEvolvingAgent
 from agents.intelligence_agent import IntelligenceAgent
+from agents.index_publisher_agent import IndexPublisherAgent
 
 log = structlog.get_logger("aquaintel")
 
@@ -71,11 +72,12 @@ async def run_agents() -> None:
     hedger = MarketHedgerAgent()
     self_evolve = SelfEvolvingAgent()
     intelligence = IntelligenceAgent()
+    publisher = IndexPublisherAgent()  # WS-2: weekly AI-STI / AI-LPI publication
 
     agents = [
         ingest, exposure, correlation, signal_gen,
         prediction, backfill, execution, compliance,
-        bloom, hedger, self_evolve, intelligence,
+        bloom, hedger, self_evolve, intelligence, publisher,
     ]
 
     # Run all agents as concurrent tasks

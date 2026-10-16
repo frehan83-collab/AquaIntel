@@ -5,7 +5,7 @@
 Last updated: 2026-10-16 (commercial hardening + WS-1 lice lineage — see docs/HANDOVER.md)
 
 **Taking over coding? Read `docs/HANDOVER.md`** — verified state, gate commands, the
-prioritised workstream backlog (WS-1 done; WS-2…WS-18 open) and the traps that cost real time.
+prioritised workstream backlog (WS-1 and WS-2 done; WS-3…WS-18 open) and the traps that cost real time.
 
 ## Commercial hardening (in progress)
 
@@ -22,6 +22,7 @@ prioritised workstream backlog (WS-1 done; WS-2…WS-18 open) and the traps that
 | 9. GTM kit (ROI calculator, one-pager, demo) | **Shipped** | `core/gtm/roi.py` (4 ICPs; invents no market value — every line publishes its formula and flags assumptions), `/api/gtm/roi` + `/api/gtm/kit`, `docs/GTM_SECURITY_ONE_PAGER.md` (with an explicit "not in place yet" table), `docs/GTM_DEMO_SCRIPT.md`, `docs/GTM_LINKEDIN_PACK.md`, `docs/GTM_EVENTS.md`, `tests/test_gtm_roi.py` (12 tests) |
 | 10. Role definitions | **Shipped** | `docs/roles/{commercial-lead,enterprise-security-engineer,product-designer-field}.md` + `docs/roles/README.md` — postable as-is, with quarterly targets, first-30-days plans and "what we will not ask you to do" |
 | WS-1. Lice lineage verifiable (`lice_records.source`) | **Shipped** | `core/source_lineage.py` (one vocabulary: `barentswatch` / `demo_seed` / `unverified`), Alembic 019 (never backfills a real source), `lice_quota_tracker` row-level `lineage` + degraded provenance, `indices._lice_lineage_note()` row-level, `/api/data-freshness` `verified_rows`/`unverified_rows`/`no_verified_rows`, verifier `lice_source_column` (critical) + `freshness_no_verified_rows`, 20 tests. Honest state on the dev box: 0 verified rows → AI-LPI degraded until the ingest is healthy (WS-16) |
+| WS-2. Weekly index publication scheduled | **Shipped** | `agents/index_publisher_agent.py` (13th agent: hourly check, one observation per index per ISO week behind a readiness gate the admin endpoint shares; a failure is logged, audited and exposed in health — paging is WS-9), `core/market/index_publication.py` (`status()`, `readiness()`), `publication` block on `GET /api/indices`, verifier `index_publication_current_week` + `index_publication_interval`, 29 tests |
 
 **Plans / pricing (canonical):** Insight (free) → Operator (NOK 4,900) → Desk
 (professional, NOK 2,990) → Enterprise (NOK 14,900) → Investor (NOK 24,900) →
@@ -42,7 +43,7 @@ anonymous browsing is never gated.
 | Shared components | 43+ |
 | Database tables | 31 |
 | DB migrations | 19 (head 019) |
-| Test functions | 1024 collected (1000 passing, 1 skipped, 13 xfail, 10 xpass — measured 2026-10-16) |
+| Test functions | 1053 collected (1029 passing, 1 skipped, 13 xfail, 10 xpass — measured 2026-10-16) |
 | i18n keys | ~600 (NO/EN) |
 | Design tokens | 86 (Figma pipeline active) |
 | Data source clients | 45+ |

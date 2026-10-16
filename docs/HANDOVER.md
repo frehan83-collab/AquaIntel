@@ -3,6 +3,8 @@
 > **Verified at commit `f04e79a` (branch `master`).** The WS-1 figures below were
 > measured on the working tree before the WS-1 commit (2026-10-16, see §5):
 > migrations at head `019`, fast gate 211 passed + 1 network skip, §6 traps 11–15.
+> **WS-2 landed 2026-10-16** too: the `index_publisher` agent (13th) and
+> `core/market/index_publication.py`; fast gate 240 passed + 1 skip.
 > Every number below was measured, not copied from an older doc. Re-verify with the
 > commands in §2 before trusting them.
 >
@@ -18,13 +20,13 @@
 |---|---|
 | Platform version | `2.6.0` |
 | OpenAPI surface | **345 paths / 353 operations** (`docs/openapi.frozen.json`) |
-| Tests | **1024 collected** (`pytest --collect-only`, 2026-10-16 after WS-1) |
+| Tests | **1053 collected** (`pytest --collect-only`, 2026-10-16 after WS-2) |
 | Alembic migrations | **19** (head `019`) |
 | Router modules | **38** (`core/routers/`) |
 | Engine modules | **77** (`core/market/`) |
 | Frontend routes | **68** page files |
 | Production topology | `docker-compose.prod.yml`: `api` + `agents` + `db` (TimescaleDB) + `web` |
-| Last full-suite run | **1000 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 4m45s (2026-10-16, after WS-1 + review fixes) |
+| Last full-suite run | **1029 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 4m38s (2026-10-16, after WS-2 + four review rounds and a final read) |
 
 **What this session delivered** (all pushed): 10 commercial-hardening steps plus 3
 follow-up fixes — see §3 for the doc to read per area.
@@ -41,7 +43,7 @@ cd frontend && npm run dev
 python -m pytest tests/test_entitlements.py tests/test_billing_money_path.py \
   tests/test_indices.py tests/test_accuracy_registry.py tests/test_production_truth.py \
   tests/test_partner_pilots.py tests/test_legal.py tests/test_provenance_ratchet.py \
-  tests/test_gtm_roi.py tests/test_migrations.py tests/test_openapi_contract.py -q   # 208 pass + 1 skip (network), ~20s
+  tests/test_gtm_roi.py tests/test_migrations.py tests/test_openapi_contract.py -q   # 240 pass + 1 skip (network), ~22s
 
 # the full suite (≈4.5 min) — command runners time out at ~30s, so background it:
 #   Start-Process -FilePath python -ArgumentList '-m','pytest','tests/','-q' \
@@ -101,7 +103,7 @@ always confirm with `git ls-remote origin refs/heads/master`.
 ## 5. Workstream backlog — pick these up in order
 
 Each item is self-contained: goal → files → steps → **acceptance criteria you can
-test** → traps. WS-1 is done; `WS-2 … WS-4` are the highest value per hour — do them next.
+test** → traps. WS-1 and WS-2 are done; `WS-3 … WS-4` are the highest value per hour — do them next.
 
 ### WS-1 · Make the lice lineage verifiable — **DONE 2026-10-16**
 **Shipped:** `core/source_lineage.py` — the one vocabulary for `lice_records.source`
@@ -131,18 +133,32 @@ only per-tick insert counts, which is not row-level proof. The tracker's year-wi
 window (WS-15) and the dead ingest (WS-16) keep AI-LPI degraded here until a real
 re-ingest; on a fresh production DB every row arrives as `barentswatch`.
 
-### WS-2 · Publish the weekly indices on a schedule
-**Why:** `/api/indices/*/history` is populated only by test runs, so the published
-series is not yet a product.
-**Files:** `core/market/bio_price_weekly.py` (`publish_week` exists), an agent in
-`agents/`, `main.py` (`--agents-only`), `docs/INDICES.md`.
-**Steps:** a weekly agent calling `publish_week()`; idempotence per ISO week is
-already enforced by a unique constraint; alert when the current week is missing.
-**Acceptance:** after a run `GET /api/indices/ai-sti/history` is non-empty and
-`index_observations` shows `fresh` in `/api/data-freshness`; a test proves the
-interval ≤ 7 days.
-**Traps:** `publish_week()` stores **both** indices (do not double-publish); the
-digest degrading when a source is down is correct behaviour.
+### WS-2 · Publish the weekly indices on a schedule — **DONE 2026-10-16**
+**Shipped:** `agents/index_publisher_agent.py` (`index_publisher`, the 13th agent,
+started by `python main.py --agents-only`): hourly check; builds the digest and
+stores one observation per ISO week when `index_publication.status()` says the week
+is missing **and** `readiness()` approves (never a null value; only a live digest
+within the first 72 h of the week; a disclosed degraded one after); never
+double-publishes (a lost race is a duplicate); a failed or incomplete publication is
+an error log, an `index_publication` audit row, `last_failure` in `health()` and a
+raised tick. `status()` reads the store: latest week per index with value and
+provenance, weeks behind, **interval in ISO weeks** (wall-clock gaps are
+informational — they drift with the hourly tick), `degraded_current`,
+`skipped_weeks`; honest on a missing table. Surfaces: `publication` on
+`GET /api/indices`, verifier `index_publication_current_week` +
+`index_publication_interval` (a wait inside the grace is info), freshness cadence
+(168 + 72 + 1 h) and hint from one definition. The admin `POST /api/indices/publish`
+shares the gate (409 when withheld; `force=true&reason=` overrides the grace, audited;
+the store refuses null values).
+Also fixed: `save_observation` race-safe; `BaseAgent` status recovers after a failed
+tick. 29 tests (`tests/test_indices.py::TestWeeklyPublication`,
+`tests/test_production_truth.py::TestIndexPublicationCheck`).
+**Acceptance met:** the agent publishes once per week across an injected week boundary
+(7 d + 30 min is one step; 2 weeks is a named skipped week); `/api/indices/*/history`
+is non-empty and the store reports `fresh`; the verifier names the week. **Honest scope:** on this box the
+2026-W42 rows were written by the publish test before the lineage guard (trap 16);
+the agent's first real run happens with the `agents` service. Human paging on a
+missing week is WS-9.
 
 ### WS-3 · Ship model artifacts through the release path
 **Why:** weights live in the gitignored `data/models/`, so CI/prod silently fall back
@@ -218,9 +234,11 @@ without one. **Traps:** the publisher refuses demo-only data — keep that, neve
 **Why:** nothing pages when a source goes `dead`, and nothing proves the weekly
 publication ran.
 **Files:** `core/market/freshness_monitor.py`, an agent, `core/production_truth.py`.
-**Steps:** alert on `critical_unknown` / `dead` / `synthetic_only`; assert
-`index_observations` contains the current ISO week; expose alert state on
-`/api/data-freshness`.
+**Steps:** alert on `critical_unknown` / `dead` / `synthetic_only` /
+`no_verified_rows` (WS-1) and on `index_publication.status()["missing"]` (WS-2 — the
+assertion exists; only the paging is missing); expose alert state on
+`/api/data-freshness`; fold the lice observation-week age into the monitor (it reads
+`fetched_at`, a write time).
 **Acceptance:** a test simulating a missing current-week row fails with a named reason.
 
 ### WS-10 · Wire runtime provenance measurement into CI
@@ -355,6 +373,7 @@ stamping; 019 survives this because it is existence-guarded — new migrations m
 | 13 | **Empty `alembic_version` bricks the ingest** | A `create_all`-built DB whose chain aborts at 001 never runs 019, so every lice insert fails. Recover with `alembic stamp 018` then `alembic upgrade head` — never stamp head. The verifier's `lice_source_column` check catches it. |
 | 14 | **The freshness monitor runs in a worker thread** | `fm.report()` uses `asyncio.to_thread`; an in-memory SQLite engine is empty in that thread. Test it with a file-backed engine. |
 | 15 | **Long shell heredocs on this box** | Git-Bash `cat <<'EOF'` with a long Python body intermittently fails to parse. Write the patch to a file and run `python file.py`. |
+| 16 | **Tests used to publish into the real index store** | Until WS-2 the publish tests stored the current week into the dev DB on every run; this box's 2026-W42 rows predate the lineage guard and the AI-LPI one claims `is_live: true`. Use the `observation_store` fixture for anything that writes observations; never read the dev box's published history as evidence of the agent. |
 
 ## 7. Definition of done for the next module
 

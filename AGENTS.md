@@ -10,9 +10,10 @@
 ## What this is
 
 Production-grade salmon aquaculture intelligence platform ("Bloomberg Terminal
-for Salmon"): FastAPI backend (322 operations across 316 paths, ~75 engines),
-Next.js 16 frontend (63 pages), 45+ live data-source clients, 3 foundation-model
-forecasting engines (with honest seasonal-naive fallbacks), 762 tests.
+for Salmon"): FastAPI backend (353 operations across 345 paths, ~77 engines),
+Next.js 16 frontend (68 pages), 45+ live data-source clients, 3 foundation-model
+forecasting engines (with honest seasonal-naive fallbacks), 1,000+ tests
+(1042 collected on 2026-10-16).
 
 - Repository: `github.com/frehan83-collab/AquaIntel` (public). `origin` points
   here directly; the legacy `openclaw-legacy` remote points at the old
@@ -123,7 +124,7 @@ test runs with `Start-Process ... -RedirectStandardOutput` and poll the file.
 | `core/models.py` | SQLAlchemy models (31 tables, 19 Alembic migrations) |
 | `core/source_lineage.py` | **One definition of what a `lice_records.source` value means** (`barentswatch` / `demo_seed` / `unverified`), the synthetic markers, and the lineage-summary rule; the indices, quota tracker, freshness monitor and production-truth verifier project it |
 | `core/async_db.py` | `get_async_session()` — **never** sync `Session` in async code |
-| `agents/`, `main.py` | 12 background agents (asyncio; daemon-thread mode for dev only) |
+| `agents/`, `main.py` | 13 background agents (asyncio; daemon-thread mode for dev only); `index_publisher` publishes AI-STI / AI-LPI once per ISO week (WS-2) |
 | `frontend/src/app/` | Next.js App Router pages (`"use client"`) |
 | `frontend/src/lib/api.ts` | Typed API client — every new endpoint gets a method here |
 | `tests/` | pytest (762 tests); add tests for every bugfix/feature |

@@ -5,6 +5,79 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
+### WS-2 — the weekly indices are published on a schedule
+- **Why:** `publish_week()` existed but nothing scheduled it, so
+  `/api/indices/*/history` held only what test runs had written and nothing could
+  say whether the current week had been published.
+- **New agent `agents/index_publisher_agent.py`** (`index_publisher`, the 13th agent,
+  started by `python main.py --agents-only`, i.e. the production `agents` service):
+  ticks hourly, builds the digest, and stores it only when the current ISO week is
+  not yet stored for every index at the current method version **and the digest is
+  ready** — the unique constraint on `index_observations` is the second line of
+  defence, and losing that race to another writer is reported as a duplicate, not
+  a failure. A failed or incomplete publication is an error log, an
+  `index_publication` audit row and a `last_failure` in `health()`, and the tick
+  raises so the orchestrator counts it — never silence (paging a human is WS-9).
+- **Readiness gate, per index** (`index_publication.readiness()`): an observation is
+  immutable for its (index, week, version), so the first computation of a week must
+  not lock in an artefact of missing inputs. An index with no value is never stored
+  (the store refuses it, whoever writes); within the first 72 h of the week only a
+  live value is stored; after that a degraded value is stored with its provenance
+  saying why — a source outage is disclosed, never hidden. A valid AI-STI is not
+  withheld because AI-LPI's source is down.
+- **The admin endpoint shares the gate:** `publish_week()` applies `readiness()`, so
+  `POST /api/indices/publish` answers 409 when nothing could be stored (naming why)
+  and 200 with per-index `storage` otherwise; `force=true&reason=…` overrides the
+  grace only (never the null rule), its intent is written to the audit log
+  **before** anything is stored (503 and no store when the audit log is
+  unavailable), and `forced` is true only when a grace-withheld value was actually
+  stored (a duplicate is not a forced publication). One UTC normaliser
+  (`core/source_lineage.to_utc`) stamps and judges every week label, so a non-UTC
+  caller can never build one week and check another. The freshness cadence for the store is one
+  definition: publication + readiness grace + one tick (241 h), so a designed wait
+  never reads as "stale"; the verifier reports a wait inside the grace (with last
+  week stored) as info, and an unmeasurable interval (fewer than two observations)
+  as info rather than "ok"; a partial in-grace store (one index stored, the other
+  withheld) is reported as the designed wait it is, never as "the agent has not
+  run"; a future-dated row is a named `store_ahead_of_clock` warning.
+- **New `core/market/index_publication.py`** — `status()` reads the *store*, not the
+  scheduler: per index the latest stored week with its value and provenance
+  verdict, weeks behind, the ISO-week steps between consecutive observations
+  (`interval_ok` = no step > 1; wall-clock `gaps_days` are informational because
+  they drift with the hourly tick), and overall `current_week_published` /
+  `missing` / `degraded_current` / `skipped_weeks`. A missing or unreadable table
+  reports every index as missing with the reason. One definition of the cadence
+  (168 h + one tick) and the publisher hint, imported by the freshness monitor.
+- **Surfaces:** `GET /api/indices` carries a `publication` block; the production-truth
+  verifier adds `index_publication_current_week` (ok — naming a degraded current
+  week — or warn naming the week and the missing indices) and
+  `index_publication_interval` (warn naming skipped weeks).
+- **Also fixed on the way:** `indices.save_observation` treats a lost insert race
+  as a duplicate instead of raising; `BaseAgent` sets its status back to running
+  after a tick succeeds (it stayed `error` forever).
+- **Tests (+29):** the week/label/cadence contracts; honest status on a missing
+  table; missing → published with method-version scoping and stored provenance;
+  interval measured in ISO weeks (7 d + 30 min is fine, 2 weeks is a skipped week,
+  `weeks_behind`); the agent across an injected week boundary at fixed instants
+  (no wall-clock flakiness), the bare `tick()` form, the readiness gate (waiting
+  within the grace, disclosed degraded store after it, never a null value), a
+  store failure (raise + audit + health), a lost race, an unreadable store after a
+  successful write, an incomplete store; the race-safe `save_observation`;
+  `BaseAgent` status recovery; the `/api/indices` block; the orchestrator wiring
+  (uncommented lines); the verifier verdicts deterministically (ok with
+  degradation, warn with the store's reason, skipped-week warning).
+- **Review:** four adversarial rounds (4 + 3 + 2 lenses, verifiers per finding) plus
+  a final independent read confirmed 21 + 15 + 11 + 5 findings — the wall-clock interval metric, the missing readiness
+  gate and then its admin-endpoint bypass, the per-digest (not per-index) gate, the
+  Sunday-night test flake, a race test that faked its integrity error, the false
+  "FAILED" audit on an unreadable re-read, the sticky `error` status, a freshness
+  cadence that contradicted the grace, vacuous `interval_ok`, doc counts; all
+  addressed above.
+- **Deliberate OpenAPI re-freeze:** no new route, but `POST /api/indices/publish`
+  gained the `force` and `reason` query parameters and a new description, so
+  `docs/openapi.frozen.json` was re-frozen with `scripts/freeze_openapi.py` for that
+  one operation (twice: parameters, then the description). The provenance ratchet (GET routes) is unchanged.
+
 ### WS-1 — the lice lineage is verifiable (`lice_records.source`)
 - **Why:** `lice_records` had no `source` column, so demo seeds and reported
   BarentsWatch rows were indistinguishable and AI-LPI reported `is_live: false`

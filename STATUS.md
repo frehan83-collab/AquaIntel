@@ -531,3 +531,32 @@ added `tests/test_migrations.py`.
   WS-16 (ingest health), WS-17 (accuracy publisher `price_nok` column bug),
   WS-18 (dev DB stamped 018 without 015's index). See `docs/HANDOVER.md` §5.
 
+## WS-2 — weekly index publication scheduled — 2026-10-16
+
+- **Shipped:** `agents/index_publisher_agent.py` (`index_publisher`, started with the
+  other agents by `python main.py --agents-only`; hourly check, builds the digest and
+  stores one observation per ISO week when it is ready — never a null value, only a
+  live digest within the first 72 h, a disclosed degraded one after — never
+  double-publishes, a lost race is a duplicate; a failure raises + audits + exposes
+  `last_failure`), `core/market/index_publication.py` (`status()`: latest stored week
+  per index with value/provenance, weeks behind, interval measured in ISO weeks,
+  `degraded_current`, `skipped_weeks`; `readiness()`), `publication` block on
+  `GET /api/indices`, verifier `index_publication_current_week` +
+  `index_publication_interval`; `POST /api/indices/publish` shares the gate (409 when
+  withheld; `force=true&reason=` overrides the grace, audited); `save_observation`
+  refuses null values and is race-safe; `BaseAgent` status recovers after a failed tick.
+- **Verified:** a real tick on the dev box reports the current week (2026-W42) already
+  published and takes no action; the verifier reports
+  `index_publication_current_week: ok`; 29 new tests green (after four adversarial
+  review rounds plus a final read: 21 + 15 + 11 + 5 confirmed findings fixed); fast gate **240 passed, 1
+  skipped**; full suite **1029 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** (1053 collected); ruff and ratchet clean.
+- **Honest scope:** the two 2026-W42 rows on this box were written by the test
+  suite's real `publish()` at 15:36 on 2026-10-16 — *before* the lineage guard
+  (`f04e79a`) — so the stored AI-LPI W42 row claims `is_live: true` (0.85), which the
+  current code can never produce, and the AI-STI row is the degraded 100.0. The
+  publish tests now run against a throwaway store (`observation_store` fixture), so
+  this cannot recur; the stale rows themselves were left in place (deleting dev data
+  is the owner's call: `DELETE FROM index_observations WHERE week='2026-W42'` lets the
+  agent publish W42 honestly). Production never had a test run. Paging a human when
+  the week is missing is WS-9; the status WS-9 alerts on now exists.
+

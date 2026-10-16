@@ -310,6 +310,154 @@ async def check_freshness() -> list[dict]:
     return out
 
 
+async def check_index_publication() -> list[dict]:
+    """WS-2: the weekly index publication must actually have run this ISO week.
+
+    Reads the store (not the scheduler), so a scheduler that silently stopped is
+    a named warning instead of an assumption.
+    """
+    from core.market import index_publication
+
+    try:
+        state = await index_publication.status()
+    except Exception as exc:  # pragma: no cover - status() reports, not raises
+        return [
+            _verdict(
+                "warn",
+                "index_publication_current_week",
+                f"could not read the index publication status: {exc}",
+            )
+        ]
+    out: list[dict] = []
+    if state.get("current_week_published"):
+        degraded = state.get("degraded_current") or []
+        out.append(
+            _verdict(
+                "ok",
+                "index_publication_current_week",
+                f"{state['week']} published for {', '.join(index_publication.INDEX_CODES)} "
+                f"(method {state['version']})"
+                + (
+                    f"; degraded this week: {', '.join(degraded)} (provenance says why)"
+                    if degraded
+                    else ""
+                ),
+            )
+        )
+    else:
+        missing_codes = list(state.get("missing") or [])
+        missing = ", ".join(missing_codes)
+        reason = state.get("reason")
+        entries = state.get("indices") or {}
+        stored_now = [
+            code for code, entry in entries.items() if (entry or {}).get("current_week_published")
+        ]
+        # The wait is judged per MISSING index: last week stored for each of them.
+        previous_present = bool(missing_codes) and all(
+            (entries.get(code) or {}).get("weeks_behind") == 1 for code in missing_codes
+        )
+        remedy = (
+            "; start the agents service, or POST /api/indices/publish (same readiness "
+            "gate; force=true with a reason overrides the grace, audited)"
+        )
+        no_history = bool(missing_codes) and all(
+            (entries.get(code) or {}).get("weeks_behind") is None for code in missing_codes
+        )
+        if state.get("within_grace") and no_history and not reason and not stored_now:
+            # First week at this method version (or a fresh store): a waiting
+            # publisher and a stopped one look the same from the store — say so.
+            out.append(
+                _verdict(
+                    "warn",
+                    "index_publication_current_week",
+                    f"{state['week']} not published for: {missing} and there is no "
+                    f"observation at method {state.get('version')} yet; within the "
+                    f"{state.get('readiness_grace_hours')} h readiness grace the store cannot "
+                    "tell a waiting publisher from a stopped one — check the publisher's "
+                    "health (`waiting` / `last_failure`)" + remedy,
+                )
+            )
+        elif state.get("within_grace") and previous_present and not reason:
+            # Designed state: last week is stored and this week's value is still
+            # within the readiness grace — the agent is waiting for a live value.
+            out.append(
+                _verdict(
+                    "info",
+                    "index_publication_current_week",
+                    f"{state['week']} not yet published for: {missing} — within the "
+                    f"{state.get('readiness_grace_hours')} h readiness grace "
+                    f"({state.get('hours_into_week')} h into the week); last week is stored"
+                    + (f"; already stored this week: {', '.join(stored_now)}" if stored_now else ""),
+                )
+            )
+        elif stored_now and not reason:
+            # The agent demonstrably ran (an index is stored this week): the other
+            # is withheld or failed — say that, never "the agent has not run".
+            out.append(
+                _verdict(
+                    "warn",
+                    "index_publication_current_week",
+                    f"{state['week']} stored for {', '.join(stored_now)} but not for: {missing} "
+                    "— withheld (no value, or degraded past the grace) or its store failed; "
+                    "see the publisher's `waiting` / `last_failure`" + remedy,
+                )
+            )
+        else:
+            out.append(
+                _verdict(
+                    "warn",
+                    "index_publication_current_week",
+                    f"{state['week']} not published for: {missing} — the index_publisher "
+                    "agent has not run (or failed) this week"
+                    + (f" ({reason})" if reason else "")
+                    + remedy,
+                )
+            )
+    ahead = [
+        code for code, entry in (state.get("indices") or {}).items()
+        if (entry or {}).get("store_ahead_of_clock")
+    ]
+    if ahead:
+        out.append(
+            _verdict(
+                "warn",
+                "index_publication_store_ahead_of_clock",
+                "the store holds observations for a FUTURE week for: " + ", ".join(ahead)
+                + " — clock skew or an as_of override; those rows are immutable",
+            )
+        )
+    skipped = state.get("skipped_weeks") or []
+    interval_ok = state.get("interval_ok")
+    if interval_ok is None:
+        out.append(
+            _verdict(
+                "info",
+                "index_publication_interval",
+                "interval not measurable yet (fewer than two observations, or the store "
+                "unreadable)",
+            )
+        )
+    elif interval_ok:
+        out.append(
+            _verdict(
+                "ok",
+                "index_publication_interval",
+                "consecutive stored observations are consecutive ISO weeks",
+            )
+        )
+    else:
+        out.append(
+            _verdict(
+                "warn",
+                "index_publication_interval",
+                "a week was skipped in the stored series: " + ", ".join(skipped)
+                + " — the publisher did not run (or failed all week); skipped weeks are "
+                "never backfilled",
+            )
+        )
+    return out
+
+
 async def run_checks(*, include_freshness: bool = True) -> dict:
     """Run every check and summarise the truth gaps."""
     checks: list[dict] = []
@@ -317,6 +465,7 @@ async def run_checks(*, include_freshness: bool = True) -> dict:
     checks += check_agents_service()
     checks += check_database()
     checks += check_artifacts()
+    checks += await check_index_publication()
     if include_freshness:
         checks += await check_freshness()
 

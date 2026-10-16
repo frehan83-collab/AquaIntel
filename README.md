@@ -19,7 +19,7 @@ cd frontend
 npm install
 npx next dev -p 3002
 
-# Full platform with 12 agents
+# Full platform with 13 agents
 python main.py --api-port 8001
 ```
 

@@ -6,7 +6,8 @@ is the *link*: biomass and lice pressure are leading indicators for price, and t
 report states the direction it reads — while refusing to claim causality it cannot
 evidence.
 
-Published by ``publish_week()`` (the weekly job / agent calls it); readable at
+Published once per ISO week by the ``index_publisher`` agent (build → readiness
+→ store_digest) or by ``publish_week()`` behind the admin endpoint; readable at
 ``/api/indices/bio-price-weekly`` and permalinked at ``/indices#bio-price-weekly``.
 """
 from __future__ import annotations
@@ -108,7 +109,9 @@ async def _price_panel() -> dict:
 
 async def build(as_of: dt.datetime | None = None) -> dict:
     """Build the weekly digest (compute-only; nothing is stored)."""
-    stamp = as_of or dt.datetime.now(dt.UTC)
+    from core.source_lineage import to_utc
+
+    stamp = to_utc(as_of)  # one week label, in UTC, for the digest and the store
     sti = await indices.compute(indices.AI_STI, as_of=stamp)
     lpi = await indices.compute(indices.AI_LPI, as_of=stamp)
     supply = await _supply_panel()
@@ -177,17 +180,71 @@ async def build(as_of: dt.datetime | None = None) -> dict:
     }
 
 
-async def publish_week(as_of: dt.datetime | None = None) -> dict:
-    """Build the digest AND store both index observations (the weekly job)."""
-    digest = await build(as_of=as_of)
-    for code in (indices.AI_STI, indices.AI_LPI):
-        digest["indices"][code]["storage"] = await indices.save_observation(
-            digest["indices"][code]
-        )
+async def store_digest(digest: dict, codes: tuple[str, ...] | list[str] | None = None) -> dict[str, str]:
+    """Store the index observations of a BUILT digest (idempotent per index +
+    week + method version), for ``codes`` (default: both). Returns
+    ``{index_code: "stored" | "duplicate"}`` and annotates each stored index
+    result with its ``storage`` outcome. Callers gate on
+    ``index_publication.readiness()`` first — the store itself refuses only a
+    null value."""
+    statuses: dict[str, str] = {}
+    targets = (indices.AI_STI, indices.AI_LPI) if codes is None else tuple(codes)
+    for code in targets:
+        storage = await indices.save_observation(digest["indices"][code])
+        digest["indices"][code]["storage"] = storage
+        statuses[code] = storage["status"]
+    return statuses
+
+
+async def publish_week(as_of: dt.datetime | None = None, *, force: bool = False) -> dict:
+    """Build the digest and store the indices that are READY (the admin endpoint;
+    the agent uses build/readiness/store_digest directly).
+
+    The same readiness gate as the agent applies: an index with no value is never
+    stored; within the readiness grace only a live value is stored. ``force=True``
+    overrides the grace (a degraded value is stored early, provenance disclosed) —
+    it can never store a null value. The digest carries ``readiness`` and, per
+    index, a ``storage`` outcome of ``stored`` / ``duplicate`` / ``withheld``.
+    """
+    from core.market.index_publication import INDEX_CODES, readiness
+    from core.source_lineage import to_utc
+
+    stamp = to_utc(as_of)  # ONE instant: the built week, the readiness hour, the store
+    digest = await build(as_of=stamp)
+    ready = dict(readiness(digest, now=stamp))
+    original_withheld = dict(ready["withheld"])  # the verdict before force
+    withheld = dict(original_withheld)
+    if force:
+        # the grace may be overridden; a missing value may not
+        codes = [code for code in INDEX_CODES if (digest["indices"][code] or {}).get("value") is not None]
+        withheld = {code: why for code, why in withheld.items() if code not in codes}
+    else:
+        codes = list(ready["store"])
+    if codes:
+        await store_digest(digest, codes=codes)
+    for code, why in withheld.items():
+        digest["indices"][code]["storage"] = {"status": "withheld", "reason": why}
+    # the readiness block reports what happened, not only the pre-force verdict:
+    # overridden = grace-withheld indices actually STORED because of force (a
+    # duplicate was not a write, so it is not a forced publication)
+    overridden = [
+        code for code in codes
+        if code in original_withheld
+        and (digest["indices"][code].get("storage") or {}).get("status") == "stored"
+    ]
+    ready["overridden"] = overridden
+    ready["withheld"] = withheld
+    ready["store"] = list(codes)
+    ready["ready"] = bool(codes)
+    digest["readiness"] = ready
+    digest["forced"] = bool(force and overridden)
     log.info(
         "bio_price_weekly_published",
-        week=digest["week"],
-        read=digest["transmission"]["read"],
-        caveats=len(digest["caveats"]),
+        week=digest.get("week"),
+        read=(digest.get("transmission") or {}).get("read"),
+        caveats=len(digest.get("caveats") or []),
+        stored=codes,
+        withheld=sorted(withheld),
+        forced=digest["forced"],
     )
     return digest
