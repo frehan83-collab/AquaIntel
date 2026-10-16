@@ -6450,6 +6450,96 @@
         ]
       }
     },
+    "/api/gtm/kit": {
+      "get": {
+        "description": "The GTM assets and where they live (one-pager, demo, events, LinkedIn).",
+        "operationId": "gtm_kit_api_gtm_kit_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Gtm Kit",
+        "tags": [
+          "gtm"
+        ]
+      }
+    },
+    "/api/gtm/roi": {
+      "get": {
+        "description": "Default ROI case for an ICP, with every assumption labelled.",
+        "operationId": "roi_defaults_api_gtm_roi_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "icp",
+            "required": false,
+            "schema": {
+              "default": "producer",
+              "title": "Icp",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "months",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "title": "Months",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Roi Defaults",
+        "tags": [
+          "gtm"
+        ]
+      },
+      "post": {
+        "description": "Compute ROI from supplied inputs.\n\nBody: {\"icp\": \"producer\", \"months\": 12, \"inputs\": {\"annual_tonnes\": 12000}}",
+        "operationId": "roi_calculate_api_gtm_roi_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Roi Calculate",
+        "tags": [
+          "gtm"
+        ]
+      }
+    },
     "/api/harvest/optimize/{locality_no}": {
       "get": {
         "description": "Optimal harvest recommendation for a single farm using LIVE data.",

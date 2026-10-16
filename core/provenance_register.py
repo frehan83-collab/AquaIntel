@@ -42,6 +42,13 @@ EXEMPT: dict[str, dict[str, str]] = {
         "category": "catalogue_and_meta",
         "reason": "licence register and policy text",
     },
+    "/api/gtm/": {
+        "category": "catalogue_and_meta",
+        "reason": (
+            "ROI calculator computed from caller-supplied inputs and labelled "
+            "assumptions; the platform asserts no market value"
+        ),
+    },
     "/api/accuracy/method": {
         "category": "publication_metadata",
         "reason": "artifact contract, not a measurement",

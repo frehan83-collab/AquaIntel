@@ -469,6 +469,25 @@ added `tests/test_migrations.py`.
   engine's own provenance on the futures routes instead of overwriting it.
 - **Gates:** ratchet exit 0; 13 passed; ruff clean.
 
+## Commercial hardening — Step 9 (GTM kit) — 2026-10-16
+
+- **ROI calculator in code** (`core/gtm/roi.py`, 4 ICPs) — publishes each formula
+  and marks every assumption; it asserts no market value. `GET /api/gtm/roi`,
+  `POST /api/gtm/roi`, `GET /api/gtm/kit` (asset list + live proof points).
+- **Assets:** security/architecture one-pager **including an explicit "not in place
+  yet" table**, 3-minute demo script with rehearsed objections, LinkedIn pack for a
+  domain expert, AquaNor/NASF playbook.
+- **Gates:** `test_gtm_roi.py` 12 passed; ruff clean.
+
+## Commercial hardening — Step 10 (role definitions) — 2026-10-16
+
+- **Three postable roles** in `docs/roles/`: commercial lead (salmon trading
+  networks), enterprise & security engineer (SSO + SOC 2 path), product designer
+  (field & mobile) — each with quarterly targets, a first-30-days plan and an
+  explicit "what we will not ask you to do".
+- `docs/roles/README.md` indexes them with the shared pre-call reading list.
+
+
 
 
 

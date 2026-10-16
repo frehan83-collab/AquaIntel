@@ -5,7 +5,56 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
-### Step 8 — rule-3 provenance program finished (register + ratchet + 5 routes)
+### Step 10 — role definitions, usable immediately
+- **Three roles written to be posted as-is** in `docs/roles/`: **Commercial Lead
+  (salmon trading networks)** — owns recruiting and converting 5–8 paid 90-day
+  pilots, with explicit first-quarter targets and a blunt honesty requirement;
+  **Enterprise & Security Engineer (SSO + SOC 2 path)** — owns SSO/SAML/OIDC,
+  SOC 2 Type I→II readiness, per-tenant isolation and the production gaps
+  (`docs/PRODUCTION_TRUTH.md` "Still open"), with the four-part definition of done
+  for SSO; **Product Designer (field & mobile)** — owns the one-handed operator
+  loop and honest offline capture, with the degraded-state design mandate.
+- Each role states what success looks like in the first quarter as measurable
+  targets, what the person needs, what the first 30 days are, and — deliberately —
+  **what we will not ask them to do** (hide degraded data, advertise the deferred
+  performance fee, write advice framing).
+- `docs/roles/README.md` indexes the roles and gives the shared pre-call reading
+  list plus the hiring filter: comfort with refusing to claim what we have not
+  measured.
+
+### Step 9 — GTM kit (ROI calculator in code, honest sales assets)
+- **ROI calculator as real code**, not a slide: `core/gtm/roi.py` computes the case
+  for four ICPs (producer, processor, desk, insurer) from formulas it publishes,
+  and it **invents no market value** — every figure is either an input the customer
+  supplied (`inputs_supplied`) or a clearly labelled assumption
+  (`assumptions_used`), each line carrying its own `formula` and `inputs_used`.
+  `GET /api/gtm/roi?icp=` shows the default case with the assumptions marked;
+  `POST /api/gtm/roi` recomputes with the customer's numbers. `not_included` states
+  that integration effort and unverified revenue are out of scope, and the
+  disclosure says the platform asserts no market value.
+- `GET /api/gtm/kit` lists the assets and the **live proof points** a seller can
+  open on a call (`/api/indices`, `/api/accuracy`, `/api/data-freshness`,
+  `/api/billing/catalog`, `/api/legal/data-licenses`).
+- **Security & architecture one-pager** (`docs/GTM_SECURITY_ONE_PAGER.md`): data
+  handling, tenancy/IDOR, SSRF guard, provenance — followed by an explicit
+  **"what is NOT in place yet"** table (SSO, SOC 2, pen test, HA, per-tenant
+  isolation). It states the principle: the rule that stops us inventing a MAPE stops
+  us inventing a certification.
+- **3-minute demo script** (`docs/GTM_DEMO_SCRIPT.md`): timed, with the exact words
+  for the current "accuracy not yet published" state and a rehearsed objection table.
+- **LinkedIn pack** (`docs/GTM_LINKEDIN_PACK.md`): three repeatable formats for a
+  domain expert (not marketing), posting rules (never post a number you cannot
+  link; never recommend), and eight seed topics.
+- **Event playbook** (`docs/GTM_EVENTS.md`): AquaNor/NASF readiness checklist
+  (8/4 weeks out), booth kit, the 90-second stand pitch, the 72-hour follow-up
+  rule, and a "what NOT to do" list.
+- **Tests:** `tests/test_gtm_roi.py` (12) — every line states its formula/inputs and
+  is flagged as an assumption, defaults are reported as assumptions while supplied
+  inputs are not, the maths is reproducible against hand-computed values, the module
+  is checked not to embed upstream market series, validation of unknown ICPs/inputs
+  and months, and the endpoint shapes.
+
+
 - **The provenance boundary is now enforced, not remembered.** New
   `core/provenance_register.py` holds the **formal exempt register** (prefix →
   category + written reason; 18 entries across infrastructure, auth/billing,

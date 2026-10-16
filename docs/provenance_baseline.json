@@ -2,8 +2,8 @@
   "version": "1.0",
   "note": "Non-exempt /api GET routes. A route may only be added here after a deliberate provenance decision (provenance attached, or an exemption added to core/provenance_register.py). Regenerate with `python scripts/provenance_ratchet.py --update`.",
   "counts": {
-    "total_routes": 238,
-    "exempt": 31,
+    "total_routes": 240,
+    "exempt": 33,
     "registered": 207
   },
   "exempt_prefixes": [
@@ -17,6 +17,7 @@
     "/api/data-freshness",
     "/api/disclaimer",
     "/api/entitlements",
+    "/api/gtm/",
     "/api/health",
     "/api/indices/methodology",
     "/api/keys",

@@ -16,8 +16,8 @@ Last updated: 2026-10-16 (commercial hardening — see docs/ENTITLEMENTS.md)
 | 6. Design-partner infrastructure (paid pilots, reciprocity) | **Shipped** | `core/routers/partner_routes.py` (admin-gated), `design_partners` + `partner_metrics` (Alembic 018), `docs/DESIGN_PARTNERS.md` (runbook + per-ICP success metrics), `tests/test_partner_pilots.py` (18 tests); pilots grant real entitlements via `entitlement_sync` |
 | 7. Legal foundations (data-license register, advice boundary, DPA/AI Act) | **Shipped** | `core/legal/{data_licenses,performance_fee}.py`, `docs/ADVICE_BOUNDARY.md`, `/api/legal/*` (licences, use-check, advice boundary, AI Act, performance fee), `tests/test_legal.py` (18 tests). Honest state: **8 sources registered, 0 legally cleared**; perf-fee deferred by default and unadvertised |
 | 8. Rule-3 provenance program (remaining routes + exempt register + ratchet) | **Shipped** | `core/provenance_register.py` (18 exempt entries with reasons), `docs/provenance_baseline.json` (238 routes → 31 exempt / 207 baselined / 0 unregistered), `scripts/provenance_ratchet.py` (exit 1 on drift), `core/market/provenance_envelope.py::with_provenance`, 5 more routes given provenance, `tests/test_provenance_ratchet.py` (13 tests) |
-| 9. GTM kit (ROI calculator, one-pager, demo) | Planned | |
-| 10. Role definitions | Planned | |
+| 9. GTM kit (ROI calculator, one-pager, demo) | **Shipped** | `core/gtm/roi.py` (4 ICPs; invents no market value — every line publishes its formula and flags assumptions), `/api/gtm/roi` + `/api/gtm/kit`, `docs/GTM_SECURITY_ONE_PAGER.md` (with an explicit "not in place yet" table), `docs/GTM_DEMO_SCRIPT.md`, `docs/GTM_LINKEDIN_PACK.md`, `docs/GTM_EVENTS.md`, `tests/test_gtm_roi.py` (12 tests) |
+| 10. Role definitions | **Shipped** | `docs/roles/{commercial-lead,enterprise-security-engineer,product-designer-field}.md` + `docs/roles/README.md` — postable as-is, with quarterly targets, first-30-days plans and "what we will not ask you to do" |
 
 **Plans / pricing (canonical):** Insight (free) → Operator (NOK 4,900) → Desk
 (professional, NOK 2,990) → Enterprise (NOK 14,900) → Investor (NOK 24,900) →
