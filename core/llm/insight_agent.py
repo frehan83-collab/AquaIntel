@@ -1,7 +1,7 @@
 """
 Autonomous Insight Agent
 =========================
-Background OpenClaw agent that:
+Background AquaIntel agent that:
   1. Monitors new API data for threshold breaches
   2. Triggers LLM analysis on notable events
   3. Pushes personalized insights via dashboard and notifications

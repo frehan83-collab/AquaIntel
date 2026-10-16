@@ -16,6 +16,16 @@ engines (with honest seasonal-naive fallbacks), 447+ tests.
   here directly; the legacy `openclaw-legacy` remote points at the old
   `OpenClaw` URL, which GitHub now redirects to this repository.
 - Default branch: `master`.
+- Naming: the platform is **AquaIntel** (legacy: FishIntel, OpenClaw). Brand
+  strings were renamed `OpenClaw` → `AquaIntel` repo-wide, including browser
+  state keys (`openclaw_*` → `aquaintel_*`; existing users lose tour/demo state
+  once — the rest of the frontend already uses the `oc_*` prefix). Two
+  identifier classes are intentionally **left unchanged** because they are
+  cross-boundary state that cannot be migrated from the code alone: the
+  `openclaw-legacy` git remote, and the Stripe subscription metadata keys
+  (`openclaw_tier`, `openclaw_user_id`) in `core/billing/stripe_billing.py`.
+  `config/settings.py` still falls back to `data/openclaw.db` when a populated
+  pre-rename dev database exists.
 
 ## Commands
 

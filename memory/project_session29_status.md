@@ -6,7 +6,7 @@ Short maintenance session: automated data freshness check + QA sprint (12 pages,
 ---
 
 ## Automated Data Freshness Check (Scheduled Task)
-Ran `openclaw-data-freshness` scheduled task. All live data sources healthy:
+Ran `aquaintel-data-freshness` scheduled task. All live data sources healthy:
 
 | Source | Status | Value |
 |---|---|---|

@@ -140,7 +140,7 @@ class METOceanClient:
         resp = await self._client.get(
             "https://api.met.no/weatherapi/oceanforecast/2.0/complete",
             params={"lat": round(lat, 4), "lon": round(lon, 4)},
-            headers={"User-Agent": "OpenClaw/1.0 github.com/frehan83-collab/AquaIntel"},
+            headers={"User-Agent": "AquaIntel/1.0 github.com/frehan83-collab/AquaIntel"},
         )
         if resp.status_code != 200:
             raise RuntimeError(f"oceanforecast_http_{resp.status_code}")

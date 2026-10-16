@@ -10,7 +10,7 @@ frontend/.next
 *.sqlite
 *.db
 # Recursive forms: plain `*.db` only matches the context root, so a local
-# `data/openclaw.db` dev database (and its WAL files) leaked into the image
+# `data/aquaintel.db` dev database (and its WAL files) leaked into the image
 # built from a dev box. Anchor them everywhere.
 **/*.db
 **/*.db-shm

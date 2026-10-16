@@ -1,10 +1,10 @@
-# OpenClaw — Market-Leading Advancement Roadmap
+# AquaIntel — Market-Leading Advancement Roadmap
 
 ## Competitive Landscape Summary
 
 ### Current Competitors
 
-| Platform | Focus | Strengths | Weaknesses (vs OpenClaw) |
+| Platform | Focus | Strengths | Weaknesses (vs AquaIntel) |
 |----------|-------|-----------|--------------------------|
 | **Manolin/Watershed** | Disease prediction, farm operations | Strong biological models, farmer UX, real-time alerts | No trading signals, no market intelligence, no cross-market arbitrage |
 | **Kontali** | Market analytics, production data | Industry-standard production forecasts, buyer/seller intelligence | Static reports, no real-time, no predictive ML, no farmer tools |
@@ -13,7 +13,7 @@
 | **CageEye** | Biomass estimation (sonar) | Accurate real-time biomass measurement | Single-purpose, no lice/disease prediction |
 | **Optimeering** | Feed optimization | AI-driven feed strategy, FCR improvement | Feed-only, no lice/market intelligence |
 
-### OpenClaw Unique Position
+### AquaIntel Unique Position
 
 **No competitor combines all of:** lice prediction + price forecasting + trading signals + farm advisory + regulatory compliance + AIS vessel intelligence + bloom monitoring + causal inference + GNN network spread + digital twin simulation.
 

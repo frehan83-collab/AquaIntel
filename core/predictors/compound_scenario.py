@@ -210,7 +210,7 @@ class CompoundScenarioEngine:
             "cascade_narrative": cascade_narrative,
             "timestamp": dt.datetime.now(dt.UTC).isoformat(),
             "data_provenance": {
-                "source": "OpenClaw Compound Scenario Engine",
+                "source": "AquaIntel Compound Scenario Engine",
                 "models_used": [
                     "EventImpactModel (ISA/traffic-light/feed-shock cascades)",
                     "Interaction Effect Matrix (documented stress cascades)",

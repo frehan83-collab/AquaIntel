@@ -1,6 +1,6 @@
 """
 core/market/causal_engine.py
-OpenClaw - Norwegian Salmon Aquaculture Trading Platform
+AquaIntel - Norwegian Salmon Aquaculture Trading Platform
 
 Causal Inference Module: Discovers the true causal lag between sea lice outbreaks
 and Norwegian salmon export price movements using:

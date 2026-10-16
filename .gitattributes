@@ -1,4 +1,4 @@
-# OpenClaw / FishIntel - Cross-platform line ending and file handling
+# AquaIntel / FishIntel - Cross-platform line ending and file handling
 # This file ensures consistent behavior between macOS, Linux, and Windows developers.
 
 # Default: auto-detect text files and normalize line endings

@@ -206,7 +206,7 @@ def compute_current_boost(
 
 class OceanCurrents:
     """
-    Manages CMEMS NorKyst800 current + temperature data for OpenClaw.
+    Manages CMEMS NorKyst800 current + temperature data for AquaIntel.
 
     Responsibilities:
     - Authenticate with CMEMS via `copernicusmarine` Python client

@@ -1,5 +1,5 @@
 """
-FastAPI REST API for OpenClaw.
+FastAPI REST API for AquaIntel.
 Provides endpoints for programmatic access, webhooks, and the premium signal service.
 """
 from __future__ import annotations
@@ -551,7 +551,7 @@ async def chat_endpoint(req: ChatRequest):
     max_lice = lice_stats[2] or 0
     n_records = lice_stats[0] or 0
 
-    system_prompt = f"""You are the OpenClaw AI — an expert analyst for Norwegian salmon aquaculture.
+    system_prompt = f"""You are the AquaIntel AI — an expert analyst for Norwegian salmon aquaculture.
 You have access to real-time platform data:
 - {n_records:,} lice records across {n_localities} localities
 - Latest data: {f"Y{latest_week[0]}W{latest_week[1]}" if latest_week else "N/A"}
@@ -582,8 +582,8 @@ Always provide data-backed answers. Include accuracy caveats where relevant. Nev
         headers = {
             "Authorization": f"Bearer {settings.openrouter_api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://openclaw.no",
-            "X-Title": "OpenClaw",
+            "HTTP-Referer": "https://aquaintel.no",
+            "X-Title": "AquaIntel",
         }
     elif settings.llm_provider == "anthropic" and settings.anthropic_api_key:
         api_url = "https://api.anthropic.com/v1/messages"
@@ -1270,7 +1270,7 @@ async def _rule_based_chat_response(message: str) -> dict:
     # ── Fallback ──────────────────────────────────────────────────────
     if not answer_parts:
         answer_parts.append(
-            "I'm OpenClaw's intelligence assistant, specialising in Norwegian aquaculture markets.\n\n"
+            "I'm AquaIntel's intelligence assistant, specialising in Norwegian aquaculture markets.\n\n"
             "I can help you with:\n"
             "- **Lice levels** — real-time BarentsWatch data across 13 production areas\n"
             "- **Salmon prices** — SSB spot prices, Fish Pool index, equity prices\n"

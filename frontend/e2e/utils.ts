@@ -16,7 +16,7 @@ import type { Page } from "@playwright/test";
 export async function suppressOnboarding(page: Page): Promise<void> {
   await page.addInitScript(() => {
     window.localStorage.setItem("oc_onboarded", "true");
-    window.localStorage.setItem("openclaw_tour_completed", "true");
+    window.localStorage.setItem("aquaintel_tour_completed", "true");
   });
 }
 

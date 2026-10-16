@@ -81,7 +81,7 @@ class BiomassTracker:
             # Try the open data endpoint
             resp = await self._client.get(
                 "https://www.fiskeridir.no/Akvakultur/Tall-og-analyse/Apne-data",
-                headers={"User-Agent": "OpenClaw/1.0"},
+                headers={"User-Agent": "AquaIntel/1.0"},
             )
             log.info("biomass.fetch_attempt", status=resp.status_code)
         except Exception as exc:

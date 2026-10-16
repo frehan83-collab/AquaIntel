@@ -76,7 +76,7 @@ Measured route inventory: **320 HTTP routes + 2 WebSockets** (304 across 25 rout
 
 - `Dockerfile:33-41`: `CMD ["gunicorn", "core.api:app", ...]` — gunicorn imports `core.api:app` directly. `main.py` never executes in the container.
 - `docker-compose.yml` services: `db`, `fishintel` (gunicorn container; comment at line 23 says "Backend: agents + API" — **false**), `frontend`, `nginx`. There is **no service that runs `python main.py --agents-only`**.
-- Consequence: in any Docker deployment, BarentsWatch ingestion, sentiment polling (`main.py:43-54`), backfill, bloom monitoring, signal generation — all of it — silently never runs. The platform serves whatever data is in the mounted `data/openclaw.db` volume, decaying forever. The daemon-thread shutdown bug is a **dev-mode** problem; the **production** problem is that the agent subsystem doesn't exist there.
+- Consequence: in any Docker deployment, BarentsWatch ingestion, sentiment polling (`main.py:43-54`), backfill, bloom monitoring, signal generation — all of it — silently never runs. The platform serves whatever data is in the mounted `data/aquaintel.db` volume, decaying forever. The daemon-thread shutdown bug is a **dev-mode** problem; the **production** problem is that the agent subsystem doesn't exist there.
 
 ### 2.3 Decision: split-process architecture (no new dependencies)
 

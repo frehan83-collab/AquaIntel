@@ -78,7 +78,7 @@ const DATA_SOURCES: DataSourceDef[] = [
   },
   {
     name: "Climate Risk Engine",
-    provider: "OpenClaw composite (MET.no + CMEMS + Regime)",
+    provider: "AquaIntel composite (MET.no + CMEMS + Regime)",
     status: "active",
     description: "Per-PA climate risk scores combining SST stress, bloom risk, and lice pressure",
     resolution: "Per production area",

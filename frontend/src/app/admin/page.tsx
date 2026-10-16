@@ -794,7 +794,7 @@ export default function AdminPage() {
 
       {/* Version footer */}
       <div className="text-center text-xs text-[var(--text-secondary)] pt-4 pb-8">
-        OpenClaw v{status?.version || "2.1.0"} &middot; {status?.route_count || 0} routes &middot; {status?.engine_count || 0} engines &middot; {status?.db_table_count || 0} tables
+        AquaIntel v{status?.version || "2.1.0"} &middot; {status?.route_count || 0} routes &middot; {status?.engine_count || 0} engines &middot; {status?.db_table_count || 0} tables
       </div>
     </div>
   );

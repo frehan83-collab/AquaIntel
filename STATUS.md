@@ -30,7 +30,7 @@ Plan: `docs/AUTONOMOUS_RUN_PLAN.md` (**RUN-1**, active) · Prior plan:
   installed globally; `python -m uvicorn core.api:app` boots (327 routes).
 - Python version decision (required before P0-4): **pin 3.12** — matches CI
   (`test.yml`) and avoids 3.14-vs-torch risk. Do not install the models stack into 3.14.
-- `.env` + `data/openclaw.db` are gitignored; local copies were restored from the
+- `.env` + `data/aquaintel.db` are gitignored; local copies were restored from the
   `C:\Users\freha\FishIntel` dev box (same commit as the clone).
 - Visual baselines are Linux-generated — regenerate only via `visual-baselines.yml`
   (`update=true`), never on Windows.

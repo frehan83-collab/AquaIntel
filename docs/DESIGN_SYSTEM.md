@@ -1,5 +1,5 @@
-# OpenClaw Design System Specification
-## Figma File: https://www.figma.com/design/UklcflWFBHal5xPSrSQolq/OpenClaw-Design-System
+# AquaIntel Design System Specification
+## Figma File: https://www.figma.com/design/UklcflWFBHal5xPSrSQolq/AquaIntel-Design-System
 
 > **Vision:** Bloomberg Terminal meets Norwegian fjord.
 > **Principles:** Data density. Scandinavian restraint. Every color carries meaning.
@@ -163,7 +163,7 @@
 ## 6. Figma File Structure
 
 ```
-OpenClaw Design System (UklcflWFBHal5xPSrSQolq)
+AquaIntel Design System (UklcflWFBHal5xPSrSQolq)
 ├── Page 1: Color System
 │   ├── Frame: Core UI Colors (light + dark swatches)
 │   ├── Frame: Data Colors (6 aquaculture metrics)
@@ -201,7 +201,7 @@ Save as `tokens.json` and import in Tokens Studio:
 
 ```json
 {
-  "OpenClaw": {
+  "AquaIntel": {
     "bg": {
       "primary": { "value": "{bg.primary}", "type": "color" },
       "secondary": { "value": "{bg.secondary}", "type": "color" }

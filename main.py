@@ -37,7 +37,7 @@ from agents.market_hedger_agent import MarketHedgerAgent
 from core.twin.self_evolve import SelfEvolvingAgent
 from agents.intelligence_agent import IntelligenceAgent
 
-log = structlog.get_logger("openclaw")
+log = structlog.get_logger("aquaintel")
 
 
 async def _sentiment_polling_loop() -> None:
@@ -136,12 +136,12 @@ def run_api(host: str = "0.0.0.0", port: int = 8000) -> None:
 @click.option("--agents-only", is_flag=True, help="Run agents only")
 @click.option("--api-port", default=8000, help="API server port")
 def main(api_only: bool, agents_only: bool, api_port: int) -> None:
-    """OpenClaw Lice-Impact Arbitrage Bot"""
+    """AquaIntel Lice-Impact Arbitrage Bot"""
     setup_logging()
     init_db()
 
     log.info(
-        "openclaw.start",
+        "aquaintel.start",
         mode="api" if api_only else "agents" if agents_only else "full",
         broker=settings.broker_mode,
         poll_interval=settings.poll_interval_minutes,

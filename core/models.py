@@ -1,4 +1,4 @@
-"""SQLAlchemy ORM models for OpenClaw."""
+"""SQLAlchemy ORM models for AquaIntel."""
 from __future__ import annotations
 
 import asyncio

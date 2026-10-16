@@ -383,7 +383,7 @@ class FeedCostEngine:
                     try:
                         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range=5d"
                         resp = await client.get(url, headers={
-                            "User-Agent": "OpenClaw/1.0 Research",
+                            "User-Agent": "AquaIntel/1.0 Research",
                         })
                         if resp.status_code == 200:
                             data = resp.json()
@@ -415,7 +415,7 @@ class FeedCostEngine:
             async with httpx.AsyncClient(timeout=15) as client:
                 # World Bank Commodity Prices (Pink Sheet) — JSON endpoint
                 url = "https://api.worldbank.org/v2/country/WLD/indicator/COMMODITY.FISHMEAL?format=json&per_page=5&date=2025:2026"
-                resp = await client.get(url, headers={"User-Agent": "OpenClaw/1.0"})
+                resp = await client.get(url, headers={"User-Agent": "AquaIntel/1.0"})
                 if resp.status_code == 200:
                     data = resp.json()
                     # Parse World Bank response format
@@ -452,7 +452,7 @@ class FeedCostEngine:
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.get(
                     "https://query1.finance.yahoo.com/v8/finance/chart/USDNOK=X?interval=1d&range=5d",
-                    headers={"User-Agent": "OpenClaw/1.0"},
+                    headers={"User-Agent": "AquaIntel/1.0"},
                 )
                 if resp.status_code == 200:
                     data = resp.json()

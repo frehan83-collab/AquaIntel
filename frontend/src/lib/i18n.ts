@@ -264,7 +264,7 @@ const translations: Record<string, Record<Locale, string>> = {
 
   // ── Page: Billing ──
   "page.billing.title": { en: "Billing & Subscription", no: "Fakturering og abonnement" },
-  "page.billing.subtitle": { en: "Manage your OpenClaw subscription and payment history", no: "Administrer ditt OpenClaw-abonnement og betalingshistorikk" },
+  "page.billing.subtitle": { en: "Manage your AquaIntel subscription and payment history", no: "Administrer ditt AquaIntel-abonnement og betalingshistorikk" },
   "page.billing.current_tier": { en: "Current Tier", no: "Gjeldende niwa" },
   "page.billing.monthly_price": { en: "Monthly Price", no: "Månedlig pris" },
   "page.billing.api_calls": { en: "API Calls", no: "API-kall" },

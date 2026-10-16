@@ -1,11 +1,11 @@
-# OpenClaw Platform Status — Complete Briefing for AI Assistant Handoff
+# AquaIntel Platform Status — Complete Briefing for AI Assistant Handoff
 ## Date: March 29, 2026
 
 ---
 
 ## WHAT THIS IS
 
-OpenClaw is a full-stack salmon aquaculture market intelligence platform — the goal is to become the undisputed market leader, materially superior to Manolin/Watershed, Kontali, and every other competitor. It combines real-time biological data (sea lice, bloom, disease), market intelligence (prices, equities, commodities), predictive ML models, and autonomous agents into a single platform serving farmers, buyers, traders, and institutional investors.
+AquaIntel is a full-stack salmon aquaculture market intelligence platform — the goal is to become the undisputed market leader, materially superior to Manolin/Watershed, Kontali, and every other competitor. It combines real-time biological data (sea lice, bloom, disease), market intelligence (prices, equities, commodities), predictive ML models, and autonomous agents into a single platform serving farmers, buyers, traders, and institutional investors.
 
 ## CODEBASE SIZE
 
@@ -29,7 +29,7 @@ OpenClaw is a full-stack salmon aquaculture market intelligence platform — the
 ## ARCHITECTURE
 
 ```
-OpenClaw/
+AquaIntel/
 ├── main.py                    # Orchestrator — launches all agents + uvicorn
 ├── core/
 │   ├── api.py                 # 103 REST endpoints (2,789 lines)
@@ -162,7 +162,7 @@ Hidden: /esg, /predictions, /supply, /compliance (accessible but not in sidebar)
 
 ## COMPETITIVE POSITION
 
-| Feature | Manolin/Watershed | Kontali | OpenClaw |
+| Feature | Manolin/Watershed | Kontali | AquaIntel |
 |---------|:-:|:-:|:-:|
 | Lice prediction | Yes | No | Yes + GNN spread |
 | Disease prediction | Yes | No | Yes + WOAH alerts |

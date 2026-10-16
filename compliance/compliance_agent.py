@@ -22,7 +22,7 @@ from config.settings import settings
 
 # ── Regulatory text ──────────────────────────────────────────────────
 DISCLAIMER = """
-DISCLAIMER — OpenClaw Lice-Impact Arbitrage Bot
+DISCLAIMER — AquaIntel Lice-Impact Arbitrage Bot
 ================================================
 This system provides discretionary trading signals based on publicly
 available aquaculture data. It does NOT constitute financial advice.

@@ -193,7 +193,7 @@ class SentimentEngine:
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(
                 timeout=20,
-                headers={"User-Agent": "OpenClaw/1.0 (Aquaculture Research Bot)"},
+                headers={"User-Agent": "AquaIntel/1.0 (Aquaculture Research Bot)"},
                 follow_redirects=True,
             )
         return self._client

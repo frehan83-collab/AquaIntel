@@ -110,7 +110,7 @@ export default function BillingPage() {
             {t("page.billing.title")}
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
-            Manage your OpenClaw subscription and payment history
+            Manage your AquaIntel subscription and payment history
           </p>
         </div>
         <OcButton onClick={load} loading={loading}>Refresh</OcButton>

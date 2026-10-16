@@ -56,7 +56,7 @@ export default function DesignSystemPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-display text-[var(--text-primary)]">
-          OpenClaw Design System
+          AquaIntel Design System
         </h1>
         <p className="text-[var(--text-secondary)] mt-2">
           Bloomberg Terminal meets Norwegian fjord. {Object.keys(colors).length} color groups,{" "}

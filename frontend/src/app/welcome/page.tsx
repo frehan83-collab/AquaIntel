@@ -77,7 +77,7 @@ export default function WelcomePage() {
     setDemoState(true, card.persona);
     // Dispatch tour start event
     window.dispatchEvent(
-      new CustomEvent("openclaw_start_tour", { detail: { persona: card.persona } })
+      new CustomEvent("aquaintel_start_tour", { detail: { persona: card.persona } })
     );
     router.push(card.startRoute);
   };

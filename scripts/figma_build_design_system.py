@@ -1,5 +1,5 @@
 """
-Figma Design System Builder — Populates the OpenClaw Design System Figma file
+Figma Design System Builder — Populates the AquaIntel Design System Figma file
 with color swatches, typography samples, component specs, and layout references.
 
 This script uses the Figma REST API (via FigmaClient) to create visual
@@ -77,7 +77,7 @@ def generate_figma_plugin_script(tokens: dict) -> str:
 
     script_lines = [
         "// ═══════════════════════════════════════════════════════════════",
-        "// OpenClaw Design System — Figma Plugin Script",
+        "// AquaIntel Design System — Figma Plugin Script",
         f"// Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
         f"// Tokens: {len(colors)} colors, {len(typo.get('fontSize', {}))} font sizes",
         "// ",
@@ -385,7 +385,7 @@ def generate_figma_plugin_script(tokens: dict) -> str:
         "  }",
         "",
         "  figma.viewport.scrollAndZoomIntoView([darkBg]);",
-        f"  figma.notify('OpenClaw Design System built: {len(colors)} colors, 8 font sizes, {len(spacing)} spacing tokens, 8 components');",
+        f"  figma.notify('AquaIntel Design System built: {len(colors)} colors, 8 font sizes, {len(spacing)} spacing tokens, 8 components');",
         "}",
         "",
         "buildDesignSystem();",
@@ -395,7 +395,7 @@ def generate_figma_plugin_script(tokens: dict) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Build OpenClaw Design System in Figma")
+    parser = argparse.ArgumentParser(description="Build AquaIntel Design System in Figma")
     parser.add_argument("--file-key", default="UklcflWFBHal5xPSrSQolq", help="Figma file key")
     parser.add_argument("--dry-run", action="store_true", help="Generate script without API calls")
     args = parser.parse_args()
@@ -403,7 +403,7 @@ def main():
     tokens = load_tokens()
     colors = flatten_colors(tokens.get("global", {}).get("colors", {}))
 
-    print(f"OpenClaw Design System Builder")
+    print(f"AquaIntel Design System Builder")
     print(f"  File: https://www.figma.com/design/{args.file_key}/")
     print(f"  Tokens: {len(colors)} colors")
 

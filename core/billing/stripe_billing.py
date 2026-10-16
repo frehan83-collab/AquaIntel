@@ -2,7 +2,7 @@
 Stripe Billing Engine
 =======================
 Handles subscription lifecycle: checkout sessions, webhooks, cancellations.
-Maps OpenClaw tiers to Stripe Products/Prices.
+Maps AquaIntel tiers to Stripe Products/Prices.
 
 Requires env vars: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
 """
@@ -21,17 +21,17 @@ log = structlog.get_logger(__name__)
 # Tier → Stripe metadata mapping
 TIER_PRODUCTS = {
     "professional": {
-        "name": "OpenClaw Professional",
+        "name": "AquaIntel Professional",
         "price_nok": 2990,
         "description": "Real-time alerts, farm forecasts, harvest optimizer, ML baselines",
     },
     "enterprise": {
-        "name": "OpenClaw Enterprise",
+        "name": "AquaIntel Enterprise",
         "price_nok": 14900,
         "description": "Full market intelligence, EU traceability, supply chain tools",
     },
     "investor": {
-        "name": "OpenClaw Investor",
+        "name": "AquaIntel Investor",
         "price_nok": 24900,
         "description": "All features + trading signals, performance tracking, full API",
     },

@@ -16,7 +16,7 @@ const PERSONA_CONFIG: Record<DemoPersona, { label: string; icon: typeof Sunrise;
 export function getDemoState(): { active: boolean; persona: DemoPersona } {
   if (typeof window === "undefined") return { active: false, persona: "farmer" };
   try {
-    const raw = localStorage.getItem("openclaw_demo_mode");
+    const raw = localStorage.getItem("aquaintel_demo_mode");
     if (!raw) return { active: false, persona: "farmer" };
     const parsed = JSON.parse(raw);
     return { active: !!parsed.active, persona: parsed.persona || "farmer" };
@@ -28,14 +28,14 @@ export function getDemoState(): { active: boolean; persona: DemoPersona } {
 export function setDemoState(active: boolean, persona?: DemoPersona) {
   if (typeof window === "undefined") return;
   if (!active) {
-    localStorage.removeItem("openclaw_demo_mode");
+    localStorage.removeItem("aquaintel_demo_mode");
   } else {
     localStorage.setItem(
-      "openclaw_demo_mode",
+      "aquaintel_demo_mode",
       JSON.stringify({ active: true, persona: persona || "farmer" })
     );
   }
-  window.dispatchEvent(new Event("openclaw_demo_change"));
+  window.dispatchEvent(new Event("aquaintel_demo_change"));
 }
 
 export default function DemoBanner() {
@@ -48,10 +48,10 @@ export default function DemoBanner() {
   useEffect(() => {
     setDemo(getDemoState());
     const handler = () => setDemo(getDemoState());
-    window.addEventListener("openclaw_demo_change", handler);
+    window.addEventListener("aquaintel_demo_change", handler);
     window.addEventListener("storage", handler);
     return () => {
-      window.removeEventListener("openclaw_demo_change", handler);
+      window.removeEventListener("aquaintel_demo_change", handler);
       window.removeEventListener("storage", handler);
     };
   }, []);

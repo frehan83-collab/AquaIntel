@@ -1,4 +1,4 @@
-# Competitive Analysis: OpenClaw vs Manolin Aqua (Watershed)
+# Competitive Analysis: AquaIntel vs Manolin Aqua (Watershed)
 
 ## Manolin Aqua — Strengths
 
@@ -16,31 +16,31 @@
 
 ## Manolin — Weaknesses & Gaps
 
-| Gap | OpenClaw Advantage |
+| Gap | AquaIntel Advantage |
 |-----|-------------------|
-| Farm-centric only | OpenClaw serves full value chain: farmers + buyers + processors + investors |
-| No LLM/agentic layer | OpenClaw has 7 LLM agents + multi-agent swarm |
-| Static models | OpenClaw: live retraining, self-evolving intelligence |
-| No public data fusion | OpenClaw: real-time BarentsWatch API + regulatory data |
-| No multi-horizon transparency | OpenClaw: 2-20 week horizons with explicit accuracy degradation |
-| No digital twin | OpenClaw: autonomous agentic digital twin with Monte Carlo |
-| No what-if scenarios | OpenClaw: LLM-orchestrated generative scenarios |
-| No conversational AI | OpenClaw: natural-language decision intelligence |
-| No trading signals | OpenClaw: optional conditional signals (consent-gated) |
-| No supply-chain coordination | OpenClaw: regional supply forecasts, contract risk alerts |
-| Closed ecosystem | OpenClaw: open API, tiered SaaS, Docker-deployable |
+| Farm-centric only | AquaIntel serves full value chain: farmers + buyers + processors + investors |
+| No LLM/agentic layer | AquaIntel has 7 LLM agents + multi-agent swarm |
+| Static models | AquaIntel: live retraining, self-evolving intelligence |
+| No public data fusion | AquaIntel: real-time BarentsWatch API + regulatory data |
+| No multi-horizon transparency | AquaIntel: 2-20 week horizons with explicit accuracy degradation |
+| No digital twin | AquaIntel: autonomous agentic digital twin with Monte Carlo |
+| No what-if scenarios | AquaIntel: LLM-orchestrated generative scenarios |
+| No conversational AI | AquaIntel: natural-language decision intelligence |
+| No trading signals | AquaIntel: optional conditional signals (consent-gated) |
+| No supply-chain coordination | AquaIntel: regional supply forecasts, contract risk alerts |
+| Closed ecosystem | AquaIntel: open API, tiered SaaS, Docker-deployable |
 
-## OpenClaw Superiority Matrix
+## AquaIntel Superiority Matrix
 
-| Dimension | Manolin | OpenClaw | Winner |
+| Dimension | Manolin | AquaIntel | Winner |
 |-----------|---------|----------|--------|
-| Stage-structured lice prediction | Internal models | Stige et al. (2025) Bayesian NegBin GLM, R²=0.47 | OpenClaw (published science) |
-| Prediction horizons | 90 days (fixed) | 2-20 weeks (user-selectable, accuracy-transparent) | OpenClaw |
-| AI/LLM integration | None | 7 agents + swarm + RAG + scenarios | OpenClaw |
-| Digital twin | None | Autonomous agentic twin with Monte Carlo | OpenClaw |
-| Value-chain coverage | Farmers only | Farmers + buyers + processors + investors | OpenClaw |
-| Treatment advisory | Basic | Type/timing/cost/efficacy with alternatives | OpenClaw |
-| Supply forecasting | None | Regional PA-level volume + quality grades | OpenClaw |
-| Self-improvement | None | Accuracy tracking + auto-parameter adjustment | OpenClaw |
-| Compliance/audit | Unknown | Full GDPR, NLOD, consent logging, audit trail | OpenClaw |
-| Monetization model | Freemium | 6-tier SaaS (Free to Intelligence NOK 39,900/mo) | OpenClaw |
+| Stage-structured lice prediction | Internal models | Stige et al. (2025) Bayesian NegBin GLM, R²=0.47 | AquaIntel (published science) |
+| Prediction horizons | 90 days (fixed) | 2-20 weeks (user-selectable, accuracy-transparent) | AquaIntel |
+| AI/LLM integration | None | 7 agents + swarm + RAG + scenarios | AquaIntel |
+| Digital twin | None | Autonomous agentic twin with Monte Carlo | AquaIntel |
+| Value-chain coverage | Farmers only | Farmers + buyers + processors + investors | AquaIntel |
+| Treatment advisory | Basic | Type/timing/cost/efficacy with alternatives | AquaIntel |
+| Supply forecasting | None | Regional PA-level volume + quality grades | AquaIntel |
+| Self-improvement | None | Accuracy tracking + auto-parameter adjustment | AquaIntel |
+| Compliance/audit | Unknown | Full GDPR, NLOD, consent logging, audit trail | AquaIntel |
+| Monetization model | Freemium | 6-tier SaaS (Free to Intelligence NOK 39,900/mo) | AquaIntel |

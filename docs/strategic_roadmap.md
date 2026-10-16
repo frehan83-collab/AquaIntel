@@ -1,4 +1,4 @@
-# OpenClaw Strategic Roadmap — "Bloomberg Terminal for Salmon"
+# AquaIntel Strategic Roadmap — "Bloomberg Terminal for Salmon"
 
 ## EXECUTIVE SUMMARY
 
@@ -141,7 +141,7 @@ The platform becomes indispensable when:
 | **Manolin/Watershed** | Farm-level disease analytics | No market terminal, no pricing, no transport, no value chain |
 | **Fish Pool** | Derivatives marketplace | No supply intelligence, no analytics |
 | **AquaCloud** | Lice data aggregation | No predictions, no commercial layer |
-| **OpenClaw** | **ALL OF THE ABOVE + AI + Digital Twin** | — |
+| **AquaIntel** | **ALL OF THE ABOVE + AI + Digital Twin** | — |
 
 ---
 

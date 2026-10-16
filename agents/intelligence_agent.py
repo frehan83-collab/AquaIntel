@@ -1,5 +1,5 @@
 """
-OpenClaw Intelligence Agent
+AquaIntel Intelligence Agent
 ============================
 Background polling agent that drives all 6 intelligence modules:
 
@@ -10,7 +10,7 @@ Background polling agent that drives all 6 intelligence modules:
   5. Chile Monitor            — every 60 minutes
   6. Pairs Engine             — every 10 minutes (price updates)
 
-Runs concurrently in the main OpenClaw agent loop. Each sub-task
+Runs concurrently in the main AquaIntel agent loop. Each sub-task
 runs on its own cadence via internal scheduling.
 """
 from __future__ import annotations

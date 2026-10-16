@@ -78,7 +78,7 @@ class SalmonPriceEngine:
         try:
             resp = await self._client.get(
                 "https://salmonprice.nasdaqomx.com/",
-                headers={"User-Agent": "OpenClaw/1.0"},
+                headers={"User-Agent": "AquaIntel/1.0"},
             )
 
             if resp.status_code == 200:
@@ -337,7 +337,7 @@ async def get_latest_prices() -> dict[str, float]:
             timeout=20,
             follow_redirects=True,
             headers={
-                "User-Agent": "Mozilla/5.0 (compatible; OpenClaw/1.0)",
+                "User-Agent": "Mozilla/5.0 (compatible; AquaIntel/1.0)",
                 "Accept": "application/json",
             },
         ) as client:

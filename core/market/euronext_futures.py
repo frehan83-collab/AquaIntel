@@ -93,7 +93,7 @@ class EuronextFuturesEngine:
             timeout=20.0,
             follow_redirects=True,
             headers={
-                "User-Agent": "OpenClaw-FishIntel/2.5 (aquaculture-intel)",
+                "User-Agent": "AquaIntel/2.5 (aquaculture-intel)",
                 "Accept": "text/html,application/xhtml+xml",
             },
         )
@@ -124,7 +124,7 @@ class EuronextFuturesEngine:
             resp = await self._client.get(
                 "https://query1.finance.yahoo.com/v8/finance/chart/EURNOK=X",
                 params={"interval": "1d", "range": "5d"},
-                headers={"User-Agent": "OpenClaw-FishIntel/2.5"},
+                headers={"User-Agent": "AquaIntel/2.5"},
             )
             if resp.status_code == 200:
                 data = resp.json()

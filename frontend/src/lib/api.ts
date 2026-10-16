@@ -10,7 +10,7 @@
  */
 import type {
   HealthResponse, LiceSummary, DecisionCard, FarmPortfolioResponse,
-  BiomassNational, SSBPriceHistory, FeedCostLatest, CompetitivenessIndex,
+  BiomassNational, MarketBiomass, SSBPriceHistory, FeedCostLatest, CompetitivenessIndex,
   FuturesForwardCurve, FuturesBasis, LeaderEntry, AnomalyScores,
   MorningBrief, RegimeAlert, DiseaseNorway, DiseaseByCompany,
   ResistanceMap, ASCReadiness, ForecastResponse, EnsembleForecast,
@@ -506,6 +506,8 @@ export const api = {
 
   // Biomass Status (Fiskeridirektoratet)
   biomassNational: () => fetchAPI<BiomassNational>("/api/farms/biomass/national"),
+  // Derived supply model — estimated harvestable/outlook (see MarketBiomass type)
+  marketBiomass: () => fetchAPI<MarketBiomass>("/api/market/biomass"),
   biomassByPA: (pa: number) => fetchAPI(`/api/farms/biomass/pa/${pa}`),
   biomassByLocality: (localityNo: number) => fetchAPI(`/api/farms/biomass/locality/${localityNo}`),
 

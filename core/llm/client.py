@@ -283,8 +283,8 @@ class LLMClient:
                 max_tokens=max_tokens,
                 temperature=temperature,
                 extra_headers={
-                    "HTTP-Referer": "https://openclaw.no",
-                    "X-Title": "OpenClaw Aquaculture Platform",
+                    "HTTP-Referer": "https://aquaintel.no",
+                    "X-Title": "AquaIntel Aquaculture Platform",
                 },
             )
 
@@ -500,8 +500,8 @@ class LLMClient:
             }
             if self.provider == "openrouter":
                 kwargs["extra_headers"] = {
-                    "HTTP-Referer": "https://openclaw.no",
-                    "X-Title": "OpenClaw Aquaculture Platform",
+                    "HTTP-Referer": "https://aquaintel.no",
+                    "X-Title": "AquaIntel Aquaculture Platform",
                 }
             return client.chat.completions.create(**kwargs)
 

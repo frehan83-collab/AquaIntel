@@ -156,12 +156,12 @@ const TOUR_STEPS: Record<DemoPersona, TourStep[]> = {
 
 export function isTourCompleted(): boolean {
   if (typeof window === "undefined") return false;
-  return localStorage.getItem("openclaw_tour_completed") === "true";
+  return localStorage.getItem("aquaintel_tour_completed") === "true";
 }
 
 export function resetTour() {
   if (typeof window === "undefined") return;
-  localStorage.removeItem("openclaw_tour_completed");
+  localStorage.removeItem("aquaintel_tour_completed");
 }
 
 export default function GuidedTour() {
@@ -179,8 +179,8 @@ export default function GuidedTour() {
       setStepIndex(0);
       setActive(true);
     };
-    window.addEventListener("openclaw_start_tour", handler);
-    return () => window.removeEventListener("openclaw_start_tour", handler);
+    window.addEventListener("aquaintel_start_tour", handler);
+    return () => window.removeEventListener("aquaintel_start_tour", handler);
   }, []);
 
   const steps = TOUR_STEPS[persona];
@@ -199,13 +199,13 @@ export default function GuidedTour() {
       setStepIndex((i) => i + 1);
     } else {
       // Tour complete
-      localStorage.setItem("openclaw_tour_completed", "true");
+      localStorage.setItem("aquaintel_tour_completed", "true");
       setActive(false);
     }
   }, [stepIndex, steps.length]);
 
   const handleSkip = useCallback(() => {
-    localStorage.setItem("openclaw_tour_completed", "true");
+    localStorage.setItem("aquaintel_tour_completed", "true");
     setActive(false);
   }, []);
 

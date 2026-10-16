@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// OpenClaw Design System — Figma Plugin Script
+// AquaIntel Design System — Figma Plugin Script
 // Generated: 2026-04-08 19:02 UTC
 // Tokens: 34 colors, 8 font sizes
 // 
@@ -673,7 +673,7 @@ async function buildDesignSystem() {
   }
 
   figma.viewport.scrollAndZoomIntoView([darkBg]);
-  figma.notify('OpenClaw Design System built: 34 colors, 8 font sizes, 11 spacing tokens, 8 components');
+  figma.notify('AquaIntel Design System built: 34 colors, 8 font sizes, 11 spacing tokens, 8 components');
 }
 
 buildDesignSystem();

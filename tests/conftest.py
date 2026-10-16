@@ -24,7 +24,7 @@ from fastapi.testclient import TestClient
 
 # ── Test-database bootstrap (CI runners & fresh clones) ─────────────────────
 # TestClient(app) does NOT run the FastAPI lifespan, so on a machine without
-# a populated data/openclaw.db (CI!) the schema was never created and every
+# a populated data/aquaintel.db (CI!) the schema was never created and every
 # DB-touching test failed with "no such table" / "unable to open database
 # file". Build the schema explicitly and seed the deterministic demo dataset
 # when the lice table is empty. No-op on a populated dev DB (this box: 186k rows).

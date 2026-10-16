@@ -1,6 +1,6 @@
 {
-  "name": "OpenClaw Aquaculture Intelligence",
-  "short_name": "OpenClaw",
+  "name": "AquaIntel Aquaculture Intelligence",
+  "short_name": "AquaIntel",
   "description": "Real-time salmon market intelligence for farmers, traders, and investors",
   "start_url": "/",
   "display": "standalone",

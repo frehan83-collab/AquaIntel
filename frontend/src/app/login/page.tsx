@@ -31,8 +31,8 @@ export default function LoginPage() {
       }
 
       // Store token
-      localStorage.setItem("openclaw_token", result.token);
-      localStorage.setItem("openclaw_user", JSON.stringify(result.user));
+      localStorage.setItem("aquaintel_token", result.token);
+      localStorage.setItem("aquaintel_user", JSON.stringify(result.user));
 
       setSuccess(`Welcome, ${result.user.email}! Tier: ${result.user.tier}`);
 

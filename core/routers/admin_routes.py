@@ -511,7 +511,7 @@ async def admin_export_dataset(
 
     # Timestamp for filename
     ts = dt.datetime.now(dt.UTC).strftime("%Y%m%d_%H%M%S")
-    filename_base = f"openclaw_{dataset}_{ts}"
+    filename_base = f"aquaintel_{dataset}_{ts}"
 
     if format == "csv":
         return StreamingResponse(
@@ -839,7 +839,7 @@ async def _csrd_export_impl(
         "social": social,
         "governance": governance,
         "metadata": {
-            "platform": "OpenClaw Aquaculture Intelligence",
+            "platform": "AquaIntel Aquaculture Intelligence",
             "version": "2.2.0",
             "data_sources": [
                 "BarentsWatch (lice monitoring)",
@@ -852,7 +852,7 @@ async def _csrd_export_impl(
                      "Companies should supplement with HR, emissions, and supply chain data.",
         },
         "data_provenance": {
-            "source": "OpenClaw multi-source aggregation",
+            "source": "AquaIntel multi-source aggregation",
             "is_live": True,
             "freshness": now.isoformat(),
             "confidence": 0.80,

@@ -1,6 +1,6 @@
 """
 Alembic environment configuration.
-Reads database URL from OpenClaw settings and imports all models
+Reads database URL from AquaIntel settings and imports all models
 so Base.metadata reflects the complete schema.
 """
 from __future__ import annotations

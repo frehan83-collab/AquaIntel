@@ -1,5 +1,5 @@
 /**
- * TypeScript API Response Types for AquaIntelligence (OpenClaw)
+ * TypeScript API Response Types for AquaIntelligence (AquaIntel)
  * =============================================================
  * Organized by domain. Every interface mirrors the actual backend response shape.
  * Source: core/routers/*.py + core/schemas.py
@@ -121,6 +121,25 @@ export interface FarmPortfolioSummary {
   avg_lice_level: number;
   farms_needing_treatment: number;
   risk_breakdown: Record<string, number>;
+}
+
+/**
+ * /api/market/biomass — derived national supply model.
+ * NOTE: the backend currently returns DataProvenance.simulated — these values
+ * are a synthetic placeholder generated from an approximate hardcoded
+ * historical pattern (the Fiskeridirektoratet open-data file is not parsed),
+ * NOT reported biomass. Never present them as live.
+ */
+export interface MarketBiomass {
+  total_biomass_tonnes: number;
+  biomass_vs_historical_pct: number;
+  harvestable_tonnes: number;
+  weekly_harvest_estimate: number;
+  days_of_supply: number;
+  supply_outlook: string;
+  yoy_change_pct: number;
+  pa_breakdown: Record<string, number>;
+  data_provenance?: DataProvenance;
 }
 
 /** /api/farms/biomass/national */

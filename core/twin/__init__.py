@@ -1,5 +1,5 @@
 """
-OpenClaw Autonomous Agentic Digital Twin
+AquaIntel Autonomous Agentic Digital Twin
 =========================================
 A live virtual replica of Norwegian salmon farm production areas that:
   1. Mirrors real-time lice/biomass/treatment state from BarentsWatch

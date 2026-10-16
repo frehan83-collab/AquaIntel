@@ -8,14 +8,14 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: openclaw
-      POSTGRES_USER: openclaw
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-openclaw-dev-password}
+      POSTGRES_DB: aquaintel
+      POSTGRES_USER: aquaintel
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aquaintel-dev-password}
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U openclaw"]
+      test: ["CMD-SHELL", "pg_isready -U aquaintel"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -49,7 +49,7 @@ services:
         reservations:
           memory: 512M
     environment:
-      - DATABASE_URL=postgresql+psycopg2://openclaw:${POSTGRES_PASSWORD:-openclaw-dev-password}@db:5432/openclaw
+      - DATABASE_URL=postgresql+psycopg2://aquaintel:${POSTGRES_PASSWORD:-aquaintel-dev-password}@db:5432/aquaintel
       - PYTENSOR_FLAGS=device=cpu,floatX=float64,optimizer=fast_compile,cxx=
       - FISHINTEL_JWT_SECRET=${FISHINTEL_JWT_SECRET:?FISHINTEL_JWT_SECRET is required - generate with: python -c "import secrets; print(secrets.token_urlsafe(64))"}
       - FISHINTEL_ENV=production
@@ -83,7 +83,7 @@ services:
         reservations:
           memory: 512M
     environment:
-      - DATABASE_URL=postgresql+psycopg2://openclaw:${POSTGRES_PASSWORD:-openclaw-dev-password}@db:5432/openclaw
+      - DATABASE_URL=postgresql+psycopg2://aquaintel:${POSTGRES_PASSWORD:-aquaintel-dev-password}@db:5432/aquaintel
       - PYTENSOR_FLAGS=device=cpu,floatX=float64,optimizer=fast_compile,cxx=
       - FISHINTEL_JWT_SECRET=${FISHINTEL_JWT_SECRET:?FISHINTEL_JWT_SECRET is required - generate with: python -c "import secrets; print(secrets.token_urlsafe(64))"}
       - FISHINTEL_ENV=production

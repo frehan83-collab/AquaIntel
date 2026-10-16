@@ -5,7 +5,7 @@ Reads all rows from the SQLite database and batch-inserts into PostgreSQL.
 Handles type conversions (text dates → timestamps, int bools → booleans).
 
 Usage:
-    DATABASE_URL=postgresql+psycopg2://user:pass@host:5432/openclaw \
+    DATABASE_URL=postgresql+psycopg2://user:pass@host:5432/aquaintel \
     python scripts/migrate_sqlite_to_pg.py
 """
 from __future__ import annotations
@@ -23,7 +23,7 @@ import structlog
 
 log = structlog.get_logger(__name__)
 
-SQLITE_URL = f"sqlite:///{ROOT_DIR / 'data' / 'openclaw.db'}"
+SQLITE_URL = f"sqlite:///{ROOT_DIR / 'data' / 'aquaintel.db'}"
 BATCH_SIZE = 500
 
 

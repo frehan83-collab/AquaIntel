@@ -128,8 +128,8 @@ File: core/routers/webhook_routes.py:72
 Issue: Only the URL scheme is validated. An attacker can point a webhook at http://localhost:8000/api/admin/status or http://169.254.169.254/ (cloud metadata).
 Fix: Resolve the hostname and block loopback, link-local, and RFC1918 ranges. Bound Content-Length on responses. Keep the existing 5s timeout.
   HIGH     JWT stored in localStorage on the frontend
-File: frontend/src/app/login/page.tsx:36
-Issue: openclaw_token sits in localStorage — accessible to any script that runs on the page. Any XSS becomes a full session takeover.
+File: frontend/src/app/login/page.tsx:34
+Issue: aquaintel_token sits in localStorage — accessible to any script that runs on the page. Any XSS becomes a full session takeover.
 Fix: Move auth tokens to an HttpOnly, Secure, SameSite=Lax cookie set by the backend. Add a strict Content-Security-Policy header.
   MEDIUM     No webhook signature on outbound dispatch
 File: core/market/webhook_dispatcher.py

@@ -1,11 +1,11 @@
-# OpenClaw — Autonomous Research Report & Market-Leading Roadmap
+# AquaIntel — Autonomous Research Report & Market-Leading Roadmap
 ## Compiled: March 2026 | 6 Parallel Research Agents
 
 ---
 
 ## Executive Summary
 
-After exhaustive parallel research across 6 domains, we identified the **10 highest-impact features** that would make OpenClaw the undisputed market leader in salmon intelligence. The platform already has capabilities no competitor matches (causal inference, GNN lice spread, AIS vessel intelligence, ESG scoring, biomass prediction). The next phase focuses on **data depth, ML advancement, and monetization infrastructure**.
+After exhaustive parallel research across 6 domains, we identified the **10 highest-impact features** that would make AquaIntel the undisputed market leader in salmon intelligence. The platform already has capabilities no competitor matches (causal inference, GNN lice spread, AIS vessel intelligence, ESG scoring, biomass prediction). The next phase focuses on **data depth, ML advancement, and monetization infrastructure**.
 
 ---
 
@@ -28,9 +28,9 @@ After exhaustive parallel research across 6 domains, we identified the **10 high
 
 ## 2. COMPETITIVE ANALYSIS
 
-### What Competitors Offer vs. OpenClaw
+### What Competitors Offer vs. AquaIntel
 
-| Feature | Manolin | Kontali | Aquabyte | AKVA | OpenClaw |
+| Feature | Manolin | Kontali | Aquabyte | AKVA | AquaIntel |
 |---------|---------|---------|----------|------|----------|
 | Lice prediction | Yes | No | No | No | **Yes + GNN spread** |
 | Disease prediction | Yes | No | No | No | **Yes + WOAH alerts** |
@@ -45,7 +45,7 @@ After exhaustive parallel research across 6 domains, we identified the **10 high
 | Digital twin | No | No | No | No | **Yes** |
 | Bloom monitoring | No | No | No | No | **Yes + Copernicus** |
 
-**Key insight:** No competitor covers more than ~25% of OpenClaw's feature set. The closest combination (Manolin + Kontali) still lacks trading signals, ESG, feed cost, AIS, causal inference, and digital twin.
+**Key insight:** No competitor covers more than ~25% of AquaIntel's feature set. The closest combination (Manolin + Kontali) still lacks trading signals, ESG, feed cost, AIS, causal inference, and digital twin.
 
 ---
 

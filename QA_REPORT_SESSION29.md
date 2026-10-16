@@ -1,4 +1,4 @@
-# OpenClaw / FishIntel QA Report — Session 29
+# AquaIntel / FishIntel QA Report — Session 29
 **Date:** 2026-04-07
 **Tester:** Claude (automated via Chrome plugin)
 **Environment:** Backend localhost:8000 (FastAPI), Frontend localhost:3001 (Next.js 15.5.14 + React 19.2.4)

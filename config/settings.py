@@ -1,5 +1,5 @@
 """
-OpenClaw global settings loaded from environment / .env file.
+AquaIntel global settings loaded from environment / .env file.
 """
 from __future__ import annotations
 
@@ -9,6 +9,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import model_validator
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
+
+# Canonical dev SQLite DB is data/aquaintel.db. Fall back to the pre-rename
+# data/openclaw.db so an existing populated dev database is not orphaned by
+# the OpenClaw -> AquaIntel rename (a fresh clone gets the canonical name).
+_LEGACY_DB = ROOT_DIR / "data" / "openclaw.db"
+_CANONICAL_DB = ROOT_DIR / "data" / "aquaintel.db"
+_DEFAULT_DB = _CANONICAL_DB if (_CANONICAL_DB.exists() or not _LEGACY_DB.exists()) else _LEGACY_DB
 
 
 class Settings(BaseSettings):
@@ -43,7 +50,7 @@ class Settings(BaseSettings):
     secret_key: str = "change-me"
 
     # Database (override with DATABASE_URL env var for PostgreSQL)
-    database_url: str = f"sqlite:///{ROOT_DIR / 'data' / 'openclaw.db'}"
+    database_url: str = f"sqlite:///{_DEFAULT_DB}"
 
     # Stripe billing
     stripe_secret_key: str = ""
@@ -65,7 +72,7 @@ class Settings(BaseSettings):
 
     # Logging
     log_level: str = "INFO"
-    log_file: str = str(ROOT_DIR / "logs" / "openclaw.log")
+    log_file: str = str(ROOT_DIR / "logs" / "aquaintel.log")
 
     # Performance fee
     performance_fee_rate: float = 0.20
@@ -132,7 +139,7 @@ class Settings(BaseSettings):
         if errors:
             raise ValueError("Production configuration errors:\n  - " + "\n  - ".join(errors))
         if not self.barentswatch_client_id:
-            logging.getLogger("openclaw.settings").warning(
+            logging.getLogger("aquaintel.settings").warning(
                 "BARENTSWATCH_CLIENT_ID not set — live lice data will be unavailable"
             )
         return self

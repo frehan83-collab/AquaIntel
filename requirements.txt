@@ -1,4 +1,4 @@
-# OpenClaw Lice-Impact Arbitrage Bot
+# AquaIntel Lice-Impact Arbitrage Bot
 # Python 3.11+
 #
 # Dependency policy (review L8):

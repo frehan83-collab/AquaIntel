@@ -1,1 +1,1 @@
-"""OpenClaw multi-agent orchestration modules."""
+"""AquaIntel multi-agent orchestration modules."""

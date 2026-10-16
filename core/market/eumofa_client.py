@@ -90,7 +90,7 @@ class EUMOFAClient:
     def __init__(self) -> None:
         self._client = httpx.AsyncClient(
             timeout=30.0,
-            headers={"Accept": "application/json", "User-Agent": "OpenClaw/2.1"},
+            headers={"Accept": "application/json", "User-Agent": "AquaIntel/2.1"},
         )
         self._price_cache: Optional[EUMOFASalmonData] = None
         self._price_cache_time: Optional[dt.datetime] = None

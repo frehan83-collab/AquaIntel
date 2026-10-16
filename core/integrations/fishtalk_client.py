@@ -71,7 +71,7 @@ class FishtalkClient:
                 headers={
                     "Authorization": f"Bearer {FISHTALK_API_KEY}",
                     "Accept": "application/json",
-                    "User-Agent": "OpenClaw/2.3.0",
+                    "User-Agent": "AquaIntel/2.3.0",
                 },
                 timeout=30.0,
             )

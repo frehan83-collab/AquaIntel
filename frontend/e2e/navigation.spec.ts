@@ -15,7 +15,7 @@ test.beforeEach(async ({ page }) => {
 test.describe("Core navigation", () => {
   test("dashboard loads and shows KPI cards", async ({ page }) => {
     await page.goto("/");
-    await expect(page).toHaveTitle(/OpenClaw|FishIntel/i);
+    await expect(page).toHaveTitle(/AquaIntel|FishIntel/i);
     // Dashboard should show at least one KPI card
     await expect(page.locator('[class*="kpi"], [class*="KPI"], [class*="glass"]').first()).toBeVisible({
       timeout: 10_000,

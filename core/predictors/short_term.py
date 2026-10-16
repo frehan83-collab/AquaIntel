@@ -33,7 +33,7 @@ at 2-week horizon (as reported by Stige et al.).
 Implementation:
   - Primary: PyMC Bayesian inference with NUTS sampler
   - Fallback: statsmodels GLM negative binomial (faster, less accurate)
-  - Retraining: nightly via OpenClaw agent
+  - Retraining: nightly via AquaIntel agent
 """
 from __future__ import annotations
 

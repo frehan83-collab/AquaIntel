@@ -17,6 +17,7 @@ import type {
   MacroSnapshot,
   SentimentArticle,
   SentimentSummary,
+  MarketBiomass,
 } from "@/types/api";
 import { useApiError } from "@/lib/useApiError";
 import dynamic from "next/dynamic";
@@ -188,6 +189,7 @@ export default function MarketTerminalPage() {
   const [exports, setExports] = useState<ExportDest[]>([]);
   const [futures, setFutures] = useState<FuturesPoint[]>([]);
   const [futuresSynthetic, setFuturesSynthetic] = useState(false);
+  const [biomassSupply, setBiomassSupply] = useState<MarketBiomass | null>(null);
   const [seasonalYears, setSeasonalYears] = useState<string | null>(null);
   const [signals, setSignals] = useState<HedgerSignalRow[]>([]);
   const [sentimentArticles, setSentimentArticles] = useState<SentimentArticle[]>([]);
@@ -204,13 +206,14 @@ export default function MarketTerminalPage() {
     if (showRefresh) setRefreshing(true);
     else setLoading(true);
     try {
-      const [eqRes, ssbRes, seasonRes, expRes, futRes, sigRes] = await Promise.allSettled([
+      const [eqRes, ssbRes, seasonRes, expRes, futRes, sigRes, bioRes] = await Promise.allSettled([
         api.equityPrices(),
         api.ssbPriceHistory(52),
         api.ssbSeasonal(),
         api.exportDestinations(12),
         api.futuresForwardCurve(12),
         api.hedgerSignals(),
+        api.marketBiomass(),
       ]);
       if (eqRes.status === "fulfilled") setEquity(eqRes.value as EquityPrices);
       // /api/market/ssb-price-history returns {spot_nok, history:[{week, price_nok,…}]}
@@ -267,6 +270,9 @@ export default function MarketTerminalPage() {
       // /api/market/hedger-signals returns the Signal rows as a LIST
       // (previously read as {signals:[…]} — always empty).
       if (sigRes.status === "fulfilled") setSignals(sigRes.value);
+      // /api/market/biomass — derived supply model; harvestable/outlook are
+      // ESTIMATES, so the card labels them as estimated (not reported data).
+      if (bioRes.status === "fulfilled") setBiomassSupply(bioRes.value);
       // Fetch NOK/USD, sentiment, AIS
       try {
         const macro = await api.macroSnapshot();
@@ -657,6 +663,68 @@ export default function MarketTerminalPage() {
           )}
         </GlassCard>
       </div>
+
+      {/* Biomass Supply Tracker — ESTIMATES ONLY. The backend
+          /api/market/biomass is tagged data_provenance.simulated: these are a
+          synthetic historical-pattern placeholder, NOT reported biomass. */}
+      {biomassSupply && (
+        <GlassCard accent="ocean" delay={0.33}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)]">Biomass Supply Tracker</h2>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full border ${
+                biomassSupply.data_provenance?.is_live
+                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                  : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+              }`}
+            >
+              {biomassSupply.data_provenance?.is_live ? "Live" : "Estimated"}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <p className="text-[10px] text-white/30 uppercase tracking-wide">Estimated Harvestable</p>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">
+                {biomassSupply.harvestable_tonnes != null
+                  ? `${formatNumber(biomassSupply.harvestable_tonnes / 1000, locale)}k t`
+                  : "\u2014"}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] text-white/30 uppercase tracking-wide">Weekly Harvest Est.</p>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">
+                {biomassSupply.weekly_harvest_estimate != null
+                  ? `${formatNumber(biomassSupply.weekly_harvest_estimate, locale)} t`
+                  : "\u2014"}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] text-white/30 uppercase tracking-wide">Days of Supply</p>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">
+                {biomassSupply.days_of_supply != null
+                  ? formatNumber(biomassSupply.days_of_supply, locale, 0)
+                  : "\u2014"}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] text-white/30 uppercase tracking-wide">Supply Outlook</p>
+              <p className="text-sm font-semibold text-[var(--text-primary)] capitalize">
+                {biomassSupply.supply_outlook || "\u2014"}
+              </p>
+            </div>
+          </div>
+          <p className="text-[10px] text-white/30 mt-3 pt-3 border-t border-white/[0.04]">
+            Estimated — a synthetic historical-pattern placeholder, not reported biomass.
+            The live Fiskeridirektoratet feed is not connected yet, so these figures must
+            not be treated as market intelligence.
+            {" \u00b7 "}
+            vs seasonal norm:{" "}
+            {biomassSupply.biomass_vs_historical_pct != null
+              ? `${formatNumber(biomassSupply.biomass_vs_historical_pct, locale, 0)}%`
+              : "\u2014"}
+          </p>
+        </GlassCard>
+      )}
 
       {/* ── Hedger Signals ───────────────────────────────────────────────── */}
       <GlassCard accent="rose" delay={0.35}>

@@ -1,5 +1,5 @@
-// OpenClaw Service Worker — Network-first for dev, offline fallback for prod
-const CACHE_NAME = 'openclaw-v3';
+// AquaIntel Service Worker — Network-first for dev, offline fallback for prod
+const CACHE_NAME = 'aquaintel-v3';
 
 // Install: skip waiting immediately (no pre-caching — avoids stale HTML)
 self.addEventListener('install', () => {

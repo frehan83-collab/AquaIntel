@@ -8,7 +8,7 @@
 
 ## 1. What this project is
 
-AquaIntel (legacy names: OpenClaw / FishIntel) — a "Bloomberg Terminal for Salmon":
+AquaIntel (legacy names: FishIntel) — a "Bloomberg Terminal for Salmon":
 a salmon aquaculture intelligence platform for Norwegian farmers, traders, and analysts.
 
 | Dimension | Current state |

@@ -1,5 +1,5 @@
 """
-OpenClaw Dashboard — Streamlit Application
+AquaIntel Dashboard — Streamlit Application
 ===========================================
 Real-time alerts, exposure heatmaps, signal confirmation UI,
 backtest results, and performance metrics.
@@ -35,7 +35,7 @@ from backtest.engine import BacktestEngine
 
 # ── Page Config ──────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="OpenClaw — Lice-Impact Arbitrage",
+    page_title="AquaIntel — Lice-Impact Arbitrage",
     page_icon="🦐",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -44,7 +44,7 @@ st.set_page_config(
 init_db()
 
 # ── Sidebar ──────────────────────────────────────────────────────────
-st.sidebar.title("OpenClaw")
+st.sidebar.title("AquaIntel")
 st.sidebar.caption("Lice-Impact Arbitrage Bot")
 st.sidebar.markdown("---")
 
@@ -79,7 +79,7 @@ st.sidebar.warning("**Disclaimer**: This is not financial advice. All signals ar
 # DASHBOARD PAGE
 # ══════════════════════════════════════════════════════════════════════
 if page == "Dashboard":
-    st.title("OpenClaw — Real-Time Dashboard")
+    st.title("AquaIntel — Real-Time Dashboard")
 
     # Key metrics
     with Session() as s:

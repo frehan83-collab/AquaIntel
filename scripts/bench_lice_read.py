@@ -186,7 +186,7 @@ def bench_duckdb_rowload(db_path: str, full_table: bool) -> tuple[dict, list[flo
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="lice weekly-summary read-path benchmark")
-    ap.add_argument("--db", default="data/openclaw.db", help="SQLite database path")
+    ap.add_argument("--db", default="data/aquaintel.db", help="SQLite database path")
     ap.add_argument("--runs", type=int, default=5, help="timed runs per candidate")
     args = ap.parse_args()
     TIMING["runs"] = max(1, args.runs)

@@ -1,9 +1,9 @@
-# OpenClaw Advanced Feature Roadmap
+# AquaIntel Advanced Feature Roadmap
 ## "Bloomberg Terminal for Salmon" — Beyond Manolin
 
-### Competitive Analysis: OpenClaw vs Manolin Watershed
+### Competitive Analysis: AquaIntel vs Manolin Watershed
 
-| Capability | Manolin | OpenClaw (Current) | OpenClaw (Roadmap) |
+| Capability | Manolin | AquaIntel (Current) | AquaIntel (Roadmap) |
 |---|---|---|---|
 | Lice monitoring dashboard | Yes | Yes | Yes + predictive |
 | Disease surveillance | Yes (core) | Partial | Full + ML prediction |
@@ -73,4 +73,4 @@
 - **Value**: All stakeholders — drives subscription revenue
 
 ---
-*Generated: 2026-03-28 | OpenClaw Autonomous Development*
+*Generated: 2026-03-28 | AquaIntel Autonomous Development*

@@ -1,5 +1,5 @@
 """
-Base agent class for OpenClaw multi-agent architecture.
+Base agent class for AquaIntel multi-agent architecture.
 
 Each agent is an autonomous unit with its own run-loop, health status,
 and structured logging. Agents communicate via the shared database and
@@ -25,7 +25,7 @@ class AgentStatus:
 
 
 class BaseAgent(ABC):
-    """Every OpenClaw agent inherits from this."""
+    """Every AquaIntel agent inherits from this."""
 
     name: str = "base_agent"
     interval_seconds: int = 900  # default 15 min

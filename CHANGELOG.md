@@ -844,7 +844,7 @@ RUN-1 Sprints 1–3 plus the P0–P2 follow-up sweeps.)
 - `scripts/ci_bootstrap_db.py` — idempotent fresh-runner DB bootstrap (schema +
   demo seed), mirrors the conftest pattern.
 - `frontend/e2e/utils.ts` — `suppressOnboarding()` (pre-marks `oc_onboarded` /
-  `openclaw_tour_completed`; the first-visit wizard otherwise intercepts pointer
+  `aquaintel_tour_completed`; the first-visit wizard otherwise intercepts pointer
   events on every fresh browser profile). Visual baselines intentionally unaffected.
 
 #### Fixed

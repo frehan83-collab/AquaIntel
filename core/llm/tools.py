@@ -2,7 +2,7 @@
 LLM Tool Definitions for Agentic RAG
 ======================================
 Defines tools the LLM can call during multi-turn conversations
-to fetch live data from OpenClaw's market engines.
+to fetch live data from AquaIntel's market engines.
 
 Each tool has:
   - name: identifier for the tool

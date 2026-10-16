@@ -7,7 +7,7 @@ import { chartPalette } from "@/lib/design-tokens";
  *
  * Visualises: Smolt Production → Sea Growth → Harvest → Processing → Markets
  * No external library — cubic bezier links, proportional widths, glassmorphic
- * tooltip matching existing OpenClaw design language.
+ * tooltip matching existing AquaIntel design language.
  * ──────────────────────────────────────────────────────────────────────── */
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */

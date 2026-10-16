@@ -1061,11 +1061,11 @@ Full-stack salmon aquaculture intelligence platform. ~300 API routes + 2 WebSock
 - Subagent A (Architecture): Verified 214 routes, 51 engines, found monolithic api.py (4,459 lines), sync DB in async endpoints, data provenance created but NOT wired into any API response
 - Subagent D (Frontend): Inventoried all 47 pages, rated completeness 3.5-5/5, identified missing interactivity on data tables
 - Subagent C+E (Data/Production): Found 8% test coverage (222 lines), hardcoded JWT secret, CORS wildcard, no CI/CD
-- Competitive analysis: No competitor combines bio-intel + market-intel + trading + compliance. OpenClaw's moat is real.
+- Competitive analysis: No competitor combines bio-intel + market-intel + trading + compliance. AquaIntel's moat is real.
 
 ### Priority 1: Security Hardening (SHIPPED)
 - **FIXED** `core/auth.py` — bcrypt password hashing via passlib (was SHA-256)
-- **FIXED** `core/auth.py` — JWT secret from environment variable only (was hardcoded `"openclaw-jwt-secret-change-in-production"`)
+- **FIXED** `core/auth.py` — JWT secret from environment variable only (was hardcoded `"aquaintel-jwt-secret-change-in-production"`)
 - **FIXED** `core/auth.py` — Legacy SHA-256 passwords auto-migrate to bcrypt on login
 - **FIXED** `core/api.py` — CORS restricted to domain whitelist (was `["*"]`)
 - **ADDED** `core/api.py` — Rate limiting via slowapi (200/min global, 10/min login, 5/min register)

@@ -11,7 +11,7 @@ const sections = [
     accent: "ocean" as const,
     content: (
       <>
-        <p>FishIntel (OpenClaw) is an aquaculture intelligence platform operated from Norway. We provide data-driven decision support for salmon farming professionals, traders, and analysts.</p>
+        <p>FishIntel / AquaIntel is an aquaculture intelligence platform operated from Norway. We provide data-driven decision support for salmon farming professionals, traders, and analysts.</p>
         <p className="mt-2">Our mission is to aggregate public and licensed open data sources into actionable intelligence, while maintaining the highest standards of data privacy and transparency.</p>
       </>
     ),
@@ -184,7 +184,7 @@ const sections = [
       <div className="space-y-3">
         <div>
           <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-1">Data Controller</h4>
-          <p>FishIntel / OpenClaw<br />Norway</p>
+          <p>FishIntel / AquaIntel<br />Norway</p>
           <p className="mt-1">Email: <span className="text-ocean-300">privacy@fishintel.io</span></p>
         </div>
         <div>

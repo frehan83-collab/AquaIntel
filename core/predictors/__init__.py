@@ -1,5 +1,5 @@
 """
-OpenClaw Tiered Prediction Engine
+AquaIntel Tiered Prediction Engine
 =================================
 Three-tier lice forecasting:
   1. Short-term (1-2 weeks): Stige-style GLM with infestation pressure

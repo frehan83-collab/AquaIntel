@@ -146,7 +146,7 @@ class DiseaseAlertEngine:
                         "diseaseId": "",     # All diseases
                         "year": str(dt.datetime.now(dt.UTC).year),
                     },
-                    headers={"User-Agent": "OpenClaw/1.0 Research"},
+                    headers={"User-Agent": "AquaIntel/1.0 Research"},
                 )
                 if resp.status_code == 200:
                     data = resp.json()

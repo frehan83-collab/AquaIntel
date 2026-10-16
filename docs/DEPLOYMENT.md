@@ -89,7 +89,7 @@ The `docker-compose.yml` includes:
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `DATABASE_URL` | No | `sqlite:///data/openclaw.db` | Database connection string |
+| `DATABASE_URL` | No | `sqlite:///data/aquaintel.db` | Database connection string |
 | `FISHINTEL_JWT_SECRET` | **Yes** | `change-me-in-production` | JWT signing secret (64+ chars) |
 | `FISHINTEL_CORS_ORIGINS` | No | `localhost:3000,localhost:8000` | Comma-separated allowed origins |
 | `BARENTSWATCH_CLIENT_ID` | No | -- | BarentsWatch API client ID |
@@ -103,7 +103,7 @@ The `docker-compose.yml` includes:
 | `SENTINEL_HUB_CLIENT_SECRET` | No | -- | Sentinel Hub OAuth client secret |
 | `LLM_PROVIDER` | No | `openrouter` | LLM backend: `anthropic`, `openai`, `openrouter` |
 | `ANTHROPIC_API_KEY` | No | -- | Anthropic API key (if LLM_PROVIDER=anthropic) |
-| `POSTGRES_PASSWORD` | No | `openclaw-dev-password` | PostgreSQL password (Docker only) |
+| `POSTGRES_PASSWORD` | No | `aquaintel-dev-password` | PostgreSQL password (Docker only) |
 | `PUBLIC_API_URL` | No | `http://localhost:8000` | API URL injected into frontend build |
 
 ## Production Checklist

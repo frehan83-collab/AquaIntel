@@ -1,4 +1,4 @@
-# OpenClaw Demo Guide — 3-Minute Golden Path
+# AquaIntel Demo Guide — 3-Minute Golden Path
 
 > **Target:** Seafood Expo Global Barcelona, April 21-23, 2026
 > **Audience:** Farm operators, traders, investors, regulators
@@ -22,7 +22,7 @@
 ### Act 1: The Problem (30 seconds)
 **Page: Dashboard** (`/`)
 
-> "Norwegian salmon farming generates $15B/year, but operators make critical decisions — when to treat for lice, when to harvest, where prices are going — using spreadsheets and phone calls. OpenClaw changes that."
+> "Norwegian salmon farming generates $15B/year, but operators make critical decisions — when to treat for lice, when to harvest, where prices are going — using spreadsheets and phone calls. AquaIntel changes that."
 
 **Point to:**
 - KPI cards: spot price, feed cost, anomaly score, lice average
@@ -80,7 +80,7 @@
 
 **Close with:**
 
-> "This is live data. Right now. Not a report from last week. OpenClaw is the Bloomberg Terminal of aquaculture."
+> "This is live data. Right now. Not a report from last week. AquaIntel is the Bloomberg Terminal of aquaculture."
 
 ---
 

@@ -128,7 +128,7 @@ class ChileMonitor:
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(
                 timeout=30,
-                headers={"User-Agent": "OpenClaw/1.0 Research"},
+                headers={"User-Agent": "AquaIntel/1.0 Research"},
                 follow_redirects=True,
             )
         return self._client
