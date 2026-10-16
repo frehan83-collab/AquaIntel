@@ -5,7 +5,43 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
-### Step 1 — entitlements: ONE source of truth (the tier conflict is dead)
+### Step 2 — the money path is proven end to end
+- **One catalog, one entitlement write.** `core/billing/stripe_catalog.py` derives
+  the Stripe Products/Prices from `core/entitlements.py` (idempotent
+  create-or-find), and `core/billing/entitlement_sync.py` is the single place a
+  billing event becomes an entitlement — used by the real webhook **and** the
+  mock path, so a paid plan cannot land differently depending on the door.
+- **`stripe_billing.TIER_PRODUCTS` was a *third* tier table** (it drifted from
+  `core/auth.py` and `core/valuechain/subscription.py`); it is now derived from
+  the SSOT too.
+- **Mock mode is explicit, never silent.** Without `STRIPE_SECRET_KEY` the catalog
+  serves deterministic `price_mock_<plan>` ids with `"mock": true`, checkout
+  returns a mock URL, and `POST /api/billing/webhook/mock` completes the chain
+  (refused in production, token-guarded when `FISHINTEL_MOCK_BILLING_TOKEN` is
+  set). The pricing page shows a banner instead of pretending prices are live.
+- **Server-side plan resolution.** The webhook resolves the plan from the **price
+  id** first, then metadata; both `aquaintel_plan` and the legacy `openclaw_tier`
+  are read and written, so existing Stripe objects keep working.
+- **New endpoints:** `GET /api/billing/catalog` (public pricing model),
+  `POST /api/billing/webhook/mock`; checkout now accepts `?plan=<canonical key>`
+  (legacy `?tier=` still works) and 400s on non-self-serve plans.
+- **Public pricing page** `frontend/src/app/pricing/page.tsx` driven entirely by
+  `/api/billing/catalog` (no hardcoded feature list), plus `api.billingCatalog()`
+  and `api.billingCheckout()`.
+- **Fixed a production-blocking schema drift:** the dev DB was missing
+  `subscriptions.stripe_customer_id` (present in migration 002 but never applied
+  to this box). `tests/conftest.py` now reconciles missing ORM columns
+  automatically (the manual PRAGMA/ALTER loop AGENTS.md documents), and prints
+  what it added — this is what makes the money-path tests deterministic.
+- **Tests:** `tests/test_billing_money_path.py` (12) proves the full chain —
+  catalog → checkout → webhook → entitlement → **the previously-blocked premium
+  route now returning non-402** — plus persistence, cancellation → free,
+  non-self-serve rejection, auth requirement and mock-token enforcement. No Stripe
+  credentials required.
+- Docs: `docs/BILLING.md`; `.env.example` gains the mock-billing vars and a note
+  that the catalog is auto-created.
+
+
 - **New `core/entitlements.py`** is the only definition of plans, prices, quotas,
   features and the paywall boundary. `core/auth.TIERS` and
   `core/valuechain/subscription.TIERS` are now *projections* of it.

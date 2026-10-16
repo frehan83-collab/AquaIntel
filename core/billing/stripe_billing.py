@@ -15,26 +15,23 @@ from typing import Any
 import structlog
 
 from config.settings import settings
+from core.billing import stripe_catalog
+from core.billing.entitlement_sync import activate, revoke
+from core.entitlements import PLANS, normalize_plan
 
 log = structlog.get_logger(__name__)
 
-# Tier → Stripe metadata mapping
+# Tier → Stripe metadata mapping — DERIVED from core.entitlements (one source).
+# This module used to carry its own third tier table that drifted from
+# core/auth.py and core/valuechain/subscription.py.
 TIER_PRODUCTS = {
-    "professional": {
-        "name": "AquaIntel Professional",
-        "price_nok": 2990,
-        "description": "Real-time alerts, farm forecasts, harvest optimizer, ML baselines",
-    },
-    "enterprise": {
-        "name": "AquaIntel Enterprise",
-        "price_nok": 14900,
-        "description": "Full market intelligence, EU traceability, supply chain tools",
-    },
-    "investor": {
-        "name": "AquaIntel Investor",
-        "price_nok": 24900,
-        "description": "All features + trading signals, performance tracking, full API",
-    },
+    key: {
+        "name": f"AquaIntel {plan.name}",
+        "price_nok": plan.price_nok_month,
+        "description": plan.audience,
+    }
+    for key, plan in PLANS.items()
+    if key in stripe_catalog.SELF_SERVE_PLANS
 }
 
 
@@ -99,19 +96,35 @@ class StripeBillingEngine:
     async def create_checkout_session(
         self, user_id: int, email: str, tier: str
     ) -> dict:
-        """Create a Stripe Checkout Session for subscription upgrade.
+        """Create a Stripe Checkout Session for a plan upgrade.
 
-        The sync Stripe SDK + sync DB Session run in a worker thread so the
-        event loop is never blocked (arch report P1).
+        The plan key is normalised through core.entitlements (one source) and the
+        price comes from the canonical Stripe catalog. When Stripe is not
+        configured this returns a deterministic MOCK checkout URL so the money
+        path (catalog → checkout → webhook → entitlement → gated route) is
+        exercisable in dev/CI without credentials.
         """
-        if tier not in TIER_PRODUCTS:
-            return {"error": f"Invalid tier: {tier}"}
+        plan_key = normalize_plan(tier)
+        if plan_key not in TIER_PRODUCTS:
+            return {
+                "error": f"Plan '{tier}' is not self-serve",
+                "plans_url": "/api/entitlements/plans",
+            }
 
-        if not settings.stripe_secret_key:
-            return {"error": "Stripe not configured", "demo_mode": True}
+        if not stripe_catalog.is_configured():
+            return {
+                "checkout_url": stripe_catalog.mock_checkout_url(plan_key, user_id),
+                "plan": plan_key,
+                "demo_mode": True,
+                "note": (
+                    "Stripe is not configured (STRIPE_SECRET_KEY unset) — returning a "
+                    "mock checkout URL. Entitlements still flow through "
+                    "POST /api/billing/webhook/mock in non-production environments."
+                ),
+            }
 
         return await asyncio.to_thread(
-            self._create_checkout_session_sync, user_id, email, tier
+            self._create_checkout_session_sync, user_id, email, plan_key
         )
 
     def _create_checkout_session_sync(
@@ -145,7 +158,12 @@ class StripeBillingEngine:
             line_items=[{"price": price_id, "quantity": 1}],
             success_url=settings.stripe_success_url,
             cancel_url=settings.stripe_cancel_url,
-            metadata={"openclaw_user_id": str(user_id), "openclaw_tier": tier},
+            metadata={
+                stripe_catalog.PLAN_METADATA_KEY: tier,
+                stripe_catalog.LEGACY_PLAN_METADATA_KEY: tier,
+                stripe_catalog.USER_METADATA_KEY: str(user_id),
+                stripe_catalog.LEGACY_USER_METADATA_KEY: str(user_id),
+            },
         )
 
         log.info("checkout_session_created", user_id=user_id, tier=tier)
@@ -179,49 +197,28 @@ class StripeBillingEngine:
         return {"status": "ok"}
 
     def _handle_checkout_completed_sync(self, session_data: dict) -> None:
-        """Activate subscription after successful checkout."""
-        from core.models import Session as DBSession, User, Subscription
-        from sqlalchemy import select
+        """Activate the plan after a successful checkout.
 
-        user_id = int(session_data["metadata"].get("openclaw_user_id", 0))
-        tier = session_data["metadata"].get("openclaw_tier", "professional")
-        subscription_id = session_data.get("subscription")
+        Delegates to core.billing.entitlement_sync so the real webhook and the
+        mock/dev path cannot diverge.
+        """
+        from core.billing.entitlement_sync import plan_for_event, user_id_for_event
 
-        with DBSession() as s:
-            user = s.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
-            if not user:
-                return
-
-            user.tier = tier
-
-            # Update or create subscription record
-            sub = s.execute(
-                select(Subscription).where(Subscription.user_id == user_id)
-            ).scalar_one_or_none()
-
-            tier_price = TIER_PRODUCTS.get(tier, {}).get("price_nok", 0)
-
-            if sub:
-                sub.tier = tier
-                sub.stripe_subscription_id = subscription_id
-                sub.is_active = True
-                sub.monthly_price_nok = tier_price
-                sub.started_at = dt.datetime.now(dt.UTC)
-            else:
-                sub = Subscription(
-                    user_id=user_id,
-                    tier=tier,
-                    stripe_subscription_id=subscription_id,
-                    is_active=True,
-                    monthly_price_nok=tier_price,
-                    started_at=dt.datetime.now(dt.UTC),
-                    api_calls_month=0,
-                    api_calls_limit=TIER_PRODUCTS.get(tier, {}).get("api_calls_limit", 5000),
-                )
-                s.add(sub)
-
-            s.commit()
-        log.info("subscription_activated", user_id=user_id, tier=tier)
+        user_id = user_id_for_event(session_data)
+        plan_key = plan_for_event(session_data)
+        if user_id is None or plan_key is None:
+            log.warning(
+                "checkout_activate_unresolved", user_id=user_id, plan=plan_key
+            )
+            return
+        price = session_data.get("price")
+        activate(
+            user_id,
+            plan_key,
+            price_id=price.get("id") if isinstance(price, dict) else None,
+            subscription_id=session_data.get("subscription"),
+            customer_id=session_data.get("customer"),
+        )
 
     def _handle_subscription_updated_sync(self, sub_data: dict) -> None:
         """Update subscription status on changes."""
@@ -244,24 +241,25 @@ class StripeBillingEngine:
                 s.commit()
 
     def _handle_subscription_deleted_sync(self, sub_data: dict) -> None:
-        """Deactivate subscription on cancellation."""
-        from core.models import Session as DBSession, User, Subscription
+        """Return the customer to the free plan on cancellation."""
+        from core.billing.entitlement_sync import user_id_for_event
+        from core.models import Session as DBSession, Subscription
         from sqlalchemy import select
 
-        stripe_sub_id = sub_data["id"]
-        with DBSession() as s:
-            sub = s.execute(
-                select(Subscription).where(
-                    Subscription.stripe_subscription_id == stripe_sub_id
-                )
-            ).scalar_one_or_none()
-            if sub:
-                sub.is_active = False
-                user = s.execute(select(User).where(User.id == sub.user_id)).scalar_one_or_none()
-                if user:
-                    user.tier = "free"
-                s.commit()
-        log.info("subscription_cancelled", stripe_sub_id=stripe_sub_id)
+        user_id = user_id_for_event(sub_data)
+        if user_id is None:
+            stripe_sub_id = sub_data.get("id")
+            with DBSession() as s:
+                sub = s.execute(
+                    select(Subscription).where(
+                        Subscription.stripe_subscription_id == stripe_sub_id
+                    )
+                ).scalar_one_or_none()
+                user_id = sub.user_id if sub else None
+        if user_id is None:
+            log.warning("subscription_cancel_unresolved", sub_id=sub_data.get("id"))
+            return
+        revoke(user_id, reason="subscription_deleted")
 
     def _handle_payment_failed(self, invoice_data: dict) -> None:
         """Log failed payment for follow-up."""

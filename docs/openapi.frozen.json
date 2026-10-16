@@ -2612,18 +2612,61 @@
         ]
       }
     },
+    "/api/billing/catalog": {
+      "get": {
+        "description": "Public pricing model: canonical plans + Stripe prices (or mock ids).\n\nDrives the pricing page. `mock: true` means Stripe is not configured and the\nids are placeholders \u2014 never present those as live prices.",
+        "operationId": "billing_catalog_api_billing_catalog_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Billing Catalog",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
     "/api/billing/create-checkout-session": {
       "post": {
-        "description": "Create a Stripe Checkout Session for subscription upgrade.",
+        "description": "Create a Checkout Session for a plan upgrade.\n\nAccepts `?plan=<key>` (canonical) or the legacy `?tier=<key>`; the plan is\nvalidated against core.entitlements, not against the client's string.",
         "operationId": "billing_create_checkout_api_billing_create_checkout_session_post",
         "parameters": [
           {
             "in": "query",
             "name": "tier",
-            "required": true,
+            "required": false,
             "schema": {
-              "title": "Tier",
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tier"
+            }
+          },
+          {
+            "in": "query",
+            "name": "plan",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Plan"
             }
           }
         ],
@@ -2708,6 +2751,26 @@
           }
         },
         "summary": "Billing Webhook",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/billing/webhook/mock": {
+      "post": {
+        "description": "Simulate a billing event so the money path is testable without Stripe.\n\nDev/CI only: refused when FISHINTEL_ENV=production. When\nFISHINTEL_MOCK_BILLING_TOKEN is set, the caller must present it in the\n`X-Mock-Billing-Token` header (so a publicly reachable staging box cannot be\ntold to upgrade arbitrary accounts).\n\nBody: {\"event\": \"checkout.session.completed\" | \"customer.subscription.deleted\",\n       \"user_id\": 1, \"plan\": \"professional\"}",
+        "operationId": "billing_webhook_mock_api_billing_webhook_mock_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Billing Webhook Mock",
         "tags": [
           "billing"
         ]

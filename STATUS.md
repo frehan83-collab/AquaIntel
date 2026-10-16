@@ -361,4 +361,23 @@ added `tests/test_migrations.py`.
 - **Next:** Step 2 — the money path (Stripe catalog → checkout → webhook →
   entitlement → gated route, test-mode capable).
 
+## Commercial hardening — Step 2 (the money path) — 2026-10-16
+
+- **Shipped:** `core/billing/stripe_catalog.py` (catalog derived from the
+  entitlement SSOT; idempotent Stripe Products/Prices; explicit mock mode) and
+  `core/billing/entitlement_sync.py` (the ONE place a billing event becomes an
+  entitlement — shared by the real webhook and the mock path).
+- `stripe_billing.TIER_PRODUCTS` was a third drifting tier table → now derived.
+- New: `GET /api/billing/catalog`, `POST /api/billing/webhook/mock` (non-prod,
+  token-guarded), checkout accepts `?plan=`; public `/pricing` page driven by the
+  catalog; `api.billingCatalog()` / `api.billingCheckout()`.
+- **Fixed a production-blocking schema drift:** `subscriptions.stripe_customer_id`
+  exists in migration 002 but was absent from this box's DB. `tests/conftest.py`
+  now auto-reconciles missing ORM columns (the PRAGMA/ALTER loop in AGENTS.md).
+- **Gates:** `test_billing_money_path.py` 12 passed; ruff clean; `tsc` 0 errors;
+  OpenAPI re-frozen.
+- **Value:** the previously-blocked premium route now returns non-402 after the
+  (mock) payment — the money path is proven, not asserted.
+
+
 

@@ -9,7 +9,7 @@ Last updated: 2026-10-16 (commercial hardening — see docs/ENTITLEMENTS.md)
 | Step | Status | Evidence |
 |---|---|---|
 | 1. Entitlement single source of truth | **Shipped** | `core/entitlements.py`, `docs/ENTITLEMENTS.md`, `tests/test_entitlements.py` (47 tests), Alembic 016, `/api/entitlements/{plans,me,check}` |
-| 2. Money path (Stripe catalog → checkout → webhook → entitlement → gated route) | Next | |
+| 2. Money path (Stripe catalog → checkout → webhook → entitlement → gated route) | **Shipped** | `core/billing/{stripe_catalog,entitlement_sync}.py`, `docs/BILLING.md`, `tests/test_billing_money_path.py` (12 tests, no Stripe keys needed), public `/pricing` page, `GET /api/billing/catalog` |
 | 3. Bio→Price Weekly + named indices (AI-STI, AI-LPI) | Planned | |
 | 4. Accuracy & Method (published, versioned) | Planned | |
 | 5. Production truth (agents service, artifacts, PG/Timescale, freshness) | Planned | |

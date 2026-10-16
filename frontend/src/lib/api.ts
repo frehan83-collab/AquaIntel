@@ -10,7 +10,7 @@
  */
 import type {
   HealthResponse, LiceSummary, DecisionCard, FarmPortfolioResponse,
-  BiomassNational, MarketBiomass, SSBPriceHistory, FeedCostLatest, CompetitivenessIndex,
+  BiomassNational, MarketBiomass, BillingCatalog, SSBPriceHistory, FeedCostLatest, CompetitivenessIndex,
   FuturesForwardCurve, FuturesBasis, LeaderEntry, AnomalyScores,
   MorningBrief, RegimeAlert, DiseaseNorway, DiseaseByCompany,
   ResistanceMap, ASCReadiness, ForecastResponse, EnsembleForecast,
@@ -543,6 +543,14 @@ export const api = {
   biomassNational: () => fetchAPI<BiomassNational>("/api/farms/biomass/national"),
   // Derived supply model — estimated harvestable/outlook (see MarketBiomass type)
   marketBiomass: () => fetchAPI<MarketBiomass>("/api/market/biomass"),
+  // Canonical plan catalog + Stripe prices (mock: true when Stripe is unset)
+  billingCatalog: () => fetchAPI<BillingCatalog>("/api/billing/catalog"),
+  // Start a checkout for a canonical plan key (see /api/entitlements/plans)
+  billingCheckout: (plan: string) =>
+    fetchAPI<{ checkout_url: string; plan: string; demo_mode?: boolean }>(
+      `/api/billing/create-checkout-session?plan=${encodeURIComponent(plan)}`,
+      { method: "POST" },
+    ),
   biomassByPA: (pa: number) => fetchAPI(`/api/farms/biomass/pa/${pa}`),
   biomassByLocality: (localityNo: number) => fetchAPI(`/api/farms/biomass/locality/${localityNo}`),
 

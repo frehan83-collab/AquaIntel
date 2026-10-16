@@ -28,6 +28,52 @@ from fastapi.testclient import TestClient
 # DB-touching test failed with "no such table" / "unable to open database
 # file". Build the schema explicitly and seed the deterministic demo dataset
 # when the lice table is empty. No-op on a populated dev DB (this box: 186k rows).
+def _reconcile_sqlite_schema() -> None:
+    """Add ORM columns that an existing SQLite DB is missing (idempotent).
+
+    AGENTS.md documents the gap: "Local dev SQLite may lag the ORM (create_all vs
+    Alembic) -> reconcile with PRAGMA table_info + ALTER TABLE". This automates
+    exactly that, so a stale dev DB cannot make the suite fail with
+    "no such column" — which is what the money-path tests hit on
+    `subscriptions.stripe_customer_id` (the column IS in migration 002, but this
+    box's DB predates the reconciliation).
+
+    Column additions are safe on SQLite. Non-nullable columns without a default
+    are skipped with a warning (they need a real migration, not a patch).
+    """
+    try:
+        from sqlalchemy import inspect, text
+
+        from core.models import Base, engine
+
+        inspector = inspect(engine)
+        tables = set(inspector.get_table_names())
+        added: list[str] = []
+        with engine.begin() as conn:
+            for table in Base.metadata.sorted_tables:
+                if table.name not in tables:
+                    continue
+                have = {c["name"] for c in inspector.get_columns(table.name)}
+                for column in table.columns:
+                    if column.name in have:
+                        continue
+                    if not column.nullable and column.default is None:
+                        print(
+                            f"conftest: {table.name}.{column.name} missing and NOT "
+                            "NULL without default — add a migration"
+                        )
+                        continue
+                    ddl = column.type.compile(engine.dialect)
+                    conn.execute(
+                        text(f'ALTER TABLE "{table.name}" ADD COLUMN "{column.name}" {ddl}')
+                    )
+                    added.append(f"{table.name}.{column.name}")
+        if added:
+            print(f"conftest: reconciled {len(added)} missing column(s): {added[:8]}")
+    except Exception as exc:  # never block collection on reconciliation issues
+        print(f"conftest: schema reconciliation skipped: {exc}")
+
+
 def _bootstrap_test_database() -> None:
     try:
         from core.models import engine, init_db
@@ -42,6 +88,8 @@ def _bootstrap_test_database() -> None:
             _alembic_cmd.upgrade(_cfg, "head")
         except Exception:
             pass  # ORM create_all already provided the schema
+
+        _reconcile_sqlite_schema()
 
         from sqlalchemy import text
 

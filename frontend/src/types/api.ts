@@ -143,6 +143,33 @@ export interface MarketBiomass {
   data_provenance?: DataProvenance;
 }
 
+/** /api/billing/catalog — canonical plans + Stripe prices (or mock ids). */
+export interface BillingPlan {
+  plan: string;
+  name: string;
+  audience: string;
+  amount_nok: number;
+  currency: string;
+  interval: string;
+  api_calls_per_day: number;
+  seats: number;
+  sites: number;
+  features: string[];
+  upgrade_to: string | null;
+  premium_outputs_included: boolean;
+  price_id: string | null;
+  product_id: string | null;
+  mock: boolean;
+}
+
+export interface BillingCatalog {
+  configured: boolean;
+  currency: string;
+  interval: string;
+  plans: BillingPlan[];
+  licensed_tier: { plan: string; name: string; audience: string; note: string };
+}
+
 /** /api/farms/biomass/national */
 export interface BiomassNational {
   total_standing_tonnes: number;
