@@ -5,7 +5,45 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
-### Step 4 — Accuracy & Method published (artifact-backed, or honestly absent)
+### Step 5 — production truth: the gaps are now detectable and mostly closed
+- **Agents are a first-class production service.** `docker-compose.prod.yml`
+  declares `api` + `agents` (`python main.py --agents-only`) + `db` (TimescaleDB)
+  + `web`, with required-secret guards (`:?`) so a misconfigured deploy fails at
+  `up`. Previously the production image ran API-only and all 12 agents (ingest,
+  forecasts, index publication) silently never executed.
+- **`core/production_truth.py` + `scripts/verify_production_truth.py`** turn the
+  documented gaps into checks with verdicts: production env + JWT secret length,
+  agents service present, DB dialect/reachability/**migration head**, model +
+  accuracy artifacts, and per-source freshness. Exit 1 on a critical failure, so it
+  can gate a deploy.
+- **It immediately caught a real drift:** this repository's dev DB had an EMPTY
+  `alembic_version` (`DB at None, code head 017`). `tests/conftest.py` now
+  reconciles missing ORM columns *and* stamps head for `create_all`-built dev/test
+  DBs, while real deployments keep failing if they are behind. Re-run now reports
+  `alembic_head: at head 017` with 0 failures.
+- **TimescaleDB:** `docker/init-timescale.sql` creates the extension (plus helping
+  indexes for the freshness queries). Hypertable conversion is deliberately *not*
+  automated — it needs a real time column and a correct chunk interval, and a wrong
+  conversion silently degrades plans; the verifier reports the count so "not yet
+  converted" stays visible.
+- **Per-source freshness dashboard:** `core/market/freshness_monitor.py` monitors
+  12 sources (lice, SSB prices, export volumes, chlorophyll, bloom, futures,
+  supply, price predictions, harvest timing, published indices, treatment outcomes,
+  EUDR) with latest observation, staleness vs expected cadence and a concrete
+  refresh hint. `GET /api/data-freshness` (public) and `/sources`. **A real bug was
+  found by running it:** SQLite returns timestamps as ISO **strings**, so every
+  source reported `unknown` until coercion was added.
+- **Synthetic-data disclosure:** a source whose table holds only demo/seed rows is
+  reported as `synthetic_only` — the dev DB's `ssb_weekly_prices` (52 demo rows) is
+  correctly flagged rather than presented as live data.
+- **Tests:** `tests/test_production_truth.py` (17) — agents declared in prod compose
+  and the API-only topology flagged as a critical failure, production secret rules,
+  alembic head = 017, artifact absence declared not hidden, freshness statuses,
+  missing-table → unknown, synthetic-only flagging, timestamp coercion and the
+  endpoints.
+- Docs: `docs/PRODUCTION_TRUTH.md`; AGENTS.md known-gaps register updated.
+
+
 - **`core/ml/accuracy_registry.py`** is the artifact store that makes the honesty
   rule operable: JSON artifacts under **`artifacts/accuracy/`** (tracked in git,
   deliberately not under the gitignored `data/`), validated against a published

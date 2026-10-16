@@ -74,6 +74,39 @@ def _reconcile_sqlite_schema() -> None:
         print(f"conftest: schema reconciliation skipped: {exc}")
 
 
+def _stamp_alembic_if_unstamped() -> None:
+    """Stamp the DB at head when it was built by ``create_all`` (dev/test).
+
+    Found by ``scripts/verify_production_truth.py``: this box's ``alembic_version``
+    table existed but was EMPTY, so the production-truth check reported
+    "DB at None, code head 017" — a genuine drift signal. ``create_all`` had built
+    the schema (plus the column reconciliation above), so stamping head is the
+    honest reconciliation for a dev/test database. A real production DB is left
+    alone: if it is unstamped or behind, the verifier must keep failing.
+    """
+    from sqlalchemy import text
+
+    from core.models import engine
+
+    try:
+        with engine.connect() as conn:
+            stamped = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
+        if stamped:
+            return
+    except Exception:
+        return  # no alembic_version table: create_all-only DB, nothing to stamp
+    try:
+        from alembic import command as _alembic_cmd
+        from alembic.config import Config as _AlembicConfig
+
+        _cfg = _AlembicConfig("alembic.ini")
+        _cfg.set_main_option("script_location", "alembic")
+        _alembic_cmd.stamp(_cfg, "head")
+        print("conftest: stamped alembic_version at head (create_all-built test DB)")
+    except Exception as exc:  # never block collection
+        print(f"conftest: alembic stamp skipped: {exc}")
+
+
 def _bootstrap_test_database() -> None:
     try:
         from core.models import engine, init_db
@@ -90,6 +123,7 @@ def _bootstrap_test_database() -> None:
             pass  # ORM create_all already provided the schema
 
         _reconcile_sqlite_schema()
+        _stamp_alembic_if_unstamped()
 
         from sqlalchemy import text
 

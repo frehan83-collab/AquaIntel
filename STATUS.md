@@ -414,6 +414,23 @@ added `tests/test_migrations.py`.
 - **Open:** an artifact can only be published from a host with real price access
   (`python scripts/publish_accuracy.py --weeks 260`).
 
+## Commercial hardening — Step 5 (production truth) — 2026-10-16
+
+- **Shipped** `docker-compose.prod.yml` with agents as a separate service
+  (`--agents-only`) alongside TimescaleDB/api/web, `core/production_truth.py` +
+  `scripts/verify_production_truth.py` (deploy-gating: exit 1 on critical),
+  `core/market/freshness_monitor.py` + `GET /api/data-freshness` (12 sources,
+  staleness vs cadence, `synthetic_only` disclosure), `docker/init-timescale.sql`.
+- **Real bug found by the new verifier:** this repo's dev DB had an EMPTY
+  `alembic_version` (`DB at None, code head 017`). conftest now reconciles missing
+  columns and stamps head for create_all-built dev/test DBs → re-run reports
+  `at head 017`, 0 failures.
+- **Real bug found by the freshness monitor:** SQLite returns timestamps as ISO
+  strings, so every source reported `unknown` until coercion was added; and the dev
+  DB's `ssb_weekly_prices` is correctly flagged `synthetic_only` (52 demo rows).
+- **Gates:** `test_production_truth.py` 17 passed; ruff clean; `alembic_head` OK.
+
+
 
 
 

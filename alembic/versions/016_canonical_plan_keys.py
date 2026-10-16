@@ -11,6 +11,7 @@ Revises: 015
 """
 from __future__ import annotations
 
+import sqlalchemy as sa
 from alembic import op
 
 revision = "016"
@@ -53,18 +54,39 @@ _TABLES = (
 
 
 def upgrade() -> None:
+    """Normalise legacy tier strings to canonical plan keys.
+
+    Dialect-agnostic: SQLAlchemy Core ``update()`` with bound parameters, because
+    ``exec_driver_sql`` with ``%s`` placeholders is psycopg2 syntax and raises
+    ``sqlite3.OperationalError: near "%": syntax error`` on SQLite — caught by
+    ``tests/test_migrations.py`` (fresh-DB ``alembic upgrade head``).
+
+    Tables that do not exist in this database are skipped (a fresh DB built by a
+    subset of migrations must not fail here).
+    """
     conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    existing = set(inspector.get_table_names())
+
     for table, column in _TABLES:
+        if table not in existing:
+            continue
+        tbl = sa.table(table, sa.column(column, sa.String))
         for legacy, canonical in _ALIASES.items():
-            conn.exec_driver_sql(
-                f"UPDATE {table} SET {column} = %s WHERE LOWER({column}) = %s",
-                (canonical, legacy),
+            conn.execute(
+                sa.update(tbl)
+                .where(sa.func.lower(sa.column(column)) == legacy)
+                .values({column: canonical})
             )
-        conn.exec_driver_sql(
-            f"UPDATE {table} SET {column} = 'free' "
-            f"WHERE {column} IS NOT NULL AND LOWER({column}) NOT IN "
-            f"({', '.join(['%s'] * len(_CANONICAL))})",
-            tuple(_CANONICAL),
+        conn.execute(
+            sa.update(tbl)
+            .where(
+                sa.and_(
+                    sa.column(column).isnot(None),
+                    ~sa.func.lower(sa.column(column)).in_(list(_CANONICAL)),
+                )
+            )
+            .values({column: "free"})
         )
 
 

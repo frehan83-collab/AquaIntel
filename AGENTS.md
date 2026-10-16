@@ -125,14 +125,26 @@ test runs with `Start-Process ... -RedirectStandardOutput` and poll the file.
 `pairs_engine.py`, `regime_detector.py`, `satellite_engine.py`, `self_evolve.py`
 
 ### Known operational gaps (check before assuming)
-- Production Docker CMD runs **API only** (`gunicorn core.api:app`); agents
-  need `python main.py --agents-only` as a separate service.
-- `FISHINTEL_ENV=production` + SQLite is rejected by `config/settings.py`.
+- Production Docker CMD runs **API only** (`gunicorn core.api:app`). The production
+  topology in `docker-compose.prod.yml` now declares a separate `agents` service
+  running `python main.py --agents-only`; `python scripts/verify_production_truth.py`
+  fails if it is missing. If you deploy from the bare Dockerfile, agents still will
+  not run — use the compose file.
+- `FISHINTEL_ENV=production` + SQLite is rejected by `config/settings.py` (and by
+  the production-truth verifier).
 - Foundation models require `torch` etc. (in `requirements.txt`); without
   them all forecasts honestly fall back to seasonal-naive with
   `is_live: false`.
+- Model weights live in the gitignored `data/models/` — absent in CI/prod unless a
+  volume/release artifact supplies them. `python scripts/verify_production_truth.py`
+  reports presence honestly rather than assuming it.
 - Local dev SQLite may lag the ORM (`create_all` vs Alembic); if you see
-  `no such column`, reconcile with `PRAGMA table_info` + `ALTER TABLE`.
+  `no such column`, reconcile with `PRAGMA table_info` + `ALTER TABLE`. The test
+  bootstrap now does this automatically (`tests/conftest.py`), and the
+  production-truth verifier compares `alembic_version` against the code head.
+- Per-source freshness is visible at `GET /api/data-freshness`; sources with no
+  measurable timestamp report `unknown`, and demo-only tables report
+  `synthetic_only` (never "live").
 
 ## Environment variables (security-relevant)
 

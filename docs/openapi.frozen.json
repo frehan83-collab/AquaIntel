@@ -4267,6 +4267,46 @@
         ]
       }
     },
+    "/api/data-freshness": {
+      "get": {
+        "description": "Freshness report for every monitored source (read-only, no secrets).",
+        "operationId": "data_freshness_api_data_freshness_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Data Freshness",
+        "tags": [
+          "freshness"
+        ]
+      }
+    },
+    "/api/data-freshness/sources": {
+      "get": {
+        "description": "The monitored source registry (what exists, upstream, expected cadence).",
+        "operationId": "freshness_sources_api_data_freshness_sources_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Freshness Sources",
+        "tags": [
+          "freshness"
+        ]
+      }
+    },
     "/api/decision/portfolio/{company_name}": {
       "get": {
         "description": "Get decision cards for all farms in a company portfolio.",
