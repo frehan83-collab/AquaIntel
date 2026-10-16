@@ -80,6 +80,44 @@ class TestComputation:
 
 
 class TestHonestDegradation:
+    def test_lineage_notes_prevent_a_clean_live_claim(self):
+        """lice_records has no source column, so AI-LPI cannot claim clean 'live'."""
+        import asyncio
+
+        result = asyncio.run(ix.compute(ix.AI_LPI))
+        if ix._lice_lineage_note():
+            assert result["lineage_notes"], result
+            assert result["provenance"]["is_live"] is False
+            assert "unverifiable" in result["provenance"]["fallback_reason"]
+            # the value is still produced — honest, not hidden
+            assert result["components_used"] >= 1
+
+    def test_component_source_reflects_the_trackers_own_lineage(self):
+        """Not a hardcoded label: the index reports what the tracker actually did.
+
+        `biomass_tracker` sets `last_source`/`last_is_live` during the fetch (filters
+        synthetic records, else falls back to a historical-pattern estimate), so the
+        component source must equal whatever the tracker recorded — not the fixed
+        upstream string this code used to assume.
+        """
+        import asyncio
+
+        from core.market.biomass_tracker import biomass_tracker
+
+        result = asyncio.run(ix.compute(ix.AI_STI))
+        component = next(
+            (c for c in result["components"] if c["name"] == "biomass_momentum"), None
+        )
+        if component is None or not component["used"]:
+            pytest.skip("biomass component unavailable in this environment")
+        assert component["source"] == biomass_tracker.last_source
+        if biomass_tracker.last_is_live is False:
+            assert any(
+                "fallback" in note for note in result["lineage_notes"]
+            ), result["lineage_notes"]
+            assert result["provenance"]["is_live"] is False
+
+
     def test_missing_source_is_named_and_not_reported_as_live(self, monkeypatch):
         import asyncio
 

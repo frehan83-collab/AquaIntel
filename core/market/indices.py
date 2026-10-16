@@ -93,8 +93,15 @@ def _assemble(
     sources_used: list[str],
     missing: list[str],
     as_of: dt.datetime | None = None,
+    lineage_notes: list[str] | None = None,
 ) -> dict:
-    """Weighted mean over the *used* components, renormalised; provenance."""
+    """Weighted mean over the *used* components, renormalised; provenance.
+
+    ``lineage_notes`` carries provenance problems that do not stop a value being
+    computed but must prevent a clean "live" claim (an estimated-biomass fallback,
+    or an input table with no verifiable source column).
+    """
+    notes = list(lineage_notes or [])
     used = [c for c in components if c["used"]]
     total_weight = sum(c["weight"] for c in used)
     if not used or total_weight <= 0:
@@ -106,16 +113,18 @@ def _assemble(
         )
     else:
         value = sum(c["score"] * c["weight"] for c in used) / total_weight
-        if missing:
+        reasons = list(missing) + notes
+        if reasons:
             provenance = DataProvenance.degraded(
                 f"core.market.indices::{index}",
-                "missing components: " + ", ".join(missing),
+                "; ".join(
+                    (["missing components: " + ", ".join(missing)] if missing else [])
+                    + notes
+                ),
                 round(0.5 + 0.4 * (len(used) / max(1, len(components))), 2),
             )
         else:
-            provenance = DataProvenance.live(
-                f"core.market.indices::{index}", 0.85
-            )
+            provenance = DataProvenance.live(f"core.market.indices::{index}", 0.85)
 
     stamp = as_of or dt.datetime.now(dt.UTC)
     return {
@@ -129,6 +138,7 @@ def _assemble(
         "components": components,
         "components_used": len(used),
         "components_missing": missing,
+        "lineage_notes": notes,
         "sources": sources_used,
         "provenance": provenance.to_dict(),
         "permalink": f"/indices/{index.lower()}",
@@ -164,10 +174,20 @@ async def _momentum_component(attribute: str, *, rising_means_tighter: bool) -> 
 
     Year-over-year is preferred; the immediately previous period is used only when
     a year-back period is unavailable (and the raw block says which was used).
+
+    The `source` is taken from the tracker's OWN lineage (`last_source` /
+    `last_is_live`), not hardcoded: `biomass_tracker` filters synthetic records out
+    and falls back to a historical-pattern estimate, so claiming a live Fiskeridir
+    source here would have been false whenever that fallback ran.
     """
+    from core.market.biomass_tracker import biomass_tracker
+
     totals = await _totals_by_month(attribute)
     if not totals:
         raise RuntimeError(f"no {attribute} data")
+    lineage_source = getattr(biomass_tracker, "last_source", None) or _BIOMASS_SOURCE
+    lineage_live = bool(getattr(biomass_tracker, "last_is_live", False))
+
     keys = sorted(totals)
     latest = keys[-1]
     yoy = (latest[0] - 1, latest[1])
@@ -191,7 +211,9 @@ async def _momentum_component(attribute: str, *, rising_means_tighter: bool) -> 
             "period": f"{latest[0]}-{latest[1]:02d}",
             "basis": basis,
         },
-        "source": _BIOMASS_SOURCE,
+        "source": lineage_source,
+        "is_live": lineage_live,
+        "estimated": not lineage_live,
     }
 
 
@@ -209,6 +231,29 @@ async def national_totals(attribute: str = "standing_biomass_tonnes") -> dict:
     return await _totals_by_month(attribute)
 
 
+def _lice_lineage_note() -> str | None:
+    """None when the lice lineage is verifiable, otherwise why it is not.
+
+    `lice_records` has no `source` column, so the platform cannot prove whether a
+    row is a reported Fiskeridir/Mattilsynet observation or a demo seed. A component
+    built on it may still be computed, but it must not support a clean "live" claim.
+    """
+    from sqlalchemy import inspect
+
+    from core.models import engine
+
+    try:
+        columns = {c["name"].lower() for c in inspect(engine).get_columns("lice_records")}
+    except Exception:
+        return "lineage unverifiable: lice_records is unreadable"
+    if "source" not in columns:
+        return (
+            "lineage unverifiable: lice_records has no source column, so demo and "
+            "reported rows cannot be distinguished"
+        )
+    return None
+
+
 def _unavailable(name: str, weight: float, source: str, exc: Exception) -> dict:
     return _component(
         name, weight=weight, score=0.0, raw=None, source=source, used=False,
@@ -218,16 +263,21 @@ def _unavailable(name: str, weight: float, source: str, exc: Exception) -> dict:
 
 # ── AI-STI ───────────────────────────────────────────────────────────────────
 
-async def _sti_components() -> tuple[list[dict], list[str], list[str]]:
+async def _sti_components() -> tuple[list[dict], list[str], list[str], list[str]]:
     components: list[dict] = []
     sources: list[str] = []
     missing: list[str] = []
+    lineage_notes: list[str] = []
 
     try:
         momentum = await _momentum_component(
             "standing_biomass_tonnes", rising_means_tighter=False
         )
         sources.append(momentum["source"])
+        if momentum.get("estimated"):
+            lineage_notes.append(
+                "biomass_momentum used the fallback '" + str(momentum["source"]) + "', not reported biomass"
+            )
         components.append(
             _component(
                 "biomass_momentum",
@@ -249,6 +299,10 @@ async def _sti_components() -> tuple[list[dict], list[str], list[str]]:
     try:
         harvest = await _momentum_component("harvest_tonnes", rising_means_tighter=False)
         sources.append(harvest["source"])
+        if harvest.get("estimated"):
+            lineage_notes.append(
+                "harvest_pressure used the fallback '" + str(harvest["source"]) + "', not reported biomass"
+            )
         components.append(
             _component(
                 "harvest_pressure",
@@ -271,6 +325,9 @@ async def _sti_components() -> tuple[list[dict], list[str], list[str]]:
         overview = await _national_emission()
         utilization = float(overview.get("national_utilization_pct") or 0.0)
         sources.append(_QUOTA_SOURCE)
+        lice_note = _lice_lineage_note()
+        if lice_note:
+            lineage_notes.append(lice_note)
         components.append(
             _component(
                 "quota_pressure",
@@ -295,14 +352,19 @@ async def _sti_components() -> tuple[list[dict], list[str], list[str]]:
             )
         )
 
-    return components, sources, missing
+    return components, sources, missing, lineage_notes
 
 
 async def compute_ai_sti(as_of: dt.datetime | None = None) -> dict:
     """AI-STI (0-100; higher = more upward price pressure)."""
-    components, sources, missing = await _sti_components()
+    components, sources, missing, lineage_notes = await _sti_components()
     return _assemble(
-        AI_STI, components, sources_used=sources, missing=missing, as_of=as_of
+        AI_STI,
+        components,
+        sources_used=sources,
+        missing=missing,
+        as_of=as_of,
+        lineage_notes=lineage_notes,
     )
 
 
@@ -353,7 +415,12 @@ async def compute_ai_lpi(as_of: dt.datetime | None = None) -> dict:
             components.append(_unavailable(name, LPI_WEIGHTS[name], _QUOTA_SOURCE, exc))
 
     return _assemble(
-        AI_LPI, components, sources_used=sources, missing=missing, as_of=as_of
+        AI_LPI,
+        components,
+        sources_used=sources,
+        missing=missing,
+        as_of=as_of,
+        lineage_notes=[note for note in (_lice_lineage_note(),) if note],
     )
 
 
