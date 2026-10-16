@@ -344,3 +344,21 @@ added `tests/test_migrations.py`.
     tracked in `docs/NEXT_STEPS_PLAN.md` + this log.
 
 
+## Commercial hardening — Step 1 (entitlements SSOT) — 2026-10-16
+
+- **Shipped:** `core/entitlements.py` is now the ONLY plan/price/quota/feature
+  definition. `core/auth.TIERS` and `core/valuechain/subscription.TIERS` are
+  projections of it (they were two divergent tables; `/api/tiers` served both and
+  `intelligence` silently ran on the free quota).
+- **Paywall enforced** for authenticated accounts on `PREMIUM_PREFIXES` → 402 with
+  an actionable upgrade payload; anonymous browsing stays open. Independent
+  kill-switches for gating and quota (the first cut nested gating inside the quota
+  switch — caught by the new tests).
+- **New:** `/api/entitlements/{plans,me,check}`, Alembic 016 (legacy tier
+  normalisation), `docs/ENTITLEMENTS.md`, `tests/test_entitlements.py`.
+- **Gates:** `test_entitlements.py` + `test_tier_quota.py` 67 passed; auth/tier/
+  billing slice 82 passed; ruff clean; OpenAPI re-frozen; platform version → 2.6.0.
+- **Next:** Step 2 — the money path (Stripe catalog → checkout → webhook →
+  entitlement → gated route, test-mode capable).
+
+

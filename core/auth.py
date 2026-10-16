@@ -73,67 +73,21 @@ TOKEN_EXPIRY_HOURS = 24
 security = HTTPBearer(auto_error=False)
 
 
-# ── Tier definitions (aligned with core/valuechain/subscription.py) ───────────
-TIERS = {
-    "free": {
-        "name": "Free",
-        "price_nok": 0,
-        "routes": [
-            "/api/health", "/api/brief", "/api/lice/summary",
-            "/api/signals", "/api/auth/", "/api/billing/",
-        ],
-        "pages": ["/", "/brief", "/settings", "/billing"],
-        "api_calls_per_day": 100,
-    },
-    "professional": {
-        "name": "Professional",
-        "price_nok": 2990,
-        "routes": [
-            "/api/health", "/api/brief", "/api/lice/", "/api/signals",
-            "/api/bloom/", "/api/exposure/", "/api/feed-cost/",
-            "/api/esg/", "/api/leaders/", "/api/regime/",
-            "/api/farmer-advisory/", "/api/farm-graph/",
-            "/api/production/", "/api/gnn/", "/api/twin/",
-            "/api/harvest/", "/api/ml/chronos/",
-            "/api/auth/", "/api/billing/",
-        ],
-        "pages": ["/", "/brief", "/leaders", "/esg", "/bloom", "/exposure",
-                  "/feed-cost", "/farmer", "/twin", "/predictions",
-                  "/harvest", "/ml-baselines", "/settings", "/billing"],
-        "api_calls_per_day": 5000,
-    },
-    "enterprise": {
-        "name": "Enterprise",
-        "price_nok": 14900,
-        "routes": [
-            "/api/health", "/api/brief", "/api/lice/", "/api/signals",
-            "/api/bloom/", "/api/exposure/", "/api/feed-cost/",
-            "/api/esg/", "/api/leaders/", "/api/regime/",
-            "/api/farmer-advisory/", "/api/farm-graph/",
-            "/api/production/", "/api/gnn/", "/api/twin/",
-            "/api/harvest/", "/api/ml/chronos/",
-            "/api/market/", "/api/price-outlook", "/api/causal/",
-            "/api/global-supply", "/api/macro/", "/api/ais/",
-            "/api/pairs/", "/api/chile/", "/api/backtest/",
-            "/api/biomass/", "/api/disease/", "/api/ocean/",
-            "/api/intelligence/", "/api/sentiment/",
-            "/api/traceability/", "/api/supply/",
-            "/api/auth/", "/api/billing/",
-        ],
-        "pages": "all",
-        "api_calls_per_day": 50000,
-    },
-    "investor": {
-        "name": "Investor",
-        "price_nok": 24900,
-        "routes": "all",
-        "pages": "all",
-        "api_calls_per_day": 100000,
-    },
-}
+# ── Tier definitions — PROJECTED from core.entitlements (single source) ───────
+# This dict used to be a second, divergent copy of the tier table (4 tiers with
+# per-day quotas) that contradicted core/valuechain/subscription.py (5 tiers with
+# monthly limits); /api/tiers served both. It is now a compatibility view over
+# core/entitlements.PLANS so they cannot disagree again. Edit PLANS there.
+from core.entitlements import auth_tiers as _auth_tiers  # noqa: E402
+
+TIERS: dict[str, dict] = _auth_tiers()
 
 # Backwards-compat mapping for tokens issued with old tier names
-_TIER_ALIASES = {"pro": "professional", "market": "enterprise", "institutional": "investor"}
+_TIER_ALIASES = {
+    "pro": "professional",
+    "market": "enterprise",
+    "institutional": "investor",
+}
 
 
 @dataclass
@@ -343,25 +297,18 @@ def _resolve_tier(tier: str) -> str:
 
 
 def check_tier_access(user: TokenPayload | None, path: str) -> bool:
+    """Whether the user's plan may call ``path``.
+
+    Delegates to ``core.entitlements.route_allowed`` — the single policy. Wired
+    into request handling by ``TierQuotaMiddleware`` (core/tier_quota.py) for
+    authenticated requests on the curated premium prefixes; the public site
+    stays browsable for anonymous visitors.
     """
-    Check if user's tier allows access to a given API path.
-    None user = free tier.
+    from core.entitlements import route_allowed
 
-    NOT yet wired into request handling: route-level tier gating is not
-    enforced (the public site is intentionally browsable anonymously);
-    this is the tested predicate a future paywall middleware will use.
-    The enforced half of TIERS today is api_calls_per_day — see
-    core/tier_quota.py (authenticated requests) and the
-    `route_gating_enforced: false` flags on the tier listing endpoints.
-    """
-    tier = _resolve_tier(user.tier) if user else "free"
-    tier_config = TIERS.get(tier, TIERS["free"])
-
-    allowed = tier_config["routes"]
-    if allowed == "all":
-        return True
-
-    return any(path.startswith(route) for route in allowed)
+    # Pass None through: an anonymous caller is not the "free" account — the
+    # paywall only applies to authenticated plans (anonymous browsing is open).
+    return route_allowed(user.tier if user else None, path)
 
 
 # ── Admin access ───────────────────────────────────────────────────────────────

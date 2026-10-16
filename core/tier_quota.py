@@ -1,7 +1,7 @@
 """
 Tier daily-quota enforcement (review H2)
 ========================================
-Enforces `TIERS[tier]["api_calls_per_day"]` for AUTHENTICATED requests
+Enforces `core.entitlements.PLANS[plan].api_calls_per_day` for AUTHENTICATED requests
 (Bearer JWT or X-API-Key) via `TierQuotaMiddleware`, returning 429 with a
 structured error once the per-UTC-day allowance is exhausted.
 
@@ -9,17 +9,17 @@ Honest scope (aligned with the platform's provenance discipline):
 - Anonymous "public demo" traffic is NOT quota-gated — the public site
   stays browsable for unauthenticated visitors (it remains subject to
   the global rate limiter in core/api.py).
-- Route-level tier gating (the `routes` allow-lists in core/auth.TIERS)
-  is NOT enforced yet; `check_tier_access` is the tested predicate the
-  future paywall middleware will use. Tier surfaces expose
-  `route_gating_enforced: false` so no consumer is misled.
+- Premium route gating IS enforced for authenticated accounts on the curated
+  `core.entitlements.PREMIUM_PREFIXES` outputs (HTTP 402 + upgrade payload).
+  The tier listing surfaces now report `route_gating_enforced: true`.
 - `/api/auth/*` and `/api/health` never consume quota (auth/infra
   endpoints must stay reachable to log in and upgrade).
 - Counters are in-process per UTC day (like slowapi's default memory
   storage): per worker. Swap in a shared store when the paywall ships.
 
 Kill-switch for test/CI suites: `FISHINTEL_ENFORCE_QUOTAS=0` (read per
-request so tests can toggle it; production default is on).
+request so tests can toggle it; production default is on). The paywall has its
+own switch: `FISHINTEL_ENFORCE_ROUTE_GATING=0`.
 """
 from __future__ import annotations
 
@@ -62,6 +62,15 @@ def quotas_enabled() -> bool:
     )
 
 
+def gating_enabled() -> bool:
+    """Premium route gating unless FISHINTEL_ENFORCE_ROUTE_GATING disables it."""
+    return os.environ.get("FISHINTEL_ENFORCE_ROUTE_GATING", "1").lower() not in (
+        "0",
+        "false",
+        "no",
+    )
+
+
 def _utc_day() -> str:
     return dt.datetime.now(dt.UTC).strftime("%Y-%m-%d")
 
@@ -98,15 +107,16 @@ class TierQuotaMiddleware(BaseHTTPMiddleware):
     """Enforce the per-tier daily API allowance for authenticated calls."""
 
     async def dispatch(self, request, call_next):
-        if not quotas_enabled():
-            return await call_next(request)
-
+        # NOTE: the two enforcement layers have INDEPENDENT switches. Gating must
+        # not be nested inside the quota switch — a suite-wide
+        # FISHINTEL_ENFORCE_QUOTAS=0 would otherwise silently disable the paywall
+        # (found by tests/test_entitlements.py).
         if request.method == "OPTIONS":
             return await call_next(request)  # CORS preflight
 
         path = request.url.path
-        # Auth/infra/billing endpoints never consume quota — users must
-        # always be able to log in, check status, and upgrade.
+        # Auth/infra/billing endpoints never consume quota and are never gated —
+        # users must always be able to log in, check status, and upgrade.
         if path.startswith(("/api/auth/", "/api/health", "/api/billing/")):
             return await call_next(request)
 
@@ -115,21 +125,39 @@ class TierQuotaMiddleware(BaseHTTPMiddleware):
             request.headers.get("X-API-Key") or request.query_params.get("api_key")
         )
         if not (has_bearer or has_api_key):
-            return await call_next(request)  # anonymous: not quota-gated
+            return await call_next(request)  # anonymous: ungated public browsing
 
         payload = await _resolve_user(request)
         if payload is None:
             return await call_next(request)  # bad credentials: route decides
 
-        from core.auth import TIERS, _resolve_tier
+        from core.entitlements import get_plan, route_allowed, upgrade_hint
 
-        tier = _resolve_tier(payload.tier)
-        tier_config = TIERS.get(tier, TIERS["free"])
-        quota = int(tier_config.get("api_calls_per_day", 0))
+        # 1) Premium route gating — authenticated accounts only (docstring).
+        if gating_enabled() and not route_allowed(payload.tier, path):
+            return JSONResponse(
+                status_code=402,
+                content=upgrade_hint(
+                    payload.tier,
+                    error="plan_upgrade_required",
+                    reason=(
+                        f"'{path}' is a premium output that your plan does not "
+                        "include. Upgrade to unlock it."
+                    ),
+                    path=path,
+                ),
+            )
+
+        # 2) Daily quota — from the single entitlements table (own switch).
+        if not quotas_enabled():
+            return await call_next(request)
+
+        plan = get_plan(payload.tier)
+        quota = plan.api_calls_per_day
         if quota <= 0:
-            return await call_next(request)  # unlimited tier
+            return await call_next(request)  # unlimited plan
 
-        key = (f"{payload.user_id}:{tier}", _utc_day())
+        key = (f"{payload.user_id}:{plan.key}", _utc_day())
         with _lock:
             used = _counts.get(key, 0) + 1
             _counts[key] = used
@@ -139,19 +167,18 @@ class TierQuotaMiddleware(BaseHTTPMiddleware):
                     del _counts[stale]
 
         if used > quota:
+            hint = upgrade_hint(
+                plan.key,
+                error="tier_quota_exceeded",
+                reason=(
+                    f"Daily API quota reached for plan '{plan.key}' "
+                    f"({used - 1}/{quota} calls today, UTC). Upgrade for a higher quota."
+                ),
+            )
+            hint.update({"quota_per_day": quota, "used_today": used - 1})
             return JSONResponse(
                 status_code=429,
-                content={
-                    "error": "tier_quota_exceeded",
-                    "message": (
-                        f"Daily API quota exceeded for tier '{tier}' "
-                        f"({quota}/{quota} calls used today, UTC). "
-                        "Upgrade your subscription tier for a higher quota."
-                    ),
-                    "tier": tier,
-                    "quota_per_day": quota,
-                    "used_today": quota,
-                },
+                content=hint,
                 headers={"Retry-After": str(_seconds_until_utc_midnight())},
             )
 

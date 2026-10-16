@@ -17,35 +17,39 @@ router = APIRouter(tags=["misc"])
 # ══════════════════════════════════════════════════════════════════════
 @router.get("/api/tiers")
 async def list_tiers():
-    """List available subscription tiers and pricing.
+    """List subscription plans and pricing from the ONE entitlement source.
 
-    Honest enforcement status per tier (review H2):
-    - `daily_quota_enforced`: the daily API allowance IS enforced for
-      authenticated API usage (Bearer JWT / X-API-Key) by
-      core/tier_quota.py. The source of truth is core/auth.py
-      TIERS.api_calls_per_day — mirrored here as
-      `enforced_api_calls_per_day` because this module's legacy
-      `api_calls_limit` is a monthly figure that is NOT what is
-      enforced. Tiers unknown to core/auth.py fall back to the free
-      quota.
-    - `route_gating_enforced`: tier route allow-lists are NOT enforced
-      yet (the public site is browsable anonymously).
+    Enforcement status (core/entitlements.py, docs/ENTITLEMENTS.md):
+    - `daily_quota_enforced`: the per-day allowance IS enforced for
+      authenticated usage (Bearer JWT / X-API-Key) by core/tier_quota.py.
+    - `route_gating_enforced`: premium route gating IS enforced for authenticated
+      accounts on the curated premium outputs (HTTP 402 + upgrade payload).
+      Anonymous visitors keep browsing — they are not an account, so nothing is
+      gated for them (that is the funnel).
+    - `api_calls_limit` is the MONTHLY figure DERIVED from the enforced per-day
+      quota. This endpoint previously served two contradictory tables (one from
+      core/auth.py, one from core/valuechain/subscription.py).
     """
-    from core.auth import TIERS as AUTH_TIERS
-    from core.valuechain.subscription import TIERS
+    from core.entitlements import PLANS
+    from core.tier_quota import gating_enabled
+
     return {
-        name: {
-            "name": t.name,
-            "monthly_price_nok": t.monthly_price_nok,
-            "api_calls_limit": t.api_calls_limit,
-            "features": t.features,
-            "daily_quota_enforced": True,
-            "enforced_api_calls_per_day": AUTH_TIERS.get(
-                name, AUTH_TIERS["free"]
-            )["api_calls_per_day"],
-            "route_gating_enforced": False,
+        key: {
+            "name": plan.name,
+            "audience": plan.audience,
+            "monthly_price_nok": plan.price_nok_month,
+            "api_calls_limit": plan.api_calls_per_month,
+            "api_calls_per_day": plan.api_calls_per_day,
+            "enforced_api_calls_per_day": plan.api_calls_per_day,
+            "features": list(plan.features),
+            "seats": plan.seats,
+            "sites": plan.sites,
+            "daily_quota_enforced": plan.api_calls_per_day > 0,
+            "route_gating_enforced": gating_enabled(),
+            "premium_outputs_included": plan.premium,
+            "upgrade_to": plan.upgrade_to,
         }
-        for name, t in TIERS.items()
+        for key, plan in PLANS.items()
     }
 
 

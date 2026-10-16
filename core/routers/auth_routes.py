@@ -139,10 +139,13 @@ async def auth_tiers():
     - `daily_quota_enforced`: api_calls_per_day IS enforced for
       authenticated API usage (Bearer JWT / X-API-Key) by
       core/tier_quota.py.
-    - `route_gating_enforced`: tier route allow-lists are NOT enforced
-      yet (the public site is browsable anonymously).
+    - `route_gating_enforced`: premium route gating IS enforced for authenticated
+      accounts on the curated premium outputs (HTTP 402 + upgrade payload);
+      anonymous visitors keep browsing (the funnel).
     """
     from core.auth import TIERS
+    from core.tier_quota import gating_enabled
+
     return [
         {
             "id": tid,
@@ -150,8 +153,8 @@ async def auth_tiers():
             "price_nok": t["price_nok"],
             "api_calls_per_day": t["api_calls_per_day"],
             "features": _tier_features(tid),
-            "daily_quota_enforced": True,
-            "route_gating_enforced": False,
+            "daily_quota_enforced": t["api_calls_per_day"] > 0,
+            "route_gating_enforced": gating_enabled(),
         }
         for tid, t in TIERS.items()
     ]

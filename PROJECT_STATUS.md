@@ -2,7 +2,28 @@
 
 > **Repository:** [github.com/frehan83-collab/AquaIntel](https://github.com/frehan83-collab/AquaIntel) (public)
 
-Last updated: 2026-10-16 (route-liveness audit — see docs/REPORT_LIVENESS.md)
+Last updated: 2026-10-16 (commercial hardening — see docs/ENTITLEMENTS.md)
+
+## Commercial hardening (in progress)
+
+| Step | Status | Evidence |
+|---|---|---|
+| 1. Entitlement single source of truth | **Shipped** | `core/entitlements.py`, `docs/ENTITLEMENTS.md`, `tests/test_entitlements.py` (47 tests), Alembic 016, `/api/entitlements/{plans,me,check}` |
+| 2. Money path (Stripe catalog → checkout → webhook → entitlement → gated route) | Next | |
+| 3. Bio→Price Weekly + named indices (AI-STI, AI-LPI) | Planned | |
+| 4. Accuracy & Method (published, versioned) | Planned | |
+| 5. Production truth (agents service, artifacts, PG/Timescale, freshness) | Planned | |
+| 6. Design-partner infrastructure (paid pilots, reciprocity) | Planned | |
+| 7. Legal foundations (data-license register, advice boundary, DPA/AI Act) | Planned | |
+| 8. Rule-3 provenance program (remaining routes + exempt register + ratchet) | Planned | |
+| 9. GTM kit (ROI calculator, one-pager, demo) | Planned | |
+| 10. Role definitions | Planned | |
+
+**Plans / pricing (canonical):** Insight (free) → Operator (NOK 4,900) → Desk
+(professional, NOK 2,990) → Enterprise (NOK 14,900) → Investor (NOK 24,900) →
+Intelligence (NOK 39,900) + licensed Data & Assurance (EUR 25k–150k/yr).
+The paywall is enforced for authenticated accounts on the curated premium outputs;
+anonymous browsing is never gated.
 
 ---
 

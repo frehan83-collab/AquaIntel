@@ -6,14 +6,15 @@ Pins the enforcement half of the TIERS contract:
 - `TierQuotaMiddleware` is actually registered on the app (the original
   bug: `check_tier_access`/TIERS had zero callers — nothing was enforced).
 - Authenticated requests (Bearer JWT / X-API-Key) are capped at
-  `TIERS[tier]["api_calls_per_day"]` with a structured 429 once exceeded.
+  `core.entitlements.PLANS[plan].api_calls_per_day` with a structured 429 +
+  upgrade payload once exceeded.
 - Anonymous "public demo" traffic is NOT quota-gated (the public site
   stays browsable) — that is the documented, honest scope.
 - `/api/auth/*`, `/api/health`, `/api/billing/*` never consume quota.
 - Tier surfaces (`/api/auth/tiers`, `/api/tiers`) honestly report
-  `route_gating_enforced: false` (allow-lists not enforced yet) while
-  the daily quota is enforced.
-- `check_tier_access` (the future paywall predicate) logic is pinned.
+  `route_gating_enforced: true` (premium outputs are gated for authenticated
+  accounts) while anonymous browsing stays open.
+- `check_tier_access` (the paywall predicate) is pinned to the same policy.
 
 Quotas are force-enabled per test via FISHINTEL_ENFORCE_QUOTAS (the
 middleware reads it per request); counters are reset around each test.
@@ -27,7 +28,8 @@ from fastapi.testclient import TestClient
 
 import core.tier_quota as tier_quota
 from core.api import app
-from core.auth import TIERS, TokenPayload, check_tier_access, create_token
+from core.auth import TokenPayload, check_tier_access, create_token
+from core.entitlements import PLANS
 from core.tier_quota import TierQuotaMiddleware
 
 
@@ -58,6 +60,20 @@ def _payload(tier: str) -> TokenPayload:
     )
 
 
+def _set_quota(monkeypatch, plan_key: str, per_day: int) -> None:
+    """Override a plan's ENFORCED quota for a test.
+
+    The SSOT is ``core.entitlements.PLANS`` (frozen dataclasses) and it is what
+    the middleware reads — patching ``core.auth.TIERS`` no longer has any effect
+    (that was the drift). Replace the entry instead.
+    """
+    from dataclasses import replace
+
+    from core.entitlements import PLANS
+
+    monkeypatch.setitem(PLANS, plan_key, replace(PLANS[plan_key], api_calls_per_day=per_day))
+
+
 class TestMiddlewareWiring:
     def test_tier_quota_middleware_registered(self):
         # Regression net: enforcement middleware must stay wired.
@@ -73,12 +89,12 @@ class TestMiddlewareWiring:
 
 class TestQuotaEnforcement:
     def test_anonymous_traffic_not_quota_gated(self, client, monkeypatch):
-        monkeypatch.setitem(TIERS["free"], "api_calls_per_day", 2)
+        _set_quota(monkeypatch, "free", 2)
         for _ in range(5):
             assert client.get("/api/signals").status_code == 200
 
     def test_authenticated_free_user_capped_at_quota(self, client, monkeypatch):
-        monkeypatch.setitem(TIERS["free"], "api_calls_per_day", 3)
+        _set_quota(monkeypatch, "free", 3)
         headers = _bearer("free", 91)
         for _ in range(3):
             assert client.get("/api/signals", headers=headers).status_code == 200
@@ -88,10 +104,11 @@ class TestQuotaEnforcement:
         assert body["error"] == "tier_quota_exceeded"
         assert body["tier"] == "free"
         assert body["quota_per_day"] == 3
+        assert body["suggested_plan"] in PLANS
         assert "retry-after" in {k.lower() for k in r.headers}
 
     def test_quota_buckets_are_per_user(self, client, monkeypatch):
-        monkeypatch.setitem(TIERS["free"], "api_calls_per_day", 2)
+        _set_quota(monkeypatch, "free", 2)
         a = _bearer("free", 91)
         b = _bearer("free", 92)
         for _ in range(2):
@@ -101,7 +118,7 @@ class TestQuotaEnforcement:
         assert client.get("/api/signals", headers=b).status_code == 200
 
     def test_professional_tier_gets_professional_quota(self, client, monkeypatch):
-        monkeypatch.setitem(TIERS["professional"], "api_calls_per_day", 2)
+        _set_quota(monkeypatch, "professional", 2)
         headers = _bearer("professional", 93)
         for _ in range(2):
             assert client.get("/api/signals", headers=headers).status_code == 200
@@ -112,7 +129,7 @@ class TestQuotaEnforcement:
 
     def test_tier_alias_pro_resolved(self, client, monkeypatch):
         # Old token tier names ("pro") resolve to "professional"
-        monkeypatch.setitem(TIERS["professional"], "api_calls_per_day", 1)
+        _set_quota(monkeypatch, "professional", 1)
         headers = _bearer("pro", 96)
         assert client.get("/api/signals", headers=headers).status_code == 200
         r = client.get("/api/signals", headers=headers)
@@ -120,14 +137,14 @@ class TestQuotaEnforcement:
         assert r.json()["tier"] == "professional"
 
     def test_unlimited_tier_not_gated(self, client, monkeypatch):
-        # api_calls_per_day <= 0 means unlimited (e.g. a future tier)
-        monkeypatch.setitem(TIERS["free"], "api_calls_per_day", 0)
+        # api_calls_per_day <= 0 means unlimited
+        _set_quota(monkeypatch, "free", 0)
         headers = _bearer("free", 97)
         for _ in range(6):
             assert client.get("/api/signals", headers=headers).status_code == 200
 
     def test_auth_health_billing_never_consume_quota(self, client, monkeypatch):
-        monkeypatch.setitem(TIERS["free"], "api_calls_per_day", 1)
+        _set_quota(monkeypatch, "free", 1)
         headers = _bearer("free", 94)
         # quota-consuming call burns the 1-call allowance
         assert client.get("/api/signals", headers=headers).status_code == 200
@@ -148,13 +165,13 @@ class TestQuotaEnforcement:
 
     def test_quotas_disabled_via_env(self, client, monkeypatch):
         monkeypatch.setenv("FISHINTEL_ENFORCE_QUOTAS", "0")
-        monkeypatch.setitem(TIERS["free"], "api_calls_per_day", 1)
+        _set_quota(monkeypatch, "free", 1)
         headers = _bearer("free", 95)
         for _ in range(5):
             assert client.get("/api/signals", headers=headers).status_code == 200
 
     def test_usage_helper_tracks_counts(self, client, monkeypatch):
-        monkeypatch.setitem(TIERS["free"], "api_calls_per_day", 100)
+        _set_quota(monkeypatch, "free", 100)
         headers = _bearer("free", 98)
         client.get("/api/signals", headers=headers)
         client.get("/api/signals", headers=headers)
@@ -166,8 +183,7 @@ class TestTierSurfacesHonesty:
         r = client.get("/api/auth/tiers")
         assert r.status_code == 200
         for tier in r.json():
-            assert tier["daily_quota_enforced"] is True
-            assert tier["route_gating_enforced"] is False
+            assert tier["route_gating_enforced"] is True
             assert isinstance(tier["api_calls_per_day"], int)
 
     def test_misc_tiers_mirror_enforced_values(self, client):
@@ -175,43 +191,50 @@ class TestTierSurfacesHonesty:
         assert r.status_code == 200
         tiers = r.json()
         assert tiers["free"]["daily_quota_enforced"] is True
-        assert tiers["free"]["route_gating_enforced"] is False
-        # The enforced figure comes from core/auth.py, not the legacy
-        # monthly api_calls_limit in core/valuechain/subscription.py.
-        assert (
-            tiers["free"]["enforced_api_calls_per_day"]
-            == TIERS["free"]["api_calls_per_day"]
-        )
-        # Tiers unknown to the enforcement source fall back to the free quota
-        assert (
-            tiers["intelligence"]["enforced_api_calls_per_day"]
-            == TIERS["free"]["api_calls_per_day"]
-        )
+        assert tiers["free"]["route_gating_enforced"] is True
+        # ONE source now: the endpoint reads core.entitlements directly, so the
+        # enforced per-day figure and the derived monthly figure agree for every
+        # plan (previously /api/tiers served two contradictory tables and
+        # `intelligence` fell back to the free quota).
+        from core.entitlements import PLANS
+
+        for key, plan in PLANS.items():
+            assert tiers[key]["enforced_api_calls_per_day"] == plan.api_calls_per_day
+            assert tiers[key]["api_calls_limit"] == plan.api_calls_per_month
 
 
 class TestCheckTierAccessPredicate:
-    """Pins the (not-yet-wired) allow-list predicate for the future paywall."""
+    """Pins the enforcement policy (core/entitlements.route_allowed).
 
-    def test_anonymous_is_free_tier(self):
+    The policy changed with the entitlement SSOT: the paywall is enforced on the
+    curated PREMIUM_PREFIXES outputs only, and anonymous visitors are never gated
+    (they are not an account — the public site is the funnel). The old predicate
+    used per-tier route allow-lists, which contradicted what the server actually
+    served.
+    """
+
+    def test_anonymous_is_never_gated(self):
         assert check_tier_access(None, "/api/health") is True
         assert check_tier_access(None, "/api/signals/confirm") is True
-        assert check_tier_access(None, "/api/market/prices") is False
+        assert check_tier_access(None, "/api/market/price-outlook") is True
 
-    def test_professional_allow_list(self):
-        user = _payload("professional")
-        assert check_tier_access(user, "/api/bloom/forecast") is True
-        assert check_tier_access(user, "/api/market/prices") is False
+    def test_free_account_blocked_from_premium_outputs(self):
+        free = _payload("free")
+        assert check_tier_access(free, "/api/market/price-outlook") is False
+        assert check_tier_access(free, "/api/ais/tracks") is False
+        assert check_tier_access(free, "/api/lice/summary") is True
 
-    def test_enterprise_allow_list(self):
-        user = _payload("enterprise")
-        assert check_tier_access(user, "/api/market/prices") is True
+    def test_paid_plans_reach_premium_outputs(self):
+        for tier in ("professional", "enterprise", "investor", "intelligence"):
+            assert check_tier_access(_payload(tier), "/api/market/price-outlook") is True
 
     def test_investor_all_routes(self):
         user = _payload("investor")
         assert check_tier_access(user, "/api/anything/at/all") is True
 
     def test_tier_alias_resolved(self):
-        assert check_tier_access(_payload("pro"), "/api/bloom/x") is True
+        # "pro" resolves to the canonical professional plan
+        assert check_tier_access(_payload("pro"), "/api/market/price-outlook") is True
 
     def test_unknown_tier_falls_back_to_free(self):
-        assert check_tier_access(_payload("intelligence"), "/api/market/x") is False
+        assert check_tier_access(_payload("nonsense"), "/api/market/price-outlook") is False

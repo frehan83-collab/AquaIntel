@@ -3,7 +3,47 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
-## [2.5.0] — 2026-10-16 (route-liveness audit)
+## [2.6.0] — commercial hardening (in progress)
+
+### Step 1 — entitlements: ONE source of truth (the tier conflict is dead)
+- **New `core/entitlements.py`** is the only definition of plans, prices, quotas,
+  features and the paywall boundary. `core/auth.TIERS` and
+  `core/valuechain/subscription.TIERS` are now *projections* of it.
+  Before: `/api/tiers` imported **both** tables and served a merged,
+  self-contradictory payload, and `intelligence` (present in one table only)
+  silently ran on the **free** quota while priced at NOK 39,900/month.
+- **7 canonical plans** — Insight (free), Operator, Desk (professional),
+  Enterprise, Investor, Intelligence, plus the licensed Data & Assurance tier.
+  The monthly limit is **derived** from the enforced per-day quota
+  (`api_calls_per_day × 30`), removing the drift source. Legacy keys are kept for
+  issued tokens/Stripe metadata; aliases (`premium`, `pro`, `pilot`, `growth`,
+  `licence`, `market`, `institutional`, …) resolve via `normalize_plan()`.
+- **Paywall enforced** for authenticated accounts on a curated
+  `PREMIUM_PREFIXES` set (price outlook/forecast, futures, AIS, supply balance,
+  contracts, event impact, harvest optimizer, feed supply chain, ensemble,
+  compound scenarios, premium indices) → **402 + actionable upgrade payload**
+  (`current_plan`, `suggested_plan`, `upgrade_url`). Anonymous browsing stays
+  open — that is the funnel, and it is now the documented policy rather than an
+  accident.
+- **Gating and quota have independent kill-switches**
+  (`FISHINTEL_ENFORCE_ROUTE_GATING`, `FISHINTEL_ENFORCE_QUOTAS`). The first
+  implementation nested gating inside the quota switch, so a suite-wide
+  `ENFORCE_QUOTAS=0` silently disabled the paywall — caught by the new tests and
+  restructured.
+- **New endpoints**: `GET /api/entitlements/plans` (public pricing model),
+  `/me` (caller's plan, usage, upgrade path), `/check?path=` (UI affordances).
+- **Alembic 016** normalises legacy tier strings in `users`, `subscriptions`,
+  `api_keys` and `performance_fees` to canonical keys, so a row holding
+  `"premium"` cannot silently fall back to the free quota.
+- **Tests**: `tests/test_entitlements.py` (47 tests) proves the two projections
+  agree, the monthly figure is derived, both tier endpoints agree, `intelligence`
+  has its own quota, alias resolution, the paywall policy, the 402/429 payloads
+  and the kill-switches. The assertions in `tests/test_tier_quota.py` that
+  *pinned the conflict* were replaced.
+- Docs: `docs/ENTITLEMENTS.md` (model, policy, endpoints, enforcement, migration,
+  known limitations).
+
+
 
 ### Added
 - `scripts/probe_liveness.py` — walks every parameterless GET route in-process

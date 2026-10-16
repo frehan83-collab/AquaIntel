@@ -1400,7 +1400,7 @@
   "info": {
     "description": "Aquaculture Intelligence Platform \u2014 real-time salmon market intelligence, disease monitoring, and decision support for farmers, traders, and investors.",
     "title": "FishIntel API",
-    "version": "2.5.0"
+    "version": "2.6.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -2428,7 +2428,7 @@
     },
     "/api/auth/tiers": {
       "get": {
-        "description": "Get available subscription tiers and pricing.\n\nHonest enforcement status per tier (review H2):\n- `daily_quota_enforced`: api_calls_per_day IS enforced for\n  authenticated API usage (Bearer JWT / X-API-Key) by\n  core/tier_quota.py.\n- `route_gating_enforced`: tier route allow-lists are NOT enforced\n  yet (the public site is browsable anonymously).",
+        "description": "Get available subscription tiers and pricing.\n\nHonest enforcement status per tier (review H2):\n- `daily_quota_enforced`: api_calls_per_day IS enforced for\n  authenticated API usage (Bearer JWT / X-API-Key) by\n  core/tier_quota.py.\n- `route_gating_enforced`: premium route gating IS enforced for authenticated\n  accounts on the curated premium outputs (HTTP 402 + upgrade payload);\n  anonymous visitors keep browsing (the funnel).",
         "operationId": "auth_tiers_api_auth_tiers_get",
         "responses": {
           "200": {
@@ -4580,6 +4580,97 @@
         "tags": [
           "decision",
           "treatment"
+        ]
+      }
+    },
+    "/api/entitlements/check": {
+      "get": {
+        "description": "Whether ``path`` is allowed for the caller's plan (for UI affordances).",
+        "operationId": "check_access_api_entitlements_check_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Check Access",
+        "tags": [
+          "entitlements"
+        ]
+      }
+    },
+    "/api/entitlements/me": {
+      "get": {
+        "description": "The caller's plan: quota, features, premium access and upgrade path.",
+        "operationId": "my_entitlements_api_entitlements_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "My Entitlements",
+        "tags": [
+          "entitlements"
+        ]
+      }
+    },
+    "/api/entitlements/plans": {
+      "get": {
+        "description": "Public pricing model: canonical plans in hierarchy order + licensing tier.",
+        "operationId": "list_plans_api_entitlements_plans_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Plans",
+        "tags": [
+          "entitlements"
         ]
       }
     },
@@ -10673,7 +10764,7 @@
     },
     "/api/tiers": {
       "get": {
-        "description": "List available subscription tiers and pricing.\n\nHonest enforcement status per tier (review H2):\n- `daily_quota_enforced`: the daily API allowance IS enforced for\n  authenticated API usage (Bearer JWT / X-API-Key) by\n  core/tier_quota.py. The source of truth is core/auth.py\n  TIERS.api_calls_per_day \u2014 mirrored here as\n  `enforced_api_calls_per_day` because this module's legacy\n  `api_calls_limit` is a monthly figure that is NOT what is\n  enforced. Tiers unknown to core/auth.py fall back to the free\n  quota.\n- `route_gating_enforced`: tier route allow-lists are NOT enforced\n  yet (the public site is browsable anonymously).",
+        "description": "List subscription plans and pricing from the ONE entitlement source.\n\nEnforcement status (core/entitlements.py, docs/ENTITLEMENTS.md):\n- `daily_quota_enforced`: the per-day allowance IS enforced for\n  authenticated usage (Bearer JWT / X-API-Key) by core/tier_quota.py.\n- `route_gating_enforced`: premium route gating IS enforced for authenticated\n  accounts on the curated premium outputs (HTTP 402 + upgrade payload).\n  Anonymous visitors keep browsing \u2014 they are not an account, so nothing is\n  gated for them (that is the funnel).\n- `api_calls_limit` is the MONTHLY figure DERIVED from the enforced per-day\n  quota. This endpoint previously served two contradictory tables (one from\n  core/auth.py, one from core/valuechain/subscription.py).",
         "operationId": "list_tiers_api_tiers_get",
         "responses": {
           "200": {

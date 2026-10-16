@@ -94,7 +94,13 @@ test runs with `Start-Process ... -RedirectStandardOutput` and poll the file.
    relevant test file, then the fast smoke suite before committing.
 7. **Code review before GitHub** — every commit must pass an independent
    code review (subagent or `skills: code-review`) of the actual diff.
-8. **Update this file + `CLAUDE.md`** after structural changes (new routes,
+8. **Entitlements have ONE definition.** Plans, prices, quotas, features and the
+   paywall boundary live in `core/entitlements.py` only; `core/auth.TIERS` and
+   `core/valuechain/subscription.TIERS` are derived projections. Never add a tier
+   table elsewhere. The paywall applies to *authenticated* accounts on
+   `PREMIUM_PREFIXES`; anonymous browsing stays open. Every 402/429 must carry
+   `upgrade_hint()` so the client can render an upgrade path.
+9. **Update this file + `CLAUDE.md`** after structural changes (new routes,
    engines, conventions).
 
 ## Architecture map
@@ -106,6 +112,7 @@ test runs with `Start-Process ... -RedirectStandardOutput` and poll the file.
 | `core/market/` | ~71 intelligence engines (singleton + `@cached` + provenance) |
 | `core/ml/` | Foundation-model wrappers (chronos, timesfm, moirai) |
 | `core/auth.py` | JWT, 4-tier access, `require_admin`, `is_admin` |
+| `core/entitlements.py` | **Single source of truth for plans/prices/quotas and the paywall boundary** (see `docs/ENTITLEMENTS.md`); `core/auth.TIERS` and `core/valuechain/subscription.TIERS` are projections of it |
 | `core/models.py` | SQLAlchemy models (31 tables, 15 Alembic migrations) |
 | `core/async_db.py` | `get_async_session()` — **never** sync `Session` in async code |
 | `agents/`, `main.py` | 12 background agents (asyncio; daemon-thread mode for dev only) |
