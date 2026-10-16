@@ -13,7 +13,6 @@ from sqlalchemy import select, func
 
 from core.async_db import get_async_session
 from core.cache import cached
-from core.market.data_provenance import DataProvenance
 from core.models import LiceRecord, PricePrediction, Signal
 from core.schemas import PriceOutlookResponse
 
@@ -103,15 +102,10 @@ async def biomass_supply():
     from core.market.biomass_tracker import biomass_tracker
     await biomass_tracker.fetch_biomass_data()
     model = biomass_tracker.compute_supply_model()
-    # Honesty (rules 1/3): biomass_tracker.fetch_biomass_data() currently always
-    # returns the historical-pattern estimate (the Fiskeridirektoratet open-data
-    # file is not parsed), so every value below is a synthetic placeholder — not
-    # reported biomass. Tag it via data_provenance so clients cannot present it
-    # as live. Docstring intentionally unchanged (frozen OpenAPI contract).
-    provenance = DataProvenance.simulated(
-        "Fiskeridirektoratet open data not parsed; values generated from an "
-        "approximate hardcoded historical pattern — placeholder, not reported biomass"
-    )
+    # Honesty (rules 1/3): the tracker prefers the real Fiskeridirektoratet
+    # ArcGIS client and records which path ran; the supply metrics themselves
+    # remain model estimates, so provenance is never "live".
+    provenance = biomass_tracker.provenance()
     return {
         "total_biomass_tonnes": model.total_standing_biomass_tonnes,
         "biomass_vs_historical_pct": model.biomass_vs_historical_pct,

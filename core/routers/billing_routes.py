@@ -15,7 +15,7 @@ async def billing_create_checkout(tier: str, request: Request):
     """Create a Stripe Checkout Session for subscription upgrade."""
     from core.auth import get_current_user, security
     creds = await security(request)
-    user = await get_current_user(creds)
+    user = await get_current_user(request, creds)
     if not user:
         raise HTTPException(401, "Authentication required")
     from core.billing.stripe_billing import stripe_billing
@@ -36,7 +36,7 @@ async def billing_subscription_status(request: Request):
     """Get current subscription status."""
     from core.auth import get_current_user, security
     creds = await security(request)
-    user = await get_current_user(creds)
+    user = await get_current_user(request, creds)
     if not user:
         raise HTTPException(401, "Authentication required")
     from core.billing.stripe_billing import stripe_billing
@@ -48,7 +48,7 @@ async def billing_cancel(request: Request):
     """Cancel subscription at end of current period."""
     from core.auth import get_current_user, security
     creds = await security(request)
-    user = await get_current_user(creds)
+    user = await get_current_user(request, creds)
     if not user:
         raise HTTPException(401, "Authentication required")
     from core.billing.stripe_billing import stripe_billing
@@ -60,7 +60,7 @@ async def billing_invoices(request: Request):
     """Get invoice history from Stripe."""
     from core.auth import get_current_user, security
     creds = await security(request)
-    user = await get_current_user(creds)
+    user = await get_current_user(request, creds)
     if not user:
         raise HTTPException(401, "Authentication required")
     from core.billing.stripe_billing import stripe_billing

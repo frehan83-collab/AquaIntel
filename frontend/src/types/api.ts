@@ -125,10 +125,11 @@ export interface FarmPortfolioSummary {
 
 /**
  * /api/market/biomass — derived national supply model.
- * NOTE: the backend currently returns DataProvenance.simulated — these values
- * are a synthetic placeholder generated from an approximate hardcoded
- * historical pattern (the Fiskeridirektoratet open-data file is not parsed),
- * NOT reported biomass. Never present them as live.
+ * NOTE: the base biomass comes from the Fiskeridirektoratet ArcGIS client when
+ * it answers; harvestable / weekly-harvest / days-of-supply / outlook are model
+ * estimates from a hardcoded seasonal profile. The route therefore never returns
+ * provenance that is `live` (degraded when the base is live, simulated
+ * otherwise) — never present these figures as live.
  */
 export interface MarketBiomass {
   total_biomass_tonnes: number;

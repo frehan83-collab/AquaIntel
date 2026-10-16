@@ -15,6 +15,8 @@ from dataclasses import dataclass, field
 import httpx
 import structlog
 
+from core.market.data_provenance import DataProvenance
+
 log = structlog.get_logger(__name__)
 
 
@@ -71,24 +73,69 @@ class BiomassTracker:
     def __init__(self) -> None:
         self._client = httpx.AsyncClient(timeout=30.0)
         self.records: list[BiomassRecord] = []
+        self.last_source: str = "unset"
+        self.last_is_live: bool = False
 
     async def fetch_biomass_data(self) -> list[BiomassRecord]:
-        """
-        Fetch biomass statistics from Fiskeridirektoratet.
-        The data is typically available as downloadable files.
+        """Fetch standing biomass, preferring REAL Fiskeridirektoratet data.
+
+        The ArcGIS Biomass Status client (core.market.fiskeridir_biomass) is the
+        authoritative source; only when it yields no usable records do we fall
+        back to the historical-pattern estimate. Which path ran is recorded on
+        `last_source` / `last_is_live` so callers can tag provenance honestly
+        (AGENTS.md rules 1 and 3) instead of presenting placeholders as reported
+        biomass (this function previously *always* returned the estimate while
+        the docstring claimed it fetched from Fiskeridirektoratet).
         """
         try:
-            # Try the open data endpoint
-            resp = await self._client.get(
-                "https://www.fiskeridir.no/Akvakultur/Tall-og-analyse/Apne-data",
-                headers={"User-Agent": "AquaIntel/1.0"},
-            )
-            log.info("biomass.fetch_attempt", status=resp.status_code)
-        except Exception as exc:
-            log.warning("biomass.fetch_error", error=str(exc)[:100])
+            from core.market.fiskeridir_biomass import fiskeridir_biomass
 
-        # Use estimated data based on current month if API unavailable
-        return self._generate_current_estimate()
+            real = await fiskeridir_biomass.fetch_all()
+            usable = [r for r in real if not r.is_synthetic and r.standing_biomass_tonnes > 0]
+            if usable:
+                self.records = [
+                    BiomassRecord(
+                        year=r.report_year,
+                        month=r.report_month,
+                        production_area=r.production_area,
+                        standing_biomass_tonnes=r.standing_biomass_tonnes,
+                    )
+                    for r in usable
+                ]
+                self.last_source = "Fiskeridirektoratet Biomass Status (ArcGIS)"
+                self.last_is_live = True
+                log.info("biomass.real_fetch_ok", n_localities=len(self.records))
+                return self.records
+            log.warning("biomass.real_fetch_empty")
+        except Exception as exc:  # noqa: BLE001 - fall back honestly, never raise
+            log.warning("biomass.real_fetch_failed", error=str(exc)[:120])
+
+        self.records = self._generate_current_estimate()
+        self.last_source = "historical-pattern estimate"
+        self.last_is_live = False
+        return self.records
+
+    def provenance(self) -> DataProvenance:
+        """Honest provenance for the supply model (rule 1/3).
+
+        Even with a live biomass base, the supply metrics themselves are model
+        estimates (harvestable = 60% of biomass; weekly harvest and the seasonal
+        norm come from hardcoded profiles), so the result is never `live`.
+        """
+        if self.last_is_live:
+            return DataProvenance.degraded(
+                self.last_source,
+                reason=(
+                    "base standing biomass is live; harvestable, weekly-harvest, "
+                    "days-of-supply, outlook and yoy are model estimates derived from a "
+                    "hardcoded seasonal profile, not reported figures"
+                ),
+                confidence=0.6,
+            )
+        return DataProvenance.simulated(
+            "Fiskeridirektoratet feed unavailable — figures are a synthetic "
+            "historical-pattern placeholder, not reported biomass"
+        )
 
     def _generate_current_estimate(self) -> list[BiomassRecord]:
         """Generate current biomass estimate from historical patterns."""

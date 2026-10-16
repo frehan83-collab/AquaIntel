@@ -2,7 +2,7 @@
 
 > **Repository:** [github.com/frehan83-collab/AquaIntel](https://github.com/frehan83-collab/AquaIntel) (public)
 
-Last updated: 2026-10-12 (Session 40)
+Last updated: 2026-10-16 (route-liveness audit — see docs/REPORT_LIVENESS.md)
 
 ---
 
@@ -10,20 +10,20 @@ Last updated: 2026-10-12 (Session 40)
 
 | Metric | Count |
 |--------|-------|
-| API routes | 328 (unique path+method, 0 duplicates, 12+ with response_model) |
+| API routes | 322 operations across 316 unique paths (measured 2026-10-16) |
 | Router modules | 30 |
 | Market/data engines | ~75 (incl. 3 ML foundation models) |
 | Frontend pages | 63 (68 compiled routes) |
 | Shared components | 43+ |
 | Database tables | 31 |
 | DB migrations | 15 |
-| Test functions | 651 collected (616 passing, 35 xfail/xpass) |
+| Test functions | 762 collected (739 passing, 13 xfail, 10 xpass) |
 | i18n keys | ~600 (NO/EN) |
 | Design tokens | 86 (Figma pipeline active) |
 | Data source clients | 45+ |
 | Historical data | SSB 26yr, FRED 35yr, MUR SST 44yr |
-| Next.js | 15.5.14 |
-| React | 19.2.4 (with Compiler) |
+| Next.js | 16.4 |
+| React | 19.1 |
 | FastAPI | 2.2.0 (see core/version.py) |
 
 ---

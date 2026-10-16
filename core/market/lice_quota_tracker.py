@@ -108,7 +108,7 @@ class LiceQuotaTracker:
                     "locality_no": locality_no,
                     "locality_name": loc.name if loc else f"Locality {locality_no}",
                     "production_area": loc.production_area if loc else None,
-                    "company": loc.company if loc else "Unknown",
+                    "company": loc.owner_company if loc else "Unknown",
                     "avg_adult_female_lice": float(row.avg_adult_female_lice) if row.avg_adult_female_lice else 0.0,
                     "sea_temp_c": float(row.sea_temp_c) if row.sea_temp_c else None,
                     "year": row.year,
@@ -141,7 +141,7 @@ class LiceQuotaTracker:
                     select(
                         LiceRecord.locality_no,
                         Locality.name,
-                        Locality.company,
+                        Locality.owner_company,
                         func.avg(LiceRecord.avg_adult_female_lice).label("avg_lice"),
                     )
                     .join(Locality, Locality.locality_no == LiceRecord.locality_no)
@@ -150,7 +150,7 @@ class LiceQuotaTracker:
                         LiceRecord.year == max_year,
                         LiceRecord.avg_adult_female_lice.isnot(None),
                     )
-                    .group_by(LiceRecord.locality_no, Locality.name, Locality.company)
+                    .group_by(LiceRecord.locality_no, Locality.name, Locality.owner_company)
                     .order_by(func.avg(LiceRecord.avg_adult_female_lice).desc())
                 )
                 rows = (await s.execute(q)).all()
@@ -159,7 +159,7 @@ class LiceQuotaTracker:
                     {
                         "locality_no": r.locality_no,
                         "locality_name": r.name or f"Locality {r.locality_no}",
-                        "company": r.company or "Unknown",
+                        "company": r.owner_company or "Unknown",
                         "avg_lice": round(float(r.avg_lice), 3),
                     }
                     for r in rows

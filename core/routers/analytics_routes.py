@@ -318,7 +318,7 @@ async def self_improvement_proposals():
     async with get_async_session() as s:
         logs = (await s.execute(
             select(AuditLog)
-            .where(AuditLog.event_type == "self_evolve")
+            .where(AuditLog.action == "self_evolve")
             .order_by(AuditLog.timestamp.desc())
             .limit(10)
         )).scalars().all()
@@ -327,7 +327,7 @@ async def self_improvement_proposals():
         "audits": [
             {
                 "timestamp": l.timestamp.isoformat() if l.timestamp else None,
-                "detail": l.detail,
+                "detail": l.details,
             }
             for l in logs
         ],

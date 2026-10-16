@@ -1,6 +1,6 @@
 # AquaIntel — Next Steps Execution Plan (handoff for coding agent)
 
-> Generated: 2026-10-12 · Local clone: `C:\Users\freha\AquaIntel` · Branch: `master` (clean tree at `0ba29e3`)
+> Generated: 2026-10-12 · Local clone: `C:\Users\freha\FishIntel` · Branch: `master` (clean tree at `0ba29e3`)
 > This document is a self-contained brief for any coding agent. Read it together with
 > `AGENTS.md` (authoritative rules) and `docs/AUTONOMOUS_PROGRESS.md` (session history).
 
@@ -252,7 +252,7 @@ per-country monitors (Chile/Canada/Iceland/Faroe/Scotland) with disruption level
 ## 5. Commands cheat sheet (for the agent)
 
 ```bash
-cd C:\Users\freha\AquaIntel
+cd C:\Users\freha\FishIntel
 
 # Backend
 python -m uvicorn core.api:app --port 8000          # API only

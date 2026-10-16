@@ -3,7 +3,68 @@
 All notable changes to FishIntel / AquaIntel. Format follows the spirit of
 Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
-## [Unreleased] — post-review hardening session (2026-10-13)
+## [2.5.0] — 2026-10-16 (route-liveness audit)
+
+### Added
+- `scripts/probe_liveness.py` — walks every parameterless GET route in-process
+  and records the provenance it ACTUALLY returns (live / degraded / simulated /
+  no_provenance / error). Writes `docs/REPORT_LIVENESS.md` +
+  `docs/liveness_report.json`. Measurement, not assertion: 219 routes probed.
+- `tests/test_route_liveness_contract.py` — deterministic guards for every bug
+  the audit found (no network required).
+
+### Fixed (crashes the audit surfaced — 6 defect classes across 9 endpoints, none covered by the suite)
+- `core/routers/billing_routes.py` (x4): called `get_current_user(creds)` while
+  the signature is `(request, credentials)`, so `credentials` stayed a `Depends`
+  object — every billing endpoint raised AttributeError instead of returning 401.
+- `compliance/compliance_agent.py`: `/api/audit` read non-existent
+  `AuditLog.event_type` / `actor` / `detail` (500). Maps `action` / `user_id` /
+  `details`.
+- `core/routers/analytics_routes.py`: `/api/self-improvement/proposals` queried
+  `AuditLog.event_type` and read `l.detail` (500).
+- `core/routers/alerts_routes.py`: `/api/parametric/risk-profile` never awaited
+  the async engine, returning a coroutine (500).
+- `core/market/lice_quota_tracker.py`: queried `Locality.company`, which does not
+  exist (the column is `owner_company`) — every production area silently
+  returned an empty list.
+- `core/market/efficacy_marketplace.py`: PostgreSQL-only
+  `EXTRACT(... FROM ...)` raw SQL raised OperationalError on SQLite, so
+  `/api/efficacy/*` failed in dev and CI.
+
+### Fixed (honesty — AGENTS.md rules 1 and 3)
+- `core/market/fiskeridir_biomass.py`: `_generate_fallback()` produced
+  `random.uniform` placeholders with `report_year` set, so `is_live` was True and
+  `get_national_summary()` reported `DataProvenance.live(..., confidence=0.95)`
+  for randomly generated data presented as "Fiskeridirektoratet". Fallback
+  records are now flagged `is_synthetic` and provenance is `simulated`
+  (confidence 0.0) unless the ArcGIS feed really answered.
+- `core/market/biomass_tracker.py`: `fetch_biomass_data()` ALWAYS returned the
+  hardcoded historical-pattern estimate while its docstring claimed it fetched
+  from Fiskeridirektoratet. It now prefers the real ArcGIS client and records
+  which path ran; `/api/market/biomass` emits honest provenance (never `live`,
+  because its supply metrics are model estimates).
+
+### Fixed (frontend)
+- `frontend/src/lib/api.ts`: the client sent NO `Authorization` header and
+  nothing read the token stored at login, so user-scoped routes (billing, API
+  keys, webhooks) and the per-user tier quota were unreachable from the UI. The
+  stored JWT is now attached, and a 401 clears a stale token and routes to
+  `/login` once. Keys exported as `AUTH_TOKEN_KEY` / `AUTH_USER_KEY`.
+- `/market` gains a Biomass Supply Tracker card that labels its derived figures
+  as estimates and renders the backend's own provenance reason.
+
+### Changed (docs truth pass)
+- `PROJECT_STATUS.md`: measured counts (322 operations / 316 unique paths, 762
+  tests) and real frontend versions (Next 16.4, React 19.1).
+- `docs/NEXT_STEPS_PLAN.md`: clone path `AquaIntel` -> `FishIntel`.
+- `docs/RESEARCH_SYNTHESIS.md`: the sync-`Session` claim is marked RESOLVED
+  (0 core files import `sqlalchemy.orm.Session`).
+- `docs/DEPLOYMENT.md` + `docker-compose.staging.yml`: agents run as a SEPARATE
+  service (staging parity); single-container deployments otherwise never ingest
+  data.
+
+
+## [2.3.0] — 2026-10-13 (post-review hardening session)
 
 ### Fixed (review H1 — rate limiting was configured but never enforced)
 - `core/api.py` now registers `SlowAPIMiddleware`: the `Limiter` (default

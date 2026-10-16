@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { LogIn, UserPlus, Mail, Lock, Building2, Briefcase } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, AUTH_TOKEN_KEY, AUTH_USER_KEY } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,8 +31,8 @@ export default function LoginPage() {
       }
 
       // Store token
-      localStorage.setItem("aquaintel_token", result.token);
-      localStorage.setItem("aquaintel_user", JSON.stringify(result.user));
+      localStorage.setItem(AUTH_TOKEN_KEY, result.token);
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(result.user));
 
       setSuccess(`Welcome, ${result.user.email}! Tier: ${result.user.tier}`);
 

@@ -28,7 +28,7 @@
 **Architecture Agent** — Identified critical scaling bottlenecks:
 - CRITICAL: No Gunicorn (single process) — FIXED: Dockerfile now uses 4 Gunicorn workers
 - CRITICAL: Async pool had NO config (default 5 connections) — FIXED: pool_size=20, max_overflow=40
-- CRITICAL: 47 engine files still use sync Session in async endpoints
+- CRITICAL: 47 engine files still use sync Session in async endpoints (RESOLVED — verified 2026-10-16: 0 core files import `sqlalchemy.orm.Session`)
 - HIGH: Nginx had no gzip, no caching, no rate limiting — FIXED: full production config
 - Scaling roadmap: 100 users = 18hrs work, 500 users = 46hrs, 5000 users = 72hrs
 

@@ -664,9 +664,10 @@ export default function MarketTerminalPage() {
         </GlassCard>
       </div>
 
-      {/* Biomass Supply Tracker — ESTIMATES ONLY. The backend
-          /api/market/biomass is tagged data_provenance.simulated: these are a
-          synthetic historical-pattern placeholder, NOT reported biomass. */}
+      {/* Biomass Supply Tracker — ESTIMATES ONLY. The backend tags
+          /api/market/biomass provenance as never-live (degraded when the base is
+          live, simulated otherwise): the supply metrics are model estimates from
+          a hardcoded seasonal profile, NOT reported figures. */}
       {biomassSupply && (
         <GlassCard accent="ocean" delay={0.33}>
           <div className="flex items-center justify-between mb-4">
@@ -714,9 +715,9 @@ export default function MarketTerminalPage() {
             </div>
           </div>
           <p className="text-[10px] text-white/30 mt-3 pt-3 border-t border-white/[0.04]">
-            Estimated — a synthetic historical-pattern placeholder, not reported biomass.
-            The live Fiskeridirektoratet feed is not connected yet, so these figures must
-            not be treated as market intelligence.
+            Estimated —{" "}
+            {biomassSupply.data_provenance?.fallback_reason ??
+              "derived from reported Fiskeridirektoratet biomass where available; harvestable, weekly-harvest, days-of-supply and outlook are model estimates, not reported figures"}
             {" \u00b7 "}
             vs seasonal norm:{" "}
             {biomassSupply.biomass_vs_historical_pct != null

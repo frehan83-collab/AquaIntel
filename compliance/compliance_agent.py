@@ -144,8 +144,9 @@ class ComplianceAgent(BaseAgent):
     async def export_audit_log(
         start: dt.datetime | None = None,
         end: dt.datetime | None = None,
+        limit: int | None = None,
     ) -> list[dict]:
-        """Export audit log entries for a time range."""
+        """Export audit log entries for a time range (optionally limited)."""
         async with get_async_session() as s:
             q = select(AuditLog)
             if start:
@@ -153,6 +154,8 @@ class ComplianceAgent(BaseAgent):
             if end:
                 q = q.where(AuditLog.timestamp <= end)
             q = q.order_by(AuditLog.timestamp.desc())
+            if limit:
+                q = q.limit(limit)
 
             result = await s.execute(q)
             entries = result.scalars().all()
@@ -160,9 +163,9 @@ class ComplianceAgent(BaseAgent):
                 {
                     "id": e.id,
                     "timestamp": e.timestamp.isoformat(),
-                    "event_type": e.event_type,
-                    "actor": e.actor,
-                    "detail": e.detail,
+                    "event_type": e.action,
+                    "actor": e.user_id,
+                    "detail": e.details,
                 }
                 for e in entries
             ]

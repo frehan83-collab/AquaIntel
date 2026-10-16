@@ -65,6 +65,7 @@ class LocalityBiomass:
     report_month: int = 0
     municipality: str = ""
     county: str = ""
+    is_synthetic: bool = False  # True only for _generate_fallback() placeholders
 
 
 @dataclass
@@ -93,6 +94,29 @@ class FiskeridirBiomassClient:
         self._cache: list[LocalityBiomass] | None = None
         self._cache_time: dt.datetime | None = None
         self._cache_ttl = dt.timedelta(hours=6)
+
+    @staticmethod
+    def _provenance(records: list[LocalityBiomass]) -> dict:
+        """Honest provenance (AGENTS.md rule 1).
+
+        Live ONLY when the records came from the ArcGIS feed. `_generate_fallback`
+        produces random placeholder figures; those must never be reported as live
+        government data. (They previously were: the fallback set report_year, so
+        `is_live` was True and provenance said `live` at confidence 0.95.)
+        """
+        if (
+            records
+            and not any(r.is_synthetic for r in records)
+            and any(r.standing_biomass_tonnes > 0 for r in records)
+        ):
+            return DataProvenance.live(
+                "Fiskeridirektoratet Biomass Status (ArcGIS)", confidence=0.95
+            ).to_dict()
+        return DataProvenance.simulated(
+            "Fiskeridirektoratet Biomass Status (ArcGIS) unavailable — figures are a "
+            "synthetic placeholder derived from known industry totals, not reported "
+            "locality data"
+        ).to_dict()
 
     @retry(
         stop=stop_after_attempt(3),
@@ -222,8 +246,6 @@ class FiskeridirBiomassClient:
         latest_period = max(periods) if periods else (0, 0)
         report_label = f"{latest_period[0]}-{latest_period[1]:02d}" if latest_period[0] > 0 else "unknown"
 
-        is_live = len(records) > 0 and records[0].report_year > 0
-
         return {
             "total_standing_tonnes": round(total_standing, 0),
             "national_mab_tonnes": NATIONAL_MAB_TONNES,
@@ -234,10 +256,7 @@ class FiskeridirBiomassClient:
             "species_breakdown": {
                 k: round(v, 0) for k, v in sorted(species_agg.items(), key=lambda x: -x[1])
             },
-            "data_provenance": DataProvenance.live(
-                "Fiskeridirektoratet Biomass Status (ArcGIS)",
-                confidence=0.95 if is_live else 0.5,
-            ).to_dict(),
+            "data_provenance": self._provenance(records),
         }
 
     async def get_by_production_area(self, pa: int) -> dict:
@@ -284,10 +303,7 @@ class FiskeridirBiomassClient:
             "utilization_pct": round(utilization, 1),
             "n_localities": len(pa_records),
             "localities": localities[:50],  # Cap at 50 per response
-            "data_provenance": DataProvenance.live(
-                "Fiskeridirektoratet Biomass Status (ArcGIS)",
-                confidence=0.90,
-            ).to_dict(),
+            "data_provenance": self._provenance(pa_records),
         }
 
     async def get_by_locality(self, locality_no: int) -> dict:
@@ -322,10 +338,7 @@ class FiskeridirBiomassClient:
             "report_month": r.report_month,
             "municipality": r.municipality,
             "county": r.county,
-            "data_provenance": DataProvenance.live(
-                "Fiskeridirektoratet Biomass Status (ArcGIS)",
-                confidence=0.90,
-            ).to_dict(),
+            "data_provenance": self._provenance(matches),
         }
 
     def _parse_records(self, raw: list[dict]) -> list[LocalityBiomass]:
@@ -434,6 +447,7 @@ class FiskeridirBiomassClient:
                     mab_utilization_pct=round(biomass / mab * 100, 1) if mab > 0 else 0,
                     report_year=now.year,
                     report_month=now.month,
+                    is_synthetic=True,
                 ))
 
         return records

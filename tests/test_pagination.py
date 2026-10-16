@@ -34,8 +34,10 @@ class TestLimitBounds:
     @pytest.mark.parametrize("path", [
         "/api/signals?limit=999999",
         "/api/orders?limit=999999",
-        "/api/audit?limit=999999",
         "/api/alerts?limit=999999",
+        # /api/audit is admin-gated since the liveness audit (2.5.0): anonymous
+        # requests get 401 before query validation, so its limit bound is
+        # asserted in tests/test_route_liveness_contract.py instead.
     ])
     def test_oversized_limit_rejected(self, client, path):
         r = client.get(path)

@@ -8,9 +8,9 @@
 ## What this is
 
 Production-grade salmon aquaculture intelligence platform ("Bloomberg Terminal
-for Salmon"): FastAPI backend (~340 routes, ~75 engines), Next.js 15 frontend
-(63 pages), 45+ live data-source clients, 3 foundation-model forecasting
-engines (with honest seasonal-naive fallbacks), 447+ tests.
+for Salmon"): FastAPI backend (322 operations across 316 paths, ~75 engines),
+Next.js 16 frontend (63 pages), 45+ live data-source clients, 3 foundation-model
+forecasting engines (with honest seasonal-naive fallbacks), 762 tests.
 
 - Repository: `github.com/frehan83-collab/AquaIntel` (public). `origin` points
   here directly; the legacy `openclaw-legacy` remote points at the old
@@ -54,6 +54,7 @@ python scripts/preflight_audit.py       # module import audit (if present)
 
 # One-off diagnostics
 python scripts/probe_fred_series.py     # FRED feed health
+python scripts/probe_liveness.py        # route liveness audit → docs/REPORT_LIVENESS.md
 ```
 
 Windows note: if `pip`/`pytest` are blocked by execution policy, use
@@ -110,7 +111,7 @@ test runs with `Start-Process ... -RedirectStandardOutput` and poll the file.
 | `agents/`, `main.py` | 12 background agents (asyncio; daemon-thread mode for dev only) |
 | `frontend/src/app/` | Next.js App Router pages (`"use client"`) |
 | `frontend/src/lib/api.ts` | Typed API client — every new endpoint gets a method here |
-| `tests/` | pytest (447 tests); add tests for every bugfix/feature |
+| `tests/` | pytest (762 tests); add tests for every bugfix/feature |
 | `docs/` | Roadmaps, competitive analysis, code reviews, summit reports |
 
 ### Frozen modules (do not extend)

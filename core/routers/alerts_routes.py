@@ -98,4 +98,4 @@ async def parametric_dashboard():
 @router.get("/api/parametric/risk-profile")
 async def parametric_risk_profile(locality_no: int = None, pa: int = None):
     from core.market.parametric_insurance import parametric_insurance_engine
-    return parametric_insurance_engine.compute_risk_profile(locality_no=locality_no, production_area=pa)
+    return await parametric_insurance_engine.compute_risk_profile(locality_no=locality_no, production_area=pa)

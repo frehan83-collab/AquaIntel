@@ -57,6 +57,30 @@ def _season_from_month(month: int) -> str:
     return MONTH_TO_SEASON.get(month, "unknown")
 
 
+def _dialect_parts(session) -> dict[str, str]:
+    """SQL date-part expressions for the active dialect.
+
+    The efficacy queries were written for PostgreSQL only; on SQLite (dev and
+    CI) ``EXTRACT(MONTH FROM x)`` is a syntax error, so ``/api/efficacy/*``
+    failed outright outside production. These fragments keep both working.
+    """
+    try:
+        dialect = session.bind.dialect.name
+    except Exception:  # noqa: BLE001 - fall back to the portable SQLite forms
+        dialect = "sqlite"
+    if dialect == "sqlite":
+        return {
+            "month": "CAST(STRFTIME('%m', t.treatment_date) AS INTEGER)",
+            "year": "CAST(STRFTIME('%Y', t.treatment_date) AS INTEGER)",
+            "week": "CAST(STRFTIME('%W', t.treatment_date) AS INTEGER)",
+        }
+    return {
+        "month": "EXTRACT(MONTH FROM t.treatment_date)",
+        "year": "EXTRACT(YEAR FROM t.treatment_date)",
+        "week": "EXTRACT(WEEK FROM t.treatment_date)",
+    }
+
+
 class EfficacyMarketplace:
     """Crowdsourced treatment efficacy with anonymization and multi-dimensional aggregation."""
 
@@ -71,11 +95,12 @@ class EfficacyMarketplace:
         try:
             from core.async_db import get_async_session
             async with get_async_session() as s:
-                result = await s.execute(text("""
+                d = _dialect_parts(s)
+                result = await s.execute(text(f"""
                     SELECT
                         t.method,
                         l.production_area,
-                        EXTRACT(MONTH FROM t.treatment_date) as month,
+                        {d['month']} as month,
                         lr.sea_temp_c,
                         t.pre_lice_count,
                         t.post_lice_count,
@@ -85,8 +110,8 @@ class EfficacyMarketplace:
                     FROM treatment_outcomes t
                     JOIN localities l ON t.locality_no = l.locality_no
                     LEFT JOIN lice_records lr ON t.locality_no = lr.locality_no
-                        AND lr.year = EXTRACT(YEAR FROM t.treatment_date)
-                        AND lr.week = EXTRACT(WEEK FROM t.treatment_date)
+                        AND lr.year = {d['year']}
+                        AND lr.week = {d['week']}
                     WHERE t.method IS NOT NULL
                       AND t.pre_lice_count IS NOT NULL
                       AND t.pre_lice_count > 0
@@ -353,9 +378,10 @@ class EfficacyMarketplace:
         try:
             from core.async_db import get_async_session
             async with get_async_session() as s:
-                result = await s.execute(text("""
+                d = _dialect_parts(s)
+                result = await s.execute(text(f"""
                     SELECT
-                        EXTRACT(MONTH FROM t.treatment_date) as month,
+                        {d['month']} as month,
                         t.method,
                         COUNT(*) as n,
                         AVG(CASE WHEN t.pre_lice_count > 0
@@ -367,7 +393,7 @@ class EfficacyMarketplace:
                     WHERE t.method IS NOT NULL
                       AND t.pre_lice_count IS NOT NULL
                       AND t.pre_lice_count > 0
-                    GROUP BY EXTRACT(MONTH FROM t.treatment_date), t.method
+                    GROUP BY {d['month']}, t.method
                     ORDER BY month, t.method
                 """))
                 rows = result.fetchall()

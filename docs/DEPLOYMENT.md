@@ -60,6 +60,21 @@ docker compose up -d
 #   - nginx (proxy):     localhost:80 / :443
 ```
 
+### Production: the agents are a SEPARATE service
+
+The image's default CMD is the **API only** (`gunicorn core.api:app`). Compose
+runs the agents alongside it as `fishintel-agents`
+(`python main.py --agents-only`), and `docker-compose.staging.yml` mirrors that.
+On a single-container platform (Cloud Run, a bare `docker run`, a k8s cluster
+with one Deployment) **nothing ingests data, backfills history or generates
+signals** unless you deploy a second service from the **same image** with:
+
+```bash
+python main.py --agents-only
+```
+
+Otherwise the API only serves what is already in the database, and decays.
+
 ## Database Migrations (Multi-Worker Safety)
 
 The container image runs Alembic migrations **once** in

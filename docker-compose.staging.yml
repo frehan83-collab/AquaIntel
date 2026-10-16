@@ -21,3 +21,16 @@ services:
       - "3001:3000"
     deploy:
       resources: {}
+
+  # Production parity: the image's default CMD is the API only
+  # (gunicorn core.api:app), so background agents must be deployed as a
+  # SEPARATE service running the same image. Without this, nothing ingests
+  # data, backfills history, or generates signals.
+  fishintel-agents:
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://aquaintel:${POSTGRES_PASSWORD:-aquaintel-dev-password}@db:5432/aquaintel
+      - FISHINTEL_JWT_SECRET=${FISHINTEL_JWT_SECRET:-staging-secret}
+      - FISHINTEL_ENV=staging
+      - FISHINTEL_LOG_LEVEL=DEBUG
+    deploy:
+      resources: {}

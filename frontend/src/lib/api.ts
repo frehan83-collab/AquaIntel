@@ -37,6 +37,39 @@ import type {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+// ── Auth wiring ──────────────────────────────────────────────────────────────
+// The token is written at login and must be sent as a Bearer header on every
+// request; before this the client never authenticated at all, so user-scoped
+// routes (billing, API keys, webhooks) and the per-user tier quota could not
+// work from the UI. Keys are exported so login/logout cannot drift from them.
+export const AUTH_TOKEN_KEY = "aquaintel_token";
+export const AUTH_USER_KEY = "aquaintel_user";
+
+function authHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const token = window.localStorage.getItem(AUTH_TOKEN_KEY);
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Drop a server-rejected token and send the user to /login exactly once. */
+function handleUnauthorized(): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (!window.localStorage.getItem(AUTH_TOKEN_KEY)) return; // anonymous user — stay put
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
+    window.localStorage.removeItem(AUTH_USER_KEY);
+    if (!window.location.pathname.startsWith("/login")) {
+      window.location.assign("/login");
+    }
+  } catch {
+    /* storage unavailable — nothing to clear */
+  }
+}
+
 async function fetchAPI<T = any>(
   path: string,
   options?: RequestInit,
@@ -49,10 +82,12 @@ async function fetchAPI<T = any>(
     const res = await fetch(`${API_BASE}${path}`, {
       ...options,
       signal: controller.signal,
-      headers: { "Content-Type": "application/json", ...options?.headers },
+      headers: { ...authHeaders(), "Content-Type": "application/json", ...options?.headers },
     });
 
     if (!res.ok) {
+      // A rejected token is stale: clear it and route to /login (once).
+      if (res.status === 401) handleUnauthorized();
       // Only retry on 5xx (server errors), not 4xx (client errors)
       if (res.status >= 500 && _retries > 1) {
         const delay = [500, 1500, 3500][3 - _retries] ?? 500;

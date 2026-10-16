@@ -5,10 +5,11 @@ Extracted from core/api.py (Session 10 — Router Wave 4).
 from __future__ import annotations
 
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import select
 
+from core.auth import require_admin
 from core.async_db import get_async_session
 from core.models import Signal, Order
 
@@ -87,10 +88,18 @@ async def list_orders(limit: int = Query(50, ge=1, le=1000)):
 
 
 @router.get("/api/audit")
-async def audit_log(limit: int = Query(100, ge=1, le=1000)):
+async def audit_log(
+    limit: int = Query(100, ge=1, le=1000),
+    _admin=Depends(require_admin),
+):
+    """Export the compliance audit trail (admin only).
+
+    The trail carries user-scoped metadata (who did what, webhook/API-key
+    names), so it is operational data under AGENTS.md rule 2 — it was
+    unauthenticated until the liveness audit surfaced it returning 500s.
+    """
     from compliance.compliance_agent import ComplianceAgent
-    logs = await ComplianceAgent.export_audit_log()
-    return logs[:limit]
+    return await ComplianceAgent.export_audit_log(limit=limit)
 
 
 @router.get("/api/disclaimer")
