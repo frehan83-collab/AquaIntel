@@ -504,13 +504,30 @@ added `tests/test_migrations.py`.
 - **Verified:** `test_accuracy_registry.py` 34 passed; `/api/accuracy` returns the
   metric; artifact committed under tracked `artifacts/accuracy/`.
 
+## WS-1 — lice lineage verifiable (`lice_records.source`) — 2026-10-16
 
-
-
-
-
-
-
-
-
+- **Shipped:** `core/source_lineage.py` (one vocabulary), Alembic **019**
+  (`source VARCHAR(32) NOT NULL DEFAULT 'unverified'`; demo rows relabelled by
+  construction only; nothing backfilled as real), `barentswatch` written on both
+  upsert branches of the ingest, `demo_seed` by the seed, backfill skips only
+  **verified** weeks, `lice_quota_tracker` row-level `lineage` + degraded provenance
+  on every lice-derived payload, `indices._lice_lineage_note()` row-level,
+  `/api/data-freshness` `verified_rows` / `unverified_rows` / `no_verified_rows`,
+  verifier `lice_source_column` (critical) + `freshness_no_verified_rows`.
+- **Verified numbers (this box):** `alembic current` → 019; lice sources
+  `[('demo_seed', 1040), ('unverified', 185099)]`; AI-LPI `is_live: false`, note
+  "6997/6997 lice rows used carry no verified source; newest lice observation is
+  2026-W15, 27 weeks old; newest lice row was fetched 4604 h ago" (every PA named);
+  fast gate **211 passed, 1 skipped**; full suite **1000 passed, 1 skipped, 13 xfailed,
+  10 xpassed, 0 failed** (4m45s, 1024 collected); ruff clean; ratchet 0 unregistered; verifier 0
+  failures, 2 warnings (both true: SSB demo-only, lice no verified rows).
+- **Still degraded, and why:** the lice ingest has been dead since 2026-04-07 and the
+  2026-10-12 tick inserted 0 rows (WS-16). On a bulk-loaded DB the backfill now
+  re-ingests unverified weeks once BarentsWatch is reachable; on a fresh production
+  DB every row arrives as `barentswatch` and AI-LPI goes live as soon as the window
+  is complete and fresh.
+- **Recorded, not done:** WS-14 (propagate lineage to the other 14 lice consumers),
+  WS-15 (tracker window is the whole latest year; AI-LPI magnitude implausible),
+  WS-16 (ingest health), WS-17 (accuracy publisher `price_nok` column bug),
+  WS-18 (dev DB stamped 018 without 015's index). See `docs/HANDOVER.md` §5.
 

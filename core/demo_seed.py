@@ -38,6 +38,8 @@ import datetime as dt
 import math
 import random
 
+from core.source_lineage import LICE_SOURCE_DEMO
+
 import structlog
 
 log = structlog.get_logger(__name__)
@@ -269,6 +271,7 @@ def seed_demo_data() -> dict:
                     has_cleaner_fish=rng.random() > 0.4,
                     sea_temp_c=temp,
                     fetched_at=dt.datetime.now(dt.UTC),
+                    source=LICE_SOURCE_DEMO,  # WS-1: synthetic, never live-backing
                 ))
                 summary["lice_records"] += 1
 

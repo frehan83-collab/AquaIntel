@@ -25,12 +25,16 @@ from __future__ import annotations
 
 import datetime as dt
 
+import structlog
 from sqlalchemy import select
 
 from agents.base import BaseAgent
 from core.barentswatch import BarentsWatchClient
 from core.models import Locality, LiceRecord, AuditLog
 from core.async_db import get_async_session
+from core.source_lineage import LICE_SOURCE_BARENTSWATCH
+
+log = structlog.get_logger(__name__)
 
 
 class DataIngestAgent(BaseAgent):
@@ -128,6 +132,7 @@ class DataIngestAgent(BaseAgent):
           municipality.name -> municipality
         """
         count = 0
+        updated = 0
         async with get_async_session() as s:
             for rec in raw:
                 # Extract locality number from nested object
@@ -168,6 +173,10 @@ class DataIngestAgent(BaseAgent):
                     existing.avg_stationary_lice = avg_stationary
                     existing.sea_temp_c = sea_temp
                     existing.fetched_at = dt.datetime.now(dt.UTC)
+                    # WS-1: a demo/legacy row overwritten with reported values is
+                    # now a reported observation — the lineage flips with the data.
+                    existing.source = LICE_SOURCE_BARENTSWATCH
+                    updated += 1
                 else:
                     s.add(LiceRecord(
                         locality_no=locality_no,
@@ -179,6 +188,7 @@ class DataIngestAgent(BaseAgent):
                         has_cleaner_fish=has_cleaner,
                         sea_temp_c=sea_temp,
                         fetched_at=dt.datetime.now(dt.UTC),
+                        source=LICE_SOURCE_BARENTSWATCH,  # WS-1 lineage marker
                     ))
                     count += 1
 
@@ -209,6 +219,9 @@ class DataIngestAgent(BaseAgent):
                         updated_at=dt.datetime.now(dt.UTC),
                     ))
 
+        # WS-1: the update branch is what flips unverified/demo rows to
+        # 'barentswatch' (the backfill re-ingests such weeks), so report it.
+        log.info("ingest.week_upserted", year=year, week=week, inserted=count, updated=updated)
         return count
 
     @staticmethod

@@ -73,6 +73,11 @@ test runs with `Start-Process ... -RedirectStandardOutput` and poll the file.
      artifact (see `price_ml.BACKTEST_ARTIFACT` contract).
    - Never claim "3 foundation models" if fewer actually loaded; report
      `models_used` vs `models_fallback` truthfully.
+   - Lice-derived values claim live only through a lineage summary from
+     `core/source_lineage.py` (every row used is `barentswatch`, every PA fetched,
+     newest row within cadence). `lice_records.source` is `barentswatch` /
+     `demo_seed` / `unverified`; NULL or unknown is **never** real, and nothing is
+     ever backfilled as a real source without row-level proof (WS-1).
 2. **Security — auth on anything operational or user-scoped.**
    - `/api/admin/*` and `/api/cache/*` are admin-only
      (`Depends(require_admin)` in `core/auth.py`).
@@ -115,7 +120,8 @@ test runs with `Start-Process ... -RedirectStandardOutput` and poll the file.
 | `core/ml/` | Foundation-model wrappers (chronos, timesfm, moirai) |
 | `core/auth.py` | JWT, 4-tier access, `require_admin`, `is_admin` |
 | `core/entitlements.py` | **Single source of truth for plans/prices/quotas and the paywall boundary** (see `docs/ENTITLEMENTS.md`); `core/auth.TIERS` and `core/valuechain/subscription.TIERS` are projections of it |
-| `core/models.py` | SQLAlchemy models (31 tables, 15 Alembic migrations) |
+| `core/models.py` | SQLAlchemy models (31 tables, 19 Alembic migrations) |
+| `core/source_lineage.py` | **One definition of what a `lice_records.source` value means** (`barentswatch` / `demo_seed` / `unverified`), the synthetic markers, and the lineage-summary rule; the indices, quota tracker, freshness monitor and production-truth verifier project it |
 | `core/async_db.py` | `get_async_session()` — **never** sync `Session` in async code |
 | `agents/`, `main.py` | 12 background agents (asyncio; daemon-thread mode for dev only) |
 | `frontend/src/app/` | Next.js App Router pages (`"use client"`) |

@@ -5,6 +5,79 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
+### WS-1 — the lice lineage is verifiable (`lice_records.source`)
+- **Why:** `lice_records` had no `source` column, so demo seeds and reported
+  BarentsWatch rows were indistinguishable and AI-LPI reported `is_live: false`
+  with "lineage unverifiable" on every call — correct, but it meant the flagship
+  index could never legitimately claim live. The demo seed's locality
+  numbers (10001–10022) sit inside the real BarentsWatch numbering range (the lowest
+  real locality on the dev DB is 10029), so a collision is possible in principle and
+  demo rows must be identified by a per-row marker, never by locality.
+- **One vocabulary, one module:** `core/source_lineage.py` — `barentswatch` (the
+  system of record; the handover's `fiskeridir` would have misnamed it), `demo_seed`,
+  `unverified` (server default). NULL, '' and anything outside the vocabulary classify
+  as unverified; any value containing demo/seed/synthetic/mock/fallback is synthetic.
+  The freshness monitor now imports these markers instead of carrying its own copy
+  (its SQL used to omit `fallback`), and its timestamp parser is the same function.
+- **Migration 019** adds `source VARCHAR(32) NOT NULL DEFAULT 'unverified'`
+  (renders identically on SQLite and PostgreSQL), backfills NULLs, relabels only the
+  rows provable as demo by construction (demo locality numbers × the seed year 2025)
+  and **never backfills a real source** — the 185,099 bulk-loaded rows on the dev box
+  have no row-level proof (audit logs only record per-tick insert counts), so they
+  are `unverified`. A conftest-reconciled nullable column is repaired to the ORM
+  contract; the downgrade drops the column in batch mode. SQLAlchemy Core with bound
+  parameters only (the `%s` trap from 016).
+- **Writers:** `agents/data_ingest.py` writes `barentswatch` on **both** branches of
+  its upsert (a demo/legacy row overwritten with reported values is now real);
+  `core/demo_seed.py` writes `demo_seed`; the historical backfill now counts only
+  **verified** rows when deciding to skip a week, so bulk-loaded weeks get
+  re-ingested instead of staying unverified forever.
+- **Row-level lineage, not column presence:** `lice_quota_tracker` counts the rows it
+  actually aggregated (same predicates as the data query) per production area and
+  nationally — `lineage` block in every cached payload, mirrored to `last_lineage`
+  (the biomass-tracker precedent). A value is live only when every used row is
+  `barentswatch`, every PA contributed rows without a fetch failure, and the newest
+  row is within the 168 h cadence; otherwise the tracker's provenance is **degraded
+  with the reason** (the three unconditional `DataProvenance.live` stamps in that
+  file are gone, including the single-locality emission path).
+  `indices._lice_lineage_note()` reads that lineage; an all-demo CI database and a
+  bulk-loaded dev box both stay honestly degraded.
+- **Freshness + verifier:** `/api/data-freshness` now reports `verified_rows`,
+  `unverified_rows` and `no_verified_rows` per source with a lineage contract, and
+  lists `no_verified_rows` at report level; `verify_production_truth.py` adds the
+  `freshness_no_verified_rows` warn verdict and a **critical** `lice_source_column`
+  check (a DB whose migration chain never ran 019 would fail every lice insert —
+  recovery: `alembic stamp 018` then `alembic upgrade head`, never stamp head).
+- **Measured on this box after the change:** `[('demo_seed', 1040), ('unverified',
+  185099)]`; freshness `lice_records`: synthetic 1,040 / verified 0 / unverified
+  185,099, `no_verified_rows: true`; AI-LPI `is_live: false` with
+  "6997/6997 lice rows used carry no verified source … newest lice observation is 2026-W15, 27 weeks old … newest lice row was fetched 4604 h ago" (and every PA named).
+  That is the honest result: the lice ingest has been dead since 2026-04-07 (see
+  WS-16) and no pre-WS-1 row can be relabelled without a real re-ingest.
+- **Tests (+20):** migration shape + backfill/downgrade on fresh subprocess DBs;
+  closed vocabulary; the lineage rules (synthetic, unverified, empty, failed PA,
+  stale); deterministic freshness counts on a throwaway file DB built with the
+  conftest's exact type-only DDL (so a real NULL row exists); live-DB invariants;
+  endpoint contract; verifier verdicts; AI-LPI live/degraded across six lineage
+  shapes; the upsert writing `barentswatch` on insert **and** update against a
+  temporary async engine (never the real DB); the backfill counting verified rows
+  only; tracker lineage shape, a failed-PA degradation and the single-locality path.
+- **Review fixes folded in** (independent adversarial review of the diff, 19
+  confirmed findings): the national merge keeps every PA's own fetch time and
+  observation week, so one stale area degrades the national view; liveness is gated
+  on the newest **observation week** (current or previous ISO week), not only on
+  `fetched_at`, because the backfill's re-ingest bumps the write time of old weeks;
+  cached payloads re-evaluate their lineage against *now* on every hit; the
+  verifier checks the column's **shape** (a nullable/no-default column is the
+  reconciliation shape 019 never repaired → warn with the recovery); the conftest
+  reconciliation now carries the ORM's server default and NOT NULL; the freshness
+  SQL `TRIM`s so it agrees with the classifier; provenance labels no longer name a
+  biomass source the tracker does not read (biomass is an estimate from Table 8
+  constants); the ingest logs how many rows an upsert relabelled; the accuracy
+  publisher imports the shared markers. Each fix carries a test.
+- No route or response model changed → no OpenAPI re-freeze; the provenance ratchet
+  is unchanged (237 routes, 0 unregistered).
+
 ### Handover — takeover package for the next coding module
 - **New `docs/HANDOVER.md`** — the brief an incoming module executes from: verified
   current state measured at `f04e79a` (2.6.0, 345 paths/353 operations, 1004 tests

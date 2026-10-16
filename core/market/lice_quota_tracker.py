@@ -29,11 +29,62 @@ from core.market.traffic_light_simulator import PA_DEFINITIONS, PA_FARM_COUNTS, 
 from core.market.treatment_constants import REGULATORY_LIMIT
 from core.market.data_provenance import DataProvenance
 from core.cache import engine_cache
+from core.source_lineage import (
+    lineage_note,
+    merge_lineages,
+    parse_timestamp,
+    summarise_lineage,
+)
 
 log = structlog.get_logger(__name__)
 
 # Cache TTL: 30 minutes (1800 seconds)
 CACHE_TTL = 1800
+
+
+def _provenance_for(lineage: dict | None, label: str, confidence: float) -> dict:
+    """Live only when the lineage of the rows actually used supports it (WS-1).
+
+    Rule 1: a value built on demo, unverified, stale or partially-fetched lice rows
+    is degraded, with the lineage note as the reason — never an unconditional
+    live stamp.
+    """
+    note = lineage_note(lineage)
+    if note is None:
+        return DataProvenance.live(label, confidence=confidence).to_dict()
+    return DataProvenance.degraded(
+        label, reason=note, confidence=min(confidence, 0.40)
+    ).to_dict()
+
+
+def _refresh_cached_lineage(cached: dict, label: str, confidence: float) -> None:
+    """Re-evaluate a cached payload's lineage against the current time (WS-1).
+
+    Staleness is a property of *now*, not of when the cache entry was built: a
+    lineage that crosses the cadence during the TTL must not keep being served
+    (and mirrored) as live. Mutates the cached dict in place only when the verdict
+    changed.
+    """
+    lineage = cached.get("lineage")
+    if not lineage:
+        return
+    fresh = merge_lineages([lineage])
+    if fresh.get("note") != lineage.get("note") or fresh.get("is_live") != lineage.get("is_live"):
+        cached["lineage"] = fresh
+        cached["data_provenance"] = _provenance_for(fresh, label, confidence)
+
+
+# Provenance labels. Biomass here is an ESTIMATE from the PA_MAB_ALLOCATION /
+# PA_FARM_COUNTS constants (Fiskeridirektoratet Table 8), not a biomass row read
+# at runtime — a label must never claim a source the code does not consult.
+_LOCALITY_LABEL = "BarentsWatch lice + estimated PA biomass (Fiskeridir Table 8 constants)"
+_PA_LABEL = (
+    "BarentsWatch lice + estimated PA biomass (Fiskeridir Table 8 constants) + IMR methodology"
+)
+_NATIONAL_LABEL = (
+    "BarentsWatch lice + estimated PA biomass (Fiskeridir Table 8 constants) "
+    "+ IMR carrying capacity"
+)
 
 # ── Hypothetical quota allocations per PA (tonnes lice-equivalents / year) ──────
 # These are PROJECTED values based on IMR carrying capacity assessments and
@@ -80,6 +131,18 @@ class LiceQuotaTracker:
             return
         self._initialized = True
 
+    # WS-1 lineage mirror (biomass_tracker precedent): the lineage of the rows the
+    # last national overview used. The same block travels inside the cached
+    # payloads, so a cache hit re-mirrors it instead of going stale.
+    last_lineage: dict | None = None
+    last_source: str = "unset"
+    last_is_live: bool = False
+
+    def _mirror_lineage(self, lineage: dict | None) -> None:
+        self.last_lineage = lineage
+        self.last_source = (lineage or {}).get("source") or "unset"
+        self.last_is_live = bool((lineage or {}).get("is_live"))
+
     async def _get_lice_data_for_locality(self, locality_no: int) -> dict[str, Any] | None:
         """Fetch latest lice record for a locality from DB."""
         try:
@@ -113,13 +176,20 @@ class LiceQuotaTracker:
                     "sea_temp_c": float(row.sea_temp_c) if row.sea_temp_c else None,
                     "year": row.year,
                     "week": row.week,
+                    "source": row.source,
+                    "fetched_at": row.fetched_at,
                 }
         except Exception as e:
             log.warning("lice_quota.db_fetch_failed", locality_no=locality_no, error=str(e))
             return None
 
-    async def _get_pa_lice_data(self, pa: int) -> list[dict[str, Any]]:
-        """Fetch latest lice data for all farms in a production area."""
+    async def _get_pa_lice_data(self, pa: int) -> tuple[list[dict[str, Any]], dict]:
+        """Latest-year lice data for all farms in a PA, plus the lineage of those rows.
+
+        WS-1: the lineage is counted under the SAME predicates as the data query,
+        so the provenance describes exactly the rows the value was built from. A
+        failed fetch is reported as such (never as "no rows").
+        """
         try:
             from core.async_db import get_async_session
             from core.models import LiceRecord, Locality
@@ -132,9 +202,16 @@ class LiceQuotaTracker:
                 )).one_or_none()
 
                 if not latest or not latest[0]:
-                    return []
+                    return [], summarise_lineage(
+                        {}, year=None, pas=[{"pa": pa, "rows_used": 0, "fetch_failed": False}]
+                    )
 
                 max_year = latest[0]
+                predicates = (
+                    Locality.production_area == pa,
+                    LiceRecord.year == max_year,
+                    LiceRecord.avg_adult_female_lice.isnot(None),
+                )
 
                 # Get farms in this PA with latest data
                 q = (
@@ -145,15 +222,48 @@ class LiceQuotaTracker:
                         func.avg(LiceRecord.avg_adult_female_lice).label("avg_lice"),
                     )
                     .join(Locality, Locality.locality_no == LiceRecord.locality_no)
-                    .where(
-                        Locality.production_area == pa,
-                        LiceRecord.year == max_year,
-                        LiceRecord.avg_adult_female_lice.isnot(None),
-                    )
+                    .where(*predicates)
                     .group_by(LiceRecord.locality_no, Locality.name, Locality.owner_company)
                     .order_by(func.avg(LiceRecord.avg_adult_female_lice).desc())
                 )
                 rows = (await s.execute(q)).all()
+
+                lineage_rows = (await s.execute(
+                    select(
+                        LiceRecord.source,
+                        func.count(LiceRecord.id),
+                        func.max(LiceRecord.fetched_at),
+                    )
+                    .join(Locality, Locality.locality_no == LiceRecord.locality_no)
+                    .where(*predicates)
+                    .group_by(LiceRecord.source)
+                )).all()
+                counts = {r[0]: int(r[1] or 0) for r in lineage_rows}
+                stamps = [t for t in (parse_timestamp(r[2]) for r in lineage_rows) if t]
+                newest_fetch = max(stamps) if stamps else None
+                # Newest OBSERVATION week among the rows used (max(week) alone would
+                # mix years — the W52 trap); fetched_at is only the write time.
+                newest = (await s.execute(
+                    select(LiceRecord.year, LiceRecord.week)
+                    .join(Locality, Locality.locality_no == LiceRecord.locality_no)
+                    .where(*predicates)
+                    .order_by(LiceRecord.year.desc(), LiceRecord.week.desc())
+                    .limit(1)
+                )).first()
+                newest_week = [int(newest[0]), int(newest[1])] if newest else None
+                lineage = summarise_lineage(
+                    counts,
+                    year=max_year,
+                    latest_fetched_at=newest_fetch,
+                    latest_week=newest_week,
+                    pas=[{
+                        "pa": pa,
+                        "rows_used": sum(counts.values()),
+                        "fetch_failed": False,
+                        "latest_fetched_at": newest_fetch.isoformat() if newest_fetch else None,
+                        "latest_week": newest_week,
+                    }],
+                )
 
                 return [
                     {
@@ -163,10 +273,12 @@ class LiceQuotaTracker:
                         "avg_lice": round(float(r.avg_lice), 3),
                     }
                     for r in rows
-                ]
+                ], lineage
         except Exception as e:
             log.warning("lice_quota.pa_fetch_failed", pa=pa, error=str(e))
-            return []
+            return [], summarise_lineage(
+                {}, year=None, pas=[{"pa": pa, "rows_used": 0, "fetch_failed": True}]
+            )
 
     def _estimate_farm_emission(
         self, avg_lice: float, biomass_tonnes: float, pa: int
@@ -191,6 +303,7 @@ class LiceQuotaTracker:
         cache_key = f"lice_emission:{locality_no}"
         cached = engine_cache.get(cache_key)
         if cached is not None:
+            _refresh_cached_lineage(cached, _LOCALITY_LABEL, 0.65)
             return cached
 
         now = dt.datetime.now(dt.UTC)
@@ -221,6 +334,14 @@ class LiceQuotaTracker:
         pa_quota = PA_HYPOTHETICAL_QUOTA.get(pa, 300.0)
         quota_utilization_pct = round((emission / max(pa_quota, 1)) * 100, 2)
 
+        lineage = summarise_lineage(
+            {data.get("source"): 1},
+            year=data.get("year"),
+            latest_fetched_at=data.get("fetched_at"),
+            latest_week=(data.get("year"), data.get("week")),
+            pas=[],
+        )
+
         # Risk level
         if avg_lice >= REGULATORY_LIMIT:
             risk_level = "high"
@@ -246,10 +367,8 @@ class LiceQuotaTracker:
             "data_week": f"{data['year']}W{data['week']:02d}",
             "regulatory_status": "PROJECTED - regulation not yet finalized",
             "methodology": "IMR emission model: avg_lice x fish_count / water_volume_factor",
-            "data_provenance": DataProvenance.live(
-                "BarentsWatch lice + Fiskeridirektoratet biomass (estimated)",
-                confidence=0.65,
-            ).to_dict(),
+            "lineage": lineage,
+            "data_provenance": _provenance_for(lineage, _LOCALITY_LABEL, 0.65),
             "generated_at": now.isoformat(),
         }
 
@@ -261,6 +380,7 @@ class LiceQuotaTracker:
         cache_key = f"lice_quota_pa:{pa}"
         cached = engine_cache.get(cache_key)
         if cached is not None:
+            _refresh_cached_lineage(cached, _PA_LABEL, 0.60)
             return cached
 
         now = dt.datetime.now(dt.UTC)
@@ -275,7 +395,7 @@ class LiceQuotaTracker:
         avg_biomass_per_farm = pa_mab / max(farm_count, 1) * 0.935
 
         # Get farm-level lice data
-        farms = await self._get_pa_lice_data(pa)
+        farms, lineage = await self._get_pa_lice_data(pa)
 
         total_emission = 0.0
         farm_emissions = []
@@ -324,10 +444,8 @@ class LiceQuotaTracker:
             "water_volume_factor": PA_WATER_VOLUME_FACTOR.get(pa, 1.0),
             "top_emitters": top_emitters,
             "regulatory_status": "PROJECTED - regulation not yet finalized",
-            "data_provenance": DataProvenance.live(
-                "BarentsWatch lice + Fiskeridirektoratet biomass + IMR methodology",
-                confidence=0.60,
-            ).to_dict(),
+            "lineage": lineage,
+            "data_provenance": _provenance_for(lineage, _PA_LABEL, 0.60),
             "generated_at": now.isoformat(),
         }
 
@@ -339,10 +457,14 @@ class LiceQuotaTracker:
         cache_key = "lice_quota_national"
         cached = engine_cache.get(cache_key)
         if cached is not None:
+            _refresh_cached_lineage(cached, _NATIONAL_LABEL, 0.55)
+            self._mirror_lineage(cached.get("lineage"))
             return cached
 
+        self._mirror_lineage(None)  # nothing recorded until this computation succeeds
         now = dt.datetime.now(dt.UTC)
         pa_results = []
+        pa_lineages: list[dict | None] = []
         total_national_emission = 0.0
         total_national_quota = 0.0
         over_quota_count = 0
@@ -350,6 +472,7 @@ class LiceQuotaTracker:
         for pa_def in PA_DEFINITIONS:
             pa = pa_def["pa"]
             pa_status = await self.pa_quota_status(pa)
+            pa_lineages.append(pa_status.get("lineage"))
 
             if "error" in pa_status:
                 continue
@@ -381,6 +504,8 @@ class LiceQuotaTracker:
             (total_national_emission / max(total_national_quota, 1)) * 100, 1
         )
 
+        lineage = merge_lineages(pa_lineages)
+
         # Emission trend: compare to previous period (simplified: use current as baseline)
         # In production, this would compare to last month/quarter
         emission_trend = "stable"  # placeholder until historical comparison is built
@@ -400,14 +525,13 @@ class LiceQuotaTracker:
                 "activates, volume limitations in aquaculture licences will be removed."
             ),
             "regulatory_status": "PROJECTED - regulation not yet finalized",
-            "data_provenance": DataProvenance.live(
-                "BarentsWatch lice + Fiskeridirektoratet + IMR carrying capacity",
-                confidence=0.55,
-            ).to_dict(),
+            "lineage": lineage,
+            "data_provenance": _provenance_for(lineage, _NATIONAL_LABEL, 0.55),
             "generated_at": now.isoformat(),
         }
 
         engine_cache.set(cache_key, result, CACHE_TTL)
+        self._mirror_lineage(lineage)
         return result
 
 

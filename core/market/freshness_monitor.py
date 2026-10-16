@@ -17,6 +17,14 @@ from typing import Iterable
 import structlog
 from sqlalchemy import inspect, text
 
+from core.source_lineage import (
+    LICE_CADENCE_HOURS,
+    LICE_SOURCE_LABEL,
+    REAL_LICE_SOURCES,
+    SYNTHETIC_MARKERS,
+    parse_timestamp,
+)
+
 log = structlog.get_logger(__name__)
 
 # Candidate timestamp columns, in preference order (the first present is used).
@@ -33,7 +41,13 @@ TIMESTAMP_CANDIDATES: tuple[str, ...] = (
     "week_start",
 )
 
-DEMO_MARKERS = ("demo", "seed", "synthetic", "mock", "fallback")
+# One definition (core/source_lineage.py); the SQL below is built from it so the
+# Python tuple and the query can never disagree again (the SQL used to omit
+# 'fallback').
+DEMO_MARKERS = SYNTHETIC_MARKERS
+_SYNTHETIC_SQL = " OR ".join(
+    f"LOWER(TRIM(COALESCE(source, ''))) LIKE '%{marker}%'" for marker in DEMO_MARKERS
+)
 
 
 @dataclass(frozen=True)
@@ -47,6 +61,9 @@ class SourceSpec:
     expected_cadence_hours: int
     refresh_hint: str
     critical: bool = False
+    #: Source values that count as verified for this table (WS-1 lineage
+    #: contract). Empty = no contract declared: verified/unverified not measured.
+    real_sources: frozenset = frozenset()
 
 
 SOURCES: tuple[SourceSpec, ...] = (
@@ -54,10 +71,11 @@ SOURCES: tuple[SourceSpec, ...] = (
         key="lice_records",
         label="Sea lice observations",
         table="lice_records",
-        upstream="Fiskeridir / Mattilsynet lice reporting",
-        expected_cadence_hours=168,
+        upstream=LICE_SOURCE_LABEL,
+        expected_cadence_hours=LICE_CADENCE_HOURS,
         refresh_hint="agents: lice ingest (weekly upstream cadence)",
         critical=True,
+        real_sources=REAL_LICE_SOURCES,
     ),
     SourceSpec(
         key="ssb_weekly_prices",
@@ -180,30 +198,10 @@ def _parse_timestamp(value) -> dt.datetime | None:
 
     SQLite returns ISO-8601 **strings** here while PostgreSQL returns datetimes —
     without this, every source reported "unknown" freshness on SQLite (found by
-    running the monitor against the real dev database).
+    running the monitor against the real dev database). One implementation:
+    ``core.source_lineage.parse_timestamp``.
     """
-    if value is None:
-        return None
-    if isinstance(value, dt.datetime):
-        return value if value.tzinfo else value.replace(tzinfo=dt.UTC)
-    if isinstance(value, dt.date):
-        return dt.datetime(value.year, value.month, value.day, tzinfo=dt.UTC)
-    if isinstance(value, (int, float)):
-        try:
-            return dt.datetime.fromtimestamp(float(value), tz=dt.UTC)
-        except (OverflowError, OSError, ValueError):
-            return None
-    if isinstance(value, str):
-        text_value = value.strip().replace("Z", "+00:00")
-        if text_value.endswith(" UTC"):
-            text_value = text_value[:-4] + "+00:00"
-        for candidate in (text_value, text_value.replace(" ", "T")):
-            try:
-                parsed = dt.datetime.fromisoformat(candidate)
-                return parsed if parsed.tzinfo else parsed.replace(tzinfo=dt.UTC)
-            except ValueError:
-                continue
-    return None
+    return parse_timestamp(value)
 
 
 async def report(specs: tuple[SourceSpec, ...] = SOURCES) -> dict:
@@ -240,6 +238,9 @@ def _report_sync(specs: tuple[SourceSpec, ...]) -> dict:
                     "latest": None,
                     "staleness_hours": None,
                     "synthetic_rows": None,
+                    "verified_rows": None,
+                    "unverified_rows": None,
+                    "no_verified_rows": False,
                 }
             )
             rows.append(entry)
@@ -259,16 +260,30 @@ def _report_sync(specs: tuple[SourceSpec, ...]) -> dict:
                         text(f'SELECT MAX("{timestamp_column}") FROM "{spec.table}"')
                     ).scalar()
                 synthetic = None
+                verified = None
                 if _has_source_column(columns) and count:
-                    synthetic = conn.execute(
-                        text(
-                            f'SELECT COUNT(*) FROM "{spec.table}" '
-                            "WHERE LOWER(COALESCE(source, '')) LIKE '%demo%' "
-                            "OR LOWER(COALESCE(source, '')) LIKE '%seed%' "
-                            "OR LOWER(COALESCE(source, '')) LIKE '%synthetic%' "
-                            "OR LOWER(COALESCE(source, '')) LIKE '%mock%'"
+                    synthetic = (
+                        conn.execute(
+                            text(f'SELECT COUNT(*) FROM "{spec.table}" WHERE {_SYNTHETIC_SQL}')
+                        ).scalar()
+                        or 0
+                    )
+                    if spec.real_sources:
+                        params = {
+                            f"s{i}": str(value).lower()
+                            for i, value in enumerate(sorted(spec.real_sources))
+                        }
+                        placeholders = ", ".join(f":{key}" for key in params)
+                        verified = (
+                            conn.execute(
+                                text(
+                                    f'SELECT COUNT(*) FROM "{spec.table}" '
+                                    f"WHERE LOWER(TRIM(COALESCE(source, ''))) IN ({placeholders})"
+                                ),
+                                params,
+                            ).scalar()
+                            or 0
                         )
-                    ).scalar()
         except Exception as exc:  # pragma: no cover - defensive
             entry.update(
                 {
@@ -278,6 +293,9 @@ def _report_sync(specs: tuple[SourceSpec, ...]) -> dict:
                     "latest": None,
                     "staleness_hours": None,
                     "synthetic_rows": None,
+                    "verified_rows": None,
+                    "unverified_rows": None,
+                    "no_verified_rows": False,
                 }
             )
             rows.append(entry)
@@ -298,6 +316,15 @@ def _report_sync(specs: tuple[SourceSpec, ...]) -> dict:
                 "staleness_hours": staleness,
                 "synthetic_rows": synthetic,
                 "synthetic_only": bool(count and synthetic == count),
+                # WS-1 lineage contract: rows are verified (a declared real source),
+                # synthetic, or unverified (NULL/'unverified'/unknown — never real).
+                "verified_rows": verified,
+                "unverified_rows": (
+                    count - synthetic - verified
+                    if synthetic is not None and verified is not None
+                    else None
+                ),
+                "no_verified_rows": bool(count and verified == 0),
                 "status": _status(staleness, spec.expected_cadence_hours),
             }
         )
@@ -305,6 +332,11 @@ def _report_sync(specs: tuple[SourceSpec, ...]) -> dict:
             entry["reason"] = (
                 "contains only synthetic (demo/seed) rows — it cannot back a live "
                 "data claim"
+            )
+        elif entry["no_verified_rows"]:
+            entry["reason"] = (
+                "holds no row with a verified source (rows are synthetic or "
+                "unverified) — it cannot back a live data claim"
             )
         if timestamp_column is None:
             entry["reason"] = "no timestamp column found — freshness not measurable"
@@ -324,9 +356,12 @@ def _report_sync(specs: tuple[SourceSpec, ...]) -> dict:
             r["key"] for r in rows if r.get("critical") and r.get("status") == "unknown"
         ],
         "synthetic_only": [r["key"] for r in rows if r.get("synthetic_only")],
+        "no_verified_rows": [r["key"] for r in rows if r.get("no_verified_rows")],
         "note": (
             "'unknown' and 'synthetic_only' are reported as-is: a source with no "
             "measurable freshness, or backed only by synthetic rows, must never be "
-            "presented as live."
+            "presented as live. `unverified_rows` carry no verified source "
+            "(neither synthetic nor live-backing); `no_verified_rows` lists sources "
+            "that hold no verified row at all."
         ),
     }

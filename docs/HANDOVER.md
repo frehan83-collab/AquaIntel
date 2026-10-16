@@ -1,6 +1,8 @@
 # HANDOVER — takeover brief for the next coding module
 
-> **Verified at commit `f04e79a` (branch `master`, tree clean, pushed).**
+> **Verified at commit `f04e79a` (branch `master`).** The WS-1 figures below were
+> measured on the working tree before the WS-1 commit (2026-10-16, see §5):
+> migrations at head `019`, fast gate 211 passed + 1 network skip, §6 traps 11–15.
 > Every number below was measured, not copied from an older doc. Re-verify with the
 > commands in §2 before trusting them.
 >
@@ -16,13 +18,13 @@
 |---|---|
 | Platform version | `2.6.0` |
 | OpenAPI surface | **345 paths / 353 operations** (`docs/openapi.frozen.json`) |
-| Tests | **1004 collected** (`pytest --collect-only`) |
-| Alembic migrations | **18** (head `018`) |
+| Tests | **1024 collected** (`pytest --collect-only`, 2026-10-16 after WS-1) |
+| Alembic migrations | **19** (head `019`) |
 | Router modules | **38** (`core/routers/`) |
 | Engine modules | **77** (`core/market/`) |
 | Frontend routes | **68** page files |
 | Production topology | `docker-compose.prod.yml`: `api` + `agents` + `db` (TimescaleDB) + `web` |
-| Last full-suite run | 969 passed / 3 failed — all 3 fixed afterwards (§6 traps 5–6) |
+| Last full-suite run | **1000 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 4m45s (2026-10-16, after WS-1 + review fixes) |
 
 **What this session delivered** (all pushed): 10 commercial-hardening steps plus 3
 follow-up fixes — see §3 for the doc to read per area.
@@ -39,7 +41,7 @@ cd frontend && npm run dev
 python -m pytest tests/test_entitlements.py tests/test_billing_money_path.py \
   tests/test_indices.py tests/test_accuracy_registry.py tests/test_production_truth.py \
   tests/test_partner_pilots.py tests/test_legal.py tests/test_provenance_ratchet.py \
-  tests/test_gtm_roi.py tests/test_migrations.py tests/test_openapi_contract.py -q   # 207 pass, ~14s
+  tests/test_gtm_roi.py tests/test_migrations.py tests/test_openapi_contract.py -q   # 208 pass + 1 skip (network), ~20s
 
 # the full suite (≈4.5 min) — command runners time out at ~30s, so background it:
 #   Start-Process -FilePath python -ArgumentList '-m','pytest','tests/','-q' \
@@ -99,25 +101,35 @@ always confirm with `git ls-remote origin refs/heads/master`.
 ## 5. Workstream backlog — pick these up in order
 
 Each item is self-contained: goal → files → steps → **acceptance criteria you can
-test** → traps. `WS-1 … WS-4` are the highest value per hour; do them first.
+test** → traps. WS-1 is done; `WS-2 … WS-4` are the highest value per hour — do them next.
 
-### WS-1 · Make the lice lineage verifiable (highest value)
-**Why:** `lice_records` has no `source` column, so the platform cannot distinguish
-reported Fiskeridir/Mattilsynet rows from demo seeds. `AI-LPI` therefore reports
-`is_live: false` with "lineage unverifiable" on every call — correct today, but it
-means the flagship index can never legitimately claim live.
-**Files:** `core/models.py` (`LiceRecord.source`), new `alembic/versions/019_*.py`,
-the lice ingest path (`core/market/lice_quota_tracker.py`, `core/demo_seed.py`),
-`core/market/freshness_monitor.py`, `core/market/indices.py`
-(`_lice_lineage_note()` should return `None` once real rows carry a source).
-**Steps:** add the column with a `demo_seed` / `fiskeridir` marker convention; write
-it on every ingest; keep a default so `create_all` + the conftest reconciliation still
-work; have the freshness monitor count synthetic rows for it.
-**Acceptance:** `ix._lice_lineage_note() is None`; `AI-LPI` is `is_live: true` when
-rows are real and `false` when they are `demo_seed`; `/api/data-freshness` reports
-`synthetic_rows` for `lice_records`; a new test in `tests/test_production_truth.py`.
-**Traps:** tests need BOTH the migration and the conftest column reconciliation; never
-backfill rows as `fiskeridir` without proof.
+### WS-1 · Make the lice lineage verifiable — **DONE 2026-10-16**
+**Shipped:** `core/source_lineage.py` — the one vocabulary for `lice_records.source`
+(`barentswatch` / `demo_seed` / `unverified`; the `fiskeridir` marker proposed here
+earlier was replaced because the only writer is the BarentsWatch Fishhealth API v2
+client, so it is the system of record). Alembic **019**: `source VARCHAR(32) NOT NULL
+DEFAULT 'unverified'`, NULL → `unverified`, relabels **only** the demo key
+(locality 10001–10022 × the seed year 2025) as `demo_seed`, never a real source,
+repairs a conftest-reconciled nullable column, batch-mode downgrade.
+`agents/data_ingest.py` writes `barentswatch` on **both** upsert branches;
+`core/demo_seed.py` writes `demo_seed`; `agents/historical_backfill.py` skips a week
+only when its rows are **verified**. `lice_quota_tracker` publishes a row-level
+`lineage` (same predicates as its data query, per PA and merged nationally, inside
+the cached payloads, mirrored to `last_lineage`) and its provenance is degraded with
+the reason when the lineage does not support live — including the single-locality
+path. `indices._lice_lineage_note(lineage)` is row-level. `/api/data-freshness`
+reports `verified_rows` / `unverified_rows` / `no_verified_rows`; the verifier adds
+the **critical** `lice_source_column` check and the `freshness_no_verified_rows`
+warn verdict. 20 tests (`tests/test_production_truth.py::TestLiceLineage`,
+`tests/test_migrations.py`, `tests/test_indices.py`, `tests/test_market_engines.py`).
+**Acceptance met:** `ix._lice_lineage_note()` is None after a compute whose window
+is all `barentswatch`, every PA fetched and fresh (proved with stubbed lineage); on
+this box it names "6997/6997 lice rows used carry no verified source … newest lice observation is 2026-W15, 27 weeks old … newest lice row was fetched 4604 h ago" with every PA listed; AI-LPI is live/degraded by that rule; the freshness entry shows
+synthetic 1,040 / verified 0 / unverified 185,099, `no_verified_rows: true`.
+**Deliberately not done:** no pre-WS-1 row was relabelled as real — audit logs record
+only per-tick insert counts, which is not row-level proof. The tracker's year-wide
+window (WS-15) and the dead ingest (WS-16) keep AI-LPI degraded here until a real
+re-ingest; on a fresh production DB every row arrives as `barentswatch`.
 
 ### WS-2 · Publish the weekly indices on a schedule
 **Why:** `/api/indices/*/history` is populated only by test runs, so the published
@@ -252,6 +264,78 @@ the performance-fee decision, DPA completion + sub-processor register, penetrati
 test, SOC 2 Type I. Owners/conditions: `docs/ADVICE_BOUNDARY.md` §5–6,
 `docs/roles/enterprise-security-engineer.md`.
 
+### WS-14 · Propagate the lice lineage to every lice consumer
+**Why:** WS-1 verified one index. 14+ consumers still stamp
+`DataProvenance.live(... BarentsWatch ...)` on lice-derived payloads with no lineage
+input — one verified index next to a dozen unverified live labels on the same table.
+**Files (line numbers measured 2026-10-16):** `core/routers/lice_routes.py:88`,
+`core/market/decision_engine.py:138,217`, `core/routers/analytics_routes.py:228,304,340`,
+`core/routers/farm_routes.py:84,306`, `core/routers/notification_routes.py:54,584`,
+`core/routers/bloom_routes.py:302,307` (hardcodes `is_live: true`),
+`core/market/asc_compliance.py:416,489`, `core/market/regulatory_reporter.py:440`,
+`core/routers/misc_routes.py:140`, `core/routers/supply_routes.py:89,177,198,223`.
+**Steps:** for each, `summarise_lineage` over the rows it actually used (same
+predicates), then the tracker's `_provenance_for` pattern (lift it into
+`core/source_lineage.py` so there is one implementation).
+**Acceptance:** no lice-derived `DataProvenance.live(` without a lineage input; on
+an unverified DB `scripts/probe_liveness.py` reports them degraded; one test per
+consumer with a demo-seed stub. **Traps:** `bloom_routes` hardcodes `is_live: true`;
+`/api/lice/summary` already degrades on staleness — merge, do not double-report.
+
+### WS-15 · Quota tracker window + AI-LPI magnitude
+**Why:** `_get_pa_lice_data` filters `year == max(year)` only (it computes
+`max(week)` and never uses it), so "latest" is a year-to-date average; and the
+national utilisation reads **238,367 %** with every PA over quota — the emission
+model's magnitude is implausible. A correct live badge on that number is a
+credibility problem WS-1 cannot fix.
+**Files:** `core/market/lice_quota_tracker.py` (`_get_pa_lice_data`,
+`_estimate_farm_emission`, `PA_HYPOTHETICAL_QUOTA`), `core/market/indices.py`
+(`INDEX_METHOD_VERSION` bump — revision policy), `docs/INDICES.md`.
+**Steps:** window = latest reported week per PA (or a documented rolling window);
+recalibrate quota/emission units against the IMR reference and publish the note in
+`methodology()`; bump the method version so history keeps both.
+**Acceptance:** `lineage["year"]` + a `week` field reflect the latest week; national
+utilisation lands in a plausible range with the calibration published; the WS-1
+tests still pass. **Traps:** changing the window changes the lineage the index reads.
+
+### WS-16 · Lice ingest health (blocks any live AI-LPI)
+**Why:** the last real lice rows arrived 2026-04-07; the 2026-10-12 tick logged
+"0 new lice records for 2026-W42"; `lice_records` is `dead` with 0 verified rows.
+**Files:** `agents/data_ingest.py`, `core/barentswatch.py`, `.env` (BarentsWatch
+credentials), `core/market/freshness_monitor.py` (alerting — WS-9).
+**Steps:** diagnose the 0-row tick (auth, endpoint, `hasReported` filter), fix it,
+then let the backfill (which now skips only verified weeks) re-ingest 2020→now —
+roughly 350 sequential POSTs; pace it if BarentsWatch rate-limits.
+**Acceptance:** `/api/data-freshness` lice `fresh` with `verified_rows > 0`; AI-LPI
+`is_live: true` once the window is all `barentswatch`, every PA current and fresh;
+a test proving a 0-row tick raises an alert (WS-9). **Traps:** never relabel rows
+by hand — the upsert is the only honest path to `barentswatch`. `fetched_at` is a
+write time: the re-ingest bumps it on old weeks, which is why the lineage gates on
+the observation week too — the freshness monitor still reads `fetched_at`, so it
+will say `fresh` after a re-ingest even when the newest observation is months old
+(fold the observation-week age into the monitor in WS-9).
+
+### WS-17 · Accuracy publisher column bug
+**Why:** `scripts/publish_accuracy.py::_db_series` selects `price_nok` but the
+column is `price_nok_kg`; a bare `except` hides it, so its demo-row skip has never
+actually run against the DB (the live-fetch path masked it).
+**Files:** `scripts/publish_accuracy.py`, `tests/test_accuracy_registry.py`.
+**Steps:** fix the column, narrow the except, import `SYNTHETIC_MARKERS` from
+`core/source_lineage.py` instead of the local copy, regression test on a seeded
+temp DB. **Acceptance:** `_db_series()` returns rows and reports
+`skipped_synthetic` on a demo-seeded DB. **Traps:** never add a `--force` bypass.
+
+### WS-18 · Stamped-but-unmigrated dev databases
+**Why:** `data/openclaw.db` is stamped 018 but lacks 015's `ix_lice_year_week`:
+the conftest stamps `create_all`-built DBs at head, so a migration whose DDL the ORM
+does not declare (indexes, backfills) can be skipped silently.
+**Files:** `tests/conftest.py`, `core/production_truth.py`, `core/models.py::init_db`.
+**Steps:** a verifier check comparing migration-declared indexes with
+`inspect(engine).get_indexes`; guard-create `ix_lice_year_week`.
+**Acceptance:** the verifier reports index drift on this box before the fix and ok
+after; `EXPLAIN` on `/api/lice/summary` uses the index. **Traps:** never fix by
+stamping; 019 survives this because it is existence-guarded — new migrations must be.
+
 ## 6. Traps that cost real time in this codebase
 
 | # | Trap | Rule |
@@ -261,11 +345,16 @@ test, SOC 2 Type I. Owners/conditions: `docs/ADVICE_BOUNDARY.md` §5–6,
 | 3 | **SQLite returns ISO strings** | Timestamps come back as **strings**, so `isinstance(x, datetime)` is false and freshness read `unknown` for every source. Parse defensively (str/date/int/datetime). |
 | 4 | **SSB week labels** | `get_price_history` returns `"week": "W42"` → `int()` raises `ValueError`. Strip a leading `W`. |
 | 5 | **Ratchet inventories** | Never derive a route inventory from the **live app**: other tests inject `/api/test-*` routes and break it. Use `docs/openapi.frozen.json`. |
-| 6 | **Demo-seeded rows** | `ssb_weekly_prices` is `source='demo_seed'`; `lice_records` has **no** source column. Never measure accuracy on them, never claim `is_live` from them. |
+| 6 | **Demo-seeded rows** | `ssb_weekly_prices` is `source='demo_seed'`; `lice_records.source` is `barentswatch` / `demo_seed` / `unverified` (WS-1). Never measure accuracy on synthetic rows; never claim `is_live` from `demo_seed` or `unverified`. |
 | 7 | **Empty `alembic_version`** | A `create_all`-built dev DB has an empty version table; the verifier calls that drift. `tests/conftest.py` reconciles missing columns and stamps head for dev/test only. |
 | 8 | **`--timeout` is unavailable** | No pytest-timeout plugin. Background long runs with `Start-Process ... -RedirectStandardOutput` and poll the file. |
 | 9 | **PowerShell hides tracebacks** | Pipe to a file with `cmd /c "python x.py > out.txt 2>&1"`, then read `out.txt`. `git push` can exit 1 on success — confirm with `git ls-remote`. |
 | 10 | **Contract + baseline re-freeze** | Any new route changes `docs/openapi.frozen.json` **and** the provenance baseline. Re-freeze deliberately (`freeze_openapi.py`, `provenance_ratchet.py --update`) — never just to make a failure disappear. |
+| 11 | **Demo locality numbers live in the real range** | `DEMO_LOCALITIES` 10001–10022 sit inside BarentsWatch's 5-digit numbering (the lowest real locality on the dev DB is 10029; no real row shares a demo number today, but nothing reserves the range). Identify demo rows only by `source='demo_seed'`, never by locality. A first measurement here wrongly counted 10027/10029 as demo — re-measure before repeating a number. |
+| 12 | **Column presence is not lineage** | `lice_records.source` existing says nothing about the rows — a demo-seeded CI database has the column too. Claim live only from `summarise_lineage` over the rows actually used. |
+| 13 | **Empty `alembic_version` bricks the ingest** | A `create_all`-built DB whose chain aborts at 001 never runs 019, so every lice insert fails. Recover with `alembic stamp 018` then `alembic upgrade head` — never stamp head. The verifier's `lice_source_column` check catches it. |
+| 14 | **The freshness monitor runs in a worker thread** | `fm.report()` uses `asyncio.to_thread`; an in-memory SQLite engine is empty in that thread. Test it with a file-backed engine. |
+| 15 | **Long shell heredocs on this box** | Git-Bash `cat <<'EOF'` with a long Python body intermittently fails to parse. Write the patch to a file and run `python file.py`. |
 
 ## 7. Definition of done for the next module
 

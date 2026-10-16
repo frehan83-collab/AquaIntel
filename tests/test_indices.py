@@ -80,17 +80,49 @@ class TestComputation:
 
 
 class TestHonestDegradation:
-    def test_lineage_notes_prevent_a_clean_live_claim(self):
-        """lice_records has no source column, so AI-LPI cannot claim clean 'live'."""
+    def test_lineage_note_decides_the_live_claim(self):
+        """WS-1: AI-LPI is live iff every lice row the tracker used has a verified
+        source (and nothing is missing); otherwise the note names why, unconditionally.
+
+        The zero-arg `_lice_lineage_note()` reflects the tracker's LAST computation,
+        so compute first. CI (demo-seeded) and a bulk-loaded dev box (unverified
+        rows) both land on the degraded branch today; the live branch is locked
+        deterministically by test_ai_lpi_is_live_follows_the_lice_lineage.
+        """
         import asyncio
 
         result = asyncio.run(ix.compute(ix.AI_LPI))
-        if ix._lice_lineage_note():
-            assert result["lineage_notes"], result
-            assert result["provenance"]["is_live"] is False
-            assert "unverifiable" in result["provenance"]["fallback_reason"]
-            # the value is still produced — honest, not hidden
-            assert result["components_used"] >= 1
+        note = ix._lice_lineage_note()
+        if result["provenance"]["is_live"]:
+            assert note is None, note
+            assert result["lineage_notes"] == [] and result["components_missing"] == []
+        else:
+            assert result["components_missing"] or note is not None, result
+            if note is not None:
+                assert note in result["lineage_notes"], result["lineage_notes"]
+                assert note in result["provenance"]["fallback_reason"]
+                # the value is still produced — honest, not hidden
+                assert result["components_used"] >= 1
+
+    def test_lpi_lineage_mirrors_the_trackers_rows(self):
+        """The index reads the quota tracker's OWN lineage (rows it aggregated),
+        never a separate query that could disagree with the value."""
+        import asyncio
+
+        from core.market.lice_quota_tracker import lice_quota_tracker as tracker
+
+        result = asyncio.run(ix.compute(ix.AI_LPI))
+        lineage = tracker.last_lineage
+        if lineage is None:
+            assert result["components_missing"], "no lineage only when the tracker failed"
+            return
+        assert lineage["rows_used"] == sum(lineage["by_class"].values())
+        assert tracker.last_is_live == lineage["is_live"]
+        assert tracker.last_source == lineage["source"]
+        assert lineage["is_live"] == (lineage["note"] is None)
+        # the index output is built FROM this lineage, not from a separate query
+        assert result["provenance"]["is_live"] == lineage["is_live"]
+        assert result["lineage_notes"] == ([lineage["note"]] if lineage["note"] else [])
 
     def test_component_source_reflects_the_trackers_own_lineage(self):
         """Not a hardcoded label: the index reports what the tracker actually did.

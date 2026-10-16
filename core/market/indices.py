@@ -23,6 +23,7 @@ from typing import Any
 import structlog
 
 from core.market.data_provenance import DataProvenance
+from core.source_lineage import lineage_note
 
 log = structlog.get_logger(__name__)
 
@@ -231,12 +232,19 @@ async def national_totals(attribute: str = "standing_biomass_tonnes") -> dict:
     return await _totals_by_month(attribute)
 
 
-def _lice_lineage_note() -> str | None:
+def _lice_lineage_note(lineage: dict | None = None) -> str | None:
     """None when the lice lineage is verifiable, otherwise why it is not.
 
-    `lice_records` has no `source` column, so the platform cannot prove whether a
-    row is a reported Fiskeridir/Mattilsynet observation or a demo seed. A component
-    built on it may still be computed, but it must not support a clean "live" claim.
+    WS-1: `lice_records.source` lets the quota tracker report the lineage of the
+    rows it actually aggregated (``overview["lineage"]``). The note is None only
+    when every used row is a reported BarentsWatch observation, every PA
+    contributed without a fetch failure and the newest row is within cadence —
+    column *presence* alone never earns a live claim (an all-demo CI database
+    has the column too).
+
+    Zero-arg form: reflects the tracker's LAST computation (``last_lineage``), so
+    callers must compute the index first; before any computation it reports that
+    no lineage was recorded, which is the honest answer.
     """
     from sqlalchemy import inspect
 
@@ -251,7 +259,11 @@ def _lice_lineage_note() -> str | None:
             "lineage unverifiable: lice_records has no source column, so demo and "
             "reported rows cannot be distinguished"
         )
-    return None
+    if lineage is None:
+        from core.market.lice_quota_tracker import lice_quota_tracker
+
+        lineage = getattr(lice_quota_tracker, "last_lineage", None)
+    return lineage_note(lineage)
 
 
 def _unavailable(name: str, weight: float, source: str, exc: Exception) -> dict:
@@ -325,7 +337,7 @@ async def _sti_components() -> tuple[list[dict], list[str], list[str], list[str]
         overview = await _national_emission()
         utilization = float(overview.get("national_utilization_pct") or 0.0)
         sources.append(_QUOTA_SOURCE)
-        lice_note = _lice_lineage_note()
+        lice_note = _lice_lineage_note(overview.get("lineage"))
         if lice_note:
             lineage_notes.append(lice_note)
         components.append(
@@ -380,9 +392,11 @@ async def compute_ai_lpi(as_of: dt.datetime | None = None) -> dict:
     components: list[dict] = []
     sources: list[str] = []
     missing: list[str] = []
+    lineage: dict | None = None
 
     try:
         overview = await _national_emission()
+        lineage = overview.get("lineage")
         utilization = float(overview.get("national_utilization_pct") or 0.0)
         sources.append(_QUOTA_SOURCE)
         components.append(
@@ -420,7 +434,7 @@ async def compute_ai_lpi(as_of: dt.datetime | None = None) -> dict:
         sources_used=sources,
         missing=missing,
         as_of=as_of,
-        lineage_notes=[note for note in (_lice_lineage_note(),) if note],
+        lineage_notes=[note for note in (_lice_lineage_note(lineage),) if note],
     )
 
 

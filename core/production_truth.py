@@ -122,6 +122,54 @@ def _alembic_head() -> str | None:
     return heads[0] if heads else None
 
 
+def _lice_source_column_verdict(engine) -> dict:
+    """WS-1: the lice ingest writes `lice_records.source`.
+
+    A database that never ran migration 019 — typically an empty `alembic_version`
+    where the chain aborts at 001 (HANDOVER trap 7) — would fail every lice insert
+    with "no such column". Recovery: `alembic stamp 018` then `alembic upgrade head`
+    (never stamp head directly: that freezes the column out).
+    """
+    from sqlalchemy import inspect
+
+    try:
+        insp = inspect(engine)
+        if not insp.has_table("lice_records"):
+            return _verdict(
+                "info", "lice_source_column", "lice_records table absent (never ingested here)"
+            )
+        column = next(
+            (c for c in insp.get_columns("lice_records") if c["name"].lower() == "source"),
+            None,
+        )
+    except Exception as exc:  # pragma: no cover - defensive
+        return _verdict("warn", "lice_source_column", f"could not inspect lice_records: {exc}")
+    if column is None:
+        return _verdict(
+            "fail",
+            "lice_source_column",
+            "lice_records has no `source` column — migration 019 never ran, every lice "
+            "ingest insert will fail; recover with `alembic stamp 018` then "
+            "`alembic upgrade head`",
+            critical=True,
+        )
+    if column.get("nullable", True) or column.get("default") is None:
+        # The shape a schema reconciliation (not 019) produces: NULL rows classify
+        # as unverified (honest) but demo rows were never relabelled and the DDL
+        # diverges from the ORM contract.
+        return _verdict(
+            "warn",
+            "lice_source_column",
+            "lice_records.source exists but is nullable or has no default — it was "
+            "added by a schema reconciliation, not by migration 019; run "
+            "`alembic stamp 018` then `alembic upgrade head` so 019 backfills and "
+            "repairs it",
+        )
+    return _verdict(
+        "ok", "lice_source_column", "lice_records.source present, NOT NULL with default (WS-1)"
+    )
+
+
 def check_database() -> list[dict]:
     """Dialect, reachability and migration head (the ORM/migration drift check)."""
     out: list[dict] = []
@@ -172,6 +220,7 @@ def check_database() -> list[dict]:
                 critical=True,
             )
         )
+    out.append(_lice_source_column_verdict(engine))
     return out
 
 
@@ -236,6 +285,17 @@ async def check_freshness() -> list[dict]:
             "sources backed only by synthetic rows: " + ", ".join(synthetic)
             if synthetic
             else "no synthetic-only sources",
+        )
+    )
+    no_verified = data.get("no_verified_rows") or []
+    out.append(
+        _verdict(
+            "warn" if no_verified else "ok",
+            "freshness_no_verified_rows",
+            "sources holding no row with a verified source (synthetic or "
+            "unverified only): " + ", ".join(no_verified)
+            if no_verified
+            else "every source with a lineage contract holds verified rows",
         )
     )
     counts = data.get("counts", {})

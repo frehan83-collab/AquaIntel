@@ -2,10 +2,10 @@
 
 > **Repository:** [github.com/frehan83-collab/AquaIntel](https://github.com/frehan83-collab/AquaIntel) (public)
 
-Last updated: 2026-10-16 (commercial hardening — see docs/ENTITLEMENTS.md)
+Last updated: 2026-10-16 (commercial hardening + WS-1 lice lineage — see docs/HANDOVER.md)
 
 **Taking over coding? Read `docs/HANDOVER.md`** — verified state, gate commands, the
-prioritised workstream backlog (WS-1…WS-13) and the traps that cost real time.
+prioritised workstream backlog (WS-1 done; WS-2…WS-18 open) and the traps that cost real time.
 
 ## Commercial hardening (in progress)
 
@@ -18,9 +18,10 @@ prioritised workstream backlog (WS-1…WS-13) and the traps that cost real time.
 | 5. Production truth (agents service, artifacts, PG/Timescale, freshness) | **Shipped** | `docker-compose.prod.yml` (separate `agents` service), `core/production_truth.py` + `scripts/verify_production_truth.py` (deploy-gating checks; found+fixed real `alembic_version` drift), `core/market/freshness_monitor.py` + `GET /api/data-freshness` (12 sources), `docker/init-timescale.sql`, `docs/PRODUCTION_TRUTH.md`, `tests/test_production_truth.py` (17 tests) |
 | 6. Design-partner infrastructure (paid pilots, reciprocity) | **Shipped** | `core/routers/partner_routes.py` (admin-gated), `design_partners` + `partner_metrics` (Alembic 018), `docs/DESIGN_PARTNERS.md` (runbook + per-ICP success metrics), `tests/test_partner_pilots.py` (18 tests); pilots grant real entitlements via `entitlement_sync` |
 | 7. Legal foundations (data-license register, advice boundary, DPA/AI Act) | **Shipped** | `core/legal/{data_licenses,performance_fee}.py`, `docs/ADVICE_BOUNDARY.md`, `/api/legal/*` (licences, use-check, advice boundary, AI Act, performance fee), `tests/test_legal.py` (18 tests). Honest state: **8 sources registered, 0 legally cleared**; perf-fee deferred by default and unadvertised |
-| 8. Rule-3 provenance program (remaining routes + exempt register + ratchet) | **Shipped** | `core/provenance_register.py` (18 exempt entries with reasons), `docs/provenance_baseline.json` (238 routes → 31 exempt / 207 baselined / 0 unregistered), `scripts/provenance_ratchet.py` (exit 1 on drift), `core/market/provenance_envelope.py::with_provenance`, 5 more routes given provenance, `tests/test_provenance_ratchet.py` (13 tests) |
+| 8. Rule-3 provenance program (remaining routes + exempt register + ratchet) | **Shipped** | `core/provenance_register.py` (18 exempt entries with reasons), `docs/provenance_baseline.json` (237 routes → 33 exempt / 204 baselined / 0 unregistered after the f04e79a re-anchoring), `scripts/provenance_ratchet.py` (exit 1 on drift), `core/market/provenance_envelope.py::with_provenance`, 5 more routes given provenance, `tests/test_provenance_ratchet.py` (13 tests) |
 | 9. GTM kit (ROI calculator, one-pager, demo) | **Shipped** | `core/gtm/roi.py` (4 ICPs; invents no market value — every line publishes its formula and flags assumptions), `/api/gtm/roi` + `/api/gtm/kit`, `docs/GTM_SECURITY_ONE_PAGER.md` (with an explicit "not in place yet" table), `docs/GTM_DEMO_SCRIPT.md`, `docs/GTM_LINKEDIN_PACK.md`, `docs/GTM_EVENTS.md`, `tests/test_gtm_roi.py` (12 tests) |
 | 10. Role definitions | **Shipped** | `docs/roles/{commercial-lead,enterprise-security-engineer,product-designer-field}.md` + `docs/roles/README.md` — postable as-is, with quarterly targets, first-30-days plans and "what we will not ask you to do" |
+| WS-1. Lice lineage verifiable (`lice_records.source`) | **Shipped** | `core/source_lineage.py` (one vocabulary: `barentswatch` / `demo_seed` / `unverified`), Alembic 019 (never backfills a real source), `lice_quota_tracker` row-level `lineage` + degraded provenance, `indices._lice_lineage_note()` row-level, `/api/data-freshness` `verified_rows`/`unverified_rows`/`no_verified_rows`, verifier `lice_source_column` (critical) + `freshness_no_verified_rows`, 20 tests. Honest state on the dev box: 0 verified rows → AI-LPI degraded until the ingest is healthy (WS-16) |
 
 **Plans / pricing (canonical):** Insight (free) → Operator (NOK 4,900) → Desk
 (professional, NOK 2,990) → Enterprise (NOK 14,900) → Investor (NOK 24,900) →
@@ -40,8 +41,8 @@ anonymous browsing is never gated.
 | Frontend pages | 63 (68 compiled routes) |
 | Shared components | 43+ |
 | Database tables | 31 |
-| DB migrations | 15 |
-| Test functions | 762 collected (739 passing, 13 xfail, 10 xpass) |
+| DB migrations | 19 (head 019) |
+| Test functions | 1024 collected (1000 passing, 1 skipped, 13 xfail, 10 xpass — measured 2026-10-16) |
 | i18n keys | ~600 (NO/EN) |
 | Design tokens | 86 (Figma pipeline active) |
 | Data source clients | 45+ |

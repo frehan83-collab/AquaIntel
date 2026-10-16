@@ -18,6 +18,7 @@ from agents.data_ingest import DataIngestAgent
 from core.barentswatch import BarentsWatchClient
 from core.models import LiceRecord, AuditLog
 from core.async_db import get_async_session
+from core.source_lineage import REAL_LICE_SOURCES
 
 import structlog
 
@@ -112,10 +113,19 @@ class HistoricalBackfillAgent(BaseAgent):
 
     @staticmethod
     async def _week_count(year: int, week: int) -> int:
+        """Rows for the week whose lineage is VERIFIED (source in REAL_LICE_SOURCES).
+
+        WS-1: pre-migration rows carry source='unverified'. Counting them here made
+        the backfill skip every bulk-loaded week forever, so its lineage could never
+        become verifiable. Re-ingesting such a week flips its rows to 'barentswatch'
+        through the upsert's update branch — the only honest way to earn the label.
+        """
         async with get_async_session() as s:
             result = await s.execute(
                 select(func.count(LiceRecord.id)).where(
-                    LiceRecord.year == year, LiceRecord.week == week
+                    LiceRecord.year == year,
+                    LiceRecord.week == week,
+                    LiceRecord.source.in_(sorted(REAL_LICE_SOURCES)),
                 )
             )
             return result.scalar() or 0

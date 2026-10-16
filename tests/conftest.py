@@ -57,13 +57,26 @@ def _reconcile_sqlite_schema() -> None:
                 for column in table.columns:
                     if column.name in have:
                         continue
-                    if not column.nullable and column.default is None:
+                    if (
+                        not column.nullable
+                        and column.default is None
+                        and column.server_default is None
+                    ):
                         print(
                             f"conftest: {table.name}.{column.name} missing and NOT "
                             "NULL without default — add a migration"
                         )
                         continue
                     ddl = column.type.compile(engine.dialect)
+                    # Carry a constant server default (and NOT NULL) so the reconciled
+                    # column matches the ORM contract instead of leaving NULLs. WS-1's
+                    # lice_records.source relies on it: NULL classifies as unverified
+                    # (honest), but the DDL would diverge from migration 019.
+                    server_default = getattr(column.server_default, "arg", None)
+                    if isinstance(server_default, str):
+                        ddl += " DEFAULT '" + server_default.replace("'", "''") + "'"
+                        if not column.nullable:
+                            ddl += " NOT NULL"
                     conn.execute(
                         text(f'ALTER TABLE "{table.name}" ADD COLUMN "{column.name}" {ddl}')
                     )

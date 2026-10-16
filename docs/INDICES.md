@@ -28,6 +28,26 @@ components whose source was actually available**. Anything dropped is named in
 If **every** component is unavailable the index returns `value: null` and
 `band: null` rather than a fabricated number.
 
+### Lineage rule (WS-1)
+
+A component built on `lice_records` carries the lineage of the rows the quota
+tracker **actually aggregated** (its latest-year window per production area), not
+a check that a `source` column exists. The index is live only when:
+
+- every used row has `source = 'barentswatch'` (a reported BarentsWatch observation);
+- every production area contributed rows and none failed to fetch;
+- the newest used **observation week** is the current or previous ISO week — per
+  production area too, so one stale area degrades the national view;
+- the newest used row was *fetched* within the 168 h cadence (a secondary gate:
+  `fetched_at` is a write time that a re-ingest of an old week bumps).
+
+Anything else lands in `lineage_notes` with counts (for example
+"6997/6997 lice rows used carry no verified source … newest lice observation is 2026-W15, 27 weeks old … newest lice row was fetched 4604 h ago")
+and forces `provenance.is_live = false`. Rows written before WS-1 are `unverified`
+and can only become verified when a real ingest overwrites them — a demo-seeded
+database and a bulk-loaded one are therefore both honestly degraded. The same
+block is published as `lineage` on `/api/analytics/lice-quota/national`.
+
 ### AI-STI v1.0
 
 | Component | Weight | Scoring | Source |
@@ -88,3 +108,11 @@ descriptive read of leading indicators — **not** a causal claim and not advice
 - The weekly digest is generated on request or by the weekly job; there is no
   scheduler assertion yet that it *was* published this week (tracked with the
   data-freshness dashboard work).
+- **AI-LPI claims live only through the lineage rule above.** On the development
+  database it is degraded (0 of 6,997 rows in the window are verified and the
+  newest row is six months old); on a fresh production database every row arrives
+  as `barentswatch` and it goes live as soon as the window is complete and fresh.
+- The tracker's window is **every week of the latest year** (it computes the latest
+  week but does not use it) and its utilisation magnitude is implausible — both
+  recorded as WS-15 in `docs/HANDOVER.md`; a correct live badge would not make that
+  number credible.

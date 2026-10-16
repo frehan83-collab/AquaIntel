@@ -29,7 +29,8 @@ CALIBRATION_FRACTION = 0.7
 INTERVAL_LEVEL = 0.8
 
 # Rows whose `source` marks them as synthetic must never back an accuracy claim.
-DEMO_SOURCE_MARKERS = ("demo", "seed", "synthetic", "mock", "fallback")
+# One definition (core/source_lineage.py), shared with the freshness monitor.
+from core.source_lineage import SYNTHETIC_MARKERS as DEMO_SOURCE_MARKERS  # noqa: E402
 
 
 def _is_real_source(source: str | None) -> bool:

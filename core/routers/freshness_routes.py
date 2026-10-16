@@ -20,7 +20,10 @@ async def data_freshness():
     data["contract"] = (
         "status: fresh (within cadence) | stale (<= 3x cadence) | dead (> 3x) | "
         "unknown (no measurable timestamp or missing table). `synthetic_only` means "
-        "the table holds only demo/seed rows."
+        "the table holds only demo/seed rows. `verified_rows` / `unverified_rows` "
+        "split rows by lineage where a table declares a source contract; "
+        "`no_verified_rows` lists sources whose lineage is unknown — they never "
+        "back a live claim."
     )
     return data
 

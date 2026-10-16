@@ -12,6 +12,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 from config.settings import settings
+from core.source_lineage import LICE_SOURCE_UNVERIFIED
 
 
 def ensure_sqlite_dir(url: str) -> None:
@@ -83,6 +84,16 @@ class LiceRecord(Base):
     has_cleaner_fish = Column(Boolean, default=False)
     sea_temp_c = Column(Float)
     fetched_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC))
+    # WS-1 lineage marker: 'barentswatch' (agents/data_ingest.py), 'demo_seed'
+    # (core/demo_seed.py) or 'unverified' (server default; pre-WS-1 rows). One
+    # vocabulary in core/source_lineage.py; NULL/unknown never counts as real.
+    # Alembic 019 adds and backfills it.
+    source = Column(
+        String(32),
+        nullable=False,
+        default=LICE_SOURCE_UNVERIFIED,
+        server_default=LICE_SOURCE_UNVERIFIED,
+    )
 
     locality = relationship("Locality", back_populates="lice_records")
 
