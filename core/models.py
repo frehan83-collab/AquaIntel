@@ -630,3 +630,31 @@ def init_db() -> None:
 
 
 Session = sessionmaker(bind=engine)
+
+
+class IndexObservation(Base):
+    """A published observation of a named public index (AI-STI / AI-LPI).
+
+    Immutable for a given (index_code, week, version): the revision policy in
+    `core.market.indices.methodology()` promises that a change to the method
+    creates a new version rather than silently restating history.
+    """
+    __tablename__ = "index_observations"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    index_code = Column(String(16), nullable=False, index=True)
+    week = Column(String(12), nullable=False)          # ISO week, e.g. 2026-W42
+    as_of = Column(DateTime, nullable=False)
+    version = Column(String(16), nullable=False)
+    value = Column(Float)
+    band = Column(String(16))
+    components_json = Column(Text)
+    provenance_json = Column(Text)
+    created_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC))
+
+    __table_args__ = (
+        UniqueConstraint(
+            "index_code", "week", "version", name="uq_index_observations_week_version"
+        ),
+    )
+

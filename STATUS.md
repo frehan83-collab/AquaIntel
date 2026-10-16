@@ -379,5 +379,25 @@ added `tests/test_migrations.py`.
 - **Value:** the previously-blocked premium route now returns non-402 after the
   (mock) payment — the money path is proven, not asserted.
 
+## Commercial hardening — Step 3 (named indices + Bio→Price Weekly) — 2026-10-16
+
+- **Shipped AI-STI and AI-LPI** (method v1.0.0) with published weights, scoring
+  formulas, per-component source attribution and renormalising aggregation; a
+  missing source degrades the index loudly and an all-source outage returns
+  `null` rather than a fabricated value.
+- **Bio→Price Weekly v1** composes both indices + supply + price panels into one
+  weekly digest; `publish_week()` stores both observations.
+- **History:** `index_observations` (Alembic 017), unique per
+  (index_code, week, version) so published values are immutable.
+- **Endpoints:** `/api/indices`, `/ai-sti`, `/ai-lpi`, `/{code}/history`,
+  `/methodology`, `/bio-price-weekly`, admin `/publish`. Public `/indices` page
+  shows components + live/degraded badge.
+- **Gates:** `test_indices.py` 20 passed; ruff clean; `tsc` 0 errors; OpenAPI
+  re-frozen (326 paths).
+- **Also fixed:** the earlier background full-suite attempt silently failed
+  (`--timeout` needs pytest-timeout, not installed) — the suite is now run without
+  it (see the run summary).
+
+
 
 

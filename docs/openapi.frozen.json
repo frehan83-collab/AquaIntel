@@ -6280,6 +6280,183 @@
         ]
       }
     },
+    "/api/indices": {
+      "get": {
+        "description": "Latest value of every published index (compute-on-read).",
+        "operationId": "list_indices_api_indices_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Indices",
+        "tags": [
+          "indices"
+        ]
+      }
+    },
+    "/api/indices/bio-price-weekly": {
+      "get": {
+        "description": "The flagship weekly digest: supply + lice pressure \u2192 price read.",
+        "operationId": "bio_price_weekly_api_indices_bio_price_weekly_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Bio Price Weekly",
+        "tags": [
+          "indices"
+        ]
+      }
+    },
+    "/api/indices/methodology": {
+      "get": {
+        "description": "The published, versioned method behind every index value.",
+        "operationId": "index_methodology_api_indices_methodology_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Index Methodology",
+        "tags": [
+          "indices"
+        ]
+      }
+    },
+    "/api/indices/publish": {
+      "post": {
+        "description": "Compute + store both indices (admin; the weekly job calls this).",
+        "operationId": "publish_indices_api_indices_publish_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Publish Indices",
+        "tags": [
+          "indices"
+        ]
+      }
+    },
+    "/api/indices/{index_code}": {
+      "get": {
+        "description": "Latest value of one index (stable, public permalink).",
+        "operationId": "get_index_api_indices__index_code__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "index_code",
+            "required": true,
+            "schema": {
+              "title": "Index Code",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Index",
+        "tags": [
+          "indices"
+        ]
+      }
+    },
+    "/api/indices/{index_code}/history": {
+      "get": {
+        "description": "Stored, versioned history for one index (empty until first publish).",
+        "operationId": "index_history_api_indices__index_code__history_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "index_code",
+            "required": true,
+            "schema": {
+              "title": "Index Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 52,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Index History",
+        "tags": [
+          "indices"
+        ]
+      }
+    },
     "/api/integrations/fishtalk/farm/{site_id}": {
       "get": {
         "description": "Fetch daily feed, mortality, and biomass data from Fishtalk for a site.",

@@ -5,7 +5,41 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
-### Step 2 — the money path is proven end to end
+### Step 3 — Bio→Price Weekly v1 + the two named indices
+- **`AI-STI` (AquaIntel Salmon Transmission Index)** and **`AI-LPI` (AquaIntel Lice
+  Pressure Index)** are published, versioned (method `1.0.0`) and reproducible:
+  weighted component scores with published weights and scoring formulas, explicit
+  component-level source attribution, and a **renormalising** aggregation — a
+  component whose source is unavailable is named in `components_missing` and
+  forces `provenance.is_live = false`. If *every* component is unavailable the
+  index returns `value: null` instead of a fabricated number.
+- **Sources are real:** Fiskeridir/SSB standing biomass and harvest (momentum vs
+  year-over-year, with `raw.basis` when a year-back period is missing) and the lice
+  emission-quota framework (`lice_quota_tracker.national_emission_overview`).
+- **Bio→Price Weekly v1** (`core/market/bio_price_weekly.py`,
+  `GET /api/indices/bio-price-weekly`): composes both indices with a supply panel
+  and a live price panel into a weekly digest with an explicit
+  `transmission.read`, a `caveats` list and a provenance block. `publish_week()`
+  computes **and stores** both observations.
+- **History is durable and immutable:** new `index_observations` table (Alembic
+  017) with a unique constraint on `(index_code, week, version)`, so a published
+  value cannot be silently restated and a method change is visible as a new
+  version.
+- **New endpoints:** `GET /api/indices`, `/ai-sti`, `/ai-lpi`,
+  `/{code}/history`, `/methodology`, `/bio-price-weekly`, and admin
+  `POST /api/indices/publish` (stable public permalinks `/indices/ai-sti`,
+  `/indices/ai-lpi`).
+- **Frontend:** public `/indices` page showing value, band, per-component weight
+  and score, source, method version and a live/degraded badge with the degradation
+  reason — the honesty layer made visible to a buyer.
+- Docs: `docs/INDICES.md` publishes the full method, weights, bands, revision
+  policy and limitations (including what is deliberately *not* yet a component).
+- **Tests:** `tests/test_indices.py` (20) — method/version/weights contract, bands,
+  per-component traceability, honest degradation (partial and total), idempotent
+  history publishing, stable permalinks, 404 for unknown indices, and the digest's
+  caveat/provenance coupling.
+
+
 - **One catalog, one entitlement write.** `core/billing/stripe_catalog.py` derives
   the Stripe Products/Prices from `core/entitlements.py` (idempotent
   create-or-find), and `core/billing/entitlement_sync.py` is the single place a

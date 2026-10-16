@@ -345,9 +345,11 @@ from core.routers.macro_routes import router as macro_router
 from core.routers.causal_routes import router as causal_router
 from core.routers.ras_routes import router as ras_router
 from core.routers.entitlements_routes import router as entitlements_router
+from core.routers.indices_routes import router as indices_router
 from core.auth import require_admin
 app.include_router(auth_router)
 app.include_router(entitlements_router)
+app.include_router(indices_router)
 app.include_router(billing_router)
 app.include_router(disease_router)
 app.include_router(lice_router)

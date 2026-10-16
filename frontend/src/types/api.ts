@@ -170,6 +170,59 @@ export interface BillingCatalog {
   licensed_tier: { plan: string; name: string; audience: string; note: string };
 }
 
+/** /api/indices — published AI-STI / AI-LPI values. */
+export interface IndexComponent {
+  name: string;
+  weight: number;
+  score: number;
+  raw: Record<string, unknown> | null;
+  source: string;
+  used: boolean;
+  note?: string | null;
+}
+
+export interface IndexResult {
+  index: string;
+  name: string;
+  version: string;
+  value: number | null;
+  band: string | null;
+  as_of: string;
+  week: string;
+  components: IndexComponent[];
+  components_used: number;
+  components_missing: string[];
+  sources: string[];
+  provenance: DataProvenance;
+  permalink: string;
+  api: string;
+  methodology_url: string;
+  disclaimer: string;
+}
+
+export interface IndicesResponse {
+  method_version: string;
+  indices: Record<string, IndexResult>;
+  methodology_url: string;
+  disclaimer: string;
+}
+
+export interface BioPriceWeekly {
+  report: string;
+  version: string;
+  week: string;
+  as_of: string;
+  headline: string;
+  transmission: { read: string; basis: string; note: string };
+  indices: Record<string, IndexResult>;
+  supply: Record<string, unknown>;
+  price: Record<string, unknown>;
+  caveats: string[];
+  provenance: DataProvenance;
+  permalink: string;
+  api: string;
+}
+
 /** /api/farms/biomass/national */
 export interface BiomassNational {
   total_standing_tonnes: number;

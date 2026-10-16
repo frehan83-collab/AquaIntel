@@ -10,7 +10,8 @@
  */
 import type {
   HealthResponse, LiceSummary, DecisionCard, FarmPortfolioResponse,
-  BiomassNational, MarketBiomass, BillingCatalog, SSBPriceHistory, FeedCostLatest, CompetitivenessIndex,
+  BiomassNational, MarketBiomass, BillingCatalog, IndicesResponse, IndexResult, BioPriceWeekly,
+  SSBPriceHistory, FeedCostLatest, CompetitivenessIndex,
   FuturesForwardCurve, FuturesBasis, LeaderEntry, AnomalyScores,
   MorningBrief, RegimeAlert, DiseaseNorway, DiseaseByCompany,
   ResistanceMap, ASCReadiness, ForecastResponse, EnsembleForecast,
@@ -545,6 +546,14 @@ export const api = {
   marketBiomass: () => fetchAPI<MarketBiomass>("/api/market/biomass"),
   // Canonical plan catalog + Stripe prices (mock: true when Stripe is unset)
   billingCatalog: () => fetchAPI<BillingCatalog>("/api/billing/catalog"),
+  // Published named indices (AI-STI, AI-LPI) with method version + provenance
+  indices: () => fetchAPI<IndicesResponse>("/api/indices"),
+  index: (code: string) => fetchAPI<IndexResult>(`/api/indices/${code.toLowerCase()}`),
+  indexHistory: (code: string, limit = 52) =>
+    fetchAPI<{ index: string; version: string; observations: Array<Record<string, unknown>> }>(
+      `/api/indices/${code}/history?limit=${limit}`,
+    ),
+  bioPriceWeekly: () => fetchAPI<BioPriceWeekly>("/api/indices/bio-price-weekly"),
   // Start a checkout for a canonical plan key (see /api/entitlements/plans)
   billingCheckout: (plan: string) =>
     fetchAPI<{ checkout_url: string; plan: string; demo_mode?: boolean }>(
