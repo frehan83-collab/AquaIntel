@@ -341,7 +341,26 @@ test — so a new data route cannot ship without a deliberate provenance decisio
 The last two demonstrate the decorator's safe nesting: an engine that already sets
 `data_provenance` wins, so the envelope never overwrites a more specific truth.
 
-### What is *not* claimed
+### Ratchet fix — anchored to the frozen contract (post-Step-8 hardening)
+
+The full suite surfaced a real defect in the ratchet itself: it read the **live
+FastAPI app**, so other test modules that register throwaway routes for error-path
+coverage (`/api/test-not-found`, `/api/test-upstream-failure`) made the inventory
+order-dependent and produced two false failures in the full run only.
+
+`core/provenance_register.data_routes()` now reads **`docs/openapi.frozen.json`** —
+the declared surface, and the same artifact the OpenAPI contract test uses. The
+inventory is therefore deterministic and re-frozen deliberately:
+
+```
+237 /api GET routes: 33 exempt, 204 baselined, 0 unregistered
+```
+
+Tests: `tests/test_provenance_ratchet.py` 13 passed standalone; the mixed-context
+re-run is noted in the session log (the route-liveness contract test performs live
+socket probes and is slow/unavailable in a sandbox without network).
+
+
 
 The register and baseline prove **a decision was recorded**, not that every one of
 the 207 routes actually carries provenance today. The runtime measurement of that

@@ -19,6 +19,7 @@ import json
 from pathlib import Path
 
 BASELINE_PATH = Path(__file__).resolve().parents[1] / "docs" / "provenance_baseline.json"
+OPENAPI_FROZEN = Path(__file__).resolve().parents[1] / "docs" / "openapi.frozen.json"
 
 # Prefix → {category, reason}. Nothing here may return measured data.
 EXEMPT: dict[str, dict[str, str]] = {
@@ -103,16 +104,38 @@ def is_exempt(path: str) -> bool:
 
 
 def data_routes() -> list[str]:
-    """Every GET route under /api that could return data (sorted, unique)."""
+    """GET /api routes from the FROZEN OpenAPI contract (sorted, unique).
+
+    Deliberately not the live app: other test modules register throwaway routes
+    (e.g. `/api/test-not-found`) for error-path coverage, which made a live-app
+    inventory order-dependent and produced false ratchet failures. The frozen
+    contract is the declared surface — the same artifact the OpenAPI contract test
+    uses — so the ratchet is deterministic and re-frozen deliberately.
+    """
+    if OPENAPI_FROZEN.exists():
+        try:
+            spec = json.loads(OPENAPI_FROZEN.read_text(encoding="utf-8"))
+            paths = {
+                path
+                for path, operations in (spec.get("paths") or {}).items()
+                if "get" in operations
+                and path.startswith("/api")
+                and "{" not in path
+            }
+            if paths:
+                return sorted(paths)
+        except Exception:  # pragma: no cover - fall through to the live app
+            pass
+
     from core.api import app
 
-    paths: set[str] = set()
+    fallback: set[str] = set()
     for route in app.routes:
         methods = getattr(route, "methods", None) or set()
         path = getattr(route, "path", "")
         if "GET" in methods and path.startswith("/api") and "{" not in path:
-            paths.add(path)
-    return sorted(paths)
+            fallback.add(path)
+    return sorted(fallback)
 
 
 def load_baseline() -> dict:

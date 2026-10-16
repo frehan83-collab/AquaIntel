@@ -2,9 +2,9 @@
   "version": "1.0",
   "note": "Non-exempt /api GET routes. A route may only be added here after a deliberate provenance decision (provenance attached, or an exemption added to core/provenance_register.py). Regenerate with `python scripts/provenance_ratchet.py --update`.",
   "counts": {
-    "total_routes": 240,
+    "total_routes": 237,
     "exempt": 33,
-    "registered": 207
+    "registered": 204
   },
   "exempt_prefixes": [
     "/api/accuracy/artifacts",
@@ -81,7 +81,6 @@
     "/api/disease/norway/geo",
     "/api/disease/resistance-map",
     "/api/disease/treatments",
-    "/api/docs",
     "/api/efficacy/benchmarks",
     "/api/efficacy/by-region",
     "/api/efficacy/by-season",
@@ -166,7 +165,6 @@
     "/api/market/ssb-price-history",
     "/api/market/ssb-seasonal",
     "/api/metrics",
-    "/api/metrics/prometheus",
     "/api/ml/chronos/model-comparison",
     "/api/ml/chronos/price-forecast",
     "/api/ml/chronos/supply-forecast",
@@ -202,7 +200,6 @@
     "/api/ras/summary",
     "/api/ras/timeline",
     "/api/rate-limit-info",
-    "/api/redoc",
     "/api/regime/alerts",
     "/api/regime/company-risk",
     "/api/regime/states",
