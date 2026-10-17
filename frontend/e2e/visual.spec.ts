@@ -24,7 +24,7 @@ const LICE_SUMMARY = {
 
 const API_STUBS: Array<[string, unknown]> = [
   ["/api/lice/summary", LICE_SUMMARY],
-  ["/api/signals", []],
+  ["/api/signals", { signals: [], withdrawn: true }],  // WS-20: withdrawal notice
   ["/api/leaders/top30", []],
   ["/api/market/ssb-price-history", { spot_nok: 73.8, history: [] }],
   ["/api/regime/alerts", []],

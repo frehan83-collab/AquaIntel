@@ -19,7 +19,6 @@ import type {
   FeedCostCompositeIndex,
   SupplyDemandBalance,
   SentimentSummary,
-  Signal,
   MarketForwardCurve,
   PriceOutlookMulti,
   EventImpactResult,
@@ -52,7 +51,6 @@ export default function TraderPage() {
   const [feedIndex, setFeedIndex] = useState<FeedCostCompositeIndex | null>(null);
   const [supplyBalance, setSupplyBalance] = useState<SupplyDemandBalance | null>(null);
   const [sentimentData, setSentimentData] = useState<SentimentSummary | null>(null);
-  const [signals, setSignals] = useState<Signal[]>([]);
   const [forwardCurve, setForwardCurve] = useState<MarketForwardCurve | null>(null);
   const [priceOutlook, setPriceOutlook] = useState<PriceOutlookMulti | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,12 +68,13 @@ export default function TraderPage() {
 
   const load = async () => {
     setLoading(true);
-    const [r1, r2, r3, r4, r5, r6, r7] = await Promise.allSettled([
+    // WS-20: the equity direction signals panel was taken down (withdrawn
+    // 2026-10-17 pending a legal opinion; see /api/legal/advice-boundary).
+    const [r1, r2, r3, r4, r6, r7] = await Promise.allSettled([
       api.spotPrice(),
       api.feedCostCompositeIndex(),
       api.supplyDemandBalance(),
       api.sentimentSummary(),
-      api.signals(),
       api.forwardCurve(12),
       api.priceOutlookMulti().catch(handleError("trader_price_outlook_multi")),
     ]);
@@ -83,7 +82,6 @@ export default function TraderPage() {
     if (r2.status === "fulfilled") setFeedIndex(r2.value);
     if (r3.status === "fulfilled") setSupplyBalance(r3.value);
     if (r4.status === "fulfilled") setSentimentData(r4.value);
-    if (r5.status === "fulfilled") setSignals(r5.value);
     if (r6.status === "fulfilled") setForwardCurve(r6.value);
     if (r7.status === "fulfilled" && r7.value) setPriceOutlook(r7.value);
     setLoading(false);
@@ -400,44 +398,9 @@ export default function TraderPage() {
         )}
       </GlassCard>
 
-      {/* Bottom grid: Signals + Sentiment + Forward Curve */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Active Signals */}
-        <GlassCard>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-blue-400" />
-            </div>
-            <h2 className="text-lg font-semibold text-white">{t("trader.active_signals")}</h2>
-          </div>
-          {signals.length === 0 ? (
-            <p className="text-white/40 text-sm">{t("common.no_data")}</p>
-          ) : (
-            <div className="space-y-2 max-h-72 overflow-y-auto">
-              {signals.slice(0, 8).map((sig, i: number) => (
-                <div key={i} className="flex items-center justify-between bg-white/5 rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                      sig.direction?.toUpperCase() === "SHORT"
-                        ? "bg-rose-500/20 text-rose-400"
-                        : "bg-emerald-500/20 text-emerald-400"
-                    }`}>
-                      {sig.direction?.toUpperCase()}
-                    </span>
-                    <span className="text-white font-medium text-sm">{sig.ticker}</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs text-white/50">Strength</div>
-                    <div className="text-sm text-white font-medium">
-                      {typeof sig.strength === "number" ? `${formatNumber(sig.strength * 100, locale)}%` : sig.strength}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </GlassCard>
-
+      {/* Bottom grid: Sentiment + Forward Curve (the equity signals panel was
+          withdrawn — WS-20) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Market Sentiment */}
         <GlassCard>
           <div className="flex items-center gap-2 mb-4">

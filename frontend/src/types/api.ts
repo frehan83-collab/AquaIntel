@@ -671,7 +671,16 @@ export interface YoYComparison {
 
 // ── Signals Types ────────────────────────────────────────────────────
 
-/** Element of /api/signals response */
+/** /api/signals since WS-20: the withdrawal notice, never a signal */
+export interface SignalsWithdrawn {
+  signals: [];
+  withdrawn: true;
+  since: string;
+  reason: string;
+  advice_boundary: string;
+}
+
+/** Element of the former /api/signals response (withdrawn by WS-20) */
 export interface Signal {
   id: number;
   ticker: string;

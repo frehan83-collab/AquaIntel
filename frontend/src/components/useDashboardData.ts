@@ -9,7 +9,7 @@ import type { Locale } from "@/lib/i18n";
 import type {
   LiceSummary, AnomalyScores, RegimeAlert, AlertItem, AlertsResponse,
   SSBPriceHistory, MacroSnapshot, GlobalSupply, DiseaseByCompany,
-  AISHarvestSignalRow, PairsSignal, Signal,
+  AISHarvestSignalRow, PairsSignal,
 } from "@/types/api";
 
 export interface DashboardLeader {
@@ -52,7 +52,6 @@ export interface ProductionSummary {
 export interface DashboardData {
   summary: LiceSummary | null;
   fetchedAt: Date | null;
-  signals: Signal[];
   leaders: DashboardLeader[];
   ssbSpot: number;
   supplyData: Array<{ week: string; volume: number }>;
@@ -104,8 +103,7 @@ export function useDashboardData(locale: Locale): DashboardData {
 
   const summaryQ = useDashboardQuery<LiceSummary>(
     ["lice-summary"], () => api.liceSummary() as Promise<LiceSummary>, "lice_summary", { critical: true });
-  const signalsQ = useDashboardQuery<Signal[]>(
-    ["signals"], () => api.signals() as Promise<Signal[]>, "signals");
+  // WS-20: the equity direction signals are withdrawn — not fetched here.
   const leadersQ = useDashboardQuery<unknown>(
     ["leaders-top30"], () => api.leadersTop30() as Promise<unknown>, "leaders_top30");
   const ssbQ = useDashboardQuery<SSBPriceHistory>(
@@ -201,7 +199,6 @@ export function useDashboardData(locale: Locale): DashboardData {
   return {
     summary: (summaryQ.data as LiceSummary) ?? null,
     fetchedAt,
-    signals: (signalsQ.data as Signal[]) ?? [],
     leaders,
     ssbSpot,
     supplyData,

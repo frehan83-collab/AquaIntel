@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
+from core.legal.equity_signals import advice_boundary_entry
+
 router = APIRouter(prefix="/api/legal", tags=["legal"])
 
 # Reusable, mandatory disclosure string for every signal/forecast surface.
@@ -33,10 +35,14 @@ ADVICE_BOUNDARY = {
         "Indices publish their method version, component weights and provenance.",
         "Accuracy figures appear only when a validated artifact produced them "
         "(see /api/accuracy/method).",
-        "No output is framed as a recommendation to buy, sell or hold a security.",
+        "No output is framed as a recommendation to buy, sell or hold a security; "
+        "the outputs that were, and those still under review, are listed in "
+        "withdrawn_outputs.",
         "No execution, no order routing, no discretionary management.",
     ],
     "required_disclosure": SIGNAL_DISCLOSER,
+    # WS-20: outputs taken down because they crossed (or may cross) this boundary
+    "withdrawn_outputs": [advice_boundary_entry()],
     "jurisdiction_notes": [
         "Assessed against Norwegian and EU regimes (MiFID II perimeter, Norwegian "
         "securities law). Other jurisdictions require separate review.",

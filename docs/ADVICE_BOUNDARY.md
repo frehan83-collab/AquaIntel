@@ -38,6 +38,36 @@ forecasts and their provenance for professional users to interpret.
 perimeter, Norwegian securities law). Other jurisdictions need separate review.
 Marketing material must not present the platform as an adviser.
 
+**Withdrawn outputs (WS-20, 2026-10-17).** Safeguard 3 above was not true until this
+date: anonymous `GET /api/signals` served the signal generator's directional calls
+on listed salmon shares (on the dev box 1,238 rows, every one SHORT, on Grieg,
+Lerøy, Mowi, SalMar and others), each with a per-share impact estimate, and
+/trader, /signals, the dashboard and the chat showed them. Information that proposes
+an investment decision in a financial instrument may be an investment
+recommendation under the EU Market Abuse Regulation, Art. 3(1)(34). They are
+withdrawn pending a legal opinion; `core/legal/equity_signals.py` is the one
+definition and `/api/legal/advice-boundary` publishes it as `withdrawn_outputs`:
+
+- `GET /api/signals` serves the withdrawal notice and no signal (the table keeps its
+  rows); `POST /api/signals/confirm` and `/reject` answer 410.
+- The chat (rule-based answer and LLM context) no longer lists pending signals and
+  tells the model never to say whether to buy, sell or short a listed security.
+- The /trader signals panel, the /signals trading and order-history sections and
+  the dashboard's Recent Signals widget are removed.
+- `GET /api/market/hedger-signals` serves only the market hedger's salmon-price
+  (`SALMON_SPOT`) rows; the hedger also writes LONG/SHORT rows on listed shares.
+
+Still served, to review with counsel (published as `under_review`, tracked as WS-28
+in `docs/HANDOVER.md`): the pairs positions on listed shares (`/api/pairs/signals`
+and the pairs cards on /signals and the dashboard), per-ticker sentiment
+(`/api/sentiment/signals`), the paper order history (`/api/orders`), the trader
+Event Impact Simulator's per-company stock moves, and the agents that write
+directional rows to the `signals` table (signal generator, market hedger,
+prediction, bloom), which run only with the agents service. The execution agent
+acts only on user-confirmed signals, and confirming now answers 410. Also listed in
+WS-28: the Streamlit `dashboard/app.py` still renders pending signals with
+confirm/reject (not deployed), and the admin `signals` export.
+
 ## 2. EU AI Act transparency notes
 
 | System | Purpose | Transparency | Human oversight |

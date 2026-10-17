@@ -183,34 +183,9 @@ async function getAIResponse(message: string): Promise<string> {
     }
 
     if (isSignal) {
-      const data = await api.signals();
-      const signals: any[] = Array.isArray(data) ? data : [];
-      const active = signals.filter(
-        (s: any) => s.status === "active" || s.status === "pending" || !s.status
-      );
-
-      if (active.length === 0) {
-        return `**Trading Signals**\n\nNo active trading signals at this time. FishIntel monitors Norwegian aquaculture equities for momentum, mean-reversion, and lice-driven supply shocks.\n\nSignals are generated when statistical confidence exceeds our threshold. Check back shortly or view the Signals dashboard for historical performance.`;
-      }
-
-      let resp = `**Active Trading Signals** (${active.length} total)\n\n`;
-      active.slice(0, 3).forEach((s: any, i: number) => {
-        const ticker = s.ticker ?? s.symbol ?? s.company ?? "Unknown";
-        const direction = s.direction ?? s.signal ?? s.type ?? "—";
-        const confidence: number = s.confidence ?? s.score ?? 0;
-        const reason: string = s.reason ?? s.rationale ?? s.notes ?? "";
-        resp += `**${i + 1}. ${ticker}** — ${String(direction).toUpperCase()}\n`;
-        if (confidence > 0) {
-          resp += `   Confidence: **${formatNum(confidence * 100, 0)}%**\n`;
-        }
-        if (reason) {
-          resp += `   Rationale: ${reason}\n`;
-        }
-        resp += `\n`;
-      });
-
-      resp += `FishIntel signals combine lice data, supply forecasts, sentiment analysis, and statistical pair relationships.`;
-      return resp;
+      // WS-20: equity direction signals are withdrawn; the server-side chat says
+      // the same (core/legal/equity_signals.py).
+      return `**Equity signals withdrawn**\n\nThe signal generator's directional calls on listed salmon shares were withdrawn on 17 October 2026 pending a legal opinion. What was withdrawn, why, and what is still under review is published at /api/legal/advice-boundary.`;
     }
 
     if (isRisk) {
@@ -299,15 +274,11 @@ async function getAIResponse(message: string): Promise<string> {
 
     // General fallback
     const data = await api.intelligenceSummary();
-    const signalCount: number = data?.signal_count ?? data?.active_signals ?? 0;
     const avgLice: number = data?.avg_lice ?? data?.lice?.average ?? 0;
 
     let resp = `**FishIntel Intelligence Overview**\n\n`;
     resp += `I'm here to help navigate Norwegian salmon market intelligence. Live status:\n\n`;
 
-    if (signalCount > 0) {
-      resp += `  • **${signalCount} active trading signals** across Norwegian aquaculture equities\n`;
-    }
     if (avgLice > 0) {
       resp += `  • **Average lice count:** ${formatLice(avgLice)} lice/fish across production areas\n`;
     }
@@ -328,7 +299,7 @@ async function getAIResponse(message: string): Promise<string> {
 
 const SUGGESTIONS = [
   { label: "What's the current lice situation?", icon: Fish },
-  { label: "Show me active trading signals", icon: Zap },
+  { label: "What's the 8-week price outlook?", icon: Zap },
   { label: "What's driving salmon prices?", icon: Activity },
   { label: "Which farms have the highest risk?", icon: Circle },
 ] as const;
@@ -639,15 +610,6 @@ export default function ChatPage() {
             }`}
           />
           <span className="text-[11px] text-white/30">Prices: live</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-ocean-400/80" />
-          <span className="text-[11px] text-white/30">
-            Signals:{" "}
-            <span className="text-ocean-400 font-medium">
-              {contextStatus.signalCount} active
-            </span>
-          </span>
         </div>
       </div>
 

@@ -3,11 +3,10 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
-  TrendingDown, TrendingUp, DollarSign, ArrowRight, Shield,
+  DollarSign, ArrowRight, Shield,
   Settings2, Printer,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import GlassCard from "@/components/GlassCard";
 import TickerStrip from "@/components/TickerStrip";
 import SkeletonCard from "@/components/SkeletonCard";
 
@@ -38,7 +37,7 @@ export default function DashboardPage() {
   const isVisible = (id: string) => widgets.find((w) => w.id === id)?.visible !== false;
   const widgetOrder = (id: string) => { const idx = widgets.findIndex((w) => w.id === id); return idx >= 0 ? idx : 99; };
 
-  const { summary, fetchedAt, signals, leaders, ssbSpot, supplyData,
+  const { summary, fetchedAt, leaders, ssbSpot, supplyData,
     regimeAlerts, pairsSignals, aisData, macro, supply, diseaseCount,
     anomaly, production, counties, heroAlert, alertsLoaded,
     metricsExpanded, setMetricsExpanded } = data;
@@ -104,7 +103,6 @@ export default function DashboardPage() {
         { label: "Avg Lice", value: summary?.avg_adult_female_lice != null ? formatNumber(summary.avg_adult_female_lice, locale, 3) : "\u2014", trend: (summary?.avg_adult_female_lice ?? 0) > 0.3 ? "up" as const : "down" as const },
         { label: "Companies", value: leaders.length ? `${leaders.length}` : "\u2014", trend: "flat" as const },
         { label: "Anomaly", value: anomaly?.composite_score != null ? formatNumber(anomaly.composite_score, locale, 0) : "\u2014", trend: (anomaly?.composite_score ?? 0) > 50 ? "up" as const : "flat" as const },
-        { label: "Signals", value: signals.length ? `${signals.length}` : "\u2014", trend: "flat" as const },
       ]} />
 
       <DashboardKPIStrip isVisible={isVisible("kpi-strip")} order={widgetOrder("kpi-strip")} metricsExpanded={metricsExpanded} setMetricsExpanded={setMetricsExpanded}
@@ -129,33 +127,8 @@ export default function DashboardPage() {
         </ChartContainer>
       </div></div>}
 
-      {/* Signals Table */}
-      {isVisible("signals") && <div style={{ order: widgetOrder("signals") }}><GlassCard delay={0.15}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Recent Signals</h3>
-          <Link href="/signals" className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.04] text-[var(--text-secondary)] border border-white/[0.06] hover:text-ocean-400 transition-colors">{signals.length} total</Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead><tr className="border-b border-white/[0.06]">
-              <th className="text-left py-2.5 px-3 text-[var(--text-secondary)] font-medium text-[11px] uppercase tracking-wider">Time</th>
-              <th className="text-left py-2.5 px-3 text-[var(--text-secondary)] font-medium text-[11px] uppercase tracking-wider">Ticker</th>
-              <th className="text-left py-2.5 px-3 text-[var(--text-secondary)] font-medium text-[11px] uppercase tracking-wider">Direction</th>
-              <th className="text-left py-2.5 px-3 text-[var(--text-secondary)] font-medium text-[11px] uppercase tracking-wider">Strength</th>
-              <th className="text-left py-2.5 px-3 text-[var(--text-secondary)] font-medium text-[11px] uppercase tracking-wider">Status</th>
-            </tr></thead>
-            <tbody>{signals.slice(0, 8).map((sig, i) => (
-              <motion.tr key={sig.id || i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.18 + i * 0.03 }} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
-                <td className="py-3 px-3 text-[var(--text-secondary)] text-xs font-mono">{sig.created_at?.slice(0, 16)?.replace("T", " ") || "\u2014"}</td>
-                <td className="py-3 px-3 font-semibold text-[var(--text-primary)]">{sig.ticker}</td>
-                <td className="py-3 px-3"><span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold ${sig.direction?.toLowerCase() === "short" ? "bg-rose-500/10 text-rose-400 border border-rose-500/15" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/15"}`}>{sig.direction?.toLowerCase() === "short" ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}{sig.direction}</span></td>
-                <td className="py-3 px-3"><div className="flex items-center gap-2.5"><div className="w-20 h-1.5 rounded-full bg-white/[0.06] overflow-hidden"><motion.div className="h-full rounded-full bg-gradient-to-r from-ocean-600 to-ocean-400" initial={{ width: 0 }} animate={{ width: `${(sig.strength || 0) * 100}%` }} transition={{ delay: 0.2 + i * 0.03, duration: 0.4 }} /></div><span className="text-xs text-[var(--text-secondary)] font-mono tabular-nums">{formatNumber((sig.strength || 0) * 100, locale, 0)}%</span></div></td>
-                <td className="py-3 px-3"><span className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${sig.status === "confirmed" ? "bg-emerald-500/10 text-emerald-400" : sig.status === "rejected" ? "bg-rose-500/10 text-rose-400" : "bg-amber-500/10 text-amber-400"}`}>{sig.status}</span></td>
-              </motion.tr>
-            ))}</tbody>
-          </table>
-        </div>
-      </GlassCard></div>}
+      {/* WS-20: the Recent Signals widget (equity direction calls on listed
+          shares) was withdrawn on 2026-10-17 pending a legal opinion. */}
 
       <DashboardProduction isVisible={isVisible("detail-cards")} order={widgetOrder("detail-cards")} regimeAlerts={regimeAlerts} pairsSignals={pairsSignals} aisData={aisData} production={production} counties={counties} locale={locale} t={t} />
 

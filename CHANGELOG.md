@@ -5,6 +5,51 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
+### WS-20 — SHORT equity signals taken down (2026-10-17)
+- **Why:** anonymous `GET /api/signals` served the signal generator's directional
+  calls on listed salmon shares — on the dev box 1,238 rows, every one SHORT, on
+  Grieg (GSF), Lerøy (LSG), Mowi (MOWI), SalMar (SALM) and others, each with a
+  per-share impact such as "Expected stock impact: -17.2% (NOK -28/share)" — and
+  /trader, /signals, the dashboard and the chat showed them, against the project's
+  own advice boundary. This may be an investment recommendation under the EU Market
+  Abuse Regulation, Art. 3(1)(34).
+- **New `core/legal/equity_signals.py`:** the one definition of the withdrawal
+  (reason, notice, chat answer, advice-boundary entry with what is still under
+  review).
+- **API:** `GET /api/signals` serves `{"signals": [], "withdrawn": true, "since",
+  "reason", "advice_boundary"}` and never reads the table (query parameters kept:
+  frozen contract and limit bound); `POST /api/signals/confirm` and `/reject`
+  answer 410 (confirming was the consent step the execution agent turned into a
+  paper order). `/api/legal/advice-boundary` publishes `withdrawn_outputs` with an
+  `under_review` list of the same-kind outputs still served, and its safeguard line
+  points there. `GET /api/market/hedger-signals` serves only the hedger's
+  salmon-price (`SALMON_SPOT`) rows — the hedger also writes LONG/SHORT rows on
+  listed shares, which its first tick would otherwise have published.
+- **Chat:** the rule-based answer says the signals are withdrawn instead of listing
+  them (and no longer falls back to the pairs calls); the LLM context and the
+  `/api/chat` system prompt no longer carry pending signals and tell the model never
+  to say whether to buy, sell or short a listed security; the chat page and the
+  fallback answer no longer advertise "active trading signals".
+- **Frontend:** the /trader signals panel, the /signals pending, processed and
+  order-history sections (replaced by a withdrawal notice), the dashboard's Recent
+  Signals widget and ticker item, and the chat page's client-side signal answer are
+  removed; `api.confirmSignal`/`rejectSignal` deleted; `api.signals()` is typed as
+  the notice; the e2e visual stub and README's route table follow. Verified on the
+  running dev frontend (/signals, /trader, /): no signal rendered, 0 console errors.
+- **Tests:** `tests/test_signals_takedown.py` (15): seeds SHORT and LONG rows on
+  GSF/LSG/MOWI/SALM into a throwaway DB bound to every reader, then checks the route
+  (4 query variants), the limit bound, confirm/reject (410, row unchanged), the
+  hedger route, the published advice boundary, both chat paths and the page sources.
+  Added to the fast gate.
+- **Review:** an independent review found no blockers; its should-fix items (the
+  hedger route, the notice over-claiming, the chat still advertising signals) and
+  the real nits are fixed.
+- **Not done here (WS-28):** pairs positions on listed shares, per-ticker sentiment,
+  `/api/orders`, the trader Event Impact Simulator's per-company stock moves, the
+  agents that write directional rows (signal generator, hedger, prediction, bloom),
+  the Streamlit dashboard, the admin `signals` export, the TopBar's dead
+  pending-count call; and the legal opinion itself.
+
 ### WS-20 — public honesty on the landing, API docs, billing and pricing pages (2026-10-17)
 - **Why:** the pages a prospect reads first carried invented testimonials (one
   credited to Nordic Investment Bank), stale typed counts ("229 API Endpoints",

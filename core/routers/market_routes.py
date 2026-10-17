@@ -511,6 +511,9 @@ async def hedger_signals():
         signals = (await s.execute(
             select(Signal)
             .where(Signal.rationale.like("[HEDGER]%"))
+            # WS-20: the hedger also writes LONG/SHORT rows on listed shares
+            # (MOWI/SALM/LSG/GSF); only the salmon-price rows are served.
+            .where(Signal.ticker == "SALMON_SPOT")
             .order_by(Signal.created_at.desc())
             .limit(20)
         )).scalars().all()

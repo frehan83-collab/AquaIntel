@@ -8,6 +8,8 @@
 > **WS-19 landed 2026-10-17:** index method 2.0.0 (AI-STI without the lice-quota
 > component, AI-LPI v1.0 withdrawn), Alembic **020** (head `020`) marking the
 > method-1.0.0 observations superseded; fast gate 247 passed + 1 skip.
+> **WS-20's signals takedown landed 2026-10-17:** `GET /api/signals` serves no
+> signal; `tests/test_signals_takedown.py` joined the fast gate (262 passed + 1 skip).
 > Every number below was measured, not copied from an older doc. Re-verify with the
 > commands in §2 before trusting them.
 >
@@ -46,7 +48,8 @@ cd frontend && npm run dev
 python -m pytest tests/test_entitlements.py tests/test_billing_money_path.py \
   tests/test_indices.py tests/test_accuracy_registry.py tests/test_production_truth.py \
   tests/test_partner_pilots.py tests/test_legal.py tests/test_provenance_ratchet.py \
-  tests/test_gtm_roi.py tests/test_migrations.py tests/test_openapi_contract.py -q   # 247 pass + 1 skip (network), ~24s (after WS-19)
+  tests/test_gtm_roi.py tests/test_migrations.py tests/test_openapi_contract.py \
+  tests/test_signals_takedown.py -q   # 262 passed + 1 skip (network), ~25s (after WS-20 signals)
 
 # the full suite (≈4.5 min) — command runners time out at ~30s, so background it:
 #   Start-Process -FilePath python -ArgumentList '-m','pytest','tests/','-q' \
@@ -454,8 +457,15 @@ method version keeps old and new apart.
 from the landing page; plans render from the catalog on landing and billing (WS-11
 closed); the API reference matches the frozen contract and real response shapes;
 plan-catalog wording corrected; `tests/test_public_claims.py` guards page sources
-and rendered catalog text. **Left:** the SHORT-signals takedown (in progress in its
-own change); one product name and the Desk/Operator inversion (owner decisions); the
+and rendered catalog text. **Signals takedown done 2026-10-17:**
+`core/legal/equity_signals.py`; `GET /api/signals` serves the withdrawal notice and
+never reads the table, confirm/reject answer 410, `/api/market/hedger-signals` serves
+only `SALMON_SPOT`, the chat paths no longer list or advertise signals, the /trader
+panel, /signals trading and order sections and the dashboard widget are gone,
+`/api/legal/advice-boundary` lists `withdrawn_outputs` and `under_review`;
+`tests/test_signals_takedown.py` (15, in the fast gate). The legal opinion and the
+other equity-direction surfaces are WS-28. **Left:** one product name and the
+Desk/Operator inversion (owner decisions); the
 OpenAPI `info.description` "real-time salmon market intelligence" (`core/api.py`,
 needs a deliberate re-freeze of `docs/openapi.frozen.json`).
 **Why:** the public landing page shows invented testimonials under "Trusted by
@@ -625,6 +635,40 @@ shows its week, source and confidence mark; no unconditional LIVE indicator rema
 one formatter renders each value once; new visual baselines are taken once the
 design is approved (the current baseline covers only home, market, satellite and
 traffic-light, and a redesign fails it by intent).
+
+### WS-28 · Remaining equity-direction surfaces + the legal opinion
+**Why:** WS-20 took down the signal generator's SHORT/LONG calls everywhere they were
+shown, but other surfaces still put a direction or a per-company financial impact
+next to a listed salmon share, and the agents that wrote the calls still exist.
+`/api/legal/advice-boundary` publishes this list as `under_review`.
+**Surfaces (measured 2026-10-17):** `GET /api/pairs/signals` and the pairs cards on
+/signals and the dashboard (`DashboardLiveIntelligence`, `DashboardProduction`) —
+paired positions on listed shares from the frozen `pairs_engine`; `GET
+/api/sentiment/signals` and the /signals sentiment card — per-ticker sentiment on
+MOWI/SALM/LSG/GSF; `GET /api/orders` — anonymous paper order history (one filled
+SELL GSF on this box); the /trader Event Impact Simulator — per-company revenue and
+stock-move estimates (`core/predictors/event_impact_model.py`); writers of
+directional rows to `signals`, which run only with the agents service: the signal
+generator, the market hedger (`agents/market_hedger_agent.py`, LONG/SHORT on listed
+tickers — `/api/market/hedger-signals` now serves only `SALMON_SPOT`), the
+prediction agent (`agents/prediction_agent.py`, per-share impact rationale) and the
+bloom agent (`agents/bloom_agent.py`, SHORT); the execution agent acts only on
+user-confirmed signals and confirm answers 410; the Streamlit `dashboard/app.py`
+lists pending signals with confirm/reject (not deployed); the admin `signals` export
+(`core/routers/admin_routes.py`, admin-only);
+`frontend/src/components/TopBar.tsx` still polls `api.signals()` for a badge that is
+now always hidden. Unrelated bug found on the way: the rule-based chat's forecast
+branch imports `core.market.price_ensemble`, which does not exist, so it always
+answers from its error path.
+**Steps:** get the short legal opinion WS-20 asked for (MAR Art. 3(1)(34), MiFID II
+perimeter); for each surface decide keep / reword / withdraw with counsel; withdraw
+through `core/legal/equity_signals.py` so the advice boundary lists it; stop the
+agents that write directional rows on listed securities from writing them before
+the agents service runs.
+**Acceptance:** a test per withdrawn surface in `tests/test_signals_takedown.py`
+seeding the data it would show; `main.py --agents-only` starts no agent that writes
+a directional row on a listed security; the opinion's conclusion recorded in
+`docs/ADVICE_BOUNDARY.md` and `under_review` emptied accordingly.
 
 ## 6. Traps that cost real time in this codebase
 

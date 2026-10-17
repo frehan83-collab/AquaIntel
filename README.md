@@ -147,9 +147,9 @@ docker-compose up -d
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/health` | GET | System health check |
-| `/api/signals` | GET | List trading signals |
-| `/api/signals/confirm` | POST | Confirm a signal for execution |
-| `/api/signals/reject` | POST | Reject a signal |
+| `/api/signals` | GET | Withdrawal notice: equity direction signals were withdrawn on 2026-10-17 (WS-20) |
+| `/api/signals/confirm` | POST | 410 — withdrawn with the signals |
+| `/api/signals/reject` | POST | 410 — withdrawn with the signals |
 | `/api/lice/summary` | GET | Latest lice data summary |
 | `/api/orders` | GET | Order history |
 | `/api/audit` | GET | Audit trail |

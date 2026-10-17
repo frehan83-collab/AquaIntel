@@ -14,7 +14,6 @@ const DEFAULT_WIDGETS: WidgetConfig[] = [
   { id: "kpi-strip", label: "Key Metrics", visible: true },
   { id: "intelligence", label: "Live Intelligence", visible: true },
   { id: "lice-chart", label: "Lice Chart & Export Volume", visible: true },
-  { id: "signals", label: "Recent Signals", visible: true },
   { id: "detail-cards", label: "Regime / Pairs / AIS / Production", visible: true },
   { id: "disclaimer", label: "Data Disclaimer", visible: true },
 ];

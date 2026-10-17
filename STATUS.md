@@ -637,3 +637,27 @@ added `tests/test_migrations.py`.
 - **Left:** SHORT-signals takedown (separate change in progress), product name and
   Desk/Operator inversion (owner decisions), OpenAPI description (re-freeze).
 
+## WS-20 — SHORT equity signals taken down — 2026-10-17
+
+- **Reproduced before the change:** the dev DB's `signals` table holds 1,238 rows,
+  all SHORT (GSF 396, MOWI 415, SALM 179, LSG 175, SALMON_SPOT 12, the rest company
+  names); the newest reads "Predicted 26.5% harvest reduction for GSF. Expected stock
+  impact: -17.2% (NOK -28/share)". `GET /api/signals` served them anonymously; the
+  chat listed them; /trader, /signals and / rendered them; confirm was open.
+- **Failing first:** 9 of 11 initial tests failed on the old code (route ×4, confirm,
+  reject, three page sources). The chat test (added when recon found the chat path)
+  and the hedger test (added after review) were each run against the HEAD versions
+  of the files they guard and failed there ("GSF SHORT | strength 0.68 | … Expected
+  stock impact"; `['MOWI', 'GSF', 'SALMON_SPOT']`).
+- **Verified after:** `tests/test_signals_takedown.py` 15 passed; the fast gate (now
+  including it) 262 passed + 1 skip; tsc 0 errors; ESLint 0 errors and no new
+  warnings; /signals, /trader and / on the running dev frontend show no signal and
+  no console error (the TopBar badge counted 9+ only because the API on :8000 was
+  started before the change; with this code the count is 0 and the badge hides).
+- **Review:** no blockers; the hedger route (it would have re-published LONG/SHORT
+  rows on listed shares from its first tick), an over-broad notice and the chat's
+  "active trading signals" copy were fixed with tests.
+- **Left (WS-28):** pairs, per-ticker sentiment, `/api/orders`, the Event Impact
+  Simulator, the agents that write directional rows, the Streamlit dashboard, the
+  admin export, the TopBar call, the legal opinion.
+

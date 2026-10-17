@@ -11,7 +11,8 @@ from sqlalchemy import select
 
 from core.auth import require_admin
 from core.async_db import get_async_session
-from core.models import Signal, Order
+from core.legal.equity_signals import notice as equity_signals_withdrawn
+from core.models import Order
 
 router = APIRouter(tags=["signals"])
 
@@ -20,48 +21,30 @@ class SignalConfirmRequest(BaseModel):
     signal_id: int
 
 
+# WS-20: equity direction signals are withdrawn (core/legal/equity_signals.py).
+# The routes keep their frozen signatures (query parameters and request body, so the
+# OpenAPI contract and the limit bound stand) but serve no signal: the table keeps
+# its rows, nothing reads them here.
+
+
 @router.get("/api/signals")
 async def list_signals(
     status: str | None = None,
     limit: int = Query(50, ge=1, le=1000),
 ):
-    async with get_async_session() as s:
-        q = select(Signal).order_by(Signal.created_at.desc()).limit(limit)
-        if status:
-            q = q.where(Signal.status == status)
-        signals = (await s.execute(q)).scalars().all()
-
-    return [
-        {
-            "id": sig.id,
-            "ticker": sig.ticker,
-            "direction": sig.direction,
-            "strength": sig.strength,
-            "status": sig.status,
-            "rationale": sig.rationale,
-            "created_at": sig.created_at.isoformat() if sig.created_at else None,
-            "confirmed": sig.confirmed_by_user,
-        }
-        for sig in signals
-    ]
+    return equity_signals_withdrawn()
 
 
 @router.post("/api/signals/confirm")
 async def confirm_signal(req: SignalConfirmRequest):
-    from execution.execution_agent import ExecutionAgent
-    success = await ExecutionAgent.confirm_signal(req.signal_id)
-    if not success:
-        raise HTTPException(400, "Signal not found or not in pending state")
-    return {"status": "confirmed", "signal_id": req.signal_id}
+    # Confirming was the consent step the execution agent turned into a (paper)
+    # order — a withdrawn signal can be neither confirmed nor rejected.
+    raise HTTPException(410, equity_signals_withdrawn())
 
 
 @router.post("/api/signals/reject")
 async def reject_signal(req: SignalConfirmRequest):
-    from execution.execution_agent import ExecutionAgent
-    success = await ExecutionAgent.reject_signal(req.signal_id)
-    if not success:
-        raise HTTPException(400, "Signal not found or not in pending state")
-    return {"status": "rejected", "signal_id": req.signal_id}
+    raise HTTPException(410, equity_signals_withdrawn())
 
 
 @router.get("/api/orders")

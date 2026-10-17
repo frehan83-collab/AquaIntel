@@ -33,7 +33,7 @@ import type {
   RegimeState, EquityPriceResponse, EsgCompanyScores,
   CompetitivenessScenarioResponse,
   MarketSpotPrice, MarketForwardCurve, FeedCostCompositeIndex,
-  EventImpactResult, SavedScenario, Signal,
+  EventImpactResult, SavedScenario, SignalsWithdrawn,
 } from "@/types/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -119,11 +119,9 @@ async function fetchAPI<T = any>(
 
 export const api = {
   health: () => fetchAPI<HealthResponse>("/api/health"),
-  signals: (status?: string) => fetchAPI<Signal[]>(`/api/signals${status ? `?status=${status}` : ""}`),
-  confirmSignal: (id: number) =>
-    fetchAPI("/api/signals/confirm", { method: "POST", body: JSON.stringify({ signal_id: id }) }),
-  rejectSignal: (id: number) =>
-    fetchAPI("/api/signals/reject", { method: "POST", body: JSON.stringify({ signal_id: id }) }),
+  // WS-20: equity direction signals are withdrawn — the route serves the notice
+  // only; confirm/reject answer 410 and have no client method.
+  signals: () => fetchAPI<SignalsWithdrawn>("/api/signals"),
   liceSummary: () => fetchAPI<LiceSummary>("/api/lice/summary"),
   orders: () => fetchAPI("/api/orders"),
   audit: () => fetchAPI("/api/audit"),

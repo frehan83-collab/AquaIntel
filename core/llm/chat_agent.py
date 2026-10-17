@@ -28,7 +28,7 @@ from core.llm.prompts import (
     HORIZON_CONTEXT_TEMPLATE,
 )
 from core.predictors.medium_term import HORIZON_ACCURACY, uncertainty_scale
-from core.models import LiceRecord, Locality, CompanyExposure, Signal
+from core.models import LiceRecord, Locality, CompanyExposure
 from core.async_db import get_async_session
 
 import structlog
@@ -434,21 +434,14 @@ class ChatAgent:
                                 f"max={pa_stats[1]:.3f}, active_sites={pa_stats[2]}"
                             )
 
-            # Pending signals
-            result = await s.execute(
-                select(Signal)
-                .where(Signal.status == "pending")
-                .order_by(Signal.created_at.desc())
-                .limit(5)
-            )
-            signals = result.scalars().all()
+        # WS-20: equity direction signals are withdrawn — the model gets the
+        # withdrawal, never the stored calls (core/legal/equity_signals.py).
+        from core.legal.equity_signals import REASON
 
-            if signals:
-                parts.append("\nPending signals:")
-                for sig in signals:
-                    parts.append(
-                        f"  {sig.ticker} {sig.direction} strength={sig.strength:.2f}"
-                    )
+        parts.append(
+            "\nEquity direction signals: withdrawn. " + REASON
+            + " Never say whether to buy, sell or short a listed security."
+        )
 
         return "\n".join(parts)
 
