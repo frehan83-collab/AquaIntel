@@ -160,6 +160,15 @@ class PriceEnsemble:
         self._ssb_seasonal_loaded = False
         self._load_model()
 
+    @property
+    def model_version(self) -> str:
+        """The tier this process actually runs (``ensemble_v1_rule`` when XGB is absent).
+
+        Accuracy artifacts must be published against this value, never against
+        what a script hopes was loaded.
+        """
+        return self._model_version
+
     def set_seasonal_pattern(self, pattern: dict[int, float]) -> None:
         """
         Update the seasonal pattern with real SSB data.

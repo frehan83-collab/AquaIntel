@@ -6,6 +6,60 @@
 ## What This Is
 Full-stack salmon aquaculture intelligence platform. ~300 API routes + 2 WebSockets, 24 router modules (incl. admin_routes, webhook_routes, apikey_routes; misc_routes 486 lines, 0 duplicates). 61 market engines (4 frozen, 1 offshore) + 3 ML engines (TimesFM 2.5, Chronos-2, Harvest Optimizer), 13 agents (incl. index_publisher). 59+ frontend pages, 38+ components (incl. RegionalHeatmap, useWebSocket, SupplyChainSankey, RadarChart, useTheme, ShortcutsHelp, KeyboardShortcuts). Dark/light theme toggle. Notification center with history. Webhook alerts (Slack/Teams/generic, auto-disable on failure). Farm Portfolio (multi-farm risk overview). API key management (bcrypt-hashed, rate limiting, rotation). API caching (ETag + 5-tier Cache-Control). Treatment cost comparison (7 methods). Company comparison (radar chart + metrics). Sidebar fuzzy search (Cmd+K). Keyboard shortcuts (vim-style navigation, Cmd+/, help modal). Custom alert rules (user-defined thresholds, live evaluation). Changelog page (release notes, What's New indicator). Batch data export (CSV/JSON admin compliance). i18n (NO/EN, 525 keys, all 59 pages wired, locale-aware formatting). Audit logging (admin trail with filters). Bookmarkable filters (URL-synced state). Dashboard customization (user-configurable widgets). Fully async DB (67+ refs, tuned pool). Gunicorn 4-worker production server. Production nginx (gzip, proxy cache, rate limiting, connection limits). Literature-cited treatment constants (Overton 2019, Mowi Handbook 2024). Stige lice model in treatment optimizer. Farm name search + "My Farms" saved list. Dashboard hero alert zone. InteractiveChart (crosshair hover, deployed on 7 pages) + ConfidenceBand + supply pipeline stacked bars. Disease PA grid overview. Market narrative banner. Brief dynamic section sorting + PDF export. Treatment history timeline. Bio Risk Map time slider (WIRED to backend, 8-week snapshots). 20 Alembic migrations, 31 DB tables (offshore columns, lice lineage, index supersession), 22 Pydantic schemas. 33 TypeScript API interfaces. OpenAPI v2.1.0 (/api/docs). Threshold alerts (WebSocket + TopBar + notification preferences). Error boundaries on 19 pages + 5 loading.tsx + 404. CI/CD 3 workflows + dependency scanning. Security headers. Mobile hamburger sidebar. PWA + offline. Demo mode + guided onboarding (80 seed treatment outcomes). GDPR privacy policy + data attribution footer. Data Honesty Layer (100+ provenance). YoY trends (6 pages). Decision Engine + MET.no with feedback loop (marketplace-learned profiles). Treatment Efficacy Marketplace (production: validated input, seed data, Pydantic schemas, learned profiles). Unified Scenario Sandbox. API Developer Portal. Multi-country (7). WebSocket Command Centre (real-time streaming + polling fallback). Excel export (SheetJS dynamic import .xlsx from DataTable). Regional Heatmap (PA-level disease/lice SVG). Satellite intelligence (SST, chlorophyll, farm clusters). Supply Chain Sankey (SVG flow diagram on Global Supply). Admin dashboard (data quality + platform health). WCAG accessibility (ARIA labels, skip-to-content, keyboard nav). Dynamic imports with loading placeholders. JWT bcrypt + rate limiting. Stripe. PostgreSQL/TimescaleDB. 418 tests (31 Hypothesis property-based). DataTable with pagination + Excel export. In-memory cache with @cached. Prometheus metrics. CONTRIBUTING.md + PROJECT_STATUS.md + DEPLOYMENT.md + .env.example. 5-agent deep research synthesis (30+ sources, docs/RESEARCH_SYNTHESIS.md). Python/FastAPI + Next.js/React/TypeScript. Zero pandas deprecation warnings.
 
+## Session Log — 2026-10-17 (WS-23 re-run: the price accuracy claim measured on real history)
+
+- **CHANGED** `scripts/backtest_price_ml.py` — `load_ssb_series()` became
+  `load_ssb_series_with_provenance()` and returns the rows *plus* what they are:
+  every DB `SSBWeeklyPrice.source` is classified through
+  `core/source_lineage.classify_source(src, REAL_SSB_SOURCES)` (`REAL_SSB_SOURCES =
+  ("ssb_03024",)`, the model/client default). `SYNTHETIC` rows are counted and
+  dropped, unknown/empty sources are counted as `db_rows_unverified`, and real DB
+  rows still override the CSV per week. `main()` refuses to write an artifact if
+  any synthetic row entered the series or if it has fewer than
+  `max(horizons) + MIN_EVAL_POINTS` rows, and prints the composition.
+- **NEW** per-horizon, horizon-matched carry-forward baseline (forecast(t+h) =
+  observed(t)) scored on exactly the same evaluation points, and
+  `diebold_mariano()` (mean loss differential, Newey-West variance with `h-1`
+  lags, normal p-value, `better` = model/baseline/tie) with a loss of squared
+  NOK/kg error. Artifact now carries `demo_rows_used`, `rows_used`,
+  `history_provenance`, `baselines.carry_forward` (+ per-horizon MAPE) and
+  `significance_test.results`; the conformal-residuals artifact declares
+  `demo_rows_used`, `rows_used` and `window` too.
+- **NEW** `scripts/publish_accuracy.py --from-backtest [PATH]` →
+  `publish_from_backtest()`: publishes `price_ensemble_walk_forward` and
+  `carry_forward_weekly_prices` on one window, and **exits 2 writing nothing** if
+  the artifact is missing, `demo_rows_used` is absent or not `int 0`, the artifact
+  `model_version` differs from the served `price_ensemble.model_version`, the
+  carry-forward baseline or a per-horizon MAPE is missing, or there are fewer than
+  `MIN_BACKTEST_PAIRS = 30` points. `HEADLINE_HORIZON = 4`. `core/market/price_ml.py`
+  gained a `model_version` property so "served tier" is readable instead of
+  hardcoded — the previous publisher hardcoded the model name.
+- **RESULT** (`--start-year 2020 --stride 4`, window 2020W01–2026W40, 1396 CSV
+  rows → 353 weekly observations, 52 synthetic rows refused, 0 DB rows used,
+  88 points at the headline horizon): model MAPE 6.40 / 9.05 / 12.83 / 15.75% at
+  2 / 4 / 8 / 10 weeks vs horizon-matched carry-forward 6.52 / 9.44 / 13.61 /
+  16.62% (Diebold-Mariano p 0.32 / 0.0031 / 0.0002 / 0.0001, model lower loss
+  every time; the 2w edge is not significant). 80% band coverage is 71.6% at 4w
+  and 64.8% pooled — under-covered, now visible instead of claimed. The
+  2026-10-12 "8.5%" is superseded: it was measured with the 52 `demo_seed` rows
+  overriding the real CSV.
+- Because the residuals artifact now declares `demo_rows_used: 0` **and** the
+  served tier, `PriceEnsemble._load_model` loads it: the outlook serves
+  conformal p80 bands (e.g. 74.4–94.5 around 85.2 at 4w) while still reporting
+  `mape_backtest: null` and `band_trust: null` — the number lives in
+  `/api/accuracy` only. The published `method` states the score covers the
+  price-only path, not the lice/supply signals the live outlook adds.
+- Tests: `tests/test_ws23_backtest_honesty.py` (16) — the loader refuses
+  `demo_seed` rows and counts an unknown source as unverified, a DB outage falls
+  back to CSV with `db_error` recorded, DM ties/better/worse/unpaired behaviour,
+  and every publisher refusal plus a happy path where both artifacts validate
+  and are served by the registry.
+- **Still open (WS-23):** the weekly forecast log scored against carry-forward
+  (stored outside the test tree), and serving exactly the backtested
+  configuration (the live path adds signals the backtest holds neutral — now
+  disclosed in the artifact `method`).
+
+
 ## Session Log — 2026-10-17 (WS-22: no treatment advice on stale lice data)
 
 - **CHANGED** `core/market/decision_engine.py` — a card is only issued on a count

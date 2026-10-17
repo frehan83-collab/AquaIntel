@@ -644,55 +644,53 @@ WOAH and Sernapesca, yet the route's provenance names Mattilsynet
 source, and degrade when the WOAH fetch fails. The subscription's `api_calls_month`
 is never incremented (only read), so any monthly-usage display is always 0.
 
-### WS-23 · Accuracy against a strong baseline (contaminated backtest) — **TAKEDOWN DONE 2026-10-17**
+### WS-23 · Accuracy against a strong baseline (contaminated backtest) — **DONE 2026-10-17 (weekly forecast log still open)**
 **Takedown shipped:** no route prints an accuracy figure the registry does not
 hold. `core/market/price_ml.py` never reads `data/models/price_backtest.json` for
 display (`mape_backtest`/`band_trust` null; the statement points at
 `/api/accuracy`), and loads conformal residuals only from an artifact declaring
-`demo_rows_used: 0` (the 2026-10-12 one does not, so the rule tier's bands are
-honestly uncalibrated); `/api/market/price-outlook` stores at most one prediction
-per ISO week and horizon; `/api/market/prediction-history` serves
-`mape_backtest: null`; the `/api/ml/*/model-comparison` routes withhold their
-request-time MAPE/RMSE/coverage (`accuracy_registry.withhold_unregistered_metrics`);
+`demo_rows_used: 0` **and** the served `model_version`; `/api/market/price-outlook`
+stores at most one prediction per ISO week and horizon; `/api/market/prediction-history`
+serves `mape_backtest: null`; the `/api/ml/*/model-comparison` routes withhold
+their request-time MAPE/RMSE/coverage (`accuracy_registry.withhold_unregistered_metrics`);
 the supply-demand path dropped its "~80% coverage" claim and serves its artifact
 only when registered. `tests/test_accuracy_claims.py` (in the fast gate).
-**Left (the re-run half, steps below):** loader skips `demo_seed`; carry-forward
-artifact; `publish_accuracy.py` publishes the served model's backtest on the same
-weeks with a Diebold-Mariano test; residuals re-derived with `demo_rows_used: 0`;
-serve only the backtested configuration; weekly forecast log;
-`scripts/backtest_price_ml.py` must write `demo_rows_used: 0` or its residuals
-never load. Also: the in-process `PriceEnsemble.retrain()` sets residuals without a
-lineage declaration (its bands then say so); the 879 stored MAPE copies stay in
-`price_predictions`, unserved; `tests/test_entitlements.py` and
+**Re-run shipped:** `scripts/backtest_price_ml.py` classifies every DB row through
+`core/source_lineage` and refuses synthetic ones (counted in `demo_rows_used` /
+`history_provenance`, artifact not written if any entered), scores a
+horizon-matched carry-forward baseline on the same points, and runs a
+Diebold-Mariano test per horizon. `scripts/publish_accuracy.py --from-backtest`
+publishes `price_ensemble_walk_forward` + `carry_forward_weekly_prices` on one
+window and exits 2 writing nothing on a missing artifact, `demo_rows_used != 0`,
+a tier mismatch against `price_ensemble.model_version`, a missing baseline or
+fewer than 30 points. Measured 2020W01–2026W40 (real rows only, 88 points at 4w):
+4w MAPE 9.05% vs carry-forward 9.44%, DM p=0.0031 (model lower loss); 2w 6.40 vs
+6.52 (p=0.32, not significant); 8w 12.83 vs 13.61 (p=0.0002). 80% band coverage
+71.6% at 4w / 64.8% pooled. `tests/test_ws23_backtest_honesty.py` (16) pins the
+loader refusals, the DM behaviour and every publisher refusal.
+**Still open:** (a) the weekly forecast log, scored against carry-forward and
+stored where tests cannot write; (b) serving exactly the backtested
+configuration — the live outlook adds lice/supply signals the backtest holds
+neutral (disclosed in the artifact `method`, so the claim is not overstated, but
+the score still does not cover the served response); (c) the in-process
+`PriceEnsemble.retrain()` sets residuals without a lineage declaration (its bands
+then say so); (d) the 879 stored MAPE copies stay in `price_predictions`,
+unserved; (e) `tests/test_entitlements.py` and
 `tests/test_price_outlook_resilience.py` still call the outlook against the real
-store (WS-24); on Python 3.14 `predict()` reaches the TFT tier only inside a running
-event loop (`asyncio.get_event_loop()` raises outside one).
-**Why:** the price outlook prints "Backtested 4-week MAPE: 8.5%" from
+store (WS-24); (f) on Python 3.14 `predict()` reaches the TFT tier only inside a
+running event loop (`asyncio.get_event_loop()` raises outside one).
+**Why (history):** the price outlook printed "Backtested 4-week MAPE: 8.5%" from
 `data/models/price_backtest.json` (2026-10-12). That run merged the database's SSB
-rows over the real CSV, database winning (`scripts/backtest_price_ml.py`,
-`load_ssb_series`), and all 52 database rows are `demo_seed` (2025W01-W52) — trap 6.
-A read-only same-window re-run of the price-only path on real prices
-(`data/historical/ssb_prices_2000_2026.csv`, 207 target weeks 2022W42-2026W41, not
-stored) gives 4.17 / 6.47 / 8.53 / 13.18% at 1 / 2 / 4 / 8 weeks against
-carry-forward's 4.23 / 6.60 / 8.82 / 13.69% (Diebold-Mariano p 0.15 / 0.04 / 0.01 /
-0.02): a real but small edge. The registry's year-back baseline is 13.42%. The claim is also outside the registry, and `data/models/conformal_residuals.json`
-comes from the same run. The figure is also copied into `price_predictions` on every
-outlook request and served by `/api/market/prediction-history`
-(`core/routers/market_routes.py:293-313, 532-556`).
-**Files:** `scripts/backtest_price_ml.py`, `scripts/publish_accuracy.py` (it can only
-build the seasonal-naive artifact today), `core/market/price_ml.py`,
-`core/routers/accuracy_routes.py`.
-**Steps:** take the 8.5% claim down everywhere it is served; stop storing a
-prediction on every request (one per ISO week at most) and null `mape_backtest` in the
-history; make the loader skip `demo_seed` rows; add a
-horizon-matched carry-forward artifact; extend `publish_accuracy.py` to publish the
-served model's backtest on the same weeks with a Diebold-Mariano test; re-derive the
-conformal residuals; serve only the backtested configuration (the live outlook adds
-lice inputs the backtest held neutral); start a weekly forecast log, scored against
-carry-forward, stored where tests cannot write.
-**Acceptance:** `/api/accuracy` lists carry-forward and the served model on one
-window with the test result; no route prints an accuracy figure the registry does
-not hold; a test that the backtest loader refuses `demo_seed` rows.
+rows over the real CSV, database winning (`load_ssb_series`), and all 52 database
+rows are `demo_seed` (2025W01-W52) — trap 6. The figure was also copied into
+`price_predictions` on every outlook request and served by
+`/api/market/prediction-history`.
+**Files:** `scripts/backtest_price_ml.py`, `scripts/publish_accuracy.py`,
+`core/market/price_ml.py`, `core/routers/accuracy_routes.py`,
+`tests/test_ws23_backtest_honesty.py`.
+**Acceptance (met):** `/api/accuracy` lists carry-forward and the served model on
+one window with the test result; no route prints an accuracy figure the registry
+does not hold; a test that the backtest loader refuses `demo_seed` rows.
 **Added 2026-10-17 (WS-20 review):** `/api/ml/chronos/model-comparison` returns
 `mape`/`rmse`/`coverage_80` per model from a single holdout of `horizon` points
 (`core/ml/chronos_baseline.py::compare_models`), on a series whose newest weeks are

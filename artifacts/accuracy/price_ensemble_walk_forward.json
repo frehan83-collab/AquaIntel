@@ -1,0 +1,47 @@
+{
+  "artifact_id": "price_ensemble_walk_forward",
+  "fallback_used": true,
+  "method": "walk-forward one-shot forecasts from SSB 03024 weekly prices; forecast issued at week t with t's seasonal phase (as_of), evaluated at t+h only when the week gap is exactly h weeks; seasonal climatology computed from pre-window years only (<2020); biological inputs held at neutral defaults (price-only path); each horizon also scores a horizon-matched carry-forward baseline on the same points with a Diebold-Mariano test; synthetic (demo/seed) history rows are refused, never merged; produced by scripts/backtest_price_ml.py; this evaluates the price-only configuration \u2014 the live outlook also applies lice and supply signals, which this score does not cover",
+  "metrics": {
+    "carry_forward_mape_by_horizon_pct": {
+      "10": 16.62,
+      "12": 17.54,
+      "14": 19.93,
+      "16": 21.36,
+      "18": 23.37,
+      "2": 6.52,
+      "20": 23.9,
+      "4": 9.44,
+      "6": 12.1,
+      "8": 13.61
+    },
+    "carry_forward_mape_pct": 9.44,
+    "coverage_pct": 71.6,
+    "diebold_mariano_better": "model",
+    "diebold_mariano_p": 0.0031,
+    "diebold_mariano_stat": -2.953,
+    "horizon_weeks": 4,
+    "interval_level": 0.8,
+    "mape_by_horizon_pct": {
+      "10": 15.75,
+      "12": 16.44,
+      "14": 18.66,
+      "16": 19.91,
+      "18": 21.82,
+      "2": 6.4,
+      "20": 22.23,
+      "4": 9.05,
+      "6": 11.4,
+      "8": 12.83
+    },
+    "mape_pct": 9.05
+  },
+  "model": "ensemble_v1_rule",
+  "n_obs": 88,
+  "notes": "Walk-forward, price-only path (biological inputs neutral). Headline 4w: MAPE 9.05% vs horizon-matched carry-forward 9.44% on the same 88 points; Diebold-Mariano p=0.0031 (model lower loss). coverage_pct is the engine's own 80% band, not re-calibrated here. Demo/seed history rows are refused, so the 2026-10-12 numbers are superseded.",
+  "produced_at": "2026-10-17T21:33:21.655936+00:00",
+  "schema_version": "1.0",
+  "source": "SSB table 03024 weekly export prices (real rows only: 52 synthetic rows refused, 353 rows used)",
+  "target": "SSB weekly salmon export price (NOK/kg)",
+  "window": "2020W01\u20132026W40 (SSB 03024 weekly, stride 4w)"
+}

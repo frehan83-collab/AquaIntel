@@ -9,6 +9,10 @@ actually running. If this script is never run, the API reports
 
 Method (no lookahead):
 - Source: SSB table 03024 weekly salmon export prices (DB first, CSV fallback).
+  DB rows whose `source` classifies as synthetic (demo/seed/mock — one
+  definition in `core/source_lineage.SYNTHETIC_MARKERS`) are refused and
+  counted; the artifact declares `demo_rows_used` so the conformal calibration
+  may only be served when it measured real history (WS-23).
 - A forecast is issued at week t using t's seasonal phase (as_of), then
   evaluated against the actual price at t+horizon.
 - Biological/market inputs (lice, biomass, exports, futures) are held at
@@ -17,6 +21,10 @@ Method (no lookahead):
 - MAPE per horizon = mean(|actual-pred|/|actual|) * 100.
 - coverage_80 = share of ALL evaluated (point, horizon) pairs whose actual
   fell inside the engine's own lo80/hi80 band (pooled), plus per-horizon.
+- Baseline: horizon-matched carry-forward (price at t+h = price at t) on the
+  same evaluation points, plus a two-sided Diebold-Mariano test (squared
+  NOK/kg loss, Newey-West h-1 lags) so "beats doing nothing" is measured, not
+  asserted (WS-23).
 
 Usage:
     python scripts/backtest_price_ml.py [--start-year 2020] [--stride 4]
@@ -33,31 +41,57 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from core.source_lineage import REAL, SYNTHETIC, classify_source  # noqa: E402
+
 MIN_EVAL_POINTS = 30  # refuse to write an artifact with fewer (garbage in)
 
+# Provenance values this backtest accepts as a real SSB 03024 observation
+# (``SSBWeeklyPrice.source`` default / ``SalmonPriceWeek.source``). The synthetic
+# markers themselves come from core/source_lineage.py — never copied here.
+REAL_SSB_SOURCES: tuple[str, ...] = ("ssb_03024",)
 
-def load_ssb_series(start_year: int) -> list[tuple[int, int, float]]:
-    """(iso_year, iso_week, price_nok) ordered ascending.
 
-    Merges DB and CSV history (DB wins on conflicts) — the backtest needs the
-    full ~1,400-week series, and either source alone can be partial.
+def load_ssb_series_with_provenance(
+    start_year: int,
+) -> tuple[list[tuple[int, int, float]], dict]:
+    """(rows, provenance) — the history the backtest may measure on, and what it refused.
+
+    WS-23: the 2026-10-12 run merged the database's 52 ``demo_seed`` SSB rows over
+    the real CSV history (database winning), so its MAPE measured seeded data. A
+    row whose ``source`` classifies as synthetic (one definition:
+    ``core.source_lineage.SYNTHETIC_MARKERS``) is now counted and never used; a
+    real database row may still override the CSV for the same week.
     """
-    async def _db() -> list[tuple[int, int, float]]:
+    async def _db() -> list[tuple[int, int, float, str | None]]:
         from sqlalchemy import select
         from core.async_db import get_async_session
         from core.models import SSBWeeklyPrice
 
         async with get_async_session() as s:
             rows = (await s.execute(
-                select(SSBWeeklyPrice.year, SSBWeeklyPrice.week, SSBWeeklyPrice.price_nok_kg)
+                select(
+                    SSBWeeklyPrice.year,
+                    SSBWeeklyPrice.week,
+                    SSBWeeklyPrice.price_nok_kg,
+                    SSBWeeklyPrice.source,
+                )
                 .where(SSBWeeklyPrice.price_nok_kg.isnot(None))
                 .order_by(SSBWeeklyPrice.year, SSBWeeklyPrice.week)
             )).all()
-        return [(int(y), int(w), float(p)) for y, w, p in rows]
+        return [(int(y), int(w), float(p), src) for y, w, p, src in rows]
 
     merged: dict[tuple[int, int], float] = {}
+    provenance: dict = {
+        "csv_rows": 0,
+        "csv_path": None,
+        "db_rows_used": 0,
+        "db_rows_unverified": 0,
+        "synthetic_rows_skipped": 0,
+        "synthetic_rows_used": 0,
+        "db_error": None,
+    }
 
-    # CSV first (full history), then DB rows override
+    # CSV first (full history), then real DB rows override
     import csv
     base = Path(__file__).resolve().parent.parent / "data" / "historical"
     candidates = sorted(base.glob("ssb_prices_*.csv"))
@@ -69,19 +103,74 @@ def load_ssb_series(start_year: int) -> list[tuple[int, int, float]]:
                     merged[(int(row["year"]), int(row["week"]))] = float(row["price_nok_per_kg"])
                 except (KeyError, TypeError, ValueError):
                     continue
+                provenance["csv_rows"] += 1
+        provenance["csv_path"] = csv_path.name
 
     try:
-        for y, w, p in asyncio.run(_db()):
+        for y, w, p, src in asyncio.run(_db()):
+            kind = classify_source(src, REAL_SSB_SOURCES)
+            if kind == SYNTHETIC:
+                provenance["synthetic_rows_skipped"] += 1
+                continue
+            if kind != REAL:
+                provenance["db_rows_unverified"] += 1
             merged[(y, w)] = p
+            provenance["db_rows_used"] += 1
     except Exception as exc:
+        provenance["db_error"] = str(exc)[:200]
         print(f"  WARNING: DB history unavailable ({exc}); using CSV only")
 
     if not merged:
         raise SystemExit("No SSB price data available (DB empty and CSV missing)")
 
-    return sorted(
-        (y, w, p) for (y, w), p in merged.items() if y >= start_year
-    )
+    rows = sorted((y, w, p) for (y, w), p in merged.items() if y >= start_year)
+    return rows, provenance
+
+
+def load_ssb_series(start_year: int) -> list[tuple[int, int, float]]:
+    """(iso_year, iso_week, price_nok) ordered ascending — rows only."""
+    return load_ssb_series_with_provenance(start_year)[0]
+
+
+def diebold_mariano(
+    model_errors: list[float], baseline_errors: list[float], *, horizon: int,
+) -> dict:
+    """Two-sided Diebold-Mariano test of two paired loss series (Newey-West HAC).
+
+    ``model_errors``/``baseline_errors`` are absolute NOK/kg errors on the same
+    evaluation points; the loss is squared, the long-run variance uses ``h-1``
+    lags (the standard choice for overlapping h-step forecasts). ``better`` names
+    the lower-loss side, ``p_value`` is the normal approximation (two-sided).
+    """
+    import math
+
+    if len(model_errors) != len(baseline_errors):
+        raise ValueError("loss series must be paired (same evaluation points)")
+    n = len(model_errors)
+    if n < 2:
+        return {"n": n, "dm_stat": None, "p_value": None, "better": "unknown",
+                "loss": "squared NOK/kg error", "lags": max(0, horizon - 1)}
+    diff = [m * m - b * b for m, b in zip(model_errors, baseline_errors)]
+    mean = sum(diff) / n
+    var = sum((x - mean) ** 2 for x in diff) / n
+    for lag in range(1, horizon):
+        cov = sum((diff[i] - mean) * (diff[i - lag] - mean) for i in range(lag, n)) / n
+        var += 2.0 * (1.0 - lag / horizon) * cov
+    if var <= 1e-18:
+        stat = 0.0 if abs(mean) < 1e-18 else math.copysign(float("inf"), mean)
+        p_value = 1.0 if stat == 0.0 else 0.0
+    else:
+        stat = mean / math.sqrt(var / n)
+        p_value = math.erfc(abs(stat) / math.sqrt(2.0))
+    return {
+        "n": n,
+        "dm_stat": round(stat, 3),
+        "p_value": round(p_value, 4),
+        "mean_loss_diff": round(mean, 4),
+        "better": "model" if mean < 0 else "baseline" if mean > 0 else "tie",
+        "loss": "squared NOK/kg error",
+        "lags": max(0, horizon - 1),
+    }
 
 
 def load_full_history_seasonal(before_year: int) -> dict[int, float]:
@@ -111,9 +200,21 @@ def main() -> int:
     args = ap.parse_args()
     horizons = sorted({int(h) for h in args.horizons.split(",") if h.strip()})
 
-    series = load_ssb_series(args.start_year)
+    series, provenance = load_ssb_series_with_provenance(args.start_year)
+    if provenance["synthetic_rows_used"]:
+        # Cannot happen by construction (the loader refuses them); refuse loudly
+        # rather than write an artifact that measures seeded data.
+        raise SystemExit(
+            f"Refusing to backtest: {provenance['synthetic_rows_used']} synthetic "
+            "rows entered the evaluation series"
+        )
     if len(series) < max(horizons) + MIN_EVAL_POINTS:
         raise SystemExit(f"Insufficient data: {len(series)} weeks (need >= {max(horizons) + MIN_EVAL_POINTS})")
+    print(
+        f"history: {len(series)} weeks used (CSV {provenance['csv_rows']}, DB "
+        f"{provenance['db_rows_used']}, {provenance['db_rows_unverified']} unverified); "
+        f"{provenance['synthetic_rows_skipped']} synthetic DB rows refused"
+    )
 
     pattern = load_full_history_seasonal(before_year=args.start_year)
     if pattern:
@@ -158,6 +259,9 @@ def main() -> int:
     skipped_gaps = 0
     for h in horizons:
         errs, inside, n = [], 0, 0
+        abs_errs: list[float] = []
+        cf_errs: list[float] = []
+        cf_abs: list[float] = []
         res: list[float] = []
         for i in range(0, len(series) - h, args.stride):
             stamp = as_of(i)
@@ -172,6 +276,12 @@ def main() -> int:
             )
             actual = prices[i + h]
             errs.append(abs(actual - fc.predicted_nok) / abs(actual))
+            abs_errs.append(abs(actual - fc.predicted_nok))
+            # Horizon-matched carry-forward baseline on the SAME evaluation
+            # point: "price next h weeks = today's price". WS-23 — a model is
+            # only worth publishing if it beats this.
+            cf_errs.append(abs(actual - prices[i]) / abs(actual))
+            cf_abs.append(abs(actual - prices[i]))
             # Conformal calibration residual (actual − predicted), same sign
             # convention as PriceEnsemble._conformal_bands
             res.append(round(actual - fc.predicted_nok, 3))
@@ -180,15 +290,21 @@ def main() -> int:
         if n < MIN_EVAL_POINTS:
             print(f"  horizon {h:2d}w: only {n} eval points (<{MIN_EVAL_POINTS}) — refusing")
             return 1
+        cf_mape = sum(cf_errs) / len(cf_errs) * 100
         per_h[str(h)] = {
             "mape": round(sum(errs) / len(errs) * 100, 2),
             "coverage_80": round(inside / n * 100, 1),
             "n": n,
+            "carry_forward_mape": round(cf_mape, 2),
+            "diebold_mariano": diebold_mariano(abs_errs, cf_abs, horizon=h),
         }
         horizon_res[str(h)] = res
         pooled_in += inside
         pooled_total += n
+        dm = per_h[str(h)]["diebold_mariano"]
         print(f"  horizon {h:2d}w: MAPE {per_h[str(h)]['mape']:5.2f}%  "
+              f"carry-fwd {per_h[str(h)]['carry_forward_mape']:5.2f}%  "
+              f"DM p={dm['p_value']} ({dm['better']})  "
               f"cover80 {per_h[str(h)]['coverage_80']:5.1f}%  n={n}")
 
     first = f"{series[0][0]}W{series[0][1]:02d}"
@@ -200,6 +316,22 @@ def main() -> int:
         "mape": {k: v["mape"] for k, v in per_h.items()},
         "coverage_80": round(pooled_in / pooled_total * 100, 1),
         "per_horizon": per_h,
+        # WS-23: the calibration this artifact produces may only be served when
+        # it used no demo rows (PriceEnsemble._load_model enforces this).
+        "demo_rows_used": provenance["synthetic_rows_used"],
+        "rows_used": len(series),
+        "history_provenance": provenance,
+        "baselines": {
+            "carry_forward": {
+                "definition": "forecast(t+h) = observed price at t (no change)",
+                "mape": {k: v["carry_forward_mape"] for k, v in per_h.items()},
+                "evaluation_points": "identical to the model's, horizon-matched",
+            },
+        },
+        "significance_test": {
+            "name": "Diebold-Mariano (squared NOK/kg loss, Newey-West h-1 lags, two-sided)",
+            "results": {k: v["diebold_mariano"] for k, v in per_h.items()},
+        },
         "skipped_gap_points": skipped_gaps,
         "method": (
             "walk-forward one-shot forecasts from SSB 03024 weekly prices; "
@@ -207,7 +339,10 @@ def main() -> int:
             "evaluated at t+h only when the week gap is exactly h weeks; "
             "seasonal climatology computed from pre-window years only "
             f"(<{args.start_year}); biological inputs held at neutral defaults "
-            "(price-only path); produced by scripts/backtest_price_ml.py"
+            "(price-only path); each horizon also scores a horizon-matched "
+            "carry-forward baseline on the same points with a Diebold-Mariano "
+            "test; synthetic (demo/seed) history rows are refused, never merged; "
+            "produced by scripts/backtest_price_ml.py"
         ),
         "script": "scripts/backtest_price_ml.py",
     }
@@ -220,6 +355,11 @@ def main() -> int:
     calib_path.write_text(json.dumps({
         "model_version": model_version,
         "generated_at": artifact["generated_at"],
+        # WS-23 lineage declaration: the residuals come from real SSB rows only,
+        # so PriceEnsemble may serve them as calibrated bands.
+        "demo_rows_used": artifact["demo_rows_used"],
+        "rows_used": artifact["rows_used"],
+        "window": artifact["window"],
         "residual_definition": "actual - predicted (NOK/kg), walk-forward",
         "horizon_residuals": horizon_res,
         "script": "scripts/backtest_price_ml.py",

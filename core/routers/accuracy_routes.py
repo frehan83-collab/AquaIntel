@@ -12,8 +12,13 @@ from fastapi import APIRouter, HTTPException
 router = APIRouter(prefix="/api/accuracy", tags=["accuracy"])
 
 HOW_TO_PUBLISH = (
-    "python scripts/publish_accuracy.py --weeks 260  "
-    "(writes artifacts/accuracy/<id>.json; refuses to publish on demo-only data)"
+    "python scripts/backtest_price_ml.py --start-year 2020 --stride 4 && "
+    "python scripts/publish_accuracy.py --from-backtest  "
+    "(publishes the served price model and its horizon-matched carry-forward "
+    "baseline on one window; writes artifacts/accuracy/<id>.json; refuses to "
+    "publish on demo rows, another model tier, or too few points). "
+    "python scripts/publish_accuracy.py --weeks 260 publishes the seasonal-naive "
+    "baseline artifact."
 )
 
 

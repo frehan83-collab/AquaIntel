@@ -1,0 +1,29 @@
+{
+  "artifact_id": "carry_forward_weekly_prices",
+  "fallback_used": true,
+  "method": "same evaluation points, stride and horizon-matched weeks as price_ensemble_walk_forward; no-change baseline",
+  "metrics": {
+    "horizon_weeks": 4,
+    "mape_by_horizon_pct": {
+      "10": 16.62,
+      "12": 17.54,
+      "14": 19.93,
+      "16": 21.36,
+      "18": 23.37,
+      "2": 6.52,
+      "20": 23.9,
+      "4": 9.44,
+      "6": 12.1,
+      "8": 13.61
+    },
+    "mape_pct": 9.44
+  },
+  "model": "carry-forward (price at t held for t+h)",
+  "n_obs": 88,
+  "notes": "The floor a price model must beat. Published on the identical window and points as price_ensemble_walk_forward so the comparison is exact.",
+  "produced_at": "2026-10-17T21:33:21.655936+00:00",
+  "schema_version": "1.0",
+  "source": "SSB table 03024 weekly export prices (real rows only)",
+  "target": "SSB weekly salmon export price (NOK/kg)",
+  "window": "2020W01\u20132026W40 (SSB 03024 weekly, stride 4w)"
+}
