@@ -13,8 +13,13 @@ from core.models import LiceRecord, Locality
 from core.async_db import get_async_session
 from core.market.data_provenance import DataProvenance
 from core.schemas import BiomassOutlookResponse
+from core.source_lineage import provenance_for, summarise_rows
 
 router = APIRouter(prefix="/api", tags=["supply"])
+
+# The smolt model reads Fiskeridirektoratet smolt/production series only — it
+# never reads the lice table, so its label must not claim BarentsWatch (WS-14).
+SMOLT_LABEL = "Smolt model + Fiskeridirektoratet"
 
 
 @router.get("/supply-forecast")
@@ -44,10 +49,12 @@ async def supply_forecast():
     # Aggregate by production area
     import numpy as np
     pa_data: dict[int, dict] = {}
+    used: list = []  # WS-14: the rows this payload is actually computed from
     for lice, loc in records:
         pa = loc.production_area or 0
         if pa < 1 or pa > 13:
             continue
+        used.append(lice)
         if pa not in pa_data:
             pa_data[pa] = {"lice_values": [], "temps": []}
         pa_data[pa]["lice_values"].append(lice.avg_adult_female_lice or 0)
@@ -64,6 +71,7 @@ async def supply_forecast():
         }
 
     intel = generate_buyer_intelligence(pa_summary)
+    lineage = summarise_rows(used, year=year)
 
     return {
         "generated_at": intel.generated_at.isoformat(),
@@ -86,7 +94,10 @@ async def supply_forecast():
             }
             for f in intel.regional_forecasts
         ],
-        "data_provenance": DataProvenance.live("Smolt model + Fiskeridirektoratet + BarentsWatch", confidence=0.75).to_dict(),
+        "lineage": lineage,
+        "data_provenance": provenance_for(
+            lineage, "Smolt model + Fiskeridirektoratet + BarentsWatch lice", 0.75
+        ),
     }
 
 
@@ -120,7 +131,7 @@ async def supply_smolt_forecast(months: int = 18):
             sum(p.get("projected_harvest_tonnes", 0) for p in pipeline), 0
         ),
         "data_provenance": DataProvenance.live(
-            "Smolt model + Fiskeridirektoratet + BarentsWatch", confidence=0.75
+            SMOLT_LABEL, confidence=0.75
         ).to_dict(),
     }
 
@@ -143,7 +154,7 @@ async def supply_cohort_timeline():
         "cohorts": cohorts,
         "count": len(cohorts),
         "data_provenance": DataProvenance.live(
-            "Smolt model + Fiskeridirektoratet + BarentsWatch", confidence=0.75
+            SMOLT_LABEL, confidence=0.75
         ).to_dict(),
     }
 
@@ -175,7 +186,7 @@ async def supply_summary():
     from core.valuechain.smolt_model import smolt_model
     result = smolt_model.get_summary()
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("Smolt model + Fiskeridirektoratet + BarentsWatch", confidence=0.75).to_dict()
+        result["data_provenance"] = DataProvenance.live(SMOLT_LABEL, confidence=0.75).to_dict()
     return result
 
 
@@ -196,7 +207,10 @@ async def biomass_outlook(
     result = biomass_predictor.get_outlook_dict()
     if not result:
         raise HTTPException(status_code=503, detail="Biomass outlook computation failed")
-    result["data_provenance"] = DataProvenance.live("Smolt model + Fiskeridirektoratet + BarentsWatch", confidence=0.75).to_dict()
+    lineage = result.get("lineage")
+    result["data_provenance"] = provenance_for(
+        lineage, "Biomass model + Fiskeridirektoratet + BarentsWatch lice/temperature", 0.75
+    )
     return result
 
 
@@ -207,6 +221,7 @@ async def biomass_scenarios():
     # Cache keys include the scenario, so each call computes fresh results.
     await biomass_predictor.compute_outlook(20, 500, "current")
     current_dict = biomass_predictor.get_outlook_dict()
+    current_lineage = (current_dict or {}).get("lineage")
     green = await biomass_predictor.compute_outlook(20, 500, "all_green")
     red = await biomass_predictor.compute_outlook(20, 500, "all_red")
     return {
@@ -221,5 +236,10 @@ async def biomass_scenarios():
             "forecast_biomass": red.forecast_biomass,
             "utilization_pct": red.utilization_pct,
         },
-        "data_provenance": DataProvenance.live("Smolt model + Fiskeridirektoratet + BarentsWatch", confidence=0.75).to_dict(),
+        # Both scenario runs project from the same current state, so they share
+        # its lineage (WS-14).
+        "lineage": current_lineage,
+        "data_provenance": provenance_for(
+            current_lineage, "Biomass model + Fiskeridirektoratet + BarentsWatch lice/temperature", 0.75
+        ),
     }

@@ -122,12 +122,15 @@ async def competitiveness_tariff_scenario(request: Request):
 @router.get("/api/global-supply")
 async def global_supply():
     from core.market.global_supply import global_supply_engine
-    from core.market.data_provenance import DataProvenance
+    from core.source_lineage import provenance_for
     gs = await global_supply_engine.compute()
     result = global_supply_engine.to_dict(gs)
-    result["data_provenance"] = DataProvenance.live(
-        "Multi-country monitors (Norway + Canada + Chile + Iceland + Faroe + Scotland)", confidence=0.80
-    ).to_dict()
+    # WS-14: Norway's lice_pressure is lice-derived — never a blanket live claim.
+    result["data_provenance"] = provenance_for(
+        result.get("lice_lineage"),
+        "Multi-country monitors (Norway + Canada + Chile + Iceland + Faroe + Scotland)",
+        0.80,
+    )
     return result
 
 
@@ -138,11 +141,23 @@ async def traffic_light_current():
     from core.market.data_provenance import DataProvenance
     result = await traffic_light_simulator.get_current_colors()
     decision = result.get("decision") or {}
-    result["data_provenance"] = DataProvenance.live(
-        f"Official traffic-light decision {decision.get('decided_on')} "
-        f"({decision.get('regulation')}, regjeringen.no)",
-        confidence=0.95,
-    ).to_dict()
+    decided_on = decision.get("decided_on")
+    # WS-14 (widened 2026-10-17): the observation behind these colours is the
+    # official decision date, not the request time — and a payload that cannot
+    # date its decision must not claim live.
+    if decided_on:
+        result["data_provenance"] = DataProvenance.live(
+            f"Official traffic-light decision {decided_on} "
+            f"({decision.get('regulation')}, regjeringen.no)",
+            confidence=0.95,
+            observed_at=str(decided_on),
+        ).to_dict()
+    else:
+        result["data_provenance"] = DataProvenance.degraded(
+            "Official traffic-light decision (regjeringen.no)",
+            reason="no official decision date on record — the colours cannot be dated",
+            confidence=0.5,
+        ).to_dict()
     return result
 
 

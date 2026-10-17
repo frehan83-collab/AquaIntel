@@ -17,6 +17,7 @@ from core.models import Locality, LiceRecord
 from core.async_db import get_async_session
 from core.bloom.models import BloomRiskAssessment, BloomAlert, ChlorophyllReading
 from core.market.data_provenance import DataProvenance
+from core.source_lineage import provenance_for, summarise_rows
 
 router = APIRouter(prefix="/api/bloom", tags=["bloom"])
 
@@ -217,6 +218,7 @@ async def _snapshot_live(week_label: str) -> dict:
 
     # Lice summary (inline query — same as lice_routes but lighter)
     lice_data = {"avg": 0, "high_count": 0, "total_farms": 0}
+    lineage: dict = {}
     async with get_async_session() as s:
         latest = (await s.execute(
             select(LiceRecord.year, LiceRecord.week)
@@ -246,6 +248,22 @@ async def _snapshot_live(week_label: str) -> dict:
                 )
             )).scalar() or 0
             lice_data["high_count"] = int(high)
+
+            # WS-14: the same predicate as the averages above — the snapshot's
+            # live claim is only as good as these rows.
+            lineage_rows = (await s.execute(
+                select(
+                    LiceRecord.source,
+                    LiceRecord.year,
+                    LiceRecord.week,
+                    LiceRecord.fetched_at,
+                ).where(
+                    LiceRecord.year == year,
+                    LiceRecord.week == week,
+                    LiceRecord.avg_adult_female_lice.isnot(None),
+                )
+            )).all()
+            lineage = summarise_rows(lineage_rows, year=year)
 
     # Bloom risk summary
     bloom_data = {"risk_level": "LOW", "affected_areas": 0}
@@ -299,14 +317,16 @@ async def _snapshot_live(week_label: str) -> dict:
     return {
         "week_label": week_label,
         "week_offset": 0,
-        "is_live": True,
+        # WS-14: "live" is a lineage verdict, never a literal.
+        "is_live": bool(lineage.get("is_live")),
         "lice": lice_data,
         "bloom": bloom_data,
         "disease": disease_data,
         "regime": regime_data,
-        "data_provenance": DataProvenance.live(
-            "BarentsWatch + CMEMS + Mattilsynet + Regime", confidence=0.90
-        ).to_dict(),
+        "lineage": lineage,
+        "data_provenance": provenance_for(
+            lineage, "BarentsWatch + CMEMS + Mattilsynet + Regime", 0.90
+        ),
     }
 
 
@@ -314,6 +334,7 @@ async def _snapshot_historical(target_year: int, target_week: int, week_label: s
     """Build snapshot from historical DB records for a past week."""
     # ── Lice for that ISO week ──────────────────────────────────────
     lice_data = {"avg": 0, "high_count": 0, "total_farms": 0}
+    lineage: dict = {}
     async with get_async_session() as s:
         result = (await s.execute(
             select(
@@ -336,6 +357,22 @@ async def _snapshot_historical(target_year: int, target_week: int, week_label: s
             )
         )).scalar() or 0
         lice_data["high_count"] = int(high)
+
+        # WS-14: lineage of the historical week's rows (still demo/unverified on
+        # this deployment — the snapshot reports it rather than hiding it).
+        lineage_rows = (await s.execute(
+            select(
+                LiceRecord.source,
+                LiceRecord.year,
+                LiceRecord.week,
+                LiceRecord.fetched_at,
+            ).where(
+                LiceRecord.year == target_year,
+                LiceRecord.week == target_week,
+                LiceRecord.avg_adult_female_lice.isnot(None),
+            )
+        )).all()
+        lineage = summarise_rows(lineage_rows, year=target_year)
 
     # ── Bloom assessments for that week's date range ────────────────
     bloom_data = {"risk_level": "LOW", "affected_areas": 0}
@@ -404,6 +441,7 @@ async def _snapshot_historical(target_year: int, target_week: int, week_label: s
         "bloom": bloom_data,
         "disease": disease_data,
         "regime": regime_data,
+        "lineage": lineage,
         "data_provenance": DataProvenance.degraded(
             "BarentsWatch + CMEMS + Mattilsynet + Regime",
             f"Historical snapshot ({week_label})",

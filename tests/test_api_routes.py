@@ -252,12 +252,15 @@ class TestRateLimiting:
 
 class TestBioRiskSnapshot:
     def test_bio_risk_snapshot_live(self, client):
-        """week_offset=0 returns live data."""
+        """week_offset=0 returns the current week with an honest live verdict."""
         r = client.get("/api/bio-risk/snapshot?week_offset=0")
         assert r.status_code == 200
         data = r.json()
         assert "week_label" in data
-        assert data["is_live"] is True
+        # WS-14: `is_live` is a lineage verdict over the rows the snapshot used,
+        # never a literal — on a demo/unverified DB it must be False.
+        assert data["is_live"] is (data["lineage"]["note"] is None)
+        assert data["data_provenance"]["is_live"] is data["is_live"]
         assert "lice" in data
         assert "bloom" in data
         assert "disease" in data

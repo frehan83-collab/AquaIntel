@@ -28,11 +28,15 @@ async def check_alerts():
 async def alerts_summary():
     """Alert summary for notification bell badge."""
     from core.market.alert_engine import alert_engine
-    from core.market.data_provenance import DataProvenance
+    from core.source_lineage import latest_week_lineage, provenance_for
     result = alert_engine.get_summary()
-    result["data_provenance"] = DataProvenance.live(
-        "Multi-engine composite (lice + disease + bloom + price)", confidence=0.75
-    ).to_dict()
+    # WS-14: the composite includes lice-derived alerts — its live claim is only
+    # as good as the newest lice week behind them.
+    lineage = await latest_week_lineage()
+    result["lineage"] = lineage
+    result["data_provenance"] = provenance_for(
+        lineage, "Multi-engine composite (lice + disease + bloom + price)", 0.75
+    )
     return result
 
 

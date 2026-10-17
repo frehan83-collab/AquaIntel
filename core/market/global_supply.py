@@ -130,6 +130,8 @@ class GlobalSupplyBalance:
     norway_spot_nok_kg: float = 0.0
     norway_premium_pct: float = 0.0
     insights: list[str] = field(default_factory=list)
+    #: WS-14: lineage of the newest lice week behind Norway's lice_pressure.
+    lice_lineage: dict = field(default_factory=dict)
 
 
 class GlobalSupplyEngine:
@@ -153,9 +155,11 @@ class GlobalSupplyEngine:
             production_share=PRODUCERS["Norway"]["share"],
             annual_tonnes=PRODUCERS["Norway"]["tonnes"],
         )
+        lice_lineage: dict = {}
         try:
             from core.models import LiceRecord
             from core.async_db import get_async_session
+            from core.source_lineage import summarise_rows
             from sqlalchemy import select, func
             async with get_async_session() as s:
                 latest = (await s.execute(
@@ -174,6 +178,20 @@ class GlobalSupplyEngine:
                         .where(LiceRecord.year == latest[0], LiceRecord.week == latest[1],
                                LiceRecord.avg_adult_female_lice > 0.5)
                     )).scalar() or 0
+                    # WS-14: lineage of exactly the rows behind lice_pressure.
+                    lice_rows = (await s.execute(
+                        select(
+                            LiceRecord.source,
+                            LiceRecord.year,
+                            LiceRecord.week,
+                            LiceRecord.fetched_at,
+                        ).where(
+                            LiceRecord.year == latest[0],
+                            LiceRecord.week == latest[1],
+                            LiceRecord.avg_adult_female_lice.isnot(None),
+                        )
+                    )).all()
+                    lice_lineage = summarise_rows(lice_rows, year=latest[0])
                     norway.lice_pressure = (
                         "critical" if avg > 0.5 else
                         "elevated" if avg > 0.2 else "normal"
@@ -405,6 +423,7 @@ class GlobalSupplyEngine:
             norway_spot_nok_kg=round(norway_spot, 1),
             norway_premium_pct=premium,
             insights=insights,
+            lice_lineage=lice_lineage,
         )
 
         self._cache = result
@@ -425,6 +444,7 @@ class GlobalSupplyEngine:
             "norway_spot_nok_kg": gs.norway_spot_nok_kg,
             "norway_premium_pct": gs.norway_premium_pct,
             "insights": gs.insights,
+            "lice_lineage": gs.lice_lineage,
             "countries": [
                 {
                     "country": c.country,

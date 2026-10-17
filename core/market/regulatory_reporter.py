@@ -21,7 +21,7 @@ import structlog
 from sqlalchemy import select, func
 
 from core.async_db import get_async_session
-from core.market.data_provenance import DataProvenance
+from core.source_lineage import lineage_for, provenance_for
 
 from core.regulatory_facts import (
     LICE_LIMIT_DEFAULT,
@@ -461,6 +461,13 @@ class RegulatoryReporter:
                 )
             )).scalar() or 0
 
+            # WS-14: lineage of the two-year lice window the score is computed from.
+            lineage = await lineage_for(
+                s,
+                LiceRecord.locality_no == locality_no,
+                LiceRecord.year >= current_year - 1,
+            )
+
         # Composite score (weighted average)
         composite = round(
             on_time_rate * 0.40
@@ -495,10 +502,10 @@ class RegulatoryReporter:
             "treatment_documentation_count": treatment_count,
             "weeks_with_data": weeks_with_data,
             "expected_weeks": expected_weeks,
-            "data_provenance": DataProvenance.live(
-                "Internal compliance database + BarentsWatch",
-                confidence=0.90,
-            ).to_dict(),
+            "lineage": lineage,
+            "data_provenance": provenance_for(
+                lineage, "Internal compliance database + BarentsWatch", 0.90
+            ),
         }
 
     async def validate_report(self, report: RegulatoryReport) -> list[str]:

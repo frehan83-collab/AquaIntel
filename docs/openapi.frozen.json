@@ -111,6 +111,18 @@
             "default": 0,
             "title": "High",
             "type": "integer"
+          },
+          "lineage": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lineage"
           }
         },
         "title": "AlertsListResponse",
@@ -745,6 +757,18 @@
             "title": "Evaluated",
             "type": "integer"
           },
+          "lineage": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lineage"
+          },
           "results": {
             "default": [],
             "items": {
@@ -845,6 +869,18 @@
                 "type": "null"
               }
             ]
+          },
+          "lineage": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lineage"
           },
           "max_adult_female_lice": {
             "title": "Max Adult Female Lice",

@@ -23,6 +23,8 @@ from dataclasses import dataclass, field
 
 import structlog
 
+from core.source_lineage import summarise_rows
+
 log = structlog.get_logger(__name__)
 
 
@@ -45,6 +47,8 @@ class MorningBrief:
     sections: list[BriefSection] = field(default_factory=list)
     top_insight: str = ""
     market_mood: str = "neutral"  # bullish / bearish / mixed / cautious
+    # WS-14: lineage of the lice rows behind the "Lice Pressure" section
+    lice_lineage: dict = field(default_factory=dict)
 
 
 class MorningBriefEngine:
@@ -64,6 +68,7 @@ class MorningBriefEngine:
         sections: list[BriefSection] = []
         signals_bullish = 0
         signals_bearish = 0
+        lice_lineage: dict = {}
 
         # ── 1. Salmon Price ──────────────────────────────────────────
         try:
@@ -137,6 +142,22 @@ class MorningBriefEngine:
                     avg_lice = float(stats[0] or 0)
                     n_sites = int(stats[1] or 0)
                     pct_above = (above / max(n_sites, 1)) * 100
+
+                    # WS-14: same predicate as the stats above, so the lineage
+                    # describes exactly the rows the headline was computed from.
+                    lineage_rows = (await s.execute(
+                        select(
+                            LiceRecord.source,
+                            LiceRecord.year,
+                            LiceRecord.week,
+                            LiceRecord.fetched_at,
+                        ).where(
+                            LiceRecord.year == latest[0],
+                            LiceRecord.week == latest[1],
+                            LiceRecord.avg_adult_female_lice.isnot(None),
+                        )
+                    )).all()
+                    lice_lineage = summarise_rows(lineage_rows, year=latest[0])
 
                     lice_sentiment = "alert" if pct_above > 20 else "bearish" if avg_lice > 0.3 else "neutral"
                     if lice_sentiment == "alert": signals_bearish += 2
@@ -446,6 +467,7 @@ class MorningBriefEngine:
             sections=sections,
             top_insight=top_insight,
             market_mood=mood,
+            lice_lineage=lice_lineage,
         )
 
         self._cache = brief
@@ -471,6 +493,9 @@ class MorningBriefEngine:
                 }
                 for s in brief.sections
             ],
+            # WS-14: the brief's lice section is only as live as its rows; an
+            # empty lineage (section failed / no rows) degrades the envelope.
+            "lineage": brief.lice_lineage,
         }
 
 

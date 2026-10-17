@@ -143,23 +143,53 @@ async def pairs_detail(pair_name: str):
 @router.get("/api/esg/scores")
 async def esg_scores():
     from core.market.esg_scorer import esg_scorer
-    return await esg_scorer.get_all()
+    from core.source_lineage import latest_week_lineage, provenance_for
+    rows = await esg_scorer.get_all()
+    # WS-14: E/S scores weight lice burden from top50's lice averages.
+    lineage = await latest_week_lineage()
+    prov_by_lineage: dict = {}
+    for row in rows:
+        if isinstance(row, dict):
+            # The row's own lineage (if an engine recorded one) wins; the
+            # provenance must then describe *that* lineage, not the national one.
+            row_lineage = row.setdefault("lineage", lineage)
+            key = id(row_lineage)
+            if key not in prov_by_lineage:
+                prov_by_lineage[key] = provenance_for(
+                    row_lineage, "ESG scores (top50 lice averages)", 0.70
+                )
+            row["data_provenance"] = prov_by_lineage[key]
+    return rows
 
 
 @router.get("/api/esg/summary")
 async def esg_summary():
     from core.market.esg_scorer import esg_scorer
-    return await esg_scorer.get_summary()
+    from core.source_lineage import latest_week_lineage, provenance_for
+    result = await esg_scorer.get_summary()
+    if isinstance(result, dict):
+        lineage = await latest_week_lineage()
+        result_lineage = result.setdefault("lineage", lineage)
+        result["data_provenance"] = provenance_for(
+            result_lineage, "ESG summary (top50 lice averages)", 0.70
+        )
+    return result
 
 
 @router.get("/api/esg/company/{company_name}")
 async def esg_company(company_name: str):
     import urllib.parse
     from core.market.esg_scorer import esg_scorer
+    from core.source_lineage import latest_week_lineage, provenance_for
     decoded = urllib.parse.unquote(company_name)
     result = await esg_scorer.get_company(decoded)
     if not result:
         raise HTTPException(404, f"Company not found: {decoded}")
+    lineage = await latest_week_lineage()
+    result_lineage = result.setdefault("lineage", lineage)
+    result["data_provenance"] = provenance_for(
+        result_lineage, f"ESG score for {decoded} (top50 lice averages)", 0.70
+    )
     return result
 
 

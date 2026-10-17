@@ -203,8 +203,13 @@ class TestEngineComposition:
             assert pt["p10"] <= pt["p25"] <= pt["p75"] <= pt["p90"]
             assert pt["p10"] <= pt["mid_nok_kg"] <= pt["p90"]
             assert pt["mid_nok_kg"] > 0
-        # provenance is live when nothing fell back
-        assert r["data_provenance"]["is_live"] is True
+        # WS-14: provenance is live only when the sources did not fall back AND
+        # the lice rows behind the delay adjustment carry a verifiable lineage.
+        # This fake returns no lineage, so the honest verdict is degraded.
+        prov = r["data_provenance"]
+        assert r["lice_lineage"] == {}
+        assert prov["is_live"] is False
+        assert "lineage unverifiable" in prov["fallback_reason"]
 
     def test_forecast_reference_is_latest_published_week(self, monkeypatch):
         # H2 regression guard: horizons are measured from the newest published

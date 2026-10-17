@@ -20,8 +20,8 @@ from sqlalchemy import select, desc
 
 from core.models import LiceRecord, Locality, CompanyExposure
 from core.async_db import get_async_session
-from core.market.data_provenance import DataProvenance
 from core.regulatory_facts import LiceLimit, breaches_limit, lice_limit as _lice_limit
+from core.source_lineage import merge_lineages, provenance_for, summarise_rows
 
 
 def _now() -> dt.datetime:
@@ -95,6 +95,7 @@ class DecisionEngine:
             trend = lice_data["trend"]
             sea_temp = lice_data["sea_temp_c"]
             history = lice_data["history"]
+            lineage = lice_data.get("lineage")
 
             # Try GNN prediction (graceful fallback)
             gnn_prediction = await self._get_gnn_prediction(locality_no)
@@ -169,7 +170,9 @@ class DecisionEngine:
                 current_lice, method, action, trigger=limit.trigger
             )
 
-            # Build provenance — lice data from BarentsWatch, GNN + ocean optional
+            # Build provenance — lice data from BarentsWatch, GNN + ocean optional.
+            # WS-14: live only when the rows this card used are verified and fresh;
+            # the lineage note names the reason otherwise.
             _sources = ["BarentsWatch lice data"]
             _confidence = 0.90
             if gnn_prediction is not None:
@@ -181,10 +184,7 @@ class DecisionEngine:
             if ocean_forecast:
                 _sources.append("MET.no OceanForecast")
                 _confidence = min(_confidence + 0.05, 0.95)  # Better temp = more trust
-            prov = DataProvenance.live(
-                " + ".join(_sources),
-                confidence=_confidence,
-            )
+            prov = provenance_for(lineage, " + ".join(_sources), _confidence)
 
             return {
                 "locality_no": locality_no,
@@ -207,8 +207,9 @@ class DecisionEngine:
                 "cost_of_inaction_nok": round(cost_inaction),
                 "lice_history": history,
                 "ocean_forecast": ocean_forecast,
+                "lineage": lineage,
                 "generated_at": dt.datetime.now(dt.UTC).isoformat(),
-                "data_provenance": prov.to_dict(),
+                "data_provenance": prov,
             }
         except Exception as e:
             log.error("decision_engine.error", locality_no=locality_no, error=str(e))
@@ -234,7 +235,16 @@ class DecisionEngine:
 
             locality_nos = [r[0] for r in rows]
             if not locality_nos:
-                return {"company": company_name, "decisions": [], "summary": "No farms found"}
+                empty = merge_lineages([])
+                return {
+                    "company": company_name,
+                    "decisions": [],
+                    "summary": "No farms found",
+                    "lineage": empty,
+                    "data_provenance": provenance_for(
+                        empty, "BarentsWatch + GNN + Treatment Economics", 0.80
+                    ),
+                }
 
             decisions = []
             for loc in locality_nos[:30]:  # cap at 30 farms
@@ -253,6 +263,9 @@ class DecisionEngine:
                 most_urgent = d
                 break
 
+            # WS-14: the portfolio is only as live as the weakest card's rows.
+            portfolio_lineage = merge_lineages([d.get("lineage") for d in decisions])
+
             return {
                 "company": company_name,
                 "farm_count": len(decisions),
@@ -260,11 +273,13 @@ class DecisionEngine:
                 "action_summary": action_counts,
                 "most_urgent": most_urgent,
                 "total_treatment_cost_nok": sum(d.get("cost_of_treatment_nok", 0) for d in decisions if d.get("action") in ("TREAT_NOW", "SCHEDULE_TREATMENT")),
+                "lineage": portfolio_lineage,
                 "generated_at": dt.datetime.now(dt.UTC).isoformat(),
-                "data_provenance": DataProvenance.live(
+                "data_provenance": provenance_for(
+                    portfolio_lineage,
                     "BarentsWatch + GNN + Treatment Economics",
-                    confidence=0.80,
-                ).to_dict(),
+                    0.80,
+                ),
             }
         except Exception as e:
             log.error("portfolio_decisions.error", company=company_name, error=str(e))
@@ -359,7 +374,7 @@ class DecisionEngine:
         return (None, None, None)
 
     async def _get_lice_data(self, locality_no: int) -> Optional[dict]:
-        """Fetch recent lice records from DB."""
+        """Fetch recent lice records from DB, with the lineage of those rows."""
         async with get_async_session() as s:
             rows = (await s.execute(
                 select(
@@ -367,6 +382,8 @@ class DecisionEngine:
                     LiceRecord.sea_temp_c,
                     LiceRecord.year,
                     LiceRecord.week,
+                    LiceRecord.source,
+                    LiceRecord.fetched_at,
                 )
                 .where(LiceRecord.locality_no == locality_no)
                 .order_by(desc(LiceRecord.year), desc(LiceRecord.week))
@@ -404,6 +421,8 @@ class DecisionEngine:
             "sea_temp_c": sea_temp,
             "trend": trend,
             "history": history,
+            # WS-14: lineage of exactly the rows read above (current + history).
+            "lineage": summarise_rows(rows, year=rows[0][2]),
         }
 
     async def _get_ocean_forecast(self, locality_no: int) -> Optional[dict]:

@@ -53,6 +53,8 @@ class WelfareScore:
     factors: list = field(default_factory=list)  # contributing factors
     locality_no: int = 0
     scored_at: str = ""
+    #: WS-14: lineage of the lice row behind the 35%-weighted lice component.
+    lice_lineage: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -258,6 +260,7 @@ class WelfareScorer:
         sea_temp_db: Optional[float] = None
         weeks_since_treatment = DEFAULT_WEEKS_SINCE_TREATMENT
         treatments_90d = DEFAULT_TREATMENTS_90D
+        lice_lineage: dict = {}
 
         try:
             from core.models import LiceRecord, Locality
@@ -275,6 +278,9 @@ class WelfareScorer:
                 if latest:
                     lice = float(latest.avg_adult_female_lice or DEFAULT_LICE)
                     sea_temp_db = float(latest.sea_temp_c) if latest.sea_temp_c else None
+                    # WS-14: the exact row the lice component is scored from.
+                    from core.source_lineage import summarise_rows
+                    lice_lineage = summarise_rows([latest])
                     factors.append(f"Lice: {lice:.3f} adult female/fish (week {latest.year}W{latest.week:02d})")
                 else:
                     factors.append(f"Lice: using default {DEFAULT_LICE} (no data)")
@@ -405,6 +411,7 @@ class WelfareScorer:
             factors=factors,
             locality_no=locality_no,
             scored_at=dt.datetime.now(dt.UTC).isoformat(),
+            lice_lineage=lice_lineage,
         )
 
 

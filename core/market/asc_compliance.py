@@ -19,6 +19,12 @@ from sqlalchemy import select, func
 
 from core.async_db import get_async_session
 from core.market.data_provenance import DataProvenance
+from core.source_lineage import (
+    lineage_for,
+    merge_lineages,
+    provenance_for,
+    summarise_rows,
+)
 
 log = structlog.get_logger(__name__)
 
@@ -223,6 +229,13 @@ class ASCComplianceChecker:
             )
             temp_count = temp_result.scalar() or 0
 
+            # WS-14: lineage of the same 26-week lice window the indicators count.
+            lineage = await lineage_for(
+                s,
+                LiceRecord.locality_no == locality_no,
+                LiceRecord.fetched_at >= cutoff_26w,
+            )
+
         # ── Run checks ──────────────────────────────────────────────
 
         # 1.1 Weekly lice counts (expect ~26 records for 26 weeks)
@@ -413,9 +426,10 @@ class ASCComplianceChecker:
                 for g in data_gaps
             ],
             "checked_at": now.isoformat(),
-            "data_provenance": DataProvenance.live(
-                "BarentsWatch + Internal treatment data", confidence=0.85
-            ).to_dict(),
+            "lineage": lineage,
+            "data_provenance": provenance_for(
+                lineage, "BarentsWatch + Internal treatment data", 0.85
+            ),
         }
 
         self._cache[cache_key] = (now, result)
@@ -438,23 +452,27 @@ class ASCComplianceChecker:
             locality_nos = [row[0] for row in loc_result.fetchall()]
 
         if not locality_nos:
+            empty_lineage = summarise_rows([])
             return {
                 "total_farms": 0,
                 "farms": [],
                 "avg_readiness": 0.0,
                 "days_until_mandatory": max(0, (ASC_MANDATORY_DATE - dt.date.today()).days),
                 "mandatory_date": ASC_MANDATORY_DATE.isoformat(),
-                "data_provenance": DataProvenance.live(
-                    "BarentsWatch + Internal", confidence=0.85
-                ).to_dict(),
+                "lineage": empty_lineage,
+                "data_provenance": provenance_for(
+                    empty_lineage, "BarentsWatch + Internal", 0.85
+                ),
             }
 
         # Check up to 50 farms for performance
         sample = locality_nos[:50]
         farm_summaries = []
+        farm_lineages: list = []
         for ln in sample:
             try:
                 r = await self.audit_readiness(ln)
+                farm_lineages.append(r.get("lineage"))
                 farm_summaries.append({
                     "locality_no": r["locality_no"],
                     "locality_name": r["locality_name"],
@@ -472,6 +490,9 @@ class ASCComplianceChecker:
         farm_summaries.sort(key=lambda x: x["readiness_score"], reverse=True)
         scores = [f["readiness_score"] for f in farm_summaries]
         avg = round(sum(scores) / max(len(scores), 1), 1)
+        # WS-14: a roll-up merges every farm's own lineage (and degrades when a
+        # farm's audit failed), rather than claiming the newest national week.
+        summary_lineage = merge_lineages(farm_lineages)
 
         result = {
             "total_farms": len(locality_nos),
@@ -486,9 +507,10 @@ class ASCComplianceChecker:
             "days_until_mandatory": max(0, (ASC_MANDATORY_DATE - dt.date.today()).days),
             "mandatory_date": ASC_MANDATORY_DATE.isoformat(),
             "checked_at": now.isoformat(),
-            "data_provenance": DataProvenance.live(
-                "BarentsWatch + Internal treatment data", confidence=0.85
-            ).to_dict(),
+            "lineage": summary_lineage,
+            "data_provenance": provenance_for(
+                summary_lineage, "BarentsWatch + Internal treatment data", 0.85
+            ),
         }
 
         self._cache[cache_key] = (now, result)

@@ -221,13 +221,16 @@ async def federated_privacy_info():
 async def leaders_top30():
     """Top 30 Norwegian salmon producers with performance scores."""
     from core.market.top50_engine import top50_engine
-    from core.market.data_provenance import DataProvenance
+    from core.source_lineage import latest_week_lineage, provenance_for
     companies = await top50_engine.compile_top50()
+    # WS-14: every score is lice-derived — lineage comes from the newest week.
+    lineage = await latest_week_lineage()
     return {
         "data": top50_engine.to_api_response(companies),
-        "data_provenance": DataProvenance.live(
-            "BarentsWatch + company registry", confidence=0.85
-        ).to_dict(),
+        "lineage": lineage,
+        "data_provenance": provenance_for(
+            lineage, "BarentsWatch + company registry", 0.85
+        ),
     }
 
 
@@ -235,12 +238,20 @@ async def leaders_top30():
 async def leader_detail(company_name: str):
     """Detailed profile for a single company."""
     from core.market.top50_engine import top50_engine
+    from core.source_lineage import latest_week_lineage, provenance_for
     import urllib.parse
     decoded = urllib.parse.unquote(company_name)
     co = await top50_engine.get_company_detail(decoded)
     if not co:
         raise HTTPException(404, f"Company not found: {decoded}")
-    return top50_engine.to_api_response([co])[0]
+    profile = top50_engine.to_api_response([co])[0]
+    # WS-14: company scores are lice-derived — carry their lineage.
+    lineage = await latest_week_lineage()
+    profile["lineage"] = lineage
+    profile["data_provenance"] = provenance_for(
+        lineage, "BarentsWatch + company registry", 0.85
+    )
+    return profile
 
 
 @router.get("/api/leaders/pa-leaderboard")
@@ -298,13 +309,15 @@ async def production_by_county():
 async def anomaly_scores():
     """Multi-modal anomaly detection — composite risk score 0-100."""
     from core.market.anomaly_engine import anomaly_engine
-    from core.market.data_provenance import DataProvenance
+    from core.source_lineage import provenance_for
     report = await anomaly_engine.compute()
     result = anomaly_engine.to_dict(report)
-    result["data_provenance"] = DataProvenance.live(
+    # WS-14: the lice z-scores are the live claim here — inherit their lineage.
+    result["data_provenance"] = provenance_for(
+        result.get("lineage"),
         "BarentsWatch lice + PyOD anomaly detection",
-        confidence=0.75,
-    ).to_dict()
+        0.75,
+    )
     return result
 
 
@@ -313,10 +326,12 @@ async def anomaly_alerts():
     """High-severity anomaly alerts only."""
     from core.market.anomaly_engine import anomaly_engine
     from core.market.data_provenance import DataProvenance
-    await anomaly_engine.compute()
+    report = await anomaly_engine.compute()
     alerts = anomaly_engine.get_alerts()
     return {
         "alerts": alerts,
+        # WS-14: the rows behind the alerts, so the client can see how old they are.
+        "lineage": report.lice_lineage,
         "data_provenance": DataProvenance.degraded(
             "BarentsWatch lice + PyOD anomaly detection",
             reason=(
@@ -334,13 +349,16 @@ async def anomaly_alerts():
 async def morning_brief():
     """Daily market intelligence digest."""
     from core.market.morning_brief import morning_brief_engine
-    from core.market.data_provenance import DataProvenance
+    from core.source_lineage import provenance_for
     brief = await morning_brief_engine.generate()
     result = morning_brief_engine.to_dict(brief)
-    result["data_provenance"] = DataProvenance.live(
-        "BarentsWatch + SSB + FRED + Mattilsynet + RSS",
-        confidence=0.85,
-    ).to_dict()
+    # WS-14: the digest quotes a lice headline, so its provenance is the lice
+    # lineage's — never a blanket live claim (WS-21 / rule 1).
+    result["data_provenance"] = provenance_for(
+        result.get("lineage"),
+        "BarentsWatch lice + SSB + FRED + Mattilsynet + RSS",
+        0.85,
+    )
     return result
 
 

@@ -13,6 +13,21 @@ from typing import Optional
 from core.version import API_SCHEMA_VERSION
 
 
+def _freshness(observed_at: dt.datetime | str | None) -> str:
+    """ISO timestamp of the *observation* a payload describes.
+
+    WS-14 (widened 2026-10-17): ``freshness`` is when the data was observed, not
+    when the request was served — a route that keeps stamping "now" makes a
+    six-month-old week look current. Callers that know the observation time pass
+    it; everything else keeps the historical request-time behaviour.
+    """
+    if observed_at is None:
+        return dt.datetime.now(dt.UTC).isoformat()
+    if isinstance(observed_at, str):
+        return observed_at
+    return (observed_at if observed_at.tzinfo else observed_at.replace(tzinfo=dt.UTC)).isoformat()
+
+
 @dataclass
 class DataProvenance:
     source: str  # e.g. "SSB Table 03024", "CDSE Sentinel-2", "simulated"
@@ -25,20 +40,28 @@ class DataProvenance:
         return {**asdict(self), "schema_version": API_SCHEMA_VERSION}
 
     @staticmethod
-    def live(source: str, confidence: float = 0.9) -> "DataProvenance":
+    def live(
+        source: str, confidence: float = 0.9, *, observed_at: dt.datetime | str | None = None
+    ) -> "DataProvenance":
         return DataProvenance(
             source=source,
             is_live=True,
-            freshness=dt.datetime.now(dt.UTC).isoformat(),
+            freshness=_freshness(observed_at),
             confidence=confidence,
         )
 
     @staticmethod
-    def degraded(source: str, reason: str, confidence: float = 0.5) -> "DataProvenance":
+    def degraded(
+        source: str,
+        reason: str,
+        confidence: float = 0.5,
+        *,
+        observed_at: dt.datetime | str | None = None,
+    ) -> "DataProvenance":
         return DataProvenance(
             source=source,
             is_live=False,
-            freshness=dt.datetime.now(dt.UTC).isoformat(),
+            freshness=_freshness(observed_at),
             confidence=confidence,
             fallback_reason=reason,
         )

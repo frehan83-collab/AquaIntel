@@ -12,6 +12,52 @@ from core.schemas import TreatmentOutcomeRequest, TreatmentOutcomeResponse
 router = APIRouter(prefix="/api", tags=["decision", "treatment"])
 
 
+# ── WS-14 lineage helpers ─────────────────────────────────────────────
+async def _lice_lineage(locality_no: int | None = None, pa: int | None = None) -> dict:
+    """Lineage of the lice rows behind a treatment recommendation.
+
+    Per-farm endpoints summarise that farm's rows; a PA-wide schedule summarises
+    every farm in the PA; anything else falls back to the newest reported week.
+    A failed lineage query yields ``{}`` — the payload then degrades honestly
+    instead of the endpoint 500-ing on a diagnostic concern (WS-14).
+    """
+    from core.source_lineage import latest_week_lineage, lineage_for
+
+    try:
+        if locality_no is not None:
+            from core.async_db import get_async_session
+            from core.models import LiceRecord
+
+            async with get_async_session() as s:
+                return await lineage_for(s, LiceRecord.locality_no == locality_no)
+        if pa is not None:
+            from sqlalchemy import select
+
+            from core.async_db import get_async_session
+            from core.models import LiceRecord, Locality
+
+            pas = select(Locality.locality_no).where(Locality.production_area == pa)
+            async with get_async_session() as s:
+                return await lineage_for(s, LiceRecord.locality_no.in_(pas))
+        return await latest_week_lineage()
+    except Exception:  # noqa: BLE001 — lineage is a badge, never a hard dependency
+        return {}
+
+
+def _attach_lineage(result, lineage: dict, label: str, confidence: float):
+    """Attach WS-14 lineage + provenance to an engine payload (dict only)."""
+    from core.source_lineage import provenance_for
+
+    if isinstance(result, dict):
+        # The engine's own lineage wins when it recorded one: the provenance
+        # must describe the rows the payload was actually computed from.
+        result.setdefault("lineage", lineage)
+        result["data_provenance"] = provenance_for(
+            result.get("lineage"), label, confidence
+        )
+    return result
+
+
 # ══════════════════════════════════════════════════════════════════════
 # TREATMENT COST OPTIMIZER
 # ══════════════════════════════════════════════════════════════════════
@@ -19,9 +65,13 @@ router = APIRouter(prefix="/api", tags=["decision", "treatment"])
 @router.get("/treatment/optimize/{locality_no}")
 async def treatment_optimize(locality_no: int, budget: float = None):
     """Find optimal treatment timing based on live lice trajectory and SST."""
+    lineage = await _lice_lineage(locality_no=locality_no)
     try:
         from core.market.treatment_optimizer import treatment_optimizer
-        return treatment_optimizer.optimize_timing(locality_no, budget_nok=budget)
+        result = await treatment_optimizer.optimize_timing(locality_no, budget_nok=budget)
+        return _attach_lineage(
+            result, lineage, "Treatment timing optimizer (lice trajectory + SST)", 0.65
+        )
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Treatment optimization failed for locality {locality_no}: {e}")
 
@@ -29,9 +79,13 @@ async def treatment_optimize(locality_no: int, budget: float = None):
 @router.get("/treatment/compare/{locality_no}")
 async def treatment_compare(locality_no: int):
     """Compare ROI across 5 treatment methods using live farm data."""
+    lineage = await _lice_lineage(locality_no=locality_no)
     try:
         from core.market.treatment_optimizer import treatment_optimizer
-        return treatment_optimizer.compare_treatments(locality_no)
+        result = await treatment_optimizer.compare_treatments(locality_no)
+        return _attach_lineage(
+            result, lineage, "Treatment ROI comparison (lice baseline + method costs)", 0.60
+        )
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Treatment comparison failed for locality {locality_no}: {e}")
 
@@ -39,9 +93,13 @@ async def treatment_compare(locality_no: int):
 @router.get("/treatment/network-schedule/{pa}")
 async def treatment_network_schedule(pa: int):
     """Coordinate PA-wide treatment schedule using live farm graph data."""
+    lineage = await _lice_lineage(pa=pa)
     try:
         from core.market.treatment_optimizer import treatment_optimizer
-        return treatment_optimizer.network_schedule(pa)
+        result = await treatment_optimizer.network_schedule(pa)
+        return _attach_lineage(
+            result, lineage, "PA network treatment schedule (farm graph lice spread)", 0.55
+        )
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Network schedule failed for PA {pa}: {e}")
 
@@ -49,9 +107,13 @@ async def treatment_network_schedule(pa: int):
 @router.get("/treatment/cost-benefit/{locality_no}")
 async def treatment_cost_benefit(locality_no: int, treatment_type: str = "mechanical"):
     """Project post-treatment lice trajectory vs cost using live baseline."""
+    lineage = await _lice_lineage(locality_no=locality_no)
     try:
         from core.market.treatment_optimizer import treatment_optimizer
-        return treatment_optimizer.cost_benefit_analysis(locality_no, treatment_type)
+        result = await treatment_optimizer.cost_benefit_analysis(locality_no, treatment_type)
+        return _attach_lineage(
+            result, lineage, "Treatment cost/benefit projection (lice baseline + cost model)", 0.55
+        )
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Cost benefit analysis failed for locality {locality_no}: {e}")
 

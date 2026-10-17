@@ -348,6 +348,49 @@ week-and-source stamp; the "All Clear" hero (`DashboardHeroAlert.tsx:80`, used o
 when WS-26 removes those pages.
 **Acceptance added:** a test per visible route that a payload older than its source's
 cadence reports `is_live: false`, and that a partial lice week is never live.
+**Shipped 2026-10-17 (partial — lice lineage propagation complete):** every
+`lice_records` consumer in the original file list now derives provenance from the
+rows it actually used. `core/source_lineage.py` gained the shared entry points
+`summarise_rows` (row dicts → lineage), `lineage_for(session, where)` (per-farm /
+per-PA), `latest_week_lineage()` (roll-ups) and `provenance_for(lineage, label,
+confidence)` (→ `DataProvenance.to_dict()`, degraded with the lineage note when the
+rows do not support a live claim). Wired: `decision_engine`, `lice_routes`,
+`supply_routes`, `analytics_routes`, `morning_brief`, `anomaly_engine`,
+`biomass_predictor`, `bloom_routes`, `notification_routes`, `alerts_routes`,
+`ml_routes`, `schemas`; then `asc_compliance`, `regulatory_reporter`,
+`global_supply`, `welfare_scorer` (+ `/api/welfare/*`), `supply_demand_engine`
+(+ `/api/supply/demand-balance`), all four `/api/treatment/*` endpoints,
+`/api/esg/{scores,summary,company/*}` and `/api/leaders/*`. On this box (all
+`lice_records` rows `demo_seed`/`unverified`, newest week 2026-W15) every one of
+those routes now reports `is_live: false` with the lineage note in
+`fallback_reason` and `freshness` = the ISO week's Monday — verified with a live
+`TestClient` sweep, not by inspection. Two bugs surfaced and were fixed on the way:
+the four `/api/treatment/*` endpoints called the `async` engine methods **without
+`await`** (every call raised `'coroutine' object is not iterable` → 500), and
+`/api/regulatory/traffic-light/current` stamped request-time freshness on a
+decision made on a fixed date (now `observed_at=decided_on`, undated → degraded).
+Three further laundering paths were closed in self-review: `/api/gnn/predict`
+merged the model's `fallback_reason` with the lineage note instead of replacing it;
+`/api/compliance/asc/readiness-summary` and `/api/welfare/pa/{pa}` now
+`merge_lineages()` each farm's own lineage (a failed farm degrades the roll-up)
+rather than borrowing `latest_week_lineage()`; and `/api/esg/scores` derives each
+row's provenance from that row's lineage.
+`tests/test_lice_lineage_propagation.py` (23 tests) pins the contract, the
+observation-time freshness rule and one test per wired consumer;
+`scripts/probe_lice_lineage.py` re-runs the live sweep. `docs/openapi.frozen.json`
+was re-frozen (three response schemas gained the optional `lineage` field).
+Gates 2026-10-17: `pytest tests/ -q` 1178 passed / 1 skipped / 13 xfailed /
+10 xpassed (254.78s), `ruff check` clean on `core scripts tests`,
+`scripts/provenance_ratchet.py` 204 baselined + 0 unregistered,
+`scripts/verify_production_truth.py` 0 failures (4 known warnings),
+`scripts/smoke_security.py` all checks passed, and `scripts/probe_lice_lineage.py`
+printed 9/9 routes with `is_live: false` and a lineage reason.
+**Still open in this item:** (a) the WS-16 clause — "a lice week below the
+completeness threshold is never live" — cannot land until WS-16 defines the
+threshold; do not invent one; (b) `is_live` from observation age on the remaining
+non-lice visible routes (country snapshots other than Norway, and the frontend
+badges listed above) is WS-26-dependent; (c) `canada_monitor` reads DFO Pacific
+lice CSVs, not `lice_records`, so it keeps its own DFO provenance.
 
 ### WS-15 · Quota tracker window + AI-LPI magnitude
 **Why:** `_get_pa_lice_data` filters `year == max(year)` only (it computes

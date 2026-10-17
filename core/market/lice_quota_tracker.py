@@ -32,9 +32,9 @@ from core.market.treatment_constants import REGULATORY_LIMIT
 from core.market.data_provenance import DataProvenance
 from core.cache import engine_cache
 from core.source_lineage import (
-    lineage_note,
     merge_lineages,
     parse_timestamp,
+    provenance_for,
     summarise_lineage,
 )
 
@@ -47,16 +47,10 @@ CACHE_TTL = 1800
 def _provenance_for(lineage: dict | None, label: str, confidence: float) -> dict:
     """Live only when the lineage of the rows actually used supports it (WS-1).
 
-    Rule 1: a value built on demo, unverified, stale or partially-fetched lice rows
-    is degraded, with the lineage note as the reason — never an unconditional
-    live stamp.
+    Thin alias: the implementation lives in ``core.source_lineage.provenance_for``
+    so every lice consumer shares one rule (WS-14).
     """
-    note = lineage_note(lineage)
-    if note is None:
-        return DataProvenance.live(label, confidence=confidence).to_dict()
-    return DataProvenance.degraded(
-        label, reason=note, confidence=min(confidence, 0.40)
-    ).to_dict()
+    return provenance_for(lineage, label, confidence)
 
 
 def _refresh_cached_lineage(cached: dict, label: str, confidence: float) -> None:

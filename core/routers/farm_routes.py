@@ -67,7 +67,10 @@ async def farmer_advisory(locality_no: int):
         forecasts_2w=[],
     )
 
-    from core.market.data_provenance import DataProvenance
+    from core.source_lineage import provenance_for, summarise_rows
+
+    # WS-14: the advisory's inputs are exactly this one lice row.
+    lineage = summarise_rows([latest])
     return {
         "locality_no": advisory.locality_no,
         "risk_level": advisory.risk_level,
@@ -81,9 +84,10 @@ async def farmer_advisory(locality_no: int):
         "forecast_2w": advisory.forecast_2w,
         "trend": advisory.trend,
         "summary": advisory.summary,
-        "data_provenance": DataProvenance.live(
-            "BarentsWatch + MET.no + local sensors", confidence=0.85
-        ).to_dict(),
+        "lineage": lineage,
+        "data_provenance": provenance_for(
+            lineage, "BarentsWatch lice + farm advisory model", 0.85
+        ),
     }
 
 
@@ -182,7 +186,7 @@ async def harvest_simulate(locality_no: int, weeks: int = 12):
 async def farm_portfolio(locality_nos: str = Query(..., description="Comma-separated locality numbers")):
     """Multi-farm portfolio overview with lice, decisions, and aggregate stats."""
     from core.market.decision_engine import decision_engine
-    from core.market.data_provenance import DataProvenance
+    from core.source_lineage import provenance_for, summarise_rows
 
     # Parse locality numbers
     try:
@@ -222,6 +226,8 @@ async def farm_portfolio(locality_nos: str = Query(..., description="Comma-separ
                 LiceRecord.has_cleaner_fish,
                 LiceRecord.year,
                 LiceRecord.week,
+                LiceRecord.source,
+                LiceRecord.fetched_at,
             )
             .join(LiceRecord, LiceRecord.locality_no == Locality.locality_no)
             .join(subq, (
@@ -231,6 +237,9 @@ async def farm_portfolio(locality_nos: str = Query(..., description="Comma-separ
             ))
             .where(Locality.locality_no.in_(loc_list))
         )).all()
+
+    # WS-14: one lineage over every row behind the portfolio cards.
+    lineage = summarise_rows(rows)
 
     # Build per-farm data with decision cards
     farms = []
@@ -303,10 +312,10 @@ async def farm_portfolio(locality_nos: str = Query(..., description="Comma-separ
             },
         },
         "generated_at": dt.datetime.now(dt.UTC).isoformat(),
-        "data_provenance": DataProvenance.live(
-            "BarentsWatch + Decision Engine",
-            confidence=0.85,
-        ).to_dict(),
+        "lineage": lineage,
+        "data_provenance": provenance_for(
+            lineage, "BarentsWatch + Decision Engine", 0.85
+        ),
     }
 
 
@@ -431,8 +440,14 @@ async def welfare_score(locality_no: int):
     Also predicts 7-day mortality using heuristic model.
     """
     from core.market.welfare_scorer import welfare_scorer
+    from core.source_lineage import provenance_for
     result = await welfare_scorer.score_farm(locality_no)
-    return result.to_dict()
+    payload = result.to_dict()
+    # WS-14: 35% of the score is lice burden — carry the lineage of that row.
+    payload["data_provenance"] = provenance_for(
+        payload.get("lice_lineage"), "SWIM welfare score (Stien et al. 2013)", 0.75
+    )
+    return payload
 
 
 @router.get("/api/welfare/pa/{pa}")
@@ -464,9 +479,11 @@ async def welfare_pa_summary(pa: int):
 
     # Score each farm
     farm_scores = []
+    farm_lineages: list = []
     for loc_no, loc_name in localities:
         try:
             score = await welfare_scorer.score_farm(loc_no)
+            farm_lineages.append(score.lice_lineage)
             farm_scores.append({
                 "locality_no": loc_no,
                 "name": loc_name or f"Locality {loc_no}",
@@ -476,6 +493,7 @@ async def welfare_pa_summary(pa: int):
                 "alert_reason": score.alert_reason,
             })
         except Exception:
+            farm_lineages.append(None)
             farm_scores.append({
                 "locality_no": loc_no,
                 "name": loc_name or f"Locality {loc_no}",
@@ -497,6 +515,11 @@ async def welfare_pa_summary(pa: int):
     # Sort by score ascending (worst first)
     farm_scores.sort(key=lambda f: f["total_score"] if f["total_score"] is not None else 999)
 
+    from core.source_lineage import merge_lineages, provenance_for
+    # WS-14: merge every farm's own lineage — a failed farm degrades the roll-up
+    # instead of hiding behind the newest national week.
+    lineage = merge_lineages(farm_lineages)
+
     return {
         "pa": pa,
         "farms": farm_scores,
@@ -506,4 +529,8 @@ async def welfare_pa_summary(pa: int):
             "grade_distribution": grade_dist,
         },
         "generated_at": dt.datetime.now(dt.UTC).isoformat(),
+        "lineage": lineage,
+        "data_provenance": provenance_for(
+            lineage, "SWIM welfare scores (Stien et al. 2013)", 0.75
+        ),
     }

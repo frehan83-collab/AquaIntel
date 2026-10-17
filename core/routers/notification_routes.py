@@ -44,14 +44,20 @@ DEFAULT_PREFS = {
 async def get_active_alerts():
     """Get all currently active threshold alerts."""
     from core.market.threshold_alerts import threshold_alert_engine
-    from core.market.data_provenance import DataProvenance
+    from core.source_lineage import latest_week_lineage, provenance_for
     alerts = await threshold_alert_engine.check_all()
+    # WS-14: the lice alerts are computed from the newest reported week, so the
+    # payload's live claim travels with that week's lineage.
+    lineage = await latest_week_lineage()
     return {
         "alerts": [a.to_dict() for a in alerts],
         "count": len(alerts),
         "critical": sum(1 for a in alerts if a.severity == "critical"),
         "high": sum(1 for a in alerts if a.severity == "high"),
-        "data_provenance": DataProvenance.live("BarentsWatch + SSB + MET.no", confidence=0.85).to_dict(),
+        "lineage": lineage,
+        "data_provenance": provenance_for(
+            lineage, "BarentsWatch + SSB + MET.no", 0.85
+        ),
     }
 
 
@@ -167,7 +173,6 @@ async def notification_history(
     Get notification history (last 100) sorted by timestamp DESC.
     Merges alerts from both ThresholdAlertEngine and AlertEngine.
     """
-    from core.market.data_provenance import DataProvenance
 
     notifications: list[dict] = []
 
@@ -235,13 +240,17 @@ async def notification_history(
 
     unread_count = sum(1 for n in notifications if not n["read"])
 
+    # WS-14: lice-derived notifications come from the newest reported week.
+    from core.source_lineage import latest_week_lineage, provenance_for
+    lineage = await latest_week_lineage()
     return {
         "notifications": notifications,
         "total": len(notifications),
         "unread_count": unread_count,
-        "data_provenance": DataProvenance.live(
-            "ThresholdAlertEngine + AlertEngine", confidence=0.85
-        ).to_dict(),
+        "lineage": lineage,
+        "data_provenance": provenance_for(
+            lineage, "ThresholdAlertEngine + AlertEngine", 0.85
+        ),
     }
 
 
@@ -528,7 +537,7 @@ async def evaluate_custom_rules() -> dict:
     """
     from core.async_db import get_async_session
     from core.models import CustomAlertRule
-    from core.market.data_provenance import DataProvenance
+    from core.source_lineage import latest_week_lineage, provenance_for
 
     results: list[dict] = []
     triggered_count = 0
@@ -577,13 +586,16 @@ async def evaluate_custom_rules() -> dict:
                 "message": message,
             })
 
+    # WS-14: the lice metrics evaluated here come from the newest reported week.
+    lineage = await latest_week_lineage()
     return {
         "evaluated": len(results),
         "triggered": triggered_count,
         "results": results,
-        "data_provenance": DataProvenance.live(
-            "BarentsWatch + SSB + Mattilsynet + CMEMS", confidence=0.80
-        ).to_dict(),
+        "lineage": lineage,
+        "data_provenance": provenance_for(
+            lineage, "BarentsWatch + SSB + Mattilsynet + CMEMS", 0.80
+        ),
     }
 
 

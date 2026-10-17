@@ -33,6 +33,7 @@ class LiceSummaryResponse(BaseModel):
     threshold: float = 0.5
     records: int
     above_threshold_pct: float = 0.0
+    lineage: Optional[dict] = None
     data_provenance: Optional[DataProvenanceSchema] = None
 
 
@@ -80,6 +81,7 @@ class AlertsListResponse(BaseModel):
     count: int = 0
     critical: int = 0
     high: int = 0
+    lineage: Optional[dict] = None
     data_provenance: Optional[DataProvenanceSchema] = None
 
 
@@ -376,6 +378,7 @@ class CustomAlertRulesEvaluateResponse(BaseModel):
     evaluated: int = 0
     triggered: int = 0
     results: list[CustomAlertRuleEvaluation] = []
+    lineage: Optional[dict] = None
     data_provenance: Optional[DataProvenanceSchema] = None
 
 

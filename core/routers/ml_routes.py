@@ -76,6 +76,8 @@ async def gnn_train(epochs: int = 50):
                 Locality.latitude,
                 Locality.longitude,
                 Locality.production_area,
+                LiceRecord.source,
+                LiceRecord.fetched_at,
             )
             .join(Locality, LiceRecord.locality_no == Locality.locality_no)
             .where(
@@ -107,7 +109,27 @@ async def gnn_train(epochs: int = 50):
 
     lice_gnn_trainer.prepare_data(farm_records)
     result = lice_gnn_trainer.train(epochs=epochs)
-    return {"status": "trained", **result, "data_provenance": DataProvenance.live("Lice GNN (PyTorch Geometric)", confidence=0.70).to_dict()}
+    # WS-14: the training corpus is the lineage — a GNN fitted on demo rows is
+    # not a live model, whatever torch_geometric reports.
+    from core.source_lineage import provenance_for, summarise_rows
+
+    lineage = summarise_rows(
+        (
+            {
+                "source": r[9],
+                "year": r[1],
+                "week": r[2],
+                "fetched_at": r[10],
+            }
+            for r in rows
+        )
+    )
+    return {
+        "status": "trained",
+        **result,
+        "lineage": lineage,
+        "data_provenance": provenance_for(lineage, "Lice GNN (PyTorch Geometric)", 0.70),
+    }
 
 
 @router.get("/gnn/predict/{locality_no}")
@@ -122,7 +144,37 @@ async def gnn_predict(locality_no: int):
     try:
         result = lice_gnn_trainer.predict(farm_id=locality_no)
         if isinstance(result, dict):
-            result["data_provenance"] = DataProvenance.from_model_result(result, "Lice GNN (PyTorch Geometric)", confidence=0.70).to_dict()
+            # WS-14: a real model over demo/unverified rows is still not live.
+            from core.models import LiceRecord
+            from core.source_lineage import (
+                lineage_for,
+                lineage_note,
+                observation_time,
+                provenance_for,
+            )
+
+            async with get_async_session() as s:
+                lineage = await lineage_for(s, LiceRecord.locality_no == locality_no)
+            result["lineage"] = lineage
+            note = lineage_note(lineage)
+            model_prov = DataProvenance.from_model_result(
+                result, "Lice GNN (PyTorch Geometric)", confidence=0.70
+            )
+            if note is None and model_prov.is_live:
+                result["data_provenance"] = provenance_for(
+                    lineage, "Lice GNN (PyTorch Geometric)", 0.70
+                )
+            else:
+                # Either side degraded: keep BOTH reasons, never lose the model's.
+                reason = "; ".join(
+                    r for r in (model_prov.fallback_reason, note) if r
+                ) or "model result not live"
+                result["data_provenance"] = DataProvenance.degraded(
+                    "Lice GNN (PyTorch Geometric)",
+                    reason=reason,
+                    confidence=min(model_prov.confidence, 0.40),
+                    observed_at=observation_time(lineage),
+                ).to_dict()
         return result
     except RuntimeError as e:
         raise HTTPException(400, str(e))
@@ -142,13 +194,18 @@ async def gnn_predict_all():
     try:
         predictions = lice_gnn_trainer.predict_all_farms()
         high_risk = [p for p in predictions if p["above_threshold"]]
+        # WS-14: predictions inherit the lineage of the newest lice week.
+        from core.source_lineage import latest_week_lineage, provenance_for
+
+        lineage = await latest_week_lineage()
         return {
             "generated_at": dt.datetime.now(dt.UTC).isoformat(),
             "n_farms": len(predictions),
             "n_high_risk": len(high_risk),
             "high_risk_farms": high_risk[:20],
             "all_predictions": predictions[:100],
-            "data_provenance": DataProvenance.live("Lice GNN (PyTorch Geometric)", confidence=0.70).to_dict(),
+            "lineage": lineage,
+            "data_provenance": provenance_for(lineage, "Lice GNN (PyTorch Geometric)", 0.70),
         }
     except RuntimeError as e:
         raise HTTPException(400, str(e))

@@ -320,7 +320,163 @@ def merge_lineages(
 
 
 def lineage_note(lineage: Mapping[str, Any] | None) -> str | None:
-    """None only when the lineage supports a live claim; otherwise the reason."""
-    if lineage is None:
+    """None only when the lineage supports a live claim; otherwise the reason.
+
+    An **empty** mapping is not a live lineage: it means the engine recorded no
+    rows at all (failed fetch, empty week, section skipped), so it must degrade
+    exactly like a missing one (WS-14).
+    """
+    if not lineage:
         return "lineage unverifiable: no lice lineage was recorded for the rows used"
     return lineage.get("note")
+
+
+def observation_time(lineage: Mapping[str, Any] | None) -> dt.datetime | None:
+    """The instant a lineage's newest weekly observation refers to.
+
+    Lice reports are weekly, so the observation time is the ISO week's Monday
+    00:00 UTC — the earliest instant the week describes. Unknown weeks return
+    None (callers then fall back to request time and stay degraded anyway).
+    """
+    week = _week_tuple((lineage or {}).get("latest_week"))
+    if week is None:
+        return None
+    try:
+        monday = dt.date.fromisocalendar(week[0], week[1], 1)
+    except ValueError:
+        return None
+    return dt.datetime.combine(monday, dt.time.min, tzinfo=dt.UTC)
+
+
+def _row_field(row: Any, name: str) -> Any:
+    """Read ``name`` from an ORM object, a SQLAlchemy Row or a mapping."""
+    if isinstance(row, Mapping):
+        return row.get(name)
+    try:
+        return getattr(row, name)
+    except AttributeError:
+        mapping = getattr(row, "_mapping", None)
+        return mapping.get(name) if mapping is not None else None
+
+
+def summarise_rows(
+    rows: Iterable[Any],
+    *,
+    year: int | None = None,
+    pas: Iterable[Mapping[str, Any]] | None = None,
+    now: dt.datetime | None = None,
+) -> dict:
+    """Summarise the lineage of rows a computation already selected.
+
+    Each row must expose ``source``, ``year``, ``week`` and ``fetched_at``
+    (attributes, Row fields or mapping keys). Pass the **same** rows the payload
+    was computed from — a lineage over a different predicate set proves nothing.
+    Rows with an unknown ``source`` classify as unverified, so an empty or
+    pre-WS-1 result never claims live.
+    """
+    counts: dict[Any, int] = {}
+    latest: dt.datetime | None = None
+    newest_week: tuple[int, int] | None = None
+    years: list[int] = []
+    for row in rows:
+        label = _row_field(row, "source")
+        key = "null" if label is None else str(label)
+        counts[key] = counts.get(key, 0) + 1
+        stamp = parse_timestamp(_row_field(row, "fetched_at"))
+        if stamp is not None and (latest is None or stamp > latest):
+            latest = stamp
+        row_year = _row_field(row, "year")
+        week = _week_tuple((row_year, _row_field(row, "week")))
+        if week is not None and (newest_week is None or week > newest_week):
+            newest_week = week
+        if row_year:
+            years.append(int(row_year))
+    return summarise_lineage(
+        counts,
+        year=year if year is not None else (max(years) if years else None),
+        latest_fetched_at=latest,
+        latest_week=newest_week,
+        pas=pas,
+        now=now,
+    )
+
+
+async def lineage_for(session: Any, *predicates: Any, year: int | None = None) -> dict:
+    """Lineage summary for the lice rows matching ``predicates``.
+
+    One query shape for every consumer: select the lineage columns with the
+    same WHERE clause the payload used, then classify them. Imported lazily so
+    this module stays importable without SQLAlchemy models (it is also used by
+    scripts and agents).
+    """
+    from sqlalchemy import select
+
+    from core.models import LiceRecord
+
+    stmt = select(
+        LiceRecord.source, LiceRecord.year, LiceRecord.week, LiceRecord.fetched_at
+    )
+    if predicates:
+        stmt = stmt.where(*predicates)
+    rows = (await session.execute(stmt)).all()
+    return summarise_rows(rows, year=year)
+
+
+async def latest_week_lineage(
+    *, year: int | None = None, now: dt.datetime | None = None
+) -> dict:
+    """Lineage of the newest lice week — for composite payloads.
+
+    Several endpoints aggregate whole engines (alerts, notifications, ML
+    training) whose lice-derived numbers all come from the newest reported
+    week. They have no row list of their own, so this helper applies the one
+    "latest lice week" selection (``year DESC, week DESC``) and summarises it.
+    Callers that already hold the rows must use :func:`summarise_rows` instead.
+    """
+    from sqlalchemy import select
+
+    from core.async_db import get_async_session
+    from core.models import LiceRecord
+
+    async with get_async_session() as s:
+        newest = (await s.execute(
+            select(LiceRecord.year, LiceRecord.week)
+            .order_by(LiceRecord.year.desc(), LiceRecord.week.desc())
+            .limit(1)
+        )).first()
+        if not newest:
+            return summarise_rows([], year=year, now=now)
+        target_year, target_week = newest
+        rows = (await s.execute(
+            select(
+                LiceRecord.source,
+                LiceRecord.year,
+                LiceRecord.week,
+                LiceRecord.fetched_at,
+            ).where(
+                LiceRecord.year == target_year,
+                LiceRecord.week == target_week,
+            )
+        )).all()
+    return summarise_rows(rows, year=year or target_year, now=now)
+
+
+def provenance_for(
+    lineage: Mapping[str, Any] | None, label: str, confidence: float
+) -> dict:
+    """Provenance dict for a payload derived from ``lineage`` — ONE implementation.
+
+    WS-1/WS-14: a value built on demo, unverified, stale or partially-fetched
+    lice rows is degraded, with the lineage note as the reason. ``freshness`` is
+    the newest observation's time, never the request time (widened rule).
+    """
+    from core.market.data_provenance import DataProvenance
+
+    note = lineage_note(lineage)
+    observed = observation_time(lineage)
+    if note is None:
+        return DataProvenance.live(label, confidence=confidence, observed_at=observed).to_dict()
+    return DataProvenance.degraded(
+        label, reason=note, confidence=min(confidence, 0.40), observed_at=observed
+    ).to_dict()
+

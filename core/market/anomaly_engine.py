@@ -31,6 +31,8 @@ from dataclasses import dataclass, field
 
 import structlog
 
+from core.source_lineage import summarise_rows
+
 log = structlog.get_logger(__name__)
 
 
@@ -56,6 +58,8 @@ class AnomalyReport:
     n_anomalies: int = 0
     anomalies: list[AnomalySignal] = field(default_factory=list)
     summary: str = ""
+    # WS-14: lineage of the newest lice week the z-scores are computed against
+    lice_lineage: dict = field(default_factory=dict)
 
 
 def _z_score(value: float, mean: float, std: float) -> float:
@@ -116,6 +120,7 @@ class AnomalyEngine:
 
         anomalies: list[AnomalySignal] = []
         component_scores: dict[str, float] = {"lice": 0, "sst": 0, "mortality": 0, "disease": 0, "multivariate": 0}
+        lice_lineage: dict = {}
 
         # ── 1. Lice Z-score per Production Area ──────────────────────
         try:
@@ -197,6 +202,27 @@ class AnomalyEngine:
                     pos_lice_zs = [a.z_score for a in anomalies if a.category == "lice" and a.z_score > 0]
                     if pos_lice_zs:
                         component_scores["lice"] = min(100, max(0, max(pos_lice_zs) * 25))
+
+                    # WS-14: the z-scores are scored against the newest week, so
+                    # that week's rows decide whether this report may claim live.
+                    # Baseline weeks are history by construction and are not
+                    # expected to be fresh.
+                    lineage_rows = (await s.execute(
+                        select(
+                            LiceRecord.source,
+                            LiceRecord.year,
+                            LiceRecord.week,
+                            LiceRecord.fetched_at,
+                        )
+                        .join(Locality, LiceRecord.locality_no == Locality.locality_no)
+                        .where(
+                            LiceRecord.year == latest_year,
+                            LiceRecord.week == latest_week,
+                            LiceRecord.avg_adult_female_lice.isnot(None),
+                            Locality.production_area.isnot(None),
+                        )
+                    )).all()
+                    lice_lineage = summarise_rows(lineage_rows, year=latest_year)
 
         except Exception as exc:
             log.warning("anomaly.lice_failed", error=str(exc)[:100])
@@ -367,6 +393,7 @@ class AnomalyEngine:
             n_anomalies=len(anomalies),
             anomalies=anomalies,
             summary=summary,
+            lice_lineage=lice_lineage,
         )
 
         self._cache = report
@@ -397,6 +424,7 @@ class AnomalyEngine:
             "risk_level": report.risk_level,
             "n_anomalies": report.n_anomalies,
             "summary": report.summary,
+            "lineage": report.lice_lineage,
             "anomalies": [
                 {
                     "category": a.category,

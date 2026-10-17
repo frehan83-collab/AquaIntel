@@ -46,6 +46,7 @@ import numpy as np
 import structlog
 
 from core.market.data_provenance import DataProvenance
+from core.source_lineage import lineage_note, observation_time
 from core.market.global_supply import global_supply_engine
 from core.market.ssb_price_client import SSBPriceClient, ssb_price_client
 
@@ -463,6 +464,7 @@ class SupplyDemandEngine:
                 "lice_delay_adjustment_pct": delay_pct,
                 "lice_pressure": (lice or {}).get("lice_pressure"),
                 "lice_avg_adult_female": (lice or {}).get("avg_adult_female_lice"),
+                "lice_week": (lice or {}).get("week"),
                 "biomass_current_tonnes": (biomass or {}).get("current_biomass_tonnes"),
                 "biomass_utilization_pct": (biomass or {}).get("utilization_pct"),
                 "biomass_national_mab": (biomass or {}).get("national_mab"),
@@ -478,7 +480,10 @@ class SupplyDemandEngine:
                 "export_volume_trend_pct": (demand or {}).get("export_volume_trend_pct"),
             },
             "price_forecast": forecast,
-            "data_provenance": self._provenance(fallbacks).to_dict(),
+            "lice_lineage": (lice or {}).get("lineage") or {},
+            "data_provenance": self._provenance(
+                fallbacks, (lice or {}).get("lineage")
+            ).to_dict(),
         }
         return payload
 
@@ -506,14 +511,25 @@ class SupplyDemandEngine:
             "balanced": "Balanced",
         }.get(signal, signal.title() if signal else "Unknown")
 
-    def _provenance(self, fallbacks: list[str]) -> DataProvenance:
+    def _provenance(
+        self, fallbacks: list[str], lice_lineage: dict | None = None
+    ) -> DataProvenance:
         source = "SSB 03024 + smolt pipeline + global supply + lice DB + china demand"
-        if not fallbacks:
-            return DataProvenance.live(source, confidence=0.75)
+        # WS-14: a successful lice fetch over demo/unverified rows is still not
+        # live — the lineage note degrades the whole composite, not just a field.
+        reasons = list(fallbacks)
+        note = lineage_note(lice_lineage)
+        if note:
+            reasons.append(f"lice DB: {note}")
+        if not reasons:
+            return DataProvenance.live(
+                source, confidence=0.75, observed_at=observation_time(lice_lineage)
+            )
         return DataProvenance.degraded(
             source,
-            reason="fallbacks: " + "; ".join(fallbacks),
-            confidence=max(0.35, 0.75 - 0.15 * len(fallbacks)),
+            reason="fallbacks: " + "; ".join(reasons),
+            confidence=max(0.35, 0.75 - 0.15 * len(reasons)),
+            observed_at=observation_time(lice_lineage),
         )
 
     @staticmethod
@@ -559,6 +575,7 @@ class SupplyDemandEngine:
 
         from core.async_db import get_async_session
         from core.models import LiceRecord, Locality
+        from core.source_lineage import summarise_rows
 
         async with get_async_session() as s:
             latest = (await s.execute(
@@ -575,6 +592,19 @@ class SupplyDemandEngine:
                 .where(LiceRecord.year == year, LiceRecord.week == week)
                 .where(LiceRecord.avg_adult_female_lice.isnot(None))
             )).scalars().all()
+
+            # WS-14: lineage of the same week/filter the pressure uses.
+            lineage_rows = (await s.execute(
+                select(
+                    LiceRecord.source,
+                    LiceRecord.year,
+                    LiceRecord.week,
+                    LiceRecord.fetched_at,
+                )
+                .join(Locality, LiceRecord.locality_no == Locality.locality_no)
+                .where(LiceRecord.year == year, LiceRecord.week == week)
+                .where(LiceRecord.avg_adult_female_lice.isnot(None))
+            )).all()
 
         values = [float(v) for v in rows if v is not None]
         if not values:
@@ -593,6 +623,7 @@ class SupplyDemandEngine:
             "pct_sites_above_threshold": round(pct_above * 100, 1),
             "lice_pressure": round(pressure, 3),
             "delay_adjustment_pct": round(-pressure * LICE_MAX_DELAY_PCT, 3),
+            "lineage": summarise_rows(lineage_rows, year=year),
         }
 
     @staticmethod

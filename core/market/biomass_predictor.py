@@ -36,6 +36,8 @@ from dataclasses import dataclass, field
 import numpy as np
 import structlog
 
+from core.source_lineage import summarise_rows
+
 log = structlog.get_logger(__name__)
 
 # ── National regulatory constants ─────────────────────────────────────────────
@@ -127,6 +129,9 @@ class BiomassOutlook:
 
     # Recommendations
     recommendations: list[str] = field(default_factory=list)
+
+    # WS-14: lineage of the lice rows the current state was read from
+    lineage: dict = field(default_factory=dict)
 
 
 def _effective_temperature(temp_c: float) -> float:
@@ -282,6 +287,7 @@ class BiomassPredictionEngine:
             scenario_green_pct=round((green_biomass - base_avg) / max(base_avg, 1) * 100, 1),
             scenario_red_pct=round((red_biomass - base_avg) / max(base_avg, 1) * 100, 1),
             recommendations=recommendations,
+            lineage=current_state.get("lineage") or {},
         )
 
         self._latest = outlook
@@ -316,6 +322,7 @@ class BiomassPredictionEngine:
                     "cohorts": [],
                     "avg_sea_temp": 10.0,
                     "regime_colors": {},
+                    "lineage": summarise_rows([], year=None),
                 }
 
             year, week = latest
@@ -363,6 +370,10 @@ class BiomassPredictionEngine:
                     LiceRecord.locality_no,
                     LiceRecord.sea_temp_c,
                     LiceRecord.avg_adult_female_lice,
+                    LiceRecord.source,
+                    LiceRecord.fetched_at,
+                    LiceRecord.year,
+                    LiceRecord.week,
                 )
                 .where(LiceRecord.year == year, LiceRecord.week == week)
                 .limit(200)  # sample for performance
@@ -392,6 +403,9 @@ class BiomassPredictionEngine:
             "cohorts": cohorts,
             "avg_sea_temp": float(avg_temp),
             "regime_colors": regime_colors,
+            # WS-14: the sampled lice rows this state was built from — the
+            # provenance of the outlook can be no stronger than they are.
+            "lineage": summarise_rows(sites, year=year),
         }
 
     def _compute_effective_mab(self, regime_colors: dict, scenario: str) -> float:
@@ -598,6 +612,7 @@ class BiomassPredictionEngine:
             "scenario_green_impact_pct": o.scenario_green_pct,
             "scenario_red_impact_pct": o.scenario_red_pct,
             "recommendations": o.recommendations,
+            "lineage": o.lineage,
         }
 
 
