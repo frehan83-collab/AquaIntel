@@ -4533,9 +4533,11 @@ export interface paths {
          * Weekly Lice Report
          * @description Generate weekly lice report for Mattilsynet submission.
          *
-         *     Pulls lice data from BarentsWatch records, validates against
-         *     regulatory thresholds (0.5 adult female, 0.2 spring PA 2-7),
-         *     and flags any exceedances or missing data.
+         *     Pulls lice data from BarentsWatch records, validates against the legal
+         *     limit in lakselusforskriften § 8 (0.5 adult female lice; 0.2 in weeks 16-21
+         *     for Trøndelag and southwards and weeks 21-26 for Nordland, Troms and
+         *     Finnmark; a count equal to the limit is a breach), and flags any
+         *     exceedances or missing data.
          */
         get: operations["weekly_lice_report_api_compliance_report_weekly_lice__locality_no__get"];
         put?: never;

@@ -4390,7 +4390,7 @@
     },
     "/api/compliance/report/weekly-lice/{locality_no}": {
       "get": {
-        "description": "Generate weekly lice report for Mattilsynet submission.\n\nPulls lice data from BarentsWatch records, validates against\nregulatory thresholds (0.5 adult female, 0.2 spring PA 2-7),\nand flags any exceedances or missing data.",
+        "description": "Generate weekly lice report for Mattilsynet submission.\n\nPulls lice data from BarentsWatch records, validates against the legal\nlimit in lakselusforskriften \u00a7 8 (0.5 adult female lice; 0.2 in weeks 16-21\nfor Tr\u00f8ndelag and southwards and weeks 21-26 for Nordland, Troms and\nFinnmark; a count equal to the limit is a breach), and flags any\nexceedances or missing data.",
         "operationId": "weekly_lice_report_api_compliance_report_weekly_lice__locality_no__get",
         "parameters": [
           {

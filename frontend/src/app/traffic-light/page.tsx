@@ -125,9 +125,9 @@ export default function TrafficLightPage() {
             </h1>
             <div className="flex items-center gap-2 mt-1">
               <p className="text-slate-400 text-sm">
-                Norway Production Area Capacity Planning (2027-2029)
+                Norway production areas: official traffic-light decision{current?.decision?.decided_on ? ` of ${current.decision.decided_on}` : ""}
               </p>
-              <DataQualityBadge source="BarentsWatch" quality="live" />
+              <DataQualityBadge provenance={current?.data_provenance} />
             </div>
           </div>
           <OcButton variant="ghost" onClick={load}>
@@ -388,7 +388,10 @@ export default function TrafficLightPage() {
           </div>
         </div>
         <div className="mt-4 text-xs text-slate-500">
-          Assessments announced Q4, effective Q2 next year. System transitioning 2027-2029 to potentially include growth-based sustainability indicators.
+          {"Colours are the ministry's official decisions (2017, 2020, 2022, 2024, 2026); a red decision's cut applies 6 months after the cut regulation enters into force. A replacement of the system is proposed in Meld. St. 24 (2024-2025) and has not been adopted."}
+          {current?.decision?.source_url && (
+            <> Source: <a href={current.decision.source_url} target="_blank" rel="noopener noreferrer" className="underline">regjeringen.no</a>.</>
+          )}
         </div>
       </GlassCard>
     </div>

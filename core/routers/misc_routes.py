@@ -137,8 +137,11 @@ async def traffic_light_current():
     from core.market.traffic_light_simulator import traffic_light_simulator
     from core.market.data_provenance import DataProvenance
     result = await traffic_light_simulator.get_current_colors()
+    decision = result.get("decision") or {}
     result["data_provenance"] = DataProvenance.live(
-        "BarentsWatch lice data + PA classification rules", confidence=0.85
+        f"Official traffic-light decision {decision.get('decided_on')} "
+        f"({decision.get('regulation')}, regjeringen.no)",
+        confidence=0.95,
     ).to_dict()
     return result
 

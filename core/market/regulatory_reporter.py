@@ -23,17 +23,72 @@ from sqlalchemy import select, func
 from core.async_db import get_async_session
 from core.market.data_provenance import DataProvenance
 
+from core.regulatory_facts import (
+    LICE_LIMIT_DEFAULT,
+    LICE_LIMIT_SPRING,
+    LICE_REPORT_DUE_WEEKDAY,
+    LiceLimit,
+    breaches_limit,
+    lice_limit,
+)
+
 log = structlog.get_logger(__name__)
 
 # ── Regulatory constants ────────────────────────────────────────────
-# Mattilsynet lice reporting: weekly, due by Wednesday of following week
-LICE_REPORT_DUE_DAY = 2  # Wednesday (0=Monday)
+# Weekly lice count reported no later than Tuesday of the following week
+# (lakselusforskriften § 10; see core/regulatory_facts.py)
+LICE_REPORT_DUE_DAY = LICE_REPORT_DUE_WEEKDAY  # Tuesday (0=Monday)
 # Monthly treatment summary: due by 10th of following month
 TREATMENT_SUMMARY_DUE_DAY = 10
-# Regulatory threshold for adult female lice per fish
-LICE_THRESHOLD_ADULT_FEMALE = 0.5
-# Elevated threshold for spring (week 16-21) in production areas 2-7
-LICE_THRESHOLD_SPRING = 0.2
+# Legal adult-female lice limits (lakselusforskriften § 8): 0.5, and 0.2 in the
+# spring window (weeks 16-21 in Nord-Trøndelag and southwards, weeks 21-26 in
+# Nordland, Troms and Finnmark). One definition: core/regulatory_facts.py.
+LICE_THRESHOLD_ADULT_FEMALE = LICE_LIMIT_DEFAULT
+LICE_THRESHOLD_SPRING = LICE_LIMIT_SPRING
+
+
+def applicable_lice_limit(
+    pa: Optional[int], week: Optional[int],
+    municipality: Optional[str] = None, county: Optional[str] = None,
+) -> LiceLimit:
+    """The legal limit for a site in an ISO week (the facts module decides)."""
+    return lice_limit(pa, week, municipality=municipality, county=county)
+
+
+def assess_lice_count(
+    avg_adult_female: float, pa: Optional[int], week: Optional[int],
+    municipality: Optional[str] = None, county: Optional[str] = None,
+) -> dict:
+    """Judge one weekly count against § 8.
+
+    `exceeds` is None when the site's region is unknown inside a spring window
+    and the count lies between 0.2 and 0.5: the legal answer then depends on the
+    county, and a regulatory report must not assert a breach it cannot establish.
+    """
+    limit = applicable_lice_limit(pa, week, municipality, county)
+    warnings: list[str] = []
+    if limit.in_spring_window:
+        warnings.append(f"Spring period: limit {limit.limit} applies ({limit.rule}, W{week})")
+    if limit.established:
+        exceeds: Optional[bool] = breaches_limit(avg_adult_female, limit.limit)
+    elif breaches_limit(avg_adult_female, LICE_LIMIT_DEFAULT):
+        exceeds = True          # a breach under either window
+    elif breaches_limit(avg_adult_female, limit.limit):
+        exceeds = None          # depends on the county
+        warnings.append(
+            f"Adult female lice {avg_adult_female:.2f}: breach only if the site is in the "
+            f"northern/southern window that applies this week; region unknown"
+        )
+    else:
+        exceeds = False
+    return {
+        "threshold": limit.limit,
+        "threshold_established": limit.established,
+        "threshold_rule": limit.rule,
+        "threshold_source": limit.source_url,
+        "exceeds_threshold": exceeds,
+        "warnings": warnings,
+    }
 
 
 @dataclass
@@ -77,18 +132,18 @@ class RegulatoryReporter:
         """
         Returns next 30 days of regulatory deadlines.
 
-        Generates weekly lice deadlines (every Wednesday) and monthly treatment
+        Generates weekly lice deadlines (every Tuesday, § 10) and monthly treatment
         summary deadlines (10th of each month) for the requested period.
         """
         today = dt.date.today()
         end_date = today + dt.timedelta(days=days_ahead)
         deadlines: list[RegulatoryDeadline] = []
 
-        # ── Weekly lice report deadlines (every Wednesday) ──────────
+        # ── Weekly lice report deadlines (every Tuesday, § 10) ──────
         current = today
         while current <= end_date:
             if current.weekday() == LICE_REPORT_DUE_DAY:
-                # This Wednesday is the deadline for the previous week's data
+                # This Tuesday is the deadline for the previous week's data
                 report_week = current - dt.timedelta(days=current.weekday() + 7)
                 iso_cal = report_week.isocalendar()
                 status = "overdue" if current < today else "pending"
@@ -185,15 +240,15 @@ class RegulatoryReporter:
                 avg_mobile = float(record.avg_mobile_lice or 0)
                 avg_stationary = float(record.avg_stationary_lice or 0)
 
-                # Determine applicable threshold
-                threshold = LICE_THRESHOLD_ADULT_FEMALE
-                if pa and 2 <= pa <= 7 and 16 <= week <= 21:
-                    threshold = LICE_THRESHOLD_SPRING
-                    warnings.append(
-                        f"Spring period: reduced threshold {LICE_THRESHOLD_SPRING} applies (PA {pa}, W{week})"
-                    )
-
-                exceeds = avg_af > threshold
+                # Judge the count against § 8 (equal to the limit is a breach)
+                verdict = assess_lice_count(
+                    avg_af, pa, week,
+                    getattr(loc_result, "municipality", None),
+                    getattr(loc_result, "county", None),
+                )
+                threshold = verdict["threshold"]
+                exceeds = verdict["exceeds_threshold"]
+                warnings.extend(verdict["warnings"])
 
                 if exceeds:
                     warnings.append(
@@ -212,6 +267,9 @@ class RegulatoryReporter:
                     "sea_temperature_c": float(record.sea_temp_c) if record.sea_temp_c else None,
                     "has_cleaner_fish": record.has_cleaner_fish,
                     "threshold": threshold,
+                    "threshold_established": verdict["threshold_established"],
+                    "threshold_rule": verdict["threshold_rule"],
+                    "threshold_source": verdict["threshold_source"],
                     "exceeds_threshold": exceeds,
                     "status": "complete",
                 }

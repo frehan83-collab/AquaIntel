@@ -10,7 +10,7 @@ import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
-import { useTranslation, formatNumber, formatCurrency } from "@/lib/i18n";
+import { useTranslation, formatNumber, formatCurrency, formatDate } from "@/lib/i18n";
 import dynamic from "next/dynamic";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DataQualityBadge from "@/components/DataQualityBadge";
@@ -97,21 +97,20 @@ export default function CompetitivenessPage() {
               {t("competitiveness.tariff_impact_subtitle")}
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <div className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-                <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">{locale === "no" ? "Norge" : "Norway"}</p>
-                <p className="text-sm font-bold text-rose-400 mt-0.5">15%</p>
-                <p className="text-[9px] text-[var(--text-secondary)]">{locale === "no" ? "Siden apr. 2025" : "Since Apr 2025"}</p>
-              </div>
-              <div className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-                <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">{locale === "no" ? "Chile / Canada" : "Chile / Canada"}</p>
-                <p className="text-sm font-bold text-emerald-400 mt-0.5">0%</p>
-                <p className="text-[9px] text-[var(--text-secondary)]">FTA / USMCA</p>
-              </div>
-              <div className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-                <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">{locale === "no" ? "Skottland" : "Scotland"}</p>
-                <p className="text-sm font-bold text-amber-400 mt-0.5">2.5%</p>
-                <p className="text-[9px] text-[var(--text-secondary)]">{locale === "no" ? "UK-avtale" : "UK deal"}</p>
-              </div>
+              {/* Rates from the payload: core/regulatory_facts.py, dated and sourced */}
+              {(data?.origins ?? [])
+                .filter((o) => ["Norway", "Chile", "Scotland"].includes(o.country) && o.tariff)
+                .map((o) => (
+                  <div key={o.country} className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                    <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">{o.country}</p>
+                    <p className={`text-sm font-bold mt-0.5 ${o.tariff!.rate_pct > 0 ? "text-rose-400" : "text-emerald-400"}`}>
+                      {formatNumber(o.tariff!.rate_pct, locale, 1)}%
+                    </p>
+                    <a href={o.tariff!.source_url} target="_blank" rel="noopener noreferrer" className="text-[9px] text-[var(--text-secondary)] underline">
+                      {locale === "no" ? "Fra" : "Since"} {formatDate(new Date(`${o.tariff!.effective_from}T12:00:00`), locale)}
+                    </a>
+                  </div>
+                ))}
               <div className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                 <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider">{locale === "no" ? "Handelsvirkning" : "Trade Impact"}</p>
                 <div className="flex items-baseline gap-1.5 mt-0.5">
@@ -137,7 +136,7 @@ export default function CompetitivenessPage() {
         <KPICard
           label="Norway Delivered"
           value={norway?.total_delivered_usd != null ? `$${formatNumber(norway.total_delivered_usd, locale, 2)}/kg` : "\u2014"}
-          delta={norway ? `Rank #${norway.rank} (15% tariff)` : ""}
+          delta={norway ? `Rank #${norway.rank}${norway.tariff ? ` (US tariff ${formatNumber(norway.tariff.rate_pct, locale, 1)}%)` : ""}` : ""}
           deltaType={norway && norway.rank > 3 ? "negative" : "neutral"}
           icon={AlertTriangle}
           delay={0.03}
@@ -231,10 +230,12 @@ export default function CompetitivenessPage() {
               render: (val, row) => (
                 val > 0 ? (
                   <span className="text-rose-400 tabular-nums">
-                    {formatNumber(val * 100, locale, 0)}% ({row.tariff_cost_usd != null ? `$${formatNumber(row.tariff_cost_usd, locale, 2)}` : "\u2014"})
+                    {formatNumber(val * 100, locale, 1)}% ({row.tariff_cost_usd != null ? `$${formatNumber(row.tariff_cost_usd, locale, 2)}` : "\u2014"})
                   </span>
                 ) : (
-                  <span className="text-emerald-400">0% FTA</span>
+                  <span className="text-emerald-400">
+                    0% {row.tariff?.basis?.includes("USMCA") ? "(USMCA)" : row.tariff?.basis?.includes("MFN") ? "(MFN)" : ""}
+                  </span>
                 )
               ),
             },

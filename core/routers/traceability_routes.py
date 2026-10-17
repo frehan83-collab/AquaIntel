@@ -165,9 +165,11 @@ async def compliance_deadlines(locality_no: int = None):
 async def weekly_lice_report(locality_no: int, week: int, year: int):
     """Generate weekly lice report for Mattilsynet submission.
 
-    Pulls lice data from BarentsWatch records, validates against
-    regulatory thresholds (0.5 adult female, 0.2 spring PA 2-7),
-    and flags any exceedances or missing data.
+    Pulls lice data from BarentsWatch records, validates against the legal
+    limit in lakselusforskriften § 8 (0.5 adult female lice; 0.2 in weeks 16-21
+    for Trøndelag and southwards and weeks 21-26 for Nordland, Troms and
+    Finnmark; a count equal to the limit is a breach), and flags any
+    exceedances or missing data.
     """
     from core.market.regulatory_reporter import regulatory_reporter
     report = await regulatory_reporter.generate_weekly_lice_report(

@@ -5,6 +5,48 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
+### WS-21 — regulatory facts as dated, sourced data (2026-10-17)
+- **Why:** the served traffic-light colours came from the frozen regime detector and
+  were wrong for 6 of 13 areas against the 19 June 2026 decision (its history used
+  2019/2021/2023/2025, years with no decision); decision cards used a 0.5 lice limit
+  all year; the reporter applied 0.2 only for PA 2-7 in weeks 16-21; a count equal to
+  the limit was not a breach although § 8 says "færre enn"; weekly reports were due
+  "Wednesday" (§ 10: Tuesday); US tariffs predated the July 2026 Section 301 action.
+- **New `core/regulatory_facts.py`:** the five official colour decisions (2017-10-30,
+  2020-02-04, 2022-06-07, 2024-03-06, 2026-06-19) with announcement and regulation
+  URLs, the capacity cuts with the date each applies (§ 9: 6 months after the cut
+  regulation; PO3 stays at 88.36% until about 2027-02-20), `capacity_pct` /
+  `scheduled_capacity`; the § 8 limit by region and ISO week (`lice_limit`,
+  `breaches_limit`; county name or number, the Nordland municipalities inside PO7 —
+  Bindal, Sømna, Brønnøy — then the production area; an unknown region in a spring
+  window is a precautionary limit, flagged `established: false`); dated US salmon
+  tariff rows (Norway and Chile 12.5%, UK 10%, Canada 0% with a USMCA claim, Faroes
+  and Iceland MFN free, from 2026-07-24; Federal Register 2026-15181).
+- **Consumers:** traffic-light simulator and route serve the official decision (with
+  capacity in force, a scheduled cut, the decision's sources; offered green growth is
+  not counted); the frozen regime detector's colour tables read the facts
+  (maintenance only); the decision engine acts on this week's limit (Norwegian time),
+  judges the count against its own week's limit and reports a past breach, treats a
+  breach as TREAT_NOW whatever the trend, and labels each history bar with its week's
+  limit; the regulatory reporter judges each count with `assess_lice_count` (unknown
+  region between 0.2 and 0.5 → indeterminate, not a breach) and reports due Tuesday;
+  competitiveness takes rate and citation from one dated lookup; the lice-quota note
+  says the quota system is a proposal (Meld. St. 24), not "targeted 2026-2028".
+- **Frontend:** competitiveness banner and table, global supply, traffic light,
+  farmer daily (bars and gauge from the limit), exposure and lice-quota pages no
+  longer show retired tariffs or framework text.
+- **Contract:** deliberate OpenAPI re-freeze of one description
+  (`/api/compliance/report/weekly-lice/{locality_no}` stated the retired PA 2-7 rule).
+- **Tests:** `tests/test_regulatory_facts.py` (72), clocks pinned through `_now`
+  seams; the reporter runs on a throwaway database.
+- **Verification:** facts researched and double-verified against regjeringen.no,
+  lovdata.no, federalregister.gov and hts.usitc.gov (333 agents). Review: three rounds
+  (4 lenses, then 2, then a final read, two refuters per finding) confirmed 21 + 15 + 7
+  findings, all fixed or recorded below.
+- **Recorded, not done (HANDOVER WS-21):** other flat-0.5 consumers, the simulator's
+  scenario arithmetic, chat prompt/RAG facts and a chat crash, a full municipality →
+  county table, the pending Section 301 court ruling.
+
 ### WS-23 (takedown) — no accuracy figure outside the registry (2026-10-17)
 - **Why:** the price outlook printed "Backtested 4-week MAPE: 8.5% … 68% of actual
   prices fell within the indicated band" and a `band_trust` coverage from

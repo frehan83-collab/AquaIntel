@@ -12,6 +12,9 @@
 > signal; `tests/test_signals_takedown.py` joined the fast gate (262 passed + 1 skip).
 > **WS-23's takedown landed 2026-10-17:** no accuracy figure outside the registry;
 > `tests/test_accuracy_claims.py` joined the fast gate (274 passed + 1 skip).
+> **WS-21 landed 2026-10-17:** regulatory facts as dated, sourced data
+> (`core/regulatory_facts.py`); `tests/test_regulatory_facts.py` joined the fast gate
+> (346 passed + 1 skip).
 > Every number below was measured, not copied from an older doc. Re-verify with the
 > commands in §2 before trusting them.
 >
@@ -51,7 +54,8 @@ python -m pytest tests/test_entitlements.py tests/test_billing_money_path.py \
   tests/test_indices.py tests/test_accuracy_registry.py tests/test_production_truth.py \
   tests/test_partner_pilots.py tests/test_legal.py tests/test_provenance_ratchet.py \
   tests/test_gtm_roi.py tests/test_migrations.py tests/test_openapi_contract.py \
-  tests/test_signals_takedown.py tests/test_accuracy_claims.py -q   # 274 passed + 1 skip (network), ~26s (after WS-23 takedown)
+  tests/test_signals_takedown.py tests/test_accuracy_claims.py \
+  tests/test_regulatory_facts.py -q   # 346 passed + 1 skip (network), ~30s (after WS-21)
 
 # the full suite (≈4.5 min) — command runners time out at ~30s, so background it:
 #   Start-Process -FilePath python -ArgumentList '-m','pytest','tests/','-q' \
@@ -501,7 +505,30 @@ is empty; every displayed price comes from `api.billingCatalog()`; a test that n
 plan's feature list includes a dearer plan. **Traps:** the testimonials need a real, permissioned quote
 before anything returns.
 
-### WS-21 · Regulatory facts as dated, sourced data
+### WS-21 · Regulatory facts as dated, sourced data — **DONE 2026-10-17**
+**Done:** `core/regulatory_facts.py` (decisions, dated capacity cuts, § 8 limits by
+region and week, dated US tariff rows) and its consumers; see CHANGELOG.
+**Verification note:** every fact was researched on 2026-10-17 and checked by two
+independent verifiers against primary sources: the regjeringen.no announcements and
+the Lovdata capacity regulations (FOR-2017-12-20-2397, FOR-2020-02-04-105,
+FOR-2022-06-07-972, FOR-2024-03-22-515, FOR-2026-08-20-1764), lakselusforskriften
+§ 8/§ 10 on Lovdata, the Federal Register Section 301 notice 2026-15181 and HTSUS
+0302.14/0304.41. Medium-confidence items: the cut start dates for 2022, 2024 and 2026
+(in-force + 6 months, § 9; 2020 is from LG-2021-80234) and the Faroes' US tariff (assumes
+the Faroes are their own country of origin).
+**Follow-ups (not done):** (1) still on a flat 0.5 limit: `treatment_optimizer.py`,
+`core/valuechain/farmer_advisory.py`, `lice_quota_tracker.py` (risk level),
+`core/ml/harvest_optimizer.py`, `supply_demand_engine.py`, `correlation_engine.py` —
+route each through `regulatory_facts.lice_limit`; (2) the simulator models a colour as a
+capacity level, not the next decision's step (red cuts again, yellow restores nothing),
+and disagrees with `event_impact_model`; (3) the `/api/chat` system prompt and
+`core/llm/rag.py` state lice-derived colours, an annual cadence and 0.2 as a reporting
+threshold, and the rule-based chat crashes on a traffic-light question
+(`core/api.py`, `states.items()` on a list); (4) a full municipality → county table
+(SSB KLASS 131) so sites without a production area get an established window; (5) watch
+the Court of International Trade ruling on the Section 301 duties and add a tariff row
+when it lands; (6) the frozen regime detector's transition priors are fixed literals.
+*The original task, as written before the work (kept for the record):*
 **Why:** the served traffic-light colours are wrong for 6 of 13 areas against the
 19 June 2026 decision (PO1, PO12, PO13 green; PO3 red; the rest yellow); they come
 from the frozen regime detector or hard-coded defaults

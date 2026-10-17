@@ -688,3 +688,18 @@ added `tests/test_migrations.py`.
   `tests/test_entitlements.py` and `tests/test_price_outlook_resilience.py` still
   call the outlook against the real store (WS-24).
 
+## WS-21 — regulatory facts as dated, sourced data — 2026-10-17
+
+- **Shipped:** `core/regulatory_facts.py` and its consumers (decision engine, regulatory
+  reporter, traffic-light simulator and route, frozen regime detector as maintenance,
+  competitiveness engine, six frontend pages); one deliberate OpenAPI re-freeze of a
+  route description.
+- **Verified:** `tests/test_regulatory_facts.py` 72 passed (now in the fast gate:
+  346 passed + 1 skip); route/engine/indices/verifier suites 462 passed, 1 skipped;
+  `tsc --noEmit` and ruff clean; eslint 0 errors on the changed pages; provenance
+  ratchet unchanged. Facts double-verified against primary sources (333 agents).
+- **Review:** three rounds, 21 + 15 + 7 confirmed findings, all fixed or recorded
+  (HANDOVER WS-21 follow-ups). The running API on :8000 still serves the old code until
+  restarted (no auto-reload).
+- **Left:** the follow-ups listed under HANDOVER WS-21.
+

@@ -21,6 +21,23 @@ from sqlalchemy import select, desc
 from core.models import LiceRecord, Locality, CompanyExposure
 from core.async_db import get_async_session
 from core.market.data_provenance import DataProvenance
+from core.regulatory_facts import LiceLimit, breaches_limit, lice_limit as _lice_limit
+
+
+def _now() -> dt.datetime:
+    """The clock (a seam for tests)."""
+    return dt.datetime.now(dt.UTC)
+
+
+def _oslo_iso_week(moment: dt.datetime) -> tuple[int, int]:
+    """(ISO year, ISO week) in Norwegian time: § 8 windows start on a Norwegian Monday."""
+    try:
+        from zoneinfo import ZoneInfo
+        local = moment.astimezone(ZoneInfo("Europe/Oslo"))
+    except Exception:  # no tz database: UTC is at most two hours off
+        local = moment
+    iso = local.isocalendar()
+    return iso.year, iso.week
 
 log = structlog.get_logger()
 
@@ -29,7 +46,7 @@ log = structlog.get_logger()
 # See core/market/treatment_constants.py for full citations
 from core.market.treatment_constants import (
     TREATMENT_PROFILES as _SHARED_PROFILES,
-    REGULATORY_LIMIT, TREATMENT_TRIGGER,
+    TREATMENT_TRIGGER,
 )
 
 # Convert shared TreatmentProfile dataclasses to the dict format this engine expects
@@ -57,9 +74,9 @@ AVG_FISH_WEIGHT_KG = 4.5
 GROWTH_REDUCTION_PCT_PER_LICE = 0.03  # 3% growth penalty per adult female lice
 MORTALITY_PCT_PER_LICE_WEEK = 0.005  # 0.5% weekly mortality per lice above threshold
 
-# BUG FIX (Session 22): Removed local re-declarations that shadowed the
-# imports from treatment_constants.py (line 33). REGULATORY_LIMIT and
-# TREATMENT_TRIGGER are now ONLY defined in treatment_constants.py.
+# The legal lice limit (and the warning trigger derived from it) comes from
+# core.regulatory_facts.lice_limit for the site and ISO week (WS-21); the
+# year-round TREATMENT_TRIGGER constant is used only by the cost-of-inaction model.
 
 
 class DecisionEngine:
@@ -90,25 +107,54 @@ class DecisionEngine:
             # Fetch learned profiles from Efficacy Marketplace
             learned_profiles = await self._get_learned_profiles()
 
-            # Resolve PA for this locality (for learned profile lookup)
-            locality_pa = None
-            try:
-                async with get_async_session() as s:
-                    locality_pa = (await s.execute(
-                        select(Locality.production_area)
-                        .where(Locality.locality_no == locality_no)
-                    )).scalar()
-            except Exception:
-                pass
+            # Resolve PA (learned profiles) and municipality/county (the lice
+            # limit's spring window follows the county wording of § 8)
+            locality_pa, locality_municipality, locality_county = await self._locality_info(locality_no)
+
+            # The advice is for now, so the action uses the limit in force this
+            # ISO week (Norwegian time). The count is also judged against the limit
+            # of the week it was taken, and a past breach is reported.
+            now_year, now_week = _oslo_iso_week(_now())
+            count_week = lice_data.get("current_week") or now_week
+            count_year = lice_data.get("current_year") or now_year
+            limit = _lice_limit(
+                locality_pa, now_week,
+                municipality=locality_municipality, county=locality_county,
+            )
+            limit_count = _lice_limit(
+                locality_pa, count_week,
+                municipality=locality_municipality, county=locality_county,
+            )
+            count_breach = (
+                breaches_limit(current_lice, limit_count.limit) if limit_count.established else None
+            )
+            limit_info = {
+                **limit.as_dict(),
+                "evaluated_for": f"{now_year}-W{now_week:02d}",
+                "count_week": f"{count_year}-W{count_week:02d}",
+                "count_week_limit": limit_count.limit,
+                "count_week_rule": limit_count.rule,
+                "count_breached_its_week_limit": count_breach,
+            }
+            for entry in history:  # each bar judged against its own week's limit
+                entry["limit"] = _lice_limit(
+                    locality_pa, entry.get("week"),
+                    municipality=locality_municipality, county=locality_county,
+                ).limit
 
             # Compute action
             action, urgency, reasoning = self._compute_action(
-                current_lice, trend, sea_temp, gnn_prediction
+                current_lice, trend, sea_temp, gnn_prediction, limit=limit
             )
+            if count_breach and not breaches_limit(current_lice, limit.limit):
+                reasoning.append(
+                    f"The {count_year}-W{count_week:02d} count {current_lice:.2f} breached that "
+                    f"week's limit ({limit_count.limit}); this week's limit is {limit.limit}"
+                )
 
             # Compute feature importance explanation (SHAP-style)
             explanation = self._compute_feature_importance(
-                current_lice, trend, sea_temp, gnn_prediction, action
+                current_lice, trend, sea_temp, gnn_prediction, action, limit=limit
             )
 
             # Recommend treatment method (with learned data when available)
@@ -120,7 +166,7 @@ class DecisionEngine:
 
             # Compute ROI
             cost_treat, cost_inaction, roi = self._compute_roi(
-                current_lice, method, action
+                current_lice, method, action, trigger=limit.trigger
             )
 
             # Build provenance — lice data from BarentsWatch, GNN + ocean optional
@@ -156,6 +202,7 @@ class DecisionEngine:
                     round(gnn_prediction, 3) if gnn_prediction is not None else None
                 ),
                 "sea_temp_c": round(sea_temp, 1) if sea_temp else None,
+                "regulatory_limit": limit_info,
                 "cost_of_treatment_nok": round(cost_treat),
                 "cost_of_inaction_nok": round(cost_inaction),
                 "lice_history": history,
@@ -297,6 +344,20 @@ class DecisionEngine:
 
     # ── Private helpers ──────────────────────────────────────────────
 
+    async def _locality_info(self, locality_no: int) -> tuple:
+        """(production_area, municipality, county) for a locality, or Nones."""
+        try:
+            async with get_async_session() as s:
+                row = (await s.execute(
+                    select(Locality.production_area, Locality.municipality, Locality.county)
+                    .where(Locality.locality_no == locality_no)
+                )).first()
+            if row:
+                return tuple(row)
+        except Exception:
+            pass
+        return (None, None, None)
+
     async def _get_lice_data(self, locality_no: int) -> Optional[dict]:
         """Fetch recent lice records from DB."""
         async with get_async_session() as s:
@@ -338,6 +399,8 @@ class DecisionEngine:
 
         return {
             "current": current,
+            "current_year": rows[0][2],
+            "current_week": rows[0][3],
             "sea_temp_c": sea_temp,
             "trend": trend,
             "history": history,
@@ -389,32 +452,44 @@ class DecisionEngine:
         trend: str,
         temp: float,
         gnn_pred: Optional[float],
+        limit: Optional[LiceLimit] = None,
     ) -> tuple[str, str, list[str]]:
-        """Rule-based decision logic."""
+        """Rule-based decision logic.
+
+        `limit` is the legal limit in force for the site and week
+        (core.regulatory_facts.lice_limit); without it, the limit outside the
+        spring window applies.
+        """
+        lim = limit or _lice_limit()
+        legal, trigger = lim.limit, lim.trigger
         reasoning = []
 
-        # Rule 1: Above regulatory limit and rising
-        if lice > REGULATORY_LIMIT and trend == "rising":
-            reasoning.append(f"Lice {lice:.2f} exceeds regulatory limit ({REGULATORY_LIMIT}) and rising")
+        # Rule 1: at or above the legal limit. § 8 requires FEWER than the limit
+        # at all times, so this is a breach whatever the trend.
+        if breaches_limit(lice, legal):
+            kind = "legal" if lim.established else "precautionary"
+            reasoning.append(f"Lice {lice:.2f} at or above the {kind} limit ({legal}; {lim.rule})")
+            if trend == "rising":
+                reasoning.append("Trend is rising")
             if gnn_pred and gnn_pred > lice:
                 reasoning.append(f"GNN predicts further increase to {gnn_pred:.2f} next week")
             return "TREAT_NOW", "immediate", reasoning
 
         # Rule 2: Above trigger and high temperature stress
-        if lice > TREATMENT_TRIGGER and temp and temp > 14.0:
-            reasoning.append(f"Lice {lice:.2f} above trigger ({TREATMENT_TRIGGER}) with high temp {temp:.1f}C")
+        if lice > trigger and temp and temp > 14.0:
+            reasoning.append(f"Lice {lice:.2f} above trigger ({trigger}) with high temp {temp:.1f}C")
             reasoning.append("Warm water accelerates lice reproduction")
             return "SCHEDULE_TREATMENT", "this_week", reasoning
 
         # Rule 3: Above trigger but trend declining
-        if lice > TREATMENT_TRIGGER and trend == "declining":
+        if lice > trigger and trend == "declining":
             reasoning.append(f"Lice {lice:.2f} above trigger but trend is declining")
             reasoning.append("Monitor closely - natural decline or prior treatment taking effect")
             return "MONITOR", "next_2_weeks", reasoning
 
         # Rule 4: Above trigger, stable or rising but below regulatory
-        if lice > TREATMENT_TRIGGER:
-            reasoning.append(f"Lice {lice:.2f} above proactive trigger ({TREATMENT_TRIGGER})")
+        if lice > trigger:
+            reasoning.append(f"Lice {lice:.2f} above proactive trigger ({trigger})")
             if trend == "rising":
                 reasoning.append("Rising trend detected - schedule treatment before regulatory breach")
                 return "SCHEDULE_TREATMENT", "this_week", reasoning
@@ -422,7 +497,7 @@ class DecisionEngine:
             return "SCHEDULE_TREATMENT", "next_2_weeks", reasoning
 
         # Rule 5: GNN predicts breach
-        if gnn_pred and gnn_pred > TREATMENT_TRIGGER:
+        if gnn_pred and gnn_pred > trigger:
             reasoning.append(f"GNN predicts lice will reach {gnn_pred:.2f} next week (above trigger)")
             return "MONITOR", "next_2_weeks", reasoning
 
@@ -439,24 +514,29 @@ class DecisionEngine:
         temp: Optional[float],
         gnn_pred: Optional[float],
         action: str,
+        limit: Optional[LiceLimit] = None,
     ) -> dict:
         """Compute feature importance (SHAP-style) for the decision.
 
         Returns a structured explanation with per-factor importance scores
         (0-1 normalized) and human-readable explanations in English and Norwegian.
         """
+        lim = limit or _lice_limit()
+        legal, trigger = lim.limit, lim.trigger
         factors = []
         raw_scores = {}
 
         # ── Factor 1: Lice level ──
-        lice_ratio = min(lice / REGULATORY_LIMIT, 2.0) if REGULATORY_LIMIT > 0 else 0
+        lice_ratio = min(lice / legal, 2.0) if legal > 0 else 0
         raw_scores["lice_level"] = lice_ratio
-        if lice > REGULATORY_LIMIT:
-            en = f"Lice level {lice:.2f} exceeds regulatory limit ({REGULATORY_LIMIT})"
-            no = f"Luseniva {lice:.2f} overstiger regulatorisk grense ({REGULATORY_LIMIT})"
-        elif lice > TREATMENT_TRIGGER:
-            en = f"Lice level {lice:.2f} exceeds warning threshold ({TREATMENT_TRIGGER})"
-            no = f"Luseniva {lice:.2f} er over varselsgrensen ({TREATMENT_TRIGGER})"
+        kind_en = "legal" if lim.established else "precautionary"
+        kind_no = "lusegrensen" if lim.established else "føre-var-grensen"
+        if breaches_limit(lice, legal):
+            en = f"Lice level {lice:.2f} is at or above the {kind_en} limit ({legal})"
+            no = f"Luseniva {lice:.2f} er på eller over {kind_no} ({legal})"
+        elif lice > trigger:
+            en = f"Lice level {lice:.2f} exceeds warning threshold ({trigger})"
+            no = f"Luseniva {lice:.2f} er over varselsgrensen ({trigger})"
         else:
             en = f"Lice level {lice:.2f} is within safe range"
             no = f"Luseniva {lice:.2f} er innenfor trygt omrade"
@@ -496,7 +576,7 @@ class DecisionEngine:
 
         # ── Factor 4: GNN prediction ──
         if gnn_pred is not None:
-            gnn_ratio = min(gnn_pred / REGULATORY_LIMIT, 2.0)
+            gnn_ratio = min(gnn_pred / legal, 2.0)
             raw_scores["gnn_prediction"] = gnn_ratio
             direction_en = "increase" if gnn_pred > lice else "decrease"
             direction_no = "økning" if gnn_pred > lice else "nedgang"
@@ -510,21 +590,23 @@ class DecisionEngine:
 
         # ── Factor 5: Regulatory distance ──
         if lice > 0:
-            reg_distance = (REGULATORY_LIMIT - lice) / REGULATORY_LIMIT
+            reg_distance = (legal - lice) / legal
             reg_score = max(0, min(1.0 - reg_distance, 1.0))
         else:
             reg_score = 0.0
         raw_scores["regulatory_distance"] = reg_score
-        margin = REGULATORY_LIMIT - lice
+        margin = legal - lice
+        limit_word = "regulatory limit" if lim.established else "precautionary limit"
+        limit_word_no = "regulatorisk grense" if lim.established else "føre-var-grensen"
         if margin <= 0:
-            en = f"Already exceeding regulatory limit by {abs(margin):.2f}"
-            no = f"Allerede over regulatorisk grense med {abs(margin):.2f}"
-        elif margin < 0.1:
-            en = f"Only {margin:.2f} from regulatory limit — high breach risk"
-            no = f"Bare {margin:.2f} fra regulatorisk grense — høy risiko for brudd"
+            en = f"Already exceeding {limit_word} by {abs(margin):.2f}"
+            no = f"Allerede over {limit_word_no} med {abs(margin):.2f}"
+        elif margin < 0.2 * legal:
+            en = f"Only {margin:.2f} from {limit_word} — high breach risk"
+            no = f"Bare {margin:.2f} fra {limit_word_no} — høy risiko for brudd"
         else:
-            en = f"Margin of {margin:.2f} to regulatory limit"
-            no = f"Margin på {margin:.2f} til regulatorisk grense"
+            en = f"Margin of {margin:.2f} to {limit_word}"
+            no = f"Margin på {margin:.2f} til {limit_word_no}"
         factors.append({"name": "regulatory_distance", "importance": 0, "en": en, "no": no})
 
         # ── Factor 6: Season ──
@@ -643,7 +725,7 @@ class DecisionEngine:
         return best, success, source
 
     def _compute_roi(
-        self, lice: float, method: str, action: str
+        self, lice: float, method: str, action: str, trigger: float = TREATMENT_TRIGGER
     ) -> tuple[float, float, float]:
         """Estimate treatment cost vs cost of inaction."""
         if action in ("NO_ACTION", "MONITOR") or method in ("none", "monitoring"):
@@ -673,7 +755,7 @@ class DecisionEngine:
         )
         mortality_loss_per_week = (
             MORTALITY_PCT_PER_LICE_WEEK
-            * max(0, lice - TREATMENT_TRIGGER)
+            * max(0, lice - trigger)
             * AVG_FISH_PER_LOCALITY
             * AVG_FISH_WEIGHT_KG
             * SALMON_VALUE_NOK_PER_KG

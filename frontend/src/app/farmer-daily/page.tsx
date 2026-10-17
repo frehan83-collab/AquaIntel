@@ -438,8 +438,9 @@ export default function FarmerDailyPage() {
                     unit="af/fish"
                     size={140}
                     thresholds={[
-                      { value: 20, color: "var(--positive)" },
-                      { value: 50, color: "var(--warning)" },
+                      { value: (decision.regulatory_limit?.trigger ?? 0.3) * 100, color: "var(--positive)" },
+                      // a count equal to the limit is a breach, so the warning band ends just below it
+                      { value: (decision.regulatory_limit?.limit ?? 0.5) * 100 - 1e-6, color: "var(--warning)" },
                       { value: 100, color: "var(--danger)" },
                     ]}
                   />
@@ -520,9 +521,9 @@ export default function FarmerDailyPage() {
                         animate={{ height: `${Math.max(pct, 5)}%` }}
                         transition={{ delay: i * 0.08 }}
                         className={`w-full rounded-t-md ${
-                          h.lice > 0.5
+                          h.lice >= (h.limit ?? decision.regulatory_limit?.limit ?? 0.5)
                             ? "bg-rose-500/70"
-                            : h.lice > 0.3
+                            : h.lice > (h.limit ?? decision.regulatory_limit?.limit ?? 0.5) * 0.6
                               ? "bg-amber-500/70"
                               : "bg-ocean-500/70"
                         } ${isLast ? "ring-2 ring-white/20" : ""}`}

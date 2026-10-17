@@ -764,8 +764,8 @@ export default function ExposurePage() {
       <div className="flex items-start gap-2 px-1">
         <Info className="w-3.5 h-3.5 text-[var(--text-secondary)] flex-shrink-0 mt-0.5" />
         <p className="text-[10px] text-[var(--text-secondary)] opacity-60">
-          Lice data: BarentsWatch public API (NLOD 2.0). Traffic light regime predictions use historical transition probabilities
-          from Norwegian Directorate of Fisheries biannual reviews (2017&ndash;2025). GNN predictions require model training.
+          Lice data: BarentsWatch public API (NLOD 2.0). Current traffic-light colours are the official decision of 19 June 2026;
+          the regime predictions blend lice pressure with fixed transition priors that are not estimated from the official decisions. GNN predictions require model training.
           Farm dispersal network uses haversine distance + NorKyst800 current proxies. Not financial or regulatory advice.
         </p>
       </div>

@@ -18,7 +18,14 @@ from dataclasses import dataclass, field
 import httpx
 import structlog
 
+from core.regulatory_facts import us_salmon_tariff
+
 log = structlog.get_logger(__name__)
+
+
+def _now() -> dt.datetime:
+    """The clock (a seam for tests)."""
+    return dt.datetime.now(dt.UTC)
 
 
 # ── Per-Origin Baseline Costs (local currency) ──────────────────────────────
@@ -28,50 +35,44 @@ ORIGIN_BASELINES = {
     "Norway": {
         "local_cost": None,  # LIVE from feed_cost_engine
         "currency": "NOK",
-        "tariff_us_pct": 0.15,      # 15% US tariff (Aug 2025)
         "freight_usd": 0.45,         # Air freight to US East Coast
         "flag": "\U0001f1f3\U0001f1f4",
-        "notes": "Fiskeridirektoratet validated. 15% US tariff since Aug 2025.",
+        "notes": "Fiskeridirektoratet validated.",
     },
     "Chile": {
         "local_cost": 3400,          # CLP/kg
         "currency": "CLP",
-        "tariff_us_pct": 0.0,        # Free Trade Agreement
         "freight_usd": 0.35,         # Shorter route to US West Coast
         "flag": "\U0001f1e8\U0001f1f1",
-        "notes": "0% tariff (US-Chile FTA). Largest supplier to US market.",
+        "notes": "Largest supplier to the US market.",
     },
     "Scotland": {
         "local_cost": 4.10,          # GBP/kg
         "currency": "GBP",
-        "tariff_us_pct": 0.025,      # 2.5% MFN
         "freight_usd": 0.40,
         "flag": "\U0001f3f4\U000e0067\U000e0062\U000e0073\U000e0063\U000e0074\U000e007f",
-        "notes": "2.5% MFN tariff. PD endemic adds treatment cost.",
+        "notes": "PD endemic adds treatment cost.",
     },
     "Canada": {
         "local_cost": 5.80,          # CAD/kg
         "currency": "CAD",
-        "tariff_us_pct": 0.0,        # USMCA/CUSMA
         "freight_usd": 0.15,         # Short trucking distance
         "flag": "\U0001f1e8\U0001f1e6",
-        "notes": "0% tariff (USMCA). BC open net-pen ban June 2029.",
+        "notes": "BC open net-pen ban June 2029.",
     },
     "Faroe Islands": {
         "local_cost": 42.0,          # DKK/kg
         "currency": "DKK",
-        "tariff_us_pct": 0.15,       # Same as Norway (Danish realm, no FTA)
         "freight_usd": 0.50,
         "flag": "\U0001f1eb\U0001f1f4",
-        "notes": "15% US tariff (no separate FTA). Bakkafrost ~95%.",
+        "notes": "Bakkafrost ~95%.",
     },
     "Iceland": {
         "local_cost": 900.0,         # ISK/kg
         "currency": "ISK",
-        "tariff_us_pct": 0.0,        # US-Iceland trade agreement
         "freight_usd": 0.55,
         "flag": "\U0001f1ee\U0001f1f8",
-        "notes": "0% tariff. Disease-free status. Fastest-growing origin.",
+        "notes": "Disease-free status. Fastest-growing origin.",
     },
 }
 
@@ -112,6 +113,7 @@ class OriginCost:
     margin_pct: float
     rank: int = 0
     notes: str = ""
+    tariff_row: dict | None = None  # the dated, sourced row behind tariff_pct
 
 
 @dataclass
@@ -204,7 +206,7 @@ class CompetitivenessEngine:
 
     async def compute_index(self) -> dict:
         """Compute full competitiveness index with live FX and costs."""
-        now = dt.datetime.now(dt.UTC)
+        now = _now()
         if self._cache and self._cache_time and (now - self._cache_time) < self._cache_ttl:
             return self._to_dict(self._cache)
 
@@ -229,8 +231,9 @@ class CompetitivenessEngine:
             # Convert to USD
             prod_cost_usd = local_cost * fx
 
-            # Tariff
-            tariff_pct = cfg["tariff_us_pct"]
+            # Tariff: rate and citation from ONE dated lookup (core/regulatory_facts.py)
+            tariff_row = self.tariff_row(country, now)
+            tariff_pct = (tariff_row["rate_pct"] / 100.0) if tariff_row else 0.0
             tariff_cost = prod_cost_usd * tariff_pct
 
             # Freight
@@ -257,6 +260,7 @@ class CompetitivenessEngine:
                 margin_usd=round(margin, 2),
                 margin_pct=round(margin_pct, 1),
                 notes=cfg["notes"],
+                tariff_row=tariff_row,
             ))
 
         # Rank by delivered cost (ascending = most competitive)
@@ -296,13 +300,13 @@ class CompetitivenessEngine:
         insights.append(
             f"{cheapest.flag} {cheapest.country} is the most competitive origin at "
             f"${cheapest.total_delivered_usd:.2f}/kg delivered to US "
-            f"({cheapest.tariff_pct*100:.0f}% tariff, ${cheapest.freight_usd:.2f} freight)."
+            f"({cheapest.tariff_pct*100:.1f}% US tariff, ${cheapest.freight_usd:.2f} freight)."
         )
 
         if norway:
             tariff_cost_total = norway.tariff_cost_usd
             insights.append(
-                f"{norway.flag} Norway 15% tariff adds ${tariff_cost_total:.2f}/kg, "
+                f"{norway.flag} Norway's {norway.tariff_pct * 100:.1f}% US tariff adds ${tariff_cost_total:.2f}/kg, "
                 f"pushing delivered cost to ${norway.total_delivered_usd:.2f}/kg (rank #{norway.rank})."
             )
 
@@ -348,6 +352,8 @@ class CompetitivenessEngine:
                 new_tariff_cost = base_cost * new_tariff
                 new_delivered = base_cost + new_tariff_cost + freight
                 o["tariff_pct"] = new_tariff
+                o["tariff"] = None  # a scenario rate is not the official one
+                o["tariff_scenario_override"] = True
                 o["tariff_cost_usd"] = round(new_tariff_cost, 2)
                 o["total_delivered_usd"] = round(new_delivered, 2)
                 o["delivered_cost_usd"] = round(new_delivered, 2)
@@ -379,6 +385,14 @@ class CompetitivenessEngine:
             "baseline_origins": baseline_origins,
         }
 
+    @staticmethod
+    def tariff_row(origin: str, as_of: dt.datetime | None = None) -> dict | None:
+        """The dated, sourced US tariff behind an origin's rate (WS-21)."""
+        try:
+            return us_salmon_tariff(origin, as_of).as_dict()
+        except LookupError:
+            return None
+
     def _to_dict(self, snap: CompetitivenessSnapshot) -> dict:
         """Serialize snapshot to API-friendly dict."""
         norway_fallback = getattr(self, "_norway_cost_is_fallback", False)
@@ -399,6 +413,7 @@ class CompetitivenessEngine:
                     "fx_rate_to_usd": o.fx_rate_to_usd,
                     "production_cost_usd": o.production_cost_usd,
                     "tariff_pct": o.tariff_pct,
+                    "tariff": o.tariff_row,
                     "tariff_cost_usd": o.tariff_cost_usd,
                     "freight_usd": o.freight_usd,
                     "total_delivered_usd": o.total_delivered_usd,

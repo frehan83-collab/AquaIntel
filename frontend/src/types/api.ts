@@ -72,6 +72,19 @@ export interface DecisionCard {
   cost_of_treatment_nok: number;
   cost_of_inaction_nok: number;
   ocean_forecast?: OceanForecast;
+  /** Legal lice limit for the count's week (lakselusforskriften § 8). */
+  regulatory_limit?: {
+    limit: number;
+    established: boolean;
+    trigger: number;
+    trigger_basis: string;
+    rule: string;
+    source_url: string;
+    evaluated_for: string;
+    count_week: string;
+    count_week_limit: number;
+    count_breached_its_week_limit: boolean | null;
+  };
   explanation?: DecisionExplanation;
   generated_at: string;
   data_provenance: DataProvenance;
@@ -516,6 +529,16 @@ export interface CompetitivenessOrigin {
   fx_rate_to_usd: number;
   production_cost_usd: number;
   tariff_pct: number;
+  /** The dated, sourced US tariff behind tariff_pct (core/regulatory_facts.py). */
+  tariff?: {
+    origin: string;
+    rate_pct: number;
+    basis: string;
+    effective_from: string;
+    source_url: string;
+    confidence: string;
+    caveat: string;
+  } | null;
   tariff_cost_usd: number;
   freight_usd: number;
   total_delivered_usd: number;

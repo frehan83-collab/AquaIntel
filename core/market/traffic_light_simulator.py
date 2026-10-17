@@ -1,13 +1,12 @@
 """
 Traffic Light Simulator
 =========================
-Models the financial impact of production area color changes under
-Norway's aquaculture traffic light system (2017-present, transitioning 2027-2029).
+Models the financial impact of production area colour changes under
+Norway's aquaculture traffic-light system (produksjonsområdeforskriften, 2017).
 
-Current system: green (+6% MAB growth), yellow (0% change), red (-6% MAB reduction)
-Proposed 2027+: may include growth-based sustainability indicators
-
-Uses live data from BarentsWatch (lice by PA) + biomass predictor constants.
+Current colours are the latest OFFICIAL decision (core/regulatory_facts.py), never
+a model output. Green offers up to +6% capacity, yellow no change, red -6%.
+A replacement of the system is proposed in Meld. St. 24 (2024-2025), not adopted.
 """
 from __future__ import annotations
 
@@ -24,6 +23,11 @@ from core.market.biomass_predictor import (
 )
 
 log = structlog.get_logger(__name__)
+
+
+def _now() -> dt.datetime:
+    """The clock (a seam for tests)."""
+    return dt.datetime.now(dt.UTC)
 
 # ── Production Area definitions (PA 1-13) ────────────────────────────────────
 # Source: Nærings- og fiskeridepartementet, produksjonsområdeforskriften
@@ -74,15 +78,6 @@ PA_MAJOR_OPERATORS: dict[int, list[dict[str, Any]]] = {
     13: [{"company": "Grieg Seafood", "farms": 20}, {"company": "Cermaq", "farms": 15}, {"company": "Mowi", "farms": 10}],
 }
 
-# Historical color assignments (2020-2024 assessments)
-# Source: Nærings- og fiskeridepartementet decisions
-DEFAULT_COLORS: dict[int, str] = {
-    1: "green", 2: "green", 3: "yellow", 4: "red", 5: "yellow",
-    6: "green", 7: "green", 8: "green", 9: "green", 10: "green",
-    11: "green", 12: "green", 13: "green",
-}
-
-
 class TrafficLightSimulator:
     """
     Simulates the financial and operational impact of traffic light
@@ -90,9 +85,7 @@ class TrafficLightSimulator:
     """
 
     def __init__(self) -> None:
-        self._cached_colors: dict[int, str] | None = None
-        self._cache_time: dt.datetime | None = None
-        self._cache_ttl = dt.timedelta(hours=1)
+        pass
 
     def _get_spot_price_nok(self) -> float:
         """Get current SSB salmon spot price in NOK/kg."""
@@ -105,47 +98,30 @@ class TrafficLightSimulator:
             pass
         return 85.0  # fallback
 
-    def _get_colors_from_regime(self) -> dict[int, str]:
-        """Try to get current colors from the regime detector."""
-        try:
-            from core.market.regime_detector import regime_detector
-            states = regime_detector.get_all_states()
-            if states:
-                colors = {}
-                for s in states:
-                    pa = s.get("production_area")
-                    color = s.get("current_color", "yellow")
-                    if pa:
-                        colors[int(pa)] = color
-                if len(colors) >= 5:
-                    return colors
-        except Exception:
-            pass
-        return {}
-
     async def get_current_colors(self) -> dict[str, Any]:
-        """Return current traffic light status for all 13 PAs."""
-        now = dt.datetime.now(dt.UTC)
-        if (
-            self._cached_colors
-            and self._cache_time
-            and (now - self._cache_time) < self._cache_ttl
-        ):
-            colors = self._cached_colors
-        else:
-            colors = self._get_colors_from_regime()
-            if not colors:
-                colors = dict(DEFAULT_COLORS)
-            self._cached_colors = colors
-            self._cache_time = now
+        """Current traffic-light status for all 13 PAs: the latest official decision."""
+        from core.regulatory_facts import (
+            CUT_LAG_NOTE,
+            PRODUCTION_AREA_REGULATION_URL,
+            capacity_pct,
+            scheduled_capacity,
+            traffic_light_decision,
+        )
+
+        now = _now()
+        decision = traffic_light_decision(now)
+        colors = decision.colours
 
         pa_list = []
         for pa_def in PA_DEFINITIONS:
             pa = pa_def["pa"]
-            color = colors.get(pa, DEFAULT_COLORS.get(pa, "yellow"))
+            color = colors[pa]
             adj = TRAFFIC_LIGHT_ADJUSTMENTS.get(color, 0.0)
             base_mab = PA_MAB_ALLOCATION.get(pa, STANDARD_SITE_MAB * PA_FARM_COUNTS.get(pa, 100))
-            effective_mab = base_mab * (1 + adj)
+            cap_now = capacity_pct(pa, now)
+            # Usable capacity in force today; offered green growth is not counted
+            # (uptake is unknown), and a decided cut counts only once it applies.
+            effective_mab = base_mab * cap_now / 100.0
             pa_list.append({
                 "production_area": pa,
                 "name": pa_def["name"],
@@ -155,6 +131,9 @@ class TrafficLightSimulator:
                 "base_mab_tonnes": round(base_mab, 0),
                 "effective_mab_tonnes": round(effective_mab, 0),
                 "farms": PA_FARM_COUNTS.get(pa, 0),
+                "capacity_pct_in_force": cap_now,
+                "capacity_change_scheduled": scheduled_capacity(pa, now),
+                "growth_offered_pct": round(adj * 100, 1) if adj > 0 else 0.0,
             })
 
         green_count = sum(1 for p in pa_list if p["current_color"] == "green")
@@ -169,13 +148,17 @@ class TrafficLightSimulator:
             "national_mab_tonnes": NATIONAL_MAB_TONNES,
             "production_areas": pa_list,
             "assessment_basis": "Lice-induced wild salmon mortality",
-            "framework": "Produksjonsomradeforskriften (2017), transitioning 2027-2029",
+            "framework": "Produksjonsområdeforskriften (FOR-2017-01-16-61); a replacement is proposed in Meld. St. 24 (2024-2025), not adopted",
+            "framework_url": PRODUCTION_AREA_REGULATION_URL,
+            "decision": decision.as_dict(),
+            "capacity_rule": CUT_LAG_NOTE,
+            "mab_basis": "estimated PA allocation (Fiskeridirektoratet Table 8, estimate) x capacity in force",
             "generated_at": now.isoformat(),
         }
 
     async def simulate_color_change(self, pa: int, new_color: str) -> dict[str, Any]:
         """Simulate the impact of changing a production area's traffic light color."""
-        now = dt.datetime.now(dt.UTC)
+        now = _now()
         new_color = new_color.lower().strip()
 
         if pa < 1 or pa > 13:
@@ -259,14 +242,15 @@ class TrafficLightSimulator:
             "revenue_impact_mnok": round(revenue_impact_mnok, 1),
             "spot_price_nok_kg": round(spot_price, 2),
             "affected_companies": affected_companies,
-            "effective_date": "Typically Q2 following Q4 announcement",
+            "effective_date": "A red decision's cut applies 6 months after the cut regulation enters into force (produksjonsområdeforskriften § 9); growth in green areas is offered at a fixed price and by auction",
+            "current_decision": current_status.get("decision"),
             "reasoning": reasoning,
             "generated_at": now.isoformat(),
         }
 
     async def simulate_all_pas(self) -> dict[str, Any]:
         """Generate what-if scenarios for all 13 PAs under each color."""
-        now = dt.datetime.now(dt.UTC)
+        now = _now()
         current_status = await self.get_current_colors()
         spot_price = self._get_spot_price_nok()
 
@@ -321,6 +305,7 @@ class TrafficLightSimulator:
 
         return {
             "scenarios": scenarios,
+            "current_decision": current_status.get("decision"),
             "national_summary": {
                 "current_effective_mab": round(total_current, 0),
                 "all_green_mab": round(total_if_green, 0),
@@ -330,9 +315,9 @@ class TrafficLightSimulator:
                 "spot_price_nok_kg": round(spot_price, 2),
             },
             "framework_note": (
-                "The traffic light system is under review for 2027-2029 transition. "
-                "Future assessments may incorporate growth-based sustainability indicators "
-                "beyond the current lice-mortality metric."
+                "Scenarios are hypothetical. The current colours are the latest official "
+                "decision; a replacement of the system is proposed in Meld. St. 24 "
+                "(2024-2025) and has not been adopted."
             ),
             "generated_at": now.isoformat(),
         }

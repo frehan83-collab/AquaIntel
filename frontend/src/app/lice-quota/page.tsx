@@ -135,8 +135,8 @@ export default function LiceQuotaPage() {
               PROJECTED &mdash; Regulation Not Yet Finalized
             </p>
             <p className="text-amber-200/70 text-xs mt-1">
-              Norway is transitioning from the traffic light system to tradable lice emission quotas
-              per production area (targeted 2026-2028). All quotas and emissions shown here are
+              Meld. St. 24 (2024-2025) proposes replacing the traffic-light system with tradable lice
+              emission quotas per production area; it has not been adopted and no timeline is set. All quotas and emissions shown here are
               hypothetical estimates based on IMR carrying capacity assessments. Quotas cannot be
               traded across regions. A fee on lice emissions is also under consideration.
             </p>

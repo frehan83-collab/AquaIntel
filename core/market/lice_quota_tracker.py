@@ -1,8 +1,10 @@
 """
 Lice Emission Quota Tracker
 ==============================
-Architectural foundation for Norway's upcoming tradable lice emission quota system
-(targeted 2026-2028, replacing the traffic light system).
+Architectural foundation for the tradable lice-emission quota system proposed in
+Meld. St. 24 (2024-2025) to replace the traffic-light system. It has not been
+adopted; no timeline or allocations are published, so every quota here is
+hypothetical.
 
 Quotas are set per production area (PA 1-13) based on local carrying capacity.
 Quotas CANNOT be traded across regions. A fee on lice emissions is also under
@@ -518,11 +520,10 @@ class LiceQuotaTracker:
             "emission_trend": emission_trend,
             "production_areas": pa_results,
             "framework_note": (
-                "Norway is transitioning from the traffic light system to tradable lice "
-                "emission quotas per production area (targeted 2026-2028). Quotas are set "
-                "based on local carrying capacity and CANNOT be traded across regions. "
-                "A fee on lice emissions is also under consideration. When the system "
-                "activates, volume limitations in aquaculture licences will be removed."
+                "Meld. St. 24 (2024-2025) proposes replacing the traffic-light system with "
+                "tradable lice-emission quotas per production area. It has not been adopted, "
+                "and no timeline or quota allocations have been published. All quotas here "
+                "are hypothetical."
             ),
             "regulatory_status": "PROJECTED - regulation not yet finalized",
             "lineage": lineage,

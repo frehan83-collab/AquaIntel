@@ -134,7 +134,10 @@ TREATMENT_PROFILES = {
 }
 
 # Regulatory thresholds — Norwegian aquaculture regulations
-REGULATORY_LIMIT = 0.5       # Adult female lice per fish — mandatory treatment trigger
+# The legal limit outside the spring window. For a site and ISO week use
+# core.regulatory_facts.lice_limit(): § 8 sets 0.2 in weeks 16-21 (south) and
+# 21-26 (north). Consumers still on this flat constant are listed in HANDOVER WS-21.
+REGULATORY_LIMIT = 0.5       # Adult female lice per fish (outside the spring window)
 TREATMENT_TRIGGER = 0.3      # Warning level — schedule treatment
 MONITORING_THRESHOLD = 0.1   # Low level — routine monitoring
 

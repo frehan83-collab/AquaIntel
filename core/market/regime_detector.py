@@ -74,29 +74,16 @@ class ColorChangeAlert:
 
 
 # ── Historical Traffic Light Colors ──────────────────────────────
-# Source: Norwegian Directorate of Fisheries
-# Updated biannually since 2017
-HISTORICAL_COLORS: dict[int, dict[str, str]] = {
-    1:  {"2017": "green", "2019": "green", "2021": "green", "2023": "green", "2025": "green"},
-    2:  {"2017": "green", "2019": "yellow", "2021": "yellow", "2023": "yellow", "2025": "yellow"},
-    3:  {"2017": "yellow", "2019": "red", "2021": "red", "2023": "red", "2025": "red"},
-    4:  {"2017": "yellow", "2019": "red", "2021": "red", "2023": "yellow", "2025": "yellow"},
-    5:  {"2017": "yellow", "2019": "yellow", "2021": "red", "2023": "red", "2025": "red"},
-    6:  {"2017": "green", "2019": "green", "2021": "yellow", "2023": "green", "2025": "green"},
-    7:  {"2017": "yellow", "2019": "yellow", "2021": "yellow", "2023": "yellow", "2025": "yellow"},
-    8:  {"2017": "green", "2019": "green", "2021": "green", "2023": "green", "2025": "green"},
-    9:  {"2017": "green", "2019": "green", "2021": "green", "2023": "green", "2025": "green"},
-    10: {"2017": "green", "2019": "green", "2021": "green", "2023": "green", "2025": "green"},
-    11: {"2017": "green", "2019": "green", "2021": "green", "2023": "green", "2025": "green"},
-    12: {"2017": "green", "2019": "green", "2021": "green", "2023": "green", "2025": "green"},
-    13: {"2017": "green", "2019": "green", "2021": "green", "2023": "green", "2025": "green"},
-}
+# Maintenance fix (WS-21): the official decisions live in core/regulatory_facts.py.
+# Keys are decision years (2017, 2020, 2022, 2024, 2026); there were no decisions
+# in 2019, 2021, 2023 or 2025.
+from core.regulatory_facts import traffic_light_decision as _tl_decision  # noqa: E402
+from core.regulatory_facts import traffic_light_history as _tl_history  # noqa: E402
 
-# Current colors (2025 assessment)
-CURRENT_COLORS: dict[int, str] = {
-    pa: colors.get("2025", list(colors.values())[-1])
-    for pa, colors in HISTORICAL_COLORS.items()
-}
+HISTORICAL_COLORS: dict[int, dict[str, str]] = _tl_history()
+
+# Current colours: the latest official decision
+CURRENT_COLORS: dict[int, str] = dict(_tl_decision().colours)
 
 # Lice thresholds used in the traffic light model
 # Based on Taranger et al. (2015) and Directorate methodology
