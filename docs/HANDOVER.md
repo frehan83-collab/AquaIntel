@@ -115,7 +115,18 @@ always confirm with `git ls-remote origin refs/heads/master`.
 ## 5. Workstream backlog — pick these up in order
 
 Each item is self-contained: goal → files → steps → **acceptance criteria you can
-test** → traps. WS-1, WS-2 and WS-19 are done.
+test** → traps.
+
+**Where things stand (2026-10-17, origin/master `25f9616`):**
+- **Done:** WS-1, WS-2, WS-11, WS-19, WS-21. WS-21's entry lists its follow-ups.
+- **Partly done:** WS-20 (left: one product name and the Desk/Operator price
+  inversion, both owner decisions, plus the OpenAPI `info.description`) and WS-23
+  (takedown done; the re-run half is open).
+- **Waiting on the owner:** the WS-26 page-cut list, WS-27 layer 2, the WS-20
+  decisions above, and the legal opinion that most of WS-28 waits on.
+- **Next without an owner decision:** WS-14 together with WS-22's stale-decision-card
+  rule, then the rest of WS-22, WS-23's re-run half, WS-16, WS-24 and WS-25, in the
+  order below.
 
 **Priority changed 2026-10-17 by [`docs/VALUE_ANALYSIS.md`](VALUE_ANALYSIS.md).** The
 value analysis found buyer-visible defects that outrank the infrastructure items.
