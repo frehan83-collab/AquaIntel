@@ -560,3 +560,28 @@ added `tests/test_migrations.py`.
   agent publish W42 honestly). Production never had a test run. Paging a human when
   the week is missing is WS-9; the status WS-9 alerts on now exists.
 
+## Product value analysis — 2026-10-17
+
+- **Delivered:** `docs/VALUE_ANALYSIS.md` (feature bloat, market value per buyer,
+  a ranked quality ladder, a design-identity direction, a 90-day plan, corrections to
+  the earlier research) and backlog entries WS-19…WS-27 in `docs/HANDOVER.md`.
+- **Method:** five research lenses on the repo, the running API and the web; 24 of 27
+  web findings fact-checked (8 refuted or corrected); an adversarial critique; two
+  rounds of independent per-section verification (391 claims checked, 88 corrected).
+- **Headline:** three of five modelled buyers would hit a code defect within minutes,
+  the insurer would stop at a self-reported trigger and uncleared licences, and the
+  desk would find nothing new; most blockers are code or copy
+  defects (wrong traffic-light colours, placeholder company volumes, an inverted
+  AI-LPI component, "live" labels that ignore data age, invented testimonials, an
+  accuracy figure computed partly on demo rows, SHORT calls on listed shares shown to
+  anonymous visitors), not only this box's dead ingest. On real prices the served
+  price model does beat carrying last week's price forward at 2-8 weeks, by 0.1-0.5
+  points.
+- **Corrected along the way:** the disease feed is live (Mattilsynet, hourly); only
+  its list view hides the newest cases.
+- **Order changed:** WS-19 (guard the index history) must land before the agents
+  service runs anywhere, because the publisher would otherwise store AI-STI's
+  defect-driven 100 every week from 2026-W43. The two test-written 2026-W42 rows
+  (AI-STI 100, AI-LPI 55 claiming live) remain in the store unmarked; WS-19 marks them
+  superseded. Keep `--api-only` until WS-19 and WS-16's completeness rule land.
+- **No code changed.**

@@ -2,10 +2,11 @@
 
 > **Repository:** [github.com/frehan83-collab/AquaIntel](https://github.com/frehan83-collab/AquaIntel) (public)
 
-Last updated: 2026-10-16 (commercial hardening + WS-1 lice lineage — see docs/HANDOVER.md)
+Last updated: 2026-10-17 (product value analysis — see docs/VALUE_ANALYSIS.md)
 
 **Taking over coding? Read `docs/HANDOVER.md`** — verified state, gate commands, the
-prioritised workstream backlog (WS-1 and WS-2 done; WS-3…WS-18 open) and the traps that cost real time.
+prioritised workstream backlog (WS-1 and WS-2 done; WS-3…WS-27 open, **start at WS-19**
+per `docs/VALUE_ANALYSIS.md`) and the traps that cost real time.
 
 ## Commercial hardening (in progress)
 

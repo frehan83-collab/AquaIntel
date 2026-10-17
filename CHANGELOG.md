@@ -5,6 +5,31 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
+### Docs — product value analysis and a reprioritised backlog (2026-10-17)
+- **New `docs/VALUE_ANALYSIS.md`:** an evidence-based answer to "too many features?",
+  "valuable for the market?", "what raises quality?" and "why does the UI look
+  AI-made?", from five research lenses, a fact-check of the web claims (8 of 24
+  refuted and corrected), an adversarial critique, and an independent per-section
+  verifications of the draft (391 claims checked, 88 corrected). It separates dev-box state (no agent runs here) from code and copy
+  defects that appear on any deployment.
+- **Finding with an honesty-layer impact:** the price outlook's "Backtested 4-week
+  MAPE: 8.5%" comes from a backtest whose loader let the 52 `demo_seed` SSB rows
+  (2025) override the real history (trap 6). A same-window re-run on real prices
+  gives 8.53% at 4 weeks against 8.82% for carrying the last price forward: a small,
+  statistically significant edge, but the published figure, its data and its
+  configuration are wrong. Recorded as WS-23.
+- **Finding with a regulatory impact:** anonymous `GET /api/signals` serves 50 SHORT
+  signals on listed salmon shares with per-share impact estimates, against the
+  project's own advice boundary. Recorded in WS-20 as the first takedown.
+- **Backlog:** `docs/HANDOVER.md` gains WS-19…WS-27 (index-history guard before any
+  agent runs, public honesty, regulatory facts as dated data, buyer-checked numbers,
+  accuracy against a carry-forward baseline, test isolation, cold starts, navigation
+  cut, design identity), widens WS-14 (live from observation age on every visible
+  route) and WS-16 (partial weeks), and supersedes WS-15's quota calibration.
+  Priority now starts at WS-19; WS-3 waits for WS-23; WS-4…WS-7, WS-10, WS-13's
+  SOC 2 / pen test and WS-18 are deferred until a named deal needs them. No code
+  changed.
+
 ### WS-2 — the weekly indices are published on a schedule
 - **Why:** `publish_week()` existed but nothing scheduled it, so
   `/api/indices/*/history` held only what test runs had written and nothing could
