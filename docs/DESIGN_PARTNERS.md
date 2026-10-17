@@ -60,7 +60,7 @@ Record these for every pilot; a pilot that cannot show them does not convert.
 | Desk | Forecast adoption / decisions informed | ≥ 5 decisions/week |
 | Desk | Time saved per price review | ≥ 30 min/day |
 | Processor | Contract-risk flags actioned | ≥ 3 per quarter |
-| Producer | Lice treatment decisions changed by AI-LPI | ≥ 2 per cycle |
+| Producer | Lice treatment decisions changed (the original instrument, AI-LPI v1.0, is withdrawn by WS-19; the owner names its replacement) | ≥ 2 per cycle |
 | Producer | Avoided treatment cost (NOK) | ≥ 250,000 |
 | Insurer | Trigger-feed latency / attestation accepted | ≥ 1 accepted portfolio |
 

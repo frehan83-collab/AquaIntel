@@ -160,6 +160,64 @@ def test_019_backfills_demo_rows_and_never_a_real_source(tmp_path):
     assert count == 3
 
 
+def test_020_marks_method_1_observations_superseded_and_keeps_their_values(tmp_path):
+    """WS-19: every index observation stored under method 1.0.0 is marked superseded
+    by 2.0.0 (the quota component and AI-LPI v1.0 were withdrawn). Nothing is
+    deleted and no stored value, band, component or provenance is edited; the
+    downgrade removes the marks and keeps the rows."""
+    import sqlite3
+
+    db_file = tmp_path / "supersede.db"
+    result = _alembic(db_file, "upgrade", "019")
+    assert result.returncode == 0, f"upgrade to 019 failed:\n{result.stderr}"
+    stored = [
+        ("AI-LPI", "2026-W42", "1.0.0", 55.0, "moderate", '[{"name": "emission_pressure"}]', '{"is_live": true}'),
+        ("AI-STI", "2026-W42", "1.0.0", 100.0, "severe", '[{"name": "quota_pressure"}]', '{"is_live": false}'),
+        ("AI-STI", "2026-W41", "0.9.0", 50.0, "moderate", "[]", "{}"),
+    ]
+    conn = sqlite3.connect(db_file)
+    try:
+        conn.executemany(
+            "INSERT INTO index_observations (index_code, week, as_of, version, value, band, "
+            "components_json, provenance_json) VALUES (?, ?, '2026-10-16 15:36:20', ?, ?, ?, ?, ?)",
+            stored,
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    result = _alembic(db_file, "upgrade", "head")
+    assert result.returncode == 0, f"upgrade 019->head failed:\n{result.stderr}"
+    conn = sqlite3.connect(db_file)
+    try:
+        rows = conn.execute(
+            "SELECT index_code, week, version, value, band, components_json, provenance_json, "
+            "superseded_by, superseded_reason, superseded_at FROM index_observations ORDER BY id"
+        ).fetchall()
+    finally:
+        conn.close()
+    assert [row[:7] for row in rows] == stored, "stored observations must not be edited"
+    lpi, sti, older = rows
+    for row in (lpi, sti):
+        assert row[7] == "2.0.0", row
+        assert row[8] and "WS-19" in row[8], row
+        assert row[9] is not None, row
+    assert "AI-LPI v1.0 withdrawn" in lpi[8]
+    assert "quota_pressure" in sti[8]
+    assert older[7:] == (None, None, None), "only method 1.0.0 rows are superseded here"
+
+    result = _alembic(db_file, "downgrade", "019")
+    assert result.returncode == 0, f"downgrade failed:\n{result.stderr}"
+    conn = sqlite3.connect(db_file)
+    try:
+        cols = [row[1] for row in conn.execute("PRAGMA table_info(index_observations)")]
+        count = conn.execute("SELECT COUNT(*) FROM index_observations").fetchone()[0]
+    finally:
+        conn.close()
+    assert not {"superseded_by", "superseded_reason", "superseded_at"} & set(cols), cols
+    assert count == 3
+
+
 def test_019_repairs_a_reconciled_column_and_keeps_real_labels(tmp_path):
     """The shape a type-only reconciliation leaves (nullable, no default): 019 must
     relabel NULL demo-key rows as demo_seed, leave a real label at a demo locality

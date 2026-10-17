@@ -445,38 +445,27 @@ class TestLiceLineage:
         finally:
             engine.dispose()
 
-    # -- AI-LPI: is_live follows the lineage of the rows the tracker used --
+    # -- the national lice payload: is_live follows the lineage of the rows used --
+    # (AI-LPI v1.0 read this lineage until WS-19 withdrew it; the rule now has one
+    # consumer, the tracker's own provenance, and is locked here case by case)
 
-    def test_ai_lpi_is_live_follows_the_lice_lineage(self, tmp_path, monkeypatch):
-        import asyncio
-
+    def test_lice_payload_is_live_only_on_its_lineage(self):
         from core import source_lineage as sl
-        from core.market import indices as ix
+        from core.market import lice_quota_tracker as m
 
         now = dt.datetime.now(dt.UTC)
         this_week = tuple(now.isocalendar()[:2])
         pas = [{"pa": pa, "rows_used": 10, "fetch_failed": False} for pa in range(1, 14)]
-        # the column-presence check must not depend on whichever DB the suite runs on
-        engine = self._lice_table(
-            tmp_path, ["barentswatch"], source_ddl="source VARCHAR(32) DEFAULT 'unverified' NOT NULL"
-        )
-        monkeypatch.setattr("core.models.engine", engine)
 
         def compute(counts, *, latest=now, pas=pas, week=this_week):
             lineage = sl.summarise_lineage(
                 counts, year=2026, latest_fetched_at=latest, latest_week=week, pas=pas, now=now
             )
-
-            async def stub():
-                return {"national_utilization_pct": 60.0, "pas_over_quota": 2, "lineage": lineage}
-
-            monkeypatch.setattr(ix, "_national_emission", stub)
-            return asyncio.run(ix.compute(ix.AI_LPI))
+            return {"provenance": m._provenance_for(lineage, m._NATIONAL_LABEL, 0.55)}
 
         live = compute({"barentswatch": 130})
         assert live["provenance"]["is_live"] is True, live["provenance"]
-        assert live["lineage_notes"] == []
-        assert live["components_used"] == 2
+        assert live["provenance"]["fallback_reason"] is None
 
         demo = compute({"demo_seed": 130})
         assert demo["provenance"]["is_live"] is False
@@ -503,7 +492,6 @@ class TestLiceLineage:
         old_week = compute({"barentswatch": 130}, week=(2026, 15))
         assert old_week["provenance"]["is_live"] is False
         assert "2026-W15" in old_week["provenance"]["fallback_reason"]
-        engine.dispose()
 
     # -- the ingest writes the real marker on BOTH branches of its upsert --
 

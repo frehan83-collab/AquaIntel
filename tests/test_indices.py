@@ -1,4 +1,4 @@
-"""Named indices (AI-STI / AI-LPI) + Bio→Price Weekly tests (hardening §3).
+"""Named indices (AI-STI; AI-LPI v1.0 withdrawn) + Bio→Price Weekly tests (hardening §3).
 
 These lock the *contract* that makes the indices sellable: a published method
 version, published weights, component-level traceability, and loud degradation
@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 from core.api import app
 from core.market import indices as ix
 
-PUBLISHED = (ix.AI_STI, ix.AI_LPI)
+PUBLISHED = ix.PUBLISHED_INDICES
 
 
 @pytest.fixture(scope="module")
@@ -60,6 +60,257 @@ def missing_observation_store(tmp_path, monkeypatch):
         engine.dispose()
 
 
+QUOTA_COMPONENTS = {"quota_pressure", "emission_pressure", "quota_headroom"}
+#: a test-only second published code: the publication machinery is generic over
+#: the published set, which is AI-STI alone since method 2.0.0 (WS-19)
+SECOND = "AI-TST"
+CODES = (ix.AI_STI, SECOND)
+
+
+def _stub_supply(monkeypatch, biomass_growth_pct: float, harvest_growth_pct: float, *, live=True):
+    """National monthly totals with a chosen year-over-year growth per attribute,
+    and the biomass tracker's own lineage set as if it had fetched them."""
+    from core.market.biomass_tracker import biomass_tracker
+
+    growth = {"standing_biomass_tonnes": biomass_growth_pct, "harvest_tonnes": harvest_growth_pct}
+
+    async def totals(attribute: str):
+        return {(2025, 9): 1000.0, (2026, 9): 1000.0 * (1 + growth[attribute] / 100.0)}
+
+    monkeypatch.setattr(ix, "_totals_by_month", totals)
+    monkeypatch.setattr(biomass_tracker, "last_source", "Fiskeridir biomass (SSB)", raising=False)
+    monkeypatch.setattr(biomass_tracker, "last_is_live", live, raising=False)
+
+
+def _forbid_quota_tracker(monkeypatch) -> list:
+    """Make any read of the lice-quota tracker visible (and fail it): every public
+    coroutine of the tracker, so a future index on another entry point is caught."""
+    import inspect
+
+    from core.market.lice_quota_tracker import lice_quota_tracker
+
+    calls: list = []
+
+    def forbidden_for(name):
+        async def forbidden(*_args, **_kwargs):
+            calls.append(name)
+            raise AssertionError(f"an index read the lice-quota tracker ({name})")
+
+        return forbidden
+
+    entry_points = [
+        name for name, member in inspect.getmembers(type(lice_quota_tracker))
+        if not name.startswith("_") and inspect.iscoroutinefunction(member)
+    ]
+    assert "national_emission_overview" in entry_points, entry_points
+    for name in entry_points:
+        monkeypatch.setattr(lice_quota_tracker, name, forbidden_for(name))
+    return calls
+
+
+class TestIndexGuard:
+    """WS-19: no index may be built on the lice-quota tracker.
+
+    The tracker divides a lice count by constants labelled tonnes, for a quota
+    regime that is still a proposal (national utilisation 238,367 %), so it drove
+    AI-STI to 100 "severe" and held AI-LPI v1.0 between about 27 and 55. Method
+    2.0.0 drops AI-STI's quota component and withdraws AI-LPI v1.0.
+    """
+
+    #: inputs ordered from the loosest to the tightest supply, per published index
+    DIRECTION_DRIVERS = {
+        ix.AI_STI: [(+10.0, +10.0), (+5.0, +5.0), (0.0, 0.0), (-5.0, -5.0), (-10.0, -10.0)],
+    }
+
+    def test_no_index_reads_the_lice_quota_tracker(self, monkeypatch):
+        import asyncio
+        import json
+
+        _stub_supply(monkeypatch, -3.0, 2.0)
+        calls = _forbid_quota_tracker(monkeypatch)
+        for code in ix.COMPUTERS:
+            result = asyncio.run(ix.compute(code))
+            names = {c["name"] for c in result["components"]}
+            assert not names & QUOTA_COMPONENTS, (code, names)
+            assert "lice_quota" not in json.dumps(result), code
+        assert calls == [], "an index computation called the lice-quota tracker"
+
+    def test_each_published_index_moves_in_its_documented_direction_and_spans_0_to_100(
+        self, monkeypatch
+    ):
+        import asyncio
+
+        assert set(self.DIRECTION_DRIVERS) == set(ix.PUBLISHED_INDICES), (
+            "every published index needs a direction-and-range test"
+        )
+        method = ix.methodology()["indices"]
+        assert method[ix.AI_STI]["direction"] == "higher = more upward price pressure"
+        _forbid_quota_tracker(monkeypatch)
+        for code, inputs in self.DIRECTION_DRIVERS.items():
+            values = []
+            for biomass, harvest in inputs:
+                _stub_supply(monkeypatch, biomass, harvest)
+                result = asyncio.run(ix.compute(code))
+                assert result["provenance"]["is_live"] is True, result["provenance"]
+                values.append(result["value"])
+            assert values == sorted(values) and len(set(values)) == len(values), (code, values)
+            assert values[0] == 0.0 and values[-1] == 100.0, (code, values)
+
+        # each AI-STI component on its own: falling supply raises the index
+        def sti(biomass, harvest):
+            _stub_supply(monkeypatch, biomass, harvest)
+            return asyncio.run(ix.compute(ix.AI_STI))["value"]
+
+        assert sti(-4.0, 0.0) > sti(0.0, 0.0) > sti(4.0, 0.0)
+        assert sti(0.0, -4.0) > sti(0.0, 0.0) > sti(0.0, 4.0)
+
+    def test_ai_lpi_v1_is_withdrawn_and_never_served_as_a_value(self, monkeypatch):
+        import asyncio
+
+        calls = _forbid_quota_tracker(monkeypatch)
+        assert ix.AI_LPI not in ix.PUBLISHED_INDICES
+        result = asyncio.run(ix.compute(ix.AI_LPI))
+        assert result["value"] is None and result["band"] is None
+        assert result["status"] == "withdrawn"
+        assert result["withdrawn"]["version"] == "1.0.0"
+        assert result["provenance"]["is_live"] is False
+        assert "withdrawn" in result["provenance"]["fallback_reason"]
+        assert calls == []
+        method = ix.methodology()
+        assert ix.AI_LPI not in method["indices"]
+        assert method["withdrawn"][ix.AI_LPI]["version"] == "1.0.0"
+        assert method["withdrawn"][ix.AI_LPI]["reason"]
+        assert ix.INDEX_METHOD_VERSION != "1.0.0"
+        assert any(r["version"] == "1.0.0" for r in method["superseded_versions"])
+
+    def test_the_publication_set_is_the_published_indices(self):
+        from core.market import index_publication as pub
+
+        assert tuple(pub.INDEX_CODES) == tuple(ix.PUBLISHED_INDICES) == (ix.AI_STI,)
+
+    def test_a_publisher_tick_stores_nothing_built_on_the_quota_tracker(
+        self, observation_store, monkeypatch
+    ):
+        """The real agent, the real build: past the grace (when anything with a value
+        is stored) only AI-STI at the new method lands, with no quota input."""
+        import asyncio
+        import datetime as dt
+        import json
+
+        from sqlalchemy import select
+        from sqlalchemy.orm import sessionmaker
+
+        from agents.index_publisher_agent import IndexPublisherAgent
+        from core.market import bio_price_weekly as bpw
+        from core.market.data_provenance import DataProvenance
+        from core.models import IndexObservation
+
+        _stub_supply(monkeypatch, -3.0, 2.0)
+        calls = _forbid_quota_tracker(monkeypatch)
+
+        async def no_price_panel():
+            return {
+                "spot_nok_per_kg": None, "spot_source": None, "forward_6m_slope_pct": None,
+                "forward_points": 0,
+                "provenance": DataProvenance.degraded("price_feed_hub", "test: offline").to_dict(),
+            }
+
+        monkeypatch.setattr(bpw, "_price_panel", no_price_panel)
+        agent = IndexPublisherAgent()
+
+        async def no_audit(detail: str) -> None:
+            return None
+
+        monkeypatch.setattr(agent, "_audit", no_audit)
+        thursday = dt.datetime(2026, 10, 8, 1, tzinfo=dt.UTC)  # 73 h into 2026-W41
+        asyncio.run(agent.tick(now=thursday))
+        assert agent.last_failure is None, agent.last_failure
+
+        with sessionmaker(bind=observation_store)() as s:
+            rows = s.execute(select(IndexObservation)).scalars().all()
+        assert [r.index_code for r in rows] == [ix.AI_STI], [r.index_code for r in rows]
+        for row in rows:
+            assert row.version == ix.INDEX_METHOD_VERSION != "1.0.0"
+            names = {c["name"] for c in json.loads(row.components_json)}
+            assert names and not names & QUOTA_COMPONENTS, names
+            assert "lice_quota" not in row.components_json + row.provenance_json
+        assert calls == []
+
+    def test_freshness_does_not_count_superseded_observations(self, tmp_path, monkeypatch):
+        """The store is a critical freshness source: rows of a withdrawn method must
+        not make it read fresh (the dev box's two 2026-W42 rows would until ~W43)."""
+        import asyncio
+
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+
+        from core.market import freshness_monitor as fm
+        from core.models import Base, IndexObservation
+
+        # file-backed: the monitor runs in a worker thread (HANDOVER trap 14)
+        import datetime as dt
+
+        engine = create_engine(f"sqlite:///{tmp_path / 'fresh.db'}")
+        Base.metadata.create_all(engine, tables=[IndexObservation.__table__])
+        now = dt.datetime.now(dt.UTC).replace(tzinfo=None)  # stored naive UTC
+        with sessionmaker(bind=engine)() as s:
+            s.add(
+                IndexObservation(
+                    index_code=ix.AI_STI, week="2026-W42", as_of=now, version="1.0.0",
+                    value=100.0, band="severe", components_json="[]", provenance_json="{}",
+                    created_at=now, superseded_by="2.0.0", superseded_reason="withdrawn",
+                    superseded_at=now,
+                )
+            )
+            s.commit()
+        monkeypatch.setattr("core.models.engine", engine)
+        spec = next(s for s in fm.SOURCES if s.key == "index_observations")
+        try:
+            entry = asyncio.run(fm.report((spec,)))["sources"][0]
+            assert entry["rows"] == 0 and entry["status"] != "fresh", entry
+            assert entry["excluded_rows"] == 1 and "superseded_by" in entry["reason"], entry
+
+            with sessionmaker(bind=engine)() as s:
+                s.add(
+                    IndexObservation(
+                        index_code=ix.AI_STI, week="2026-W42", as_of=now,
+                        version=ix.INDEX_METHOD_VERSION, value=50.0, band="moderate",
+                        components_json="[]", provenance_json="{}", created_at=now,
+                    )
+                )
+                s.commit()
+            entry = asyncio.run(fm.report((spec,)))["sources"][0]
+            assert entry["rows"] == 1 and entry["status"] == "fresh", entry
+            assert entry["excluded_rows"] == 1
+        finally:
+            engine.dispose()
+
+    def test_history_marks_superseded_observations(self, observation_store):
+        import asyncio
+        import datetime as dt
+
+        from sqlalchemy.orm import sessionmaker
+
+        from core.models import IndexObservation
+
+        with sessionmaker(bind=observation_store)() as s:
+            s.add(
+                IndexObservation(
+                    index_code=ix.AI_STI, week="2026-W42",
+                    as_of=dt.datetime(2026, 10, 16, 15, 36), version="1.0.0",
+                    value=100.0, band="severe", components_json="[]", provenance_json="{}",
+                    superseded_by="2.0.0", superseded_reason="method 1.0.0 withdrawn",
+                    superseded_at=dt.datetime(2026, 10, 17),
+                )
+            )
+            s.commit()
+        rows = asyncio.run(ix.history(ix.AI_STI))
+        assert rows[0]["value"] == 100.0  # the stored value is kept, never edited
+        assert rows[0]["superseded_by"] == "2.0.0"
+        assert rows[0]["superseded_reason"] == "method 1.0.0 withdrawn"
+        assert rows[0]["superseded"] is True
+
+
 class TestMethodology:
     def test_version_is_published_and_matches_results(self):
         method = ix.methodology()
@@ -83,12 +334,12 @@ class TestMethodology:
     def test_limitations_and_planned_components_are_declared(self):
         method = ix.methodology()
         assert method["limitations"]
-        assert "v1.1" in method["planned_components"]
+        assert method["planned_components"]["next"]
         assert method["revision_policy"]
 
 
 class TestComputation:
-    @pytest.mark.parametrize("code", PUBLISHED)
+    @pytest.mark.parametrize("code", tuple(ix.COMPUTERS))  # published and withdrawn
     def test_result_shape_and_ranges(self, code, anyio_backend=None):
         import asyncio
 
@@ -120,50 +371,6 @@ class TestComputation:
 
 
 class TestHonestDegradation:
-    def test_lineage_note_decides_the_live_claim(self):
-        """WS-1: AI-LPI is live iff every lice row the tracker used has a verified
-        source (and nothing is missing); otherwise the note names why, unconditionally.
-
-        The zero-arg `_lice_lineage_note()` reflects the tracker's LAST computation,
-        so compute first. CI (demo-seeded) and a bulk-loaded dev box (unverified
-        rows) both land on the degraded branch today; the live branch is locked
-        deterministically by test_ai_lpi_is_live_follows_the_lice_lineage.
-        """
-        import asyncio
-
-        result = asyncio.run(ix.compute(ix.AI_LPI))
-        note = ix._lice_lineage_note()
-        if result["provenance"]["is_live"]:
-            assert note is None, note
-            assert result["lineage_notes"] == [] and result["components_missing"] == []
-        else:
-            assert result["components_missing"] or note is not None, result
-            if note is not None:
-                assert note in result["lineage_notes"], result["lineage_notes"]
-                assert note in result["provenance"]["fallback_reason"]
-                # the value is still produced — honest, not hidden
-                assert result["components_used"] >= 1
-
-    def test_lpi_lineage_mirrors_the_trackers_rows(self):
-        """The index reads the quota tracker's OWN lineage (rows it aggregated),
-        never a separate query that could disagree with the value."""
-        import asyncio
-
-        from core.market.lice_quota_tracker import lice_quota_tracker as tracker
-
-        result = asyncio.run(ix.compute(ix.AI_LPI))
-        lineage = tracker.last_lineage
-        if lineage is None:
-            assert result["components_missing"], "no lineage only when the tracker failed"
-            return
-        assert lineage["rows_used"] == sum(lineage["by_class"].values())
-        assert tracker.last_is_live == lineage["is_live"]
-        assert tracker.last_source == lineage["source"]
-        assert lineage["is_live"] == (lineage["note"] is None)
-        # the index output is built FROM this lineage, not from a separate query
-        assert result["provenance"]["is_live"] == lineage["is_live"]
-        assert result["lineage_notes"] == ([lineage["note"]] if lineage["note"] else [])
-
     def test_component_source_reflects_the_trackers_own_lineage(self):
         """Not a hardcoded label: the index reports what the tracker actually did.
 
@@ -193,17 +400,21 @@ class TestHonestDegradation:
     def test_missing_source_is_named_and_not_reported_as_live(self, monkeypatch):
         import asyncio
 
-        async def _boom(attribute: str):
-            raise RuntimeError("source offline")
+        _stub_supply(monkeypatch, -3.0, 2.0)
+        working = ix._totals_by_month
 
-        monkeypatch.setattr(ix, "_totals_by_month", _boom)
+        async def _harvest_offline(attribute: str):
+            if attribute == "harvest_tonnes":
+                raise RuntimeError("source offline")
+            return await working(attribute)
+
+        monkeypatch.setattr(ix, "_totals_by_month", _harvest_offline)
         result = asyncio.run(ix.compute(ix.AI_STI))
-        assert "biomass_momentum" in result["components_missing"]
-        assert "harvest_pressure" in result["components_missing"]
+        assert result["components_missing"] == ["harvest_pressure"]
         assert result["provenance"]["is_live"] is False
-        assert result["provenance"]["fallback_reason"]
-        # the quota component still works, so a value is still produced
-        assert result["components_used"] >= 1
+        assert "harvest_pressure" in result["provenance"]["fallback_reason"]
+        # the biomass component still works, so a value is still produced
+        assert result["components_used"] == 1
         assert result["value"] is not None
 
     def test_all_sources_dead_yields_no_value(self, monkeypatch):
@@ -213,7 +424,6 @@ class TestHonestDegradation:
             raise RuntimeError("everything offline")
 
         monkeypatch.setattr(ix, "_totals_by_month", _boom)
-        monkeypatch.setattr(ix, "_national_emission", _boom)
         result = asyncio.run(ix.compute(ix.AI_STI))
         assert result["value"] is None
         assert result["band"] is None
@@ -222,20 +432,23 @@ class TestHonestDegradation:
 
 
 class TestHistory:
-    def test_publish_then_history_round_trip(self, observation_store):
+    def test_publish_then_history_round_trip(self, observation_store, monkeypatch):
         import asyncio
 
-        published = asyncio.run(ix.publish(ix.AI_LPI))
+        _stub_supply(monkeypatch, -3.0, 2.0)
+        published = asyncio.run(ix.publish(ix.AI_STI))
         assert published["storage"]["status"] in {"stored", "duplicate"}
-        rows = asyncio.run(ix.history(ix.AI_LPI, limit=10))
+        rows = asyncio.run(ix.history(ix.AI_STI, limit=10))
         assert rows, "published observation must be readable back"
         assert rows[0]["week"] == published["week"]
         assert rows[0]["version"] == ix.INDEX_METHOD_VERSION
         assert rows[0]["provenance"], "history keeps the provenance it was published with"
+        assert rows[0]["superseded"] is False and rows[0]["superseded_by"] is None
 
-    def test_publish_is_idempotent_per_week_and_version(self, observation_store):
+    def test_publish_is_idempotent_per_week_and_version(self, observation_store, monkeypatch):
         import asyncio
 
+        _stub_supply(monkeypatch, -3.0, 2.0)
         first = asyncio.run(ix.publish(ix.AI_STI))
         second = asyncio.run(ix.publish(ix.AI_STI))
         assert second["storage"]["status"] == "duplicate"
@@ -246,7 +459,21 @@ class TestIndexEndpoints:
     def test_list_indices(self, client):
         body = client.get("/api/indices").json()
         assert body["method_version"] == ix.INDEX_METHOD_VERSION
-        assert set(body["indices"]) == set(PUBLISHED)
+        assert set(body["indices"]) == set(ix.COMPUTERS)  # a withdrawn index is listed ...
+        withdrawn = body["indices"][ix.AI_LPI]
+        assert withdrawn["status"] == "withdrawn" and withdrawn["value"] is None  # ... with no value
+        assert withdrawn["provenance"]["is_live"] is False
+        for code in PUBLISHED:
+            assert body["indices"][code]["status"] == "published"
+
+    def test_list_indices_exposes_publication_status(self, client):
+        body = client.get("/api/indices").json()
+        pub = body["publication"]
+        assert {
+            "week", "version", "current_week_published", "missing", "indices",
+            "interval_ok", "skipped_weeks", "degraded_current", "within_grace",
+        } <= set(pub)
+        assert set(pub["indices"]) == set(PUBLISHED)  # a withdrawn index is never "missing"
 
     @pytest.mark.parametrize("slug", ["ai-sti", "ai-lpi"])
     def test_permalinks_are_stable(self, client, slug):
@@ -276,17 +503,78 @@ class TestBioPriceWeekly:
         assert "provenance" in body
         assert isinstance(body["caveats"], list)
         assert set(body["indices"]) == set(PUBLISHED)
+        assert ix.AI_LPI in body["withdrawn"] and body["withdrawn"][ix.AI_LPI]
+        assert "lice" not in body["headline"].lower()  # no lice input enters the read
         # Any caveat must be visible in the provenance, not hidden.
         if body["caveats"]:
             assert body["provenance"]["is_live"] is False
             assert body["provenance"]["fallback_reason"]
 
-    def test_publish_week_stores_both_indices(self, observation_store):
+    @staticmethod
+    def _price_panel(monkeypatch, live: bool):
+        from core.market import bio_price_weekly as bpw
+        from core.market.data_provenance import DataProvenance
+
+        async def panel():
+            return {
+                "spot_nok_per_kg": 72.55 if live else None,
+                "spot_source": "SSB" if live else None,
+                "forward_6m_slope_pct": None,
+                "forward_points": 0,
+                "provenance": (
+                    DataProvenance.live("SSB", 0.85)
+                    if live
+                    else DataProvenance.degraded("price_feed_hub", "test: offline")
+                ).to_dict(),
+            }
+
+        monkeypatch.setattr(bpw, "_price_panel", panel)
+
+    def test_digest_is_live_only_when_its_index_and_panels_are(self, monkeypatch):
+        """WS-19 review: the read rests on AI-STI alone, so a degraded AI-STI (the
+        biomass tracker's estimate fallback) must degrade the digest — and the
+        supply panel follows the tracker's own lineage, never a fixed live stamp."""
         import asyncio
 
-        from core.market.bio_price_weekly import publish_week
+        from core.market import bio_price_weekly as bpw
 
-        digest = asyncio.run(publish_week())
+        _forbid_quota_tracker(monkeypatch)
+        self._price_panel(monkeypatch, live=True)
+
+        _stub_supply(monkeypatch, -10.0, -10.0, live=True)
+        clean = asyncio.run(bpw.build())
+        assert clean["indices"][ix.AI_STI]["value"] == 100.0
+        assert clean["transmission"]["read"] == "elevated"
+        assert "lice" not in clean["headline"].lower()
+        assert clean["caveats"] == [] and clean["provenance"]["is_live"] is True
+        assert clean["supply"]["provenance"]["is_live"] is True
+
+        _stub_supply(monkeypatch, -10.0, -10.0, live=False)
+        estimated = asyncio.run(bpw.build())
+        assert estimated["indices"][ix.AI_STI]["provenance"]["is_live"] is False
+        assert estimated["provenance"]["is_live"] is False
+        assert any(c.startswith(f"{ix.AI_STI}: ") for c in estimated["caveats"]), estimated["caveats"]
+        assert estimated["supply"]["provenance"]["is_live"] is False
+        assert any("biomass panel degraded" in c for c in estimated["caveats"])
+
+    def test_publish_week_stores_the_published_indices(self, observation_store, monkeypatch):
+        import asyncio
+
+        from core.market import bio_price_weekly as bpw
+        from core.market.data_provenance import DataProvenance
+
+        _stub_supply(monkeypatch, -3.0, 2.0)
+
+        async def no_price_panel():
+            return {
+                "spot_nok_per_kg": None, "spot_source": None, "forward_6m_slope_pct": None,
+                "forward_points": 0,
+                "provenance": DataProvenance.degraded("price_feed_hub", "test: offline").to_dict(),
+            }
+
+        monkeypatch.setattr(bpw, "_price_panel", no_price_panel)
+        digest = asyncio.run(bpw.publish_week())
+        assert set(digest["indices"]) == set(PUBLISHED)
         for code in PUBLISHED:
             status = digest["indices"][code]["storage"]["status"]
             assert status in {"stored", "duplicate"}
@@ -299,7 +587,18 @@ class TestWeeklyPublication:
     throwaway SQLite file), so the real history is never touched; the agent's
     clock is injected at fixed instants so a week boundary is crossed
     deterministically whatever the wall clock says.
+
+    The machinery is generic over the published set. Since method 2.0.0 that set
+    is AI-STI alone (AI-LPI v1.0 withdrawn, WS-19), so these tests publish AI-STI
+    plus a test-only second code: the per-index gate (one index stored, another
+    withheld) stays exercised for when a rebuilt index joins the set.
     """
+
+    @pytest.fixture(autouse=True)
+    def _two_published_codes(self, monkeypatch):
+        from core.market import index_publication as pub
+
+        monkeypatch.setattr(pub, "INDEX_CODES", CODES)
 
     import datetime as _dt
 
@@ -327,7 +626,7 @@ class TestWeeklyPublication:
     @classmethod
     def _fake_digest(cls, as_of, value=42.0, live=True, per_index=None):
         results = {}
-        for code in PUBLISHED:
+        for code in CODES:
             override = (per_index or {}).get(code, {})
             results[code] = cls._fake_result(
                 code, as_of, override.get("value", value), override.get("live", live)
@@ -388,7 +687,7 @@ class TestWeeklyPublication:
 
         st = asyncio.run(pub.status())
         assert st["current_week_published"] is False
-        assert set(st["missing"]) == set(PUBLISHED)
+        assert set(st["missing"]) == set(CODES)
         assert "missing" in (st["reason"] or "")
         assert st["interval_ok"] is None  # not measurable, never "ok"
 
@@ -416,7 +715,7 @@ class TestWeeklyPublication:
         now = self.WED_NOON
         st = asyncio.run(pub.status(now=now))
         assert st["current_week_published"] is False
-        assert set(st["missing"]) == set(PUBLISHED)
+        assert set(st["missing"]) == set(CODES)
         assert st["week"] == "2026-W41"
         assert st["version"] == ix.INDEX_METHOD_VERSION
         assert st["within_grace"] is True  # Wednesday noon is 60 h in; the grace is 72 h
@@ -428,13 +727,13 @@ class TestWeeklyPublication:
         asyncio.run(ix.save_observation(old))
         assert ix.AI_STI in asyncio.run(pub.status(now=now))["missing"]
 
-        for code in PUBLISHED:
+        for code in CODES:
             asyncio.run(ix.save_observation(self._fake_result(code, now, live=code == ix.AI_STI)))
         st = asyncio.run(pub.status(now=now))
         assert st["current_week_published"] is True
         assert st["missing"] == []
-        assert st["degraded_current"] == [ix.AI_LPI]  # stored provenance is visible
-        for code in PUBLISHED:
+        assert st["degraded_current"] == [SECOND]  # stored provenance is visible
+        for code in CODES:
             entry = st["indices"][code]
             assert entry["latest_week"] == "2026-W41"
             assert entry["latest_value"] == 42.0
@@ -442,7 +741,7 @@ class TestWeeklyPublication:
             assert entry["week_steps"] == [] and entry["gaps_days"] == []
             assert entry["interval_ok"] is None  # one observation: no interval yet
         assert st["indices"][ix.AI_STI]["latest_is_live"] is True
-        assert st["indices"][ix.AI_LPI]["latest_is_live"] is False
+        assert st["indices"][SECOND]["latest_is_live"] is False
         assert st["interval_ok"] is None
 
     def test_interval_is_measured_in_iso_weeks_not_wall_clock(self, observation_store):
@@ -456,11 +755,11 @@ class TestWeeklyPublication:
         week1 = self.WED_NOON  # 2026-W41
         week2 = week1 + dt.timedelta(days=7, minutes=30)  # 2026-W42, tick phase drifted
         for stamp in (week1, week2):
-            for code in PUBLISHED:
+            for code in CODES:
                 asyncio.run(ix.save_observation(self._fake_result(code, stamp)))
         st = asyncio.run(pub.status(now=week2))
         assert st["interval_ok"] is True and st["skipped_weeks"] == []
-        for code in PUBLISHED:
+        for code in CODES:
             assert st["indices"][code]["week_steps"] == [1]
             assert st["indices"][code]["gaps_days"] == [7.02]  # informational only
 
@@ -468,7 +767,7 @@ class TestWeeklyPublication:
         before = asyncio.run(pub.status(now=week4))
         assert before["current_week_published"] is False
         assert all(v["weeks_behind"] == 2 for v in before["indices"].values())
-        for code in PUBLISHED:
+        for code in CODES:
             asyncio.run(ix.save_observation(self._fake_result(code, week4)))
         st = asyncio.run(pub.status(now=week4))
         assert st["current_week_published"] is True
@@ -482,7 +781,7 @@ class TestWeeklyPublication:
 
         from core.market import index_publication as pub
 
-        for code in PUBLISHED:
+        for code in CODES:
             asyncio.run(ix.save_observation(self._fake_result(code, self.WED_NOON)))
             asyncio.run(
                 ix.save_observation(self._fake_result(code, self.WED_NOON + dt.timedelta(days=7)))
@@ -497,22 +796,22 @@ class TestWeeklyPublication:
 
         from core.market import index_publication as pub
 
-        mixed = self._fake_digest(self.WED_NOON, per_index={ix.AI_LPI: {"value": None}})
+        mixed = self._fake_digest(self.WED_NOON, per_index={SECOND: {"value": None}})
         ready = pub.readiness(mixed, now=self.WED_NOON)
         assert ready["store"] == [ix.AI_STI]
-        assert "no value" in ready["withheld"][ix.AI_LPI]
+        assert "no value" in ready["withheld"][SECOND]
         assert ready["ready"] is True and ready["degraded"] == []
 
         degraded = self._fake_digest(self.MON_0100, live=False)
         early = pub.readiness(degraded, now=self.MON_0100)
-        assert early["store"] == [] and set(early["withheld"]) == set(PUBLISHED)
+        assert early["store"] == [] and set(early["withheld"]) == set(CODES)
         assert early["within_grace"] is True and "waiting" in early["reason"]
 
         edge = pub.week_start(self.MON_0100) + dt.timedelta(hours=72, seconds=-10)
         assert pub.readiness(degraded, now=edge)["store"] == []  # 71.997 h: still in grace
         at_grace = pub.week_start(self.MON_0100) + dt.timedelta(hours=72)
         late = pub.readiness(degraded, now=at_grace)
-        assert late["store"] == list(PUBLISHED) and late["degraded"] == list(PUBLISHED)
+        assert late["store"] == list(CODES) and late["degraded"] == list(CODES)
         assert late["within_grace"] is False
 
     # ── the agent ──────────────────────────────────────────────────────────
@@ -587,7 +886,7 @@ class TestWeeklyPublication:
         asyncio.run(agent.tick(now=self.THU_0100))  # past the 72 h grace
         st = asyncio.run(pub.status(now=self.THU_0100))
         assert st["current_week_published"] is True
-        assert set(st["degraded_current"]) == set(PUBLISHED)
+        assert set(st["degraded_current"]) == set(CODES)
         assert agent.waiting is None
         assert any("degraded this week" in note for note in audits), audits
 
@@ -598,7 +897,7 @@ class TestWeeklyPublication:
         from core.market import bio_price_weekly as bpw
         from core.market import index_publication as pub
 
-        shape = {ix.AI_LPI: {"value": None}}
+        shape = {SECOND: {"value": None}}
         builds: list = []
 
         async def mixed_build(as_of=None):
@@ -618,17 +917,17 @@ class TestWeeklyPublication:
         asyncio.run(agent.tick(now=self.WED_NOON))  # must not raise
         st = asyncio.run(pub.status(now=self.WED_NOON))
         assert st["indices"][ix.AI_STI]["current_week_published"] is True
-        assert st["missing"] == [ix.AI_LPI]
+        assert st["missing"] == [SECOND]
         assert stored_codes == [[ix.AI_STI]]
         assert agent.last_failure is None
         assert agent.last_published_week == "2026-W41"
-        assert ix.AI_LPI in agent.waiting["reason"]
+        assert SECOND in agent.waiting["reason"]
         assert any("withheld" in note for note in audits), audits
 
         # next tick, AI-LPI ready: ONLY the still-missing index is stored
-        shape[ix.AI_LPI] = {"value": 7.0}
+        shape[SECOND] = {"value": 7.0}
         asyncio.run(agent.tick(now=self.WED_NOON + dt.timedelta(hours=1)))
-        assert stored_codes == [[ix.AI_STI], [ix.AI_LPI]], stored_codes
+        assert stored_codes == [[ix.AI_STI], [SECOND]], stored_codes
         st = asyncio.run(pub.status(now=self.WED_NOON))
         assert st["missing"] == [] and agent.waiting is None
         assert agent.last_published_week == "2026-W41"
@@ -725,7 +1024,7 @@ class TestWeeklyPublication:
             if seen["n"] == 2:  # the re-read right after the successful write
                 return {
                     "week": pub.current_week_label(now), "current_week_published": False,
-                    "missing": list(PUBLISHED),
+                    "missing": list(CODES),
                     "reason": "index_observations unreadable: simulated lock",
                 }
             return await real_status(now=now)
@@ -749,13 +1048,13 @@ class TestWeeklyPublication:
 
         async def partial_store(digest, codes=None):
             storage = await ix.save_observation(digest["indices"][ix.AI_STI])
-            return {ix.AI_STI: storage["status"], ix.AI_LPI: "error"}
+            return {ix.AI_STI: storage["status"], SECOND: "error"}
 
         monkeypatch.setattr(mod, "store_digest", partial_store)
         with pytest.raises(RuntimeError):
             asyncio.run(agent.tick(now=self.WED_NOON))
         assert agent.last_failure["stage"] == "verify"
-        assert ix.AI_LPI in agent.last_failure["reason"]
+        assert SECOND in agent.last_failure["reason"]
         assert any("FAILED" in note for note in audits), audits
 
     # ── the store ──────────────────────────────────────────────────────────
@@ -769,7 +1068,7 @@ class TestWeeklyPublication:
         digest = self._fake_digest(self.WED_NOON)
         assert asyncio.run(bpw.store_digest(digest, codes=[])) == {}
         assert asyncio.run(pub.status(now=self.WED_NOON))["current_week_published"] is False
-        assert set(asyncio.run(bpw.store_digest(digest))) == set(PUBLISHED)  # None = both
+        assert set(asyncio.run(bpw.store_digest(digest))) == set(CODES)  # None = both
 
     def test_week_labels_agree_for_a_non_utc_instant(self, observation_store, monkeypatch):
         """build()/the store, readiness() and status() must stamp and judge the SAME
@@ -783,7 +1082,7 @@ class TestWeeklyPublication:
         oslo_monday_0100 = dt.datetime(2026, 10, 5, 1, tzinfo=dt.timezone(dt.timedelta(hours=2)))
         # = Sunday 2026-10-04 23:00 UTC, still 2026-W40
         assert pub.current_week_label(oslo_monday_0100) == "2026-W40"
-        result = asyncio.run(ix.compute(ix.AI_LPI, as_of=oslo_monday_0100))
+        result = asyncio.run(ix.compute(ix.AI_STI, as_of=oslo_monday_0100))
         assert result["week"] == "2026-W40"
 
         async def live_build(as_of=None):
@@ -887,20 +1186,20 @@ class TestWeeklyPublication:
 
         monkeypatch.setattr(bpw, "build", degraded_build)
         digest = asyncio.run(bpw.publish_week(as_of=self.MON_0100))
-        assert set(digest["readiness"]["withheld"]) == set(PUBLISHED)
-        assert all(digest["indices"][c]["storage"]["status"] == "withheld" for c in PUBLISHED)
+        assert set(digest["readiness"]["withheld"]) == set(CODES)
+        assert all(digest["indices"][c]["storage"]["status"] == "withheld" for c in CODES)
         assert asyncio.run(pub.status(now=self.MON_0100))["current_week_published"] is False
         assert digest["forced"] is False
 
         forced = asyncio.run(bpw.publish_week(as_of=self.MON_0100, force=True))
         assert forced["forced"] is True
-        assert all(forced["indices"][c]["storage"]["status"] == "stored" for c in PUBLISHED)
-        assert asyncio.run(pub.status(now=self.MON_0100))["degraded_current"] == list(PUBLISHED)
+        assert all(forced["indices"][c]["storage"]["status"] == "stored" for c in CODES)
+        assert asyncio.run(pub.status(now=self.MON_0100))["degraded_current"] == list(CODES)
 
         # forcing again in the same week writes nothing: duplicate, and NOT "forced"
         again = asyncio.run(bpw.publish_week(as_of=self.MON_0100, force=True))
         assert again["forced"] is False
-        assert all(again["indices"][c]["storage"]["status"] == "duplicate" for c in PUBLISHED)
+        assert all(again["indices"][c]["storage"]["status"] == "duplicate" for c in CODES)
 
         async def empty_build(as_of=None):
             return self._fake_digest(as_of, value=None, live=False)
@@ -909,7 +1208,7 @@ class TestWeeklyPublication:
         later = self.THU_0100
         for force in (False, True):  # force never stores a null value — it is withheld
             out = asyncio.run(bpw.publish_week(as_of=later, force=force))
-            assert all(out["indices"][c]["storage"]["status"] == "withheld" for c in PUBLISHED)
+            assert all(out["indices"][c]["storage"]["status"] == "withheld" for c in CODES)
             assert out["forced"] is False
         with pytest.raises(ValueError):  # and the store itself refuses one
             asyncio.run(ix.save_observation(self._fake_result(ix.AI_STI, later, value=None)))
@@ -947,7 +1246,7 @@ class TestWeeklyPublication:
             client = TestClient(app, raise_server_exceptions=False)
             refused = client.post("/api/indices/publish")
             assert refused.status_code == 409, refused.text
-            assert set(refused.json()["detail"]["withheld"]) == set(PUBLISHED)
+            assert set(refused.json()["detail"]["withheld"]) == set(CODES)
 
             assert client.post("/api/indices/publish?force=true").status_code == 422
 
@@ -955,9 +1254,9 @@ class TestWeeklyPublication:
             assert forced.status_code == 200, forced.text
             body = forced.json()
             assert body["forced"] is True and body["audited_intent"] is True
-            assert all(body["storage"][c]["status"] == "stored" for c in PUBLISHED)
+            assert all(body["storage"][c]["status"] == "stored" for c in CODES)
             # the readiness block reports what force did, not only the prior verdict
-            assert set(body["readiness"]["overridden"]) == set(PUBLISHED)
+            assert set(body["readiness"]["overridden"]) == set(CODES)
             assert body["readiness"]["withheld"] == {}
             assert audits and audits[0].action == "index_publication_forced"
             assert "ops decision" in audits[0].details and "intent" in audits[0].details
@@ -1023,15 +1322,6 @@ class TestWeeklyPublication:
             assert agent.status == AgentStatus.STOPPED
 
         asyncio.run(run())
-
-    def test_list_indices_exposes_publication_status(self, client):
-        body = client.get("/api/indices").json()
-        pub = body["publication"]
-        assert {
-            "week", "version", "current_week_published", "missing", "indices",
-            "interval_ok", "skipped_weeks", "degraded_current", "within_grace",
-        } <= set(pub)
-        assert set(pub["indices"]) == set(PUBLISHED)
 
     def test_orchestrator_runs_the_publisher(self):
         """`python main.py --agents-only` (the production `agents` service) must start it."""

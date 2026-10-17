@@ -26,8 +26,10 @@ Open `/indices`. Point at the Bio→Price Weekly card: headline, `read`, and the
 
 - `AI-STI` — "is supply tension building?" Show the component table: names, weights,
   scores, **sources**.
-- `AI-LPI` — "how hard is lice pressure nationally?"
-- Point at the badge: `method v1.0.0` and `live`/`degraded`. Then say the line that
+- `AI-LPI` — listed as **withdrawn** (method 2.0.0, WS-19): open
+  `/api/indices/methodology` and show `withdrawn` and `superseded_versions` — the
+  method says what was withdrawn and why instead of quietly dropping it.
+- Point at the badge: `method v2.0.0` and `live`/`degraded`. Then say the line that
   closes deals:
 
 > "If a source is down, the index says *degraded* and names the missing component.

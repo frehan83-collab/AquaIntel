@@ -1,7 +1,7 @@
-"""Named public indices — AI-STI and AI-LPI (versioned, published).
+"""Named public indices — AI-STI (versioned, published); AI-LPI v1.0 withdrawn.
 
-Two weekly-measured, publicly-published indices with a versioned method, explicit
-component contributions and a provenance block. They exist so that the honesty
+A weekly-measured, publicly-published index with a versioned method, explicit
+component contributions and a provenance block. It exists so that the honesty
 layer is a *product feature*: every number can be traced to a source, the weights
 are published, and a missing input degrades the index loudly instead of being
 silently substituted (rules 1/3/4 of AGENTS.md).
@@ -9,8 +9,11 @@ silently substituted (rules 1/3/4 of AGENTS.md).
   * **AI-STI** — AquaIntel Salmon Transmission Index (0-100). How much current and
     near-term *supply tension* is likely to transmit into salmon prices.
     Higher = more upward price pressure.
-  * **AI-LPI** — AquaIntel Lice Pressure Index (0-100). National lice treatment
-    pressure. Higher = more lice-driven production risk and cost.
+  * **AI-LPI** — AquaIntel Lice Pressure Index. **Withdrawn** with method 2.0.0
+    (WS-19): v1.0 was built only on the lice-quota tracker's utilisation, which
+    divides a lice count by constants labelled tonnes for a quota regime that is
+    still a proposal. The code still answers, with no value and the reason
+    (``WITHDRAWN_INDICES``); it is never computed, published or stored.
 
 Method version: ``INDEX_METHOD_VERSION``. Never publish a value without it.
 Methodology: ``methodology()`` → also served at ``/api/indices/methodology``.
@@ -23,11 +26,11 @@ from typing import Any
 import structlog
 
 from core.market.data_provenance import DataProvenance
-from core.source_lineage import lineage_note, to_utc
+from core.source_lineage import to_utc
 
 log = structlog.get_logger(__name__)
 
-INDEX_METHOD_VERSION = "1.0.0"
+INDEX_METHOD_VERSION = "2.0.0"
 
 AI_STI = "AI-STI"
 AI_LPI = "AI-LPI"
@@ -37,19 +40,59 @@ INDEX_NAMES = {
     AI_LPI: "AquaIntel Lice Pressure Index",
 }
 
+#: The indices computed, published and stored at this method version. The
+#: publisher, the publication status and the verifier read this set (one
+#: definition, projected as ``index_publication.INDEX_CODES``).
+PUBLISHED_INDICES: tuple[str, ...] = (AI_STI,)
+
+#: Indices that are known codes but are no longer computed. Their permalink and
+#: history still answer; the value is null and the reason is served with it.
+WITHDRAWN_INDICES: dict[str, dict] = {
+    AI_LPI: {
+        "version": "1.0.0",
+        "withdrawn": "2026-10-17",
+        "reason": (
+            "AI-LPI v1.0 was built only on the lice-quota tracker's national "
+            "utilisation, which divides a lice count by constants labelled tonnes "
+            "for a quota regime that is still a proposal with no published "
+            "allocations, so the utilisation has no meaningful unit; its "
+            "quota_headroom component was also inverted, so the index could only "
+            "read between about 27 and 55"
+        ),
+        "successor": None,
+        "plan": (
+            "a lice index may return only when rebuilt on observable facts (for "
+            "example the biomass-weighted share of sites above the lice limit, "
+            "weeks to the limit) and on verified lice rows (WS-16)"
+        ),
+    },
+}
+
+#: Method versions whose stored observations are superseded (revision policy:
+#: never edited, never deleted; migration 020 marks the rows).
+SUPERSEDED_VERSIONS: tuple[dict, ...] = (
+    {
+        "version": "1.0.0",
+        "superseded_by": "2.0.0",
+        "date": "2026-10-17",
+        "changes": [
+            "AI-STI: quota_pressure removed (it read the lice-quota tracker's "
+            "utilisation, a lice count divided by constants labelled tonnes); "
+            "biomass_momentum and harvest_pressure keep their 0.40:0.35 ratio",
+            "AI-LPI v1.0 withdrawn (built only on the same utilisation)",
+        ],
+    },
+)
+
 # Weights are published (docs/INDICES.md + /api/indices/methodology). When a
 # component's source is unavailable its weight is dropped and the rest are
 # renormalised; the missing components are named in the response.
-# v1.0 deliberately ships only components backed by a wired, live source; the
-# planned v1.1 additions are listed in methodology()["planned_components"].
+# Only components backed by a wired source ship; planned additions are listed in
+# methodology()["planned_components"]. 2.0.0: v1.0's 0.40 / 0.35 renormalised
+# after quota_pressure (0.25) was removed — the ratio is unchanged.
 STI_WEIGHTS = {
-    "biomass_momentum": 0.40,
-    "harvest_pressure": 0.35,
-    "quota_pressure": 0.25,
-}
-LPI_WEIGHTS = {
-    "emission_pressure": 0.55,
-    "quota_headroom": 0.45,
+    "biomass_momentum": 0.5333,
+    "harvest_pressure": 0.4667,
 }
 
 BANDS = ((80, "severe"), (60, "elevated"), (40, "moderate"), (20, "low"), (0, "minimal"))
@@ -132,6 +175,7 @@ def _assemble(
         "index": index,
         "name": INDEX_NAMES[index],
         "version": INDEX_METHOD_VERSION,
+        "status": "published",
         "value": None if value is None else round(value, 1),
         "band": None if value is None else _band(value),
         "as_of": stamp.isoformat(),
@@ -155,7 +199,6 @@ def _assemble(
 # ── Data adapters ────────────────────────────────────────────────────────────
 
 _BIOMASS_SOURCE = "Fiskeridir biomass (SSB)"
-_QUOTA_SOURCE = "lice_quota_tracker (lice emission quota framework)"
 
 
 async def _totals_by_month(attribute: str) -> dict[tuple[int, int], float]:
@@ -218,52 +261,12 @@ async def _momentum_component(attribute: str, *, rising_means_tighter: bool) -> 
     }
 
 
-async def _national_emission() -> dict:
-    from core.market.lice_quota_tracker import lice_quota_tracker
-
-    return await lice_quota_tracker.national_emission_overview()
-
-
 async def national_totals(attribute: str = "standing_biomass_tonnes") -> dict:
     """Public adapter: national monthly totals for a biomass attribute.
 
     Also used by the Bio→Price Weekly digest (one implementation of the maths).
     """
     return await _totals_by_month(attribute)
-
-
-def _lice_lineage_note(lineage: dict | None = None) -> str | None:
-    """None when the lice lineage is verifiable, otherwise why it is not.
-
-    WS-1: `lice_records.source` lets the quota tracker report the lineage of the
-    rows it actually aggregated (``overview["lineage"]``). The note is None only
-    when every used row is a reported BarentsWatch observation, every PA
-    contributed without a fetch failure and the newest row is within cadence —
-    column *presence* alone never earns a live claim (an all-demo CI database
-    has the column too).
-
-    Zero-arg form: reflects the tracker's LAST computation (``last_lineage``), so
-    callers must compute the index first; before any computation it reports that
-    no lineage was recorded, which is the honest answer.
-    """
-    from sqlalchemy import inspect
-
-    from core.models import engine
-
-    try:
-        columns = {c["name"].lower() for c in inspect(engine).get_columns("lice_records")}
-    except Exception:
-        return "lineage unverifiable: lice_records is unreadable"
-    if "source" not in columns:
-        return (
-            "lineage unverifiable: lice_records has no source column, so demo and "
-            "reported rows cannot be distinguished"
-        )
-    if lineage is None:
-        from core.market.lice_quota_tracker import lice_quota_tracker
-
-        lineage = getattr(lice_quota_tracker, "last_lineage", None)
-    return lineage_note(lineage)
 
 
 def _unavailable(name: str, weight: float, source: str, exc: Exception) -> dict:
@@ -333,37 +336,6 @@ async def _sti_components() -> tuple[list[dict], list[str], list[str], list[str]
             )
         )
 
-    try:
-        overview = await _national_emission()
-        utilization = float(overview.get("national_utilization_pct") or 0.0)
-        sources.append(_QUOTA_SOURCE)
-        lice_note = _lice_lineage_note(overview.get("lineage"))
-        if lice_note:
-            lineage_notes.append(lice_note)
-        components.append(
-            _component(
-                "quota_pressure",
-                weight=STI_WEIGHTS["quota_pressure"],
-                # 50% utilisation = neutral; 100% = 80; above quota = 100.
-                score=_clamp((utilization - 50.0) * 1.6),
-                raw={
-                    "national_utilization_pct": utilization,
-                    "pas_over_quota": overview.get("pas_over_quota"),
-                    "total_national_emission": overview.get("total_national_emission"),
-                    "total_national_quota": overview.get("total_national_quota"),
-                },
-                source=_QUOTA_SOURCE,
-                note="quota saturation forces future biomass cuts (supply contraction)",
-            )
-        )
-    except Exception as exc:
-        missing.append("quota_pressure")
-        components.append(
-            _unavailable(
-                "quota_pressure", STI_WEIGHTS["quota_pressure"], _QUOTA_SOURCE, exc
-            )
-        )
-
     return components, sources, missing, lineage_notes
 
 
@@ -380,62 +352,48 @@ async def compute_ai_sti(as_of: dt.datetime | None = None) -> dict:
     )
 
 
-# ── AI-LPI ───────────────────────────────────────────────────────────────────
+# ── Withdrawn indices ────────────────────────────────────────────────────────
+
+def _withdrawn(index: str, as_of: dt.datetime | None = None) -> dict:
+    """The answer for a withdrawn index: same shape, no value, the reason.
+
+    Nothing is computed (no source is read), so it can never be stored: the store
+    refuses a null value and the publication set excludes it.
+    """
+    entry = WITHDRAWN_INDICES[index]
+    stamp = to_utc(as_of)
+    reason = f"withdrawn: {index} v{entry['version']} on {entry['withdrawn']} — {entry['reason']}"
+    return {
+        "index": index,
+        "name": INDEX_NAMES[index],
+        "version": INDEX_METHOD_VERSION,
+        "status": "withdrawn",
+        "withdrawn": dict(entry),
+        "value": None,
+        "band": None,
+        "as_of": stamp.isoformat(),
+        "week": stamp.strftime("%G-W%V"),
+        "components": [],
+        "components_used": 0,
+        "components_missing": [],
+        "lineage_notes": [],
+        "sources": [],
+        "provenance": DataProvenance.degraded(
+            f"core.market.indices::{index}", reason, 0.0
+        ).to_dict(),
+        "permalink": f"/indices/{index.lower()}",
+        "api": f"/api/indices/{index.lower()}",
+        "methodology_url": "/api/indices/methodology",
+        "disclaimer": (
+            "Withdrawn index: no value is published. Stored observations remain in "
+            "the history, marked superseded; see /api/indices/methodology."
+        ),
+    }
+
 
 async def compute_ai_lpi(as_of: dt.datetime | None = None) -> dict:
-    """AI-LPI (0-100; higher = more lice-driven production risk and cost).
-
-    v1.0 uses the lice *emission quota* framework as the observable proxy for
-    treatment pressure (independent lice-count series are a v1.1 component — see
-    methodology()["planned_components"]).
-    """
-    components: list[dict] = []
-    sources: list[str] = []
-    missing: list[str] = []
-    lineage: dict | None = None
-
-    try:
-        overview = await _national_emission()
-        lineage = overview.get("lineage")
-        utilization = float(overview.get("national_utilization_pct") or 0.0)
-        sources.append(_QUOTA_SOURCE)
-        components.append(
-            _component(
-                "emission_pressure",
-                weight=LPI_WEIGHTS["emission_pressure"],
-                # 40% utilisation = neutral baseline; ~107% = 100.
-                score=_clamp((utilization - 40.0) * 1.5),
-                raw={
-                    "national_utilization_pct": utilization,
-                    "pas_over_quota": overview.get("pas_over_quota"),
-                },
-                source=_QUOTA_SOURCE,
-                note="high emission utilisation implies intensive treatment pressure",
-            )
-        )
-        components.append(
-            _component(
-                "quota_headroom",
-                weight=LPI_WEIGHTS["quota_headroom"],
-                score=_clamp(100.0 - utilization),
-                raw={"headroom_pct": round(100.0 - utilization, 1)},
-                source=_QUOTA_SOURCE,
-                note="little remaining headroom before mandatory cuts",
-            )
-        )
-    except Exception as exc:
-        for name in ("emission_pressure", "quota_headroom"):
-            missing.append(name)
-            components.append(_unavailable(name, LPI_WEIGHTS[name], _QUOTA_SOURCE, exc))
-
-    return _assemble(
-        AI_LPI,
-        components,
-        sources_used=sources,
-        missing=missing,
-        as_of=as_of,
-        lineage_notes=[note for note in (_lice_lineage_note(lineage),) if note],
-    )
+    """AI-LPI: withdrawn with method 2.0.0 (WS-19) — see ``WITHDRAWN_INDICES``."""
+    return _withdrawn(AI_LPI, as_of)
 
 
 COMPUTERS = {AI_STI: compute_ai_sti, AI_LPI: compute_ai_lpi}
@@ -454,9 +412,6 @@ async def compute(index: str, as_of: dt.datetime | None = None) -> dict:
 _SCORING = {
     "biomass_momentum": "score = clamp(50 - 5 x growth_pct, 0, 100)",
     "harvest_pressure": "score = clamp(50 - 5 x growth_pct, 0, 100)",
-    "quota_pressure": "score = clamp((national_utilisation_pct - 50) x 1.6, 0, 100)",
-    "emission_pressure": "score = clamp((national_utilisation_pct - 40) x 1.5, 0, 100)",
-    "quota_headroom": "score = clamp(100 - national_utilisation_pct, 0, 100)",
 }
 
 
@@ -464,7 +419,7 @@ def methodology() -> dict:
     """The published, versioned method — the contract behind every value."""
     return {
         "version": INDEX_METHOD_VERSION,
-        "published": "2026-10-16",
+        "published": "2026-10-17",
         "aggregation": (
             "Weighted mean of the component scores. Weights are renormalised over the "
             "components whose source was actually available; any dropped component is "
@@ -484,38 +439,34 @@ def methodology() -> dict:
                     name: {"weight": weight, "scoring": _SCORING[name]}
                     for name, weight in STI_WEIGHTS.items()
                 },
-                "sources": [_BIOMASS_SOURCE, _QUOTA_SOURCE],
-            },
-            AI_LPI: {
-                "name": INDEX_NAMES[AI_LPI],
-                "question": "How intense is national lice treatment pressure?",
-                "range": "0-100",
-                "direction": "higher = more lice-driven production risk and cost",
-                "components": {
-                    name: {"weight": weight, "scoring": _SCORING[name]}
-                    for name, weight in LPI_WEIGHTS.items()
-                },
-                "sources": [_QUOTA_SOURCE],
+                "sources": [_BIOMASS_SOURCE],
             },
         },
+        "withdrawn": {code: dict(entry) for code, entry in WITHDRAWN_INDICES.items()},
+        "superseded_versions": [dict(entry) for entry in SUPERSEDED_VERSIONS],
         "revision_policy": (
             "A published value is immutable for a given (version, week). Changing a "
             "weight, a scoring formula or a source bumps INDEX_METHOD_VERSION, and the "
-            "history keeps both versions so a series break is visible rather than hidden."
+            "history keeps both versions so a series break is visible rather than hidden. "
+            "Observations of a withdrawn method are never edited or deleted: they stay "
+            "in the history marked superseded (superseded_by, superseded_reason)."
         ),
         "planned_components": {
-            "v1.1": [
+            "next": [
                 "feed_cost_pressure for AI-STI (feed margin squeeze, cost-push)",
-                "sea_temp_anomaly for AI-LPI (SST anomaly vs 5-year baseline)",
-                "independent adult-female lice count series for AI-LPI",
+                "a lice index rebuilt on observable facts (biomass-weighted share of "
+                "sites above the lice limit, weeks to the limit), only on verified "
+                "lice rows (WS-16)",
             ]
         },
         "limitations": [
-            "AI-LPI v1.0 uses the lice emission-quota framework as a proxy for "
-            "treatment pressure; it is not a direct lice-count measurement.",
+            "AI-STI 2.0.0 has two components and both come from one source "
+            "(Fiskeridir biomass); when it is unavailable there is no value, and "
+            "when the tracker falls back to an estimate the value is degraded.",
             "Momentum components prefer year-over-year; when a year-back period is "
             "missing the previous period is used and raw.basis says so.",
-            "Both indices are descriptive indicators, not investment advice.",
+            "AI-LPI v1.0 is withdrawn; no lice index is published.",
+            "A descriptive indicator, not investment advice.",
         ],
         "disclaimer": "Index output, not investment advice.",
     }
@@ -584,7 +535,12 @@ async def save_observation(result: dict) -> dict:
 
 
 async def history(index: str, *, limit: int = 52) -> list[dict]:
-    """Stored observations, newest first (empty when nothing published yet)."""
+    """Stored observations, newest first (empty when nothing published yet).
+
+    Every version is returned, so a series break stays visible; an observation of
+    a withdrawn method carries ``superseded: true`` with ``superseded_by`` and the
+    reason (WS-19) — its stored value is never edited.
+    """
     import asyncio
     import json
 
@@ -615,6 +571,9 @@ async def history(index: str, *, limit: int = 52) -> list[dict]:
                     "band": r.band,
                     "components": json.loads(r.components_json or "[]"),
                     "provenance": json.loads(r.provenance_json or "{}"),
+                    "superseded": r.superseded_by is not None,
+                    "superseded_by": r.superseded_by,
+                    "superseded_reason": r.superseded_reason,
                 }
                 for r in rows
             ]
@@ -631,5 +590,5 @@ async def publish(index: str, *, as_of: dt.datetime | None = None) -> dict:
 
 
 async def publish_all(*, as_of: dt.datetime | None = None) -> dict[str, dict]:
-    """Publish both named indices, ungated (tests and tooling)."""
-    return {code: await publish(code, as_of=as_of) for code in (AI_STI, AI_LPI)}
+    """Publish every published index, ungated (tests and tooling)."""
+    return {code: await publish(code, as_of=as_of) for code in PUBLISHED_INDICES}

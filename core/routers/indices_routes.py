@@ -1,7 +1,7 @@
 """Named public indices + the Bio→Price Weekly digest.
 
-The published surface for AI-STI / AI-LPI: latest values, versioned history,
-the methodology document and the weekly digest. Every value carries its method
+The published surface for AI-STI (AI-LPI v1.0 answers as withdrawn, WS-19):
+latest values, versioned history, the methodology document and the weekly digest. Every value carries its method
 version, component contributions and provenance — see docs/INDICES.md.
 """
 from __future__ import annotations
@@ -15,11 +15,12 @@ router = APIRouter(prefix="/api/indices", tags=["indices"])
 
 @router.get("")
 async def list_indices():
-    """Latest value of every published index (compute-on-read)."""
+    """Latest value of every published index (compute-on-read); a withdrawn index
+    is listed with status "withdrawn", no value and the reason."""
     from core.market import index_publication, indices
 
     out = {}
-    for code in (indices.AI_STI, indices.AI_LPI):
+    for code in indices.COMPUTERS:
         out[code] = await indices.compute(code)
     return {
         "method_version": indices.INDEX_METHOD_VERSION,
@@ -41,7 +42,7 @@ async def index_methodology():
 
 @router.get("/bio-price-weekly")
 async def bio_price_weekly():
-    """The flagship weekly digest: supply + lice pressure → price read."""
+    """The flagship weekly digest: supply (biomass, harvest) → price read."""
     from core.market.bio_price_weekly import build
 
     return await build()

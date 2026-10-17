@@ -114,7 +114,7 @@ PLANS: dict[str, Plan] = {
         seats=1,
         sites=0,
         features=(
-            "Public indices (AI-STI, AI-LPI) and Accuracy & Method",
+            "Public index (AI-STI) and Accuracy & Method",
             "National-level statistics",
             "Bio>Price Weekly digest",
             "30-day lag on market detail",

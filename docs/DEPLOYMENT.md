@@ -94,7 +94,8 @@ The `docker-compose.yml` includes:
 - **fishintel-agents** -- the 13 background agents (data ingest every 15 min,
   exposure mapping, correlation, signal generation, prediction, backfill,
   execution, compliance, bloom, hedging, self-evolve, intelligence, and the
-  index publisher that stores AI-STI / AI-LPI once per ISO week) plus
+  index publisher that stores AI-STI once per ISO week; AI-LPI v1.0 is
+  withdrawn, WS-19) plus
   sentiment polling. Runs `python main.py --agents-only` with graceful
   SIGTERM shutdown (`stop_grace_period: 60s`). Restarting the API does not
   interrupt data ingest.

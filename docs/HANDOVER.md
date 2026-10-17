@@ -5,6 +5,9 @@
 > migrations at head `019`, fast gate 211 passed + 1 network skip, §6 traps 11–15.
 > **WS-2 landed 2026-10-16** too: the `index_publisher` agent (13th) and
 > `core/market/index_publication.py`; fast gate 240 passed + 1 skip.
+> **WS-19 landed 2026-10-17:** index method 2.0.0 (AI-STI without the lice-quota
+> component, AI-LPI v1.0 withdrawn), Alembic **020** (head `020`) marking the
+> method-1.0.0 observations superseded; fast gate 247 passed + 1 skip.
 > Every number below was measured, not copied from an older doc. Re-verify with the
 > commands in §2 before trusting them.
 >
@@ -21,7 +24,7 @@
 | Platform version | `2.6.0` |
 | OpenAPI surface | **345 paths / 353 operations** (`docs/openapi.frozen.json`) |
 | Tests | **1053 collected** (`pytest --collect-only`, 2026-10-16 after WS-2) |
-| Alembic migrations | **19** (head `019`) |
+| Alembic migrations | **20** (head `020`, since WS-19) |
 | Router modules | **38** (`core/routers/`) |
 | Engine modules | **77** (`core/market/`) |
 | Frontend routes | **68** page files |
@@ -43,7 +46,7 @@ cd frontend && npm run dev
 python -m pytest tests/test_entitlements.py tests/test_billing_money_path.py \
   tests/test_indices.py tests/test_accuracy_registry.py tests/test_production_truth.py \
   tests/test_partner_pilots.py tests/test_legal.py tests/test_provenance_ratchet.py \
-  tests/test_gtm_roi.py tests/test_migrations.py tests/test_openapi_contract.py -q   # 240 pass + 1 skip (network), ~22s
+  tests/test_gtm_roi.py tests/test_migrations.py tests/test_openapi_contract.py -q   # 247 pass + 1 skip (network), ~24s (after WS-19)
 
 # the full suite (≈4.5 min) — command runners time out at ~30s, so background it:
 #   Start-Process -FilePath python -ArgumentList '-m','pytest','tests/','-q' \
@@ -103,7 +106,7 @@ always confirm with `git ls-remote origin refs/heads/master`.
 ## 5. Workstream backlog — pick these up in order
 
 Each item is self-contained: goal → files → steps → **acceptance criteria you can
-test** → traps. WS-1 and WS-2 are done.
+test** → traps. WS-1, WS-2 and WS-19 are done.
 
 **Priority changed 2026-10-17 by [`docs/VALUE_ANALYSIS.md`](VALUE_ANALYSIS.md).** The
 value analysis found buyer-visible defects that outrank the infrastructure items.
@@ -396,7 +399,37 @@ does not declare (indexes, backfills) can be skipped silently.
 after; `EXPLAIN` on `/api/lice/summary` uses the index. **Traps:** never fix by
 stamping; 019 survives this because it is existence-guarded — new migrations must be.
 
-### WS-19 · Guard the index history before any agent runs (do first)
+### WS-19 · Guard the index history before any agent runs — **DONE 2026-10-17**
+**Shipped:** index method **2.0.0** (`core/market/indices.py`): `quota_pressure`
+removed from AI-STI (biomass / harvest keep their 0.40 : 0.35 ratio, published as
+0.5333 / 0.4667); AI-LPI v1.0 **withdrawn** (`PUBLISHED_INDICES = ("AI-STI",)`,
+`WITHDRAWN_INDICES`, `SUPERSEDED_VERSIONS`; AI-LPI answers `status: "withdrawn"`,
+`value: null`, the reason, and is never computed, built, stored or reported
+missing). `index_publication.INDEX_CODES` projects the published set (agent,
+`status()`, `readiness()`, `publish_week()`, `store_digest()`, verifier). Alembic
+**020** adds `superseded_by` / `superseded_reason` / `superseded_at` to
+`index_observations` and marks every 1.0.0 row (existence-guarded; Core `update()`;
+downgrade keeps the rows); `history()` exposes the marks. Digest: published
+indices + a `withdrawn` block, no lice wording in the headline. `/indices` shows
+"withdrawn". Tests: `tests/test_indices.py::TestIndexGuard` (6) and
+`tests/test_migrations.py::test_020_…` — all 7 failed on the old code.
+**Acceptance met:** AI-STI moves in its documented direction per component and
+reads exactly 0 and 100 at ±10 % momentum; no computation of any code calls the
+lice-quota tracker; a real publisher tick (test, and once on a backup copy of this
+box's DB) stores only AI-STI at 2.0.0 with no quota input — on this box it stores
+nothing because AI-STI has no value ("no comparable prior period"). The two
+2026-W42 rows are marked `superseded_by='2.0.0'` with their values intact.
+Review fixes: the digest degrades when AI-STI does (the read rests on it alone)
+and the supply panel follows the biomass tracker's lineage; the freshness monitor
+ignores superseded rows (`SourceSpec.excluded_when_set`); GTM copy no longer sells
+AI-LPI; `docs/openapi.frozen.json` re-frozen deliberately (two descriptions only —
+response shapes had changed). **Left open:** no lice index is published (a rebuild
+needs observable facts and verified lice rows — WS-16, then a new method version);
+`tests/test_production_truth.py`'s verifier stubs still use "AI-LPI"/"1.0.0" as
+arbitrary codes (harmless). The agents service stays off until WS-16's
+completeness rule lands.
+
+*Original brief, kept for the record:*
 **Why:** `main.py` starts `IndexPublisherAgent` whenever it runs without `--api-only`,
 and after the 72 h grace it stores a disclosed degraded value. AI-STI reads 100
 "severe" from one component (national lice-quota utilisation 238,367%), and AI-LPI's
@@ -593,7 +626,9 @@ traffic-light, and a redesign fails it by intent).
 | 13 | **Empty `alembic_version` bricks the ingest** | A `create_all`-built DB whose chain aborts at 001 never runs 019, so every lice insert fails. Recover with `alembic stamp 018` then `alembic upgrade head` — never stamp head. The verifier's `lice_source_column` check catches it. |
 | 14 | **The freshness monitor runs in a worker thread** | `fm.report()` uses `asyncio.to_thread`; an in-memory SQLite engine is empty in that thread. Test it with a file-backed engine. |
 | 15 | **Long shell heredocs on this box** | Git-Bash `cat <<'EOF'` with a long Python body intermittently fails to parse. Write the patch to a file and run `python file.py`. |
-| 16 | **Tests used to publish into the real index store** | Until WS-2 the publish tests stored the current week into the dev DB on every run; this box's 2026-W42 rows predate the lineage guard and the AI-LPI one claims `is_live: true`. Use the `observation_store` fixture for anything that writes observations; never read the dev box's published history as evidence of the agent. The rows already store the defect values (AI-STI 100 severe; AI-LPI 55 claiming `is_live: true`); keeping them only stops a second write for W42. WS-19 marks them superseded under its method-version bump; never delete them. |
+| 16 | **Tests used to publish into the real index store** | Until WS-2 the publish tests stored the current week into the dev DB on every run; this box's 2026-W42 rows predate the lineage guard and the AI-LPI one claims `is_live: true`. Use the `observation_store` fixture for anything that writes observations; never read the dev box's published history as evidence of the agent. The rows store the defect values (AI-STI 100 severe; AI-LPI 55 claiming `is_live: true`) at method 1.0.0; since WS-19 (Alembic 020) they are marked `superseded_by='2.0.0'` and no longer count for any week. Never delete them. |
+| 17 | **The test bootstrap migrates the dev DB** | `tests/conftest.py::_bootstrap_test_database` runs `alembic upgrade head` against `data/openclaw.db` at collection, so a new migration is applied to the dev DB by the first test run — write migrations to be safe on real data before running any test. |
+| 18 | **The dev DB is in WAL mode** | Recent writes sit in `data/openclaw.db-wal`; `cp data/openclaw.db x.db` gives a stale copy (missing columns a migration just added). Copy with the SQLite backup API (`src.backup(dst)`). |
 
 ## 7. Definition of done for the next module
 

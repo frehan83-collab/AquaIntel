@@ -65,6 +65,10 @@ class SourceSpec:
     #: Source values that count as verified for this table (WS-1 lineage
     #: contract). Empty = no contract declared: verified/unverified not measured.
     real_sources: frozenset = frozenset()
+    #: Rows whose value in this column is set do not count (WS-19: an index
+    #: observation of a withdrawn method is superseded, not current). Applied only
+    #: when the column exists.
+    excluded_when_set: str | None = None
 
 
 SOURCES: tuple[SourceSpec, ...] = (
@@ -145,13 +149,14 @@ SOURCES: tuple[SourceSpec, ...] = (
     ),
     SourceSpec(
         key="index_observations",
-        label="Published indices (AI-STI / AI-LPI)",
+        label="Published indices (AI-STI)",
         table="index_observations",
         upstream="core.market.indices",
         # weekly publication plus one hourly tick of phase (WS-2: one definition)
         expected_cadence_hours=FRESHNESS_CADENCE_HOURS,
         refresh_hint=PUBLISHER,
         critical=True,
+        excluded_when_set="superseded_by",
     ),
     SourceSpec(
         key="treatment_outcomes",
@@ -250,23 +255,42 @@ def _report_sync(specs: tuple[SourceSpec, ...]) -> dict:
 
         columns = [c["name"] for c in inspector.get_columns(spec.table)]
         timestamp_column = next((c for c in TIMESTAMP_CANDIDATES if c in columns), None)
+        scope = (
+            f' WHERE "{spec.excluded_when_set}" IS NULL'
+            if spec.excluded_when_set and spec.excluded_when_set in columns
+            else ""
+        )
         try:
             with engine.connect() as conn:
                 count = (
-                    conn.execute(text(f'SELECT COUNT(*) FROM "{spec.table}"')).scalar()
+                    conn.execute(text(f'SELECT COUNT(*) FROM "{spec.table}"{scope}')).scalar()
                     or 0
+                )
+                excluded = (
+                    conn.execute(
+                        text(
+                            f'SELECT COUNT(*) FROM "{spec.table}" '
+                            f'WHERE "{spec.excluded_when_set}" IS NOT NULL'
+                        )
+                    ).scalar()
+                    or 0
+                    if scope
+                    else None
                 )
                 latest = None
                 if timestamp_column:
                     latest = conn.execute(
-                        text(f'SELECT MAX("{timestamp_column}") FROM "{spec.table}"')
+                        text(f'SELECT MAX("{timestamp_column}") FROM "{spec.table}"{scope}')
                     ).scalar()
                 synthetic = None
                 verified = None
                 if _has_source_column(columns) and count:
                     synthetic = (
                         conn.execute(
-                            text(f'SELECT COUNT(*) FROM "{spec.table}" WHERE {_SYNTHETIC_SQL}')
+                            text(
+                                f'SELECT COUNT(*) FROM "{spec.table}" WHERE ({_SYNTHETIC_SQL})'
+                                + scope.replace(" WHERE ", " AND ")
+                            )
                         ).scalar()
                         or 0
                     )
@@ -281,6 +305,7 @@ def _report_sync(specs: tuple[SourceSpec, ...]) -> dict:
                                 text(
                                     f'SELECT COUNT(*) FROM "{spec.table}" '
                                     f"WHERE LOWER(TRIM(COALESCE(source, ''))) IN ({placeholders})"
+                                    + scope.replace(" WHERE ", " AND ")
                                 ),
                                 params,
                             ).scalar()
@@ -327,6 +352,8 @@ def _report_sync(specs: tuple[SourceSpec, ...]) -> dict:
                     else None
                 ),
                 "no_verified_rows": bool(count and verified == 0),
+                # WS-19: rows marked in `excluded_when_set` (superseded) do not count
+                "excluded_rows": excluded,
                 "status": _status(staleness, spec.expected_cadence_hours),
             }
         )
@@ -339,6 +366,11 @@ def _report_sync(specs: tuple[SourceSpec, ...]) -> dict:
             entry["reason"] = (
                 "holds no row with a verified source (rows are synthetic or "
                 "unverified) — it cannot back a live data claim"
+            )
+        elif not count and excluded:
+            entry["reason"] = (
+                f"no current rows: all {excluded} row(s) are marked "
+                f"{spec.excluded_when_set} and do not count"
             )
         if timestamp_column is None:
             entry["reason"] = "no timestamp column found — freshness not measurable"

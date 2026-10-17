@@ -8,8 +8,9 @@ index mention. Nothing else.
 - [ ] `python scripts/verify_production_truth.py` green on the demo deployment.
 - [ ] Publish the accuracy artifact from real data (`scripts/publish_accuracy.py`) —
       a demo with a *measured* MAPE is a different conversation.
-- [ ] Publish at least 8 weeks of AI-STI/AI-LPI history (`POST /api/indices/publish`
-      weekly) so the chart shows a series, not a dot.
+- [ ] Publish at least 8 weeks of AI-STI history (`POST /api/indices/publish`
+      weekly) so the chart shows a series, not a dot. AI-LPI v1.0 is withdrawn
+      (WS-19); do not show or print it.
 - [ ] Print the one-pager (`docs/GTM_SECURITY_ONE_PAGER.md`) — one page, honest gaps.
 - [ ] Booth demo rehearsed to 3 minutes (`docs/GTM_DEMO_SCRIPT.md`).
 
@@ -29,13 +30,14 @@ index mention. Nothing else.
 | Screen C | `/pricing` + ROI calculator with **their** numbers |
 | One-pager | Security/architecture, with the "not in place yet" table intact |
 | QR | `/pricing` and `/api/indices/bio-price-weekly` |
-| Giveaway | Nothing plastic: a printed AI-LPI history chart is more memorable |
+| Giveaway | Nothing plastic: a printed AI-STI history chart, with its method version, is more memorable |
 
 ## The 90-second stand pitch
 
-> "Salmon supply tension is measurable before it hits price. We publish two
-> indices — AI-STI for supply tension, AI-LPI for lice pressure — with the method,
-> the weights, and the source of every component. When a source is down the index
+> "Salmon supply tension is measurable before it hits price. We publish an
+> index — AI-STI for supply tension — with the method, the weights, and the
+> source of every component; we withdrew our lice index when its input did not
+> hold up, and the history says so. When a source is down the index
 > says degraded instead of guessing. There's a free tier; the paid tiers unlock the
 > price path and the field tool. Are you the person who owns lice and harvest
 > planning?"

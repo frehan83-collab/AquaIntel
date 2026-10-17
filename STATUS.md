@@ -585,3 +585,36 @@ added `tests/test_migrations.py`.
   (AI-STI 100, AI-LPI 55 claiming live) remain in the store unmarked; WS-19 marks them
   superseded. Keep `--api-only` until WS-19 and WS-16's completeness rule land.
 - **No code changed.**
+
+## WS-19 — index history guarded (method 2.0.0) — 2026-10-17
+
+- **Shipped:** `quota_pressure` removed from AI-STI and AI-LPI v1.0 withdrawn
+  (`INDEX_METHOD_VERSION` 1.0.0 → 2.0.0; `PUBLISHED_INDICES`, `WITHDRAWN_INDICES`,
+  `SUPERSEDED_VERSIONS`); the publication set is AI-STI only; Alembic 020 marks the
+  method-1.0.0 observations superseded without editing or deleting them; history
+  exposes the marks; digest, `/api/indices`, `/indices`, plan copy updated.
+- **Reproduced before the change:** in-process `compute()` on the dev box gave AI-STI
+  1.0.0 = 100.0 "severe" (biomass components unavailable: "no comparable prior
+  period"; `quota_pressure` 100 from `national_utilization_pct` 238367.6) and AI-LPI
+  55.0 (`emission_pressure` 100, `quota_headroom` 0).
+- **Failing first:** the 7 new tests failed on the old code (quota component present,
+  no `PUBLISHED_INDICES`, stored version 1.0.0, no supersession columns).
+- **Verified after:** a real `IndexPublisherAgent().tick()` against a SQLite-backup
+  copy of the dev DB stored nothing (AI-STI has no value here; "AI-STI: no value
+  computed — nothing to store"), called the lice-quota tracker 0 times, and left the
+  2 rows untouched; the dev DB is at 020 with both 2026-W42 rows marked
+  `superseded_by='2.0.0'` (values 100.0 / 55.0 intact); the verifier reports
+  `alembic_head: at head 020` and `index_publication_current_week` warn (2026-W42 not
+  published for AI-STI at method 2.0.0 — true: no agent runs here).
+- **Found on the way:** the test bootstrap (`tests/conftest.py`) runs
+  `alembic upgrade head` on the dev DB at collection, so a new migration lands on
+  `data/openclaw.db` with the first test run; the dev DB is in WAL mode, so a plain
+  file copy misses recent writes (use the SQLite backup API). Both recorded as traps.
+- **Independent review:** no blockers; 4 should-fix + 6 nits, fixed with tests
+  (digest live claim, freshness over superseded rows, GTM copy, false route
+  descriptions → deliberate OpenAPI re-freeze of two descriptions).
+- **Verifier after the review fixes:** `freshness_critical_unknown` now warns for
+  `index_observations` (its only rows are superseded, so no current observation
+  exists — the honest state; it read a false "fresh" before).
+- **Keep `--api-only`** until WS-16's completeness rule lands (WS-19 is done).
+

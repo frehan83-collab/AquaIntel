@@ -5,7 +5,7 @@
 
 ## Format 1 — "The Number and the Caveat" (Mon)
 
-> Sea lice pressure nationally: AI-LPI at **{value}** ({band}).
+> Salmon supply tension: AI-STI at **{value}** ({band}).
 >
 > Same index, all inputs transparent: {components and weights}.
 > One source degraded this week, so the badge says so and the response names it.

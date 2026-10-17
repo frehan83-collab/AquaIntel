@@ -1,6 +1,6 @@
 "use client";
 /**
- * Public indices page — AI-STI / AI-LPI + the Bio→Price Weekly digest, driven
+ * Public indices page — AI-STI (AI-LPI v1.0 withdrawn) + the Bio→Price Weekly digest, driven
  * entirely by /api/indices. Shows the method version, component contributions and
  * a provenance badge, so a reader can see why a number is what it is.
  */
@@ -21,6 +21,7 @@ const BAND_COLOR: Record<string, string> = {
 };
 
 function IndexCard({ result }: { result: IndexResult }) {
+  const withdrawn = result.status === "withdrawn";
   const degraded = !result.provenance?.is_live;
   return (
     <GlassCard accent={degraded ? "amber" : "ocean"}>
@@ -36,7 +37,7 @@ function IndexCard({ result }: { result: IndexResult }) {
             {result.value === null ? "—" : result.value.toFixed(1)}
           </div>
           <div className="text-[11px] text-[var(--text-secondary)]">
-            {result.band ?? "unavailable"} · {result.week}
+            {withdrawn ? "withdrawn" : result.band ?? "unavailable"} · {result.week}
           </div>
         </div>
       </div>
@@ -70,7 +71,7 @@ function IndexCard({ result }: { result: IndexResult }) {
 
       <div className="mt-3 flex items-center gap-2 text-[10px]">
         <span className="px-1.5 py-0.5 rounded bg-white/5 text-white/50">
-          method v{result.version}
+          method v{withdrawn ? result.withdrawn?.version ?? result.version : result.version}
         </span>
         <span
           className={`px-1.5 py-0.5 rounded ${
@@ -79,7 +80,7 @@ function IndexCard({ result }: { result: IndexResult }) {
               : "bg-emerald-500/10 text-emerald-400"
           }`}
         >
-          {degraded ? "degraded" : "live"}
+          {withdrawn ? "withdrawn" : degraded ? "degraded" : "live"}
         </span>
         <span className="text-white/40">
           {result.components_used}/{result.components.length} components

@@ -644,11 +644,13 @@ Session = sessionmaker(bind=engine)
 
 
 class IndexObservation(Base):
-    """A published observation of a named public index (AI-STI / AI-LPI).
+    """A published observation of a named public index (AI-STI; AI-LPI until 1.0.0).
 
     Immutable for a given (index_code, week, version): the revision policy in
     `core.market.indices.methodology()` promises that a change to the method
-    creates a new version rather than silently restating history.
+    creates a new version rather than silently restating history. A withdrawn
+    method's rows are marked ``superseded_by`` (migration 020, WS-19); the value,
+    band, components and provenance are never edited and the row is never deleted.
     """
     __tablename__ = "index_observations"
 
@@ -662,6 +664,9 @@ class IndexObservation(Base):
     components_json = Column(Text)
     provenance_json = Column(Text)
     created_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC))
+    superseded_by = Column(String(16), nullable=True)   # method version that withdrew it
+    superseded_reason = Column(Text, nullable=True)
+    superseded_at = Column(DateTime, nullable=True)
 
     __table_args__ = (
         UniqueConstraint(

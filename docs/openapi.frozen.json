@@ -6771,7 +6771,7 @@
     },
     "/api/indices": {
       "get": {
-        "description": "Latest value of every published index (compute-on-read).",
+        "description": "Latest value of every published index (compute-on-read); a withdrawn index\nis listed with status \"withdrawn\", no value and the reason.",
         "operationId": "list_indices_api_indices_get",
         "responses": {
           "200": {
@@ -6791,7 +6791,7 @@
     },
     "/api/indices/bio-price-weekly": {
       "get": {
-        "description": "The flagship weekly digest: supply + lice pressure \u2192 price read.",
+        "description": "The flagship weekly digest: supply (biomass, harvest) \u2192 price read.",
         "operationId": "bio_price_weekly_api_indices_bio_price_weekly_get",
         "responses": {
           "200": {

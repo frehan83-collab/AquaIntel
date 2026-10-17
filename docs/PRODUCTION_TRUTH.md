@@ -42,12 +42,15 @@ python scripts/verify_production_truth.py --no-freshness
 ```
 [OK  ] compose_service_agents: declared
 [OK  ] agents_entrypoint: uses `python main.py --agents-only`
-[OK  ] alembic_head: at head 019
+[OK  ] alembic_head: at head 020
 [OK  ] lice_source_column: lice_records.source present, NOT NULL with default (WS-1)
 [OK  ] model_artifacts: 4 file(s) in data/models
 [OK  ] accuracy_artifacts: 1 published artifact(s)
-[OK  ] index_publication_current_week: 2026-W42 published for AI-STI, AI-LPI (method 1.0.0)
-[OK  ] freshness_critical_unknown: all critical sources measurable
+[WARN] index_publication_current_week: 2026-W42 not published for: AI-STI — the index_publisher
+       agent has not run (or failed) this week; … (method 2.0.0 since WS-19: the two
+       2026-W42 rows are method 1.0.0, marked superseded, and no agent runs here)
+[WARN] freshness_critical_unknown: unknown freshness for critical sources: index_observations
+       (WS-19: superseded rows do not count; no method-2.0.0 observation exists here yet)
 [WARN] freshness_synthetic_only: sources backed only by synthetic rows: ssb_weekly_prices
 [WARN] freshness_no_verified_rows: sources holding no row with a verified source
        (synthetic or unverified only): lice_records
@@ -80,8 +83,8 @@ week is the current or previous ISO week, and the newest row was fetched within
 the weekly cadence — checked per production area as well as nationally, so one
 stale area degrades the national view. Cached payloads re-evaluate this against
 the current time on every hit. The quota tracker publishes that summary as `lineage`
-on `/api/analytics/lice-quota/*` and `/api/analytics/lice-emission/*`, AI-LPI reads
-it, and `/api/data-freshness` counts the whole table. A database that never ran
+on `/api/analytics/lice-quota/*` and `/api/analytics/lice-emission/*` (AI-LPI v1.0
+read it until WS-19 withdrew it; no index reads it now), and `/api/data-freshness` counts the whole table. A database that never ran
 migration 019 (typically an empty `alembic_version`, where the chain aborts at 001)
 fails the verifier's `lice_source_column` check; recover with `alembic stamp 018`
 then `alembic upgrade head` — never stamp head directly.

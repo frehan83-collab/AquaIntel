@@ -210,6 +210,10 @@ export interface IndexResult {
   index: string;
   name: string;
   version: string;
+  /** "withdrawn": a known code with no value; the reason is in provenance (WS-19) */
+  status?: "published" | "withdrawn";
+  /** present when status is "withdrawn": the withdrawn method version and why */
+  withdrawn?: { version: string; withdrawn: string; reason: string; plan?: string };
   value: number | null;
   band: string | null;
   as_of: string;

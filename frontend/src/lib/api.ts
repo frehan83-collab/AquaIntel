@@ -546,7 +546,7 @@ export const api = {
   marketBiomass: () => fetchAPI<MarketBiomass>("/api/market/biomass"),
   // Canonical plan catalog + Stripe prices (mock: true when Stripe is unset)
   billingCatalog: () => fetchAPI<BillingCatalog>("/api/billing/catalog"),
-  // Published named indices (AI-STI, AI-LPI) with method version + provenance
+  // Published named index (AI-STI; AI-LPI v1.0 listed as withdrawn) with method version + provenance
   indices: () => fetchAPI<IndicesResponse>("/api/indices"),
   index: (code: string) => fetchAPI<IndexResult>(`/api/indices/${code.toLowerCase()}`),
   indexHistory: (code: string, limit = 52) =>

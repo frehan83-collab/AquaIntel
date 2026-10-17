@@ -1,7 +1,8 @@
 """Weekly publication status and readiness for the named indices (WS-2).
 
-``publish_week()`` (core/market/bio_price_weekly.py) computes and stores both
-AI-STI and AI-LPI for the ISO week of its ``as_of``; the unique constraint on
+``publish_week()`` (core/market/bio_price_weekly.py) computes and stores every
+published index (``indices.PUBLISHED_INDICES``: AI-STI since method 2.0.0, AI-LPI
+v1.0 being withdrawn — WS-19) for the ISO week of its ``as_of``; the unique constraint on
 ``index_observations`` makes that idempotent per (index, week, method version).
 Until WS-2 nothing *scheduled* it, so the published history was populated only
 by test runs and nothing could say whether the current week had been published.
@@ -29,8 +30,8 @@ monitor import them):
   missing inputs. An index with no value is never stored (the store refuses it,
   whoever writes). Within the first ``READINESS_GRACE_HOURS`` of the week only a
   *live* index value is stored; after the grace a degraded value is stored with
-  its provenance saying why. Indices are gated independently: a valid AI-STI is
-  not withheld because AI-LPI's source is down.
+  its provenance saying why. Indices are gated independently: a valid index is
+  not withheld because another index's source is down.
 """
 from __future__ import annotations
 
@@ -46,7 +47,9 @@ from core.source_lineage import parse_timestamp, to_utc
 
 log = structlog.get_logger(__name__)
 
-INDEX_CODES: tuple[str, ...] = (indices.AI_STI, indices.AI_LPI)
+#: The published set (one definition in core.market.indices). A withdrawn index is
+#: never built, stored or reported missing (WS-19).
+INDEX_CODES: tuple[str, ...] = indices.PUBLISHED_INDICES
 
 #: One observation per ISO week.
 PUBLICATION_CADENCE_HOURS = 168

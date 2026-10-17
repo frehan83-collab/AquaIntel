@@ -5,6 +5,59 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
+### WS-19 — the index history is guarded before any agent runs (2026-10-17)
+- **Why:** AI-STI read 100 "severe" from one component, `quota_pressure`, fed by the
+  lice-quota tracker's national utilisation (238,367 % on the dev box: a lice count
+  divided by constants labelled tonnes, for a quota regime that is still a
+  proposal); AI-LPI v1.0 was built only on the same number and its
+  `quota_headroom` was inverted (range about 27-55). The `index_publisher` agent
+  would have stored a degraded AI-STI 100 every week from 2026-W43.
+- **Method 2.0.0** (`core/market/indices.py`): `quota_pressure` removed from AI-STI
+  (`biomass_momentum` / `harvest_pressure` keep their 0.40 : 0.35 ratio, published as
+  0.5333 / 0.4667); **AI-LPI v1.0 withdrawn** — `PUBLISHED_INDICES = ("AI-STI",)`,
+  `WITHDRAWN_INDICES` (AI-LPI answers `status: "withdrawn"`, `value: null` and the
+  reason, never computed or stored), `SUPERSEDED_VERSIONS`; `methodology()` publishes
+  `withdrawn` and `superseded_versions`. No index reads the lice-quota tracker.
+- **Publication set:** `index_publication.INDEX_CODES` projects
+  `PUBLISHED_INDICES`, so the agent, `status()`, `readiness()`, `publish_week()`,
+  `store_digest()` and the verifier never build, store or report AI-LPI as missing.
+  The Bio→Price Weekly digest carries only published indices plus a `withdrawn`
+  block, its headline no longer cites lice pressure, and — because the read now
+  rests on AI-STI alone — a degraded AI-STI (the biomass tracker's estimate
+  fallback) adds a caveat and degrades the digest; the supply panel's provenance
+  follows the tracker's own lineage instead of an unconditional live stamp.
+  `GET /api/indices` lists AI-LPI as withdrawn; the `/indices` page shows its card
+  with "method v1.0.0" and a "withdrawn" badge.
+- **Freshness:** the `index_observations` source counts only rows that are not
+  superseded (`SourceSpec.excluded_when_set`), so the withdrawn method's rows can
+  no longer make the critical index store read "fresh".
+- **History kept, marked:** Alembic **020** adds `superseded_by`,
+  `superseded_reason`, `superseded_at` to `index_observations` and marks every
+  method-1.0.0 row superseded by 2.0.0 (index-specific reason); no value, band,
+  component or provenance is edited and nothing is deleted. `history()` and
+  `/api/indices/{code}/history` expose the marks. On the dev box the two
+  test-written 2026-W42 rows (AI-STI 100, AI-LPI 55 claiming live) are marked.
+- **Tests:** `tests/test_indices.py::TestIndexGuard` (no index reads the tracker;
+  AI-STI moves in its documented direction and spans 0-100, per component too;
+  AI-LPI withdrawn; a real publisher tick stores only AI-STI at 2.0.0 with no quota
+  input; history exposes the marks) and
+  `tests/test_migrations.py::test_020_marks_method_1_observations_superseded_and_keeps_their_values`.
+  The publication-mechanics tests now publish AI-STI plus a test-only second code
+  so the per-index gate stays exercised; the AI-LPI lineage tests moved to the
+  tracker's provenance (`test_lice_payload_is_live_only_on_its_lineage`).
+- **Copy:** the Insight plan feature now reads "Public index (AI-STI) and Accuracy &
+  Method"; GTM proof point, LinkedIn/event/demo scripts, the design-partner producer
+  metric, freshness label and agent docstrings no longer sell AI-LPI.
+- **OpenAPI re-freeze (deliberate):** response shapes changed (`status` on every
+  index result, `withdrawn` on the digest, `superseded*` on history rows) and two
+  route descriptions had become false ("supply + lice pressure"; "every published
+  index"). `docs/openapi.frozen.json` was re-frozen; its diff is exactly those two
+  descriptions (the schemas are `{}`). No path, parameter or response model changed.
+- **Review:** an independent review found no blockers; its should-fix items (the
+  digest's live claim, freshness over superseded rows, GTM copy, false route
+  descriptions) and nits (dev-box figure in the public reason, headline wording,
+  the tracker guard covering every public tracker coroutine) are fixed with tests.
+
 ### Docs — product value analysis and a reprioritised backlog (2026-10-17)
 - **New `docs/VALUE_ANALYSIS.md`:** an evidence-based answer to "too many features?",
   "valuable for the market?", "what raises quality?" and "why does the UI look

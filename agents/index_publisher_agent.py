@@ -1,7 +1,8 @@
 """
 Index Publisher Agent (WS-2)
 ============================
-Publishes the named indices (AI-STI / AI-LPI) once per ISO week: ``build()``
+Publishes the published indices (AI-STI; AI-LPI v1.0 is withdrawn, WS-19)
+once per ISO week: ``build()``
 computes the digest, ``readiness()`` decides per index whether its value may
 become the week's immutable observation, ``store_digest()`` stores the ready
 ones. The admin endpoint ``POST /api/indices/publish`` goes through the same
@@ -19,8 +20,8 @@ Behaviour (contracts in core/market/index_publication.py):
     double-publishes (the unique constraint is the second line of defence, and
     losing that race is reported as a duplicate, not a failure);
   * stores an index only when it is ready; a withheld index is named in
-    ``waiting`` and retried next tick (a valid AI-STI is not withheld because
-    AI-LPI's source is down);
+    ``waiting`` and retried next tick (a valid index is not withheld because
+    another index's source is down);
   * a failed or incomplete publication is an error log, an ``index_publication``
     audit row and ``last_failure`` in ``health()``, and the tick raises so the
     orchestrator's error counters reflect it. Paging a human on that state
@@ -44,7 +45,7 @@ log = structlog.get_logger(__name__)
 
 
 class IndexPublisherAgent(BaseAgent):
-    """Publishes AI-STI / AI-LPI once per ISO week; records when it cannot."""
+    """Publishes the published indices once per ISO week; records when it cannot."""
 
     name = "index_publisher"
     interval_seconds = PUBLISH_TICK_HOURS * 3600

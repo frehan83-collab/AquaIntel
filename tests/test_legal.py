@@ -22,16 +22,20 @@ def client():
 
 class TestRegisterCompleteness:
     def test_every_published_index_source_is_registered(self):
-        """An index component's source must be traceable to a licence entry."""
+        """An index component's source must be traceable to a licence entry.
+
+        The declared sources (methodology) are checked whatever the environment; the
+        sources a computation actually used are added when it could run (WS-19: the
+        lice-quota tracker is no longer an index source, so it is no longer allowed).
+        """
+        method = ix.methodology()["indices"]
         published_sources: set[str] = set()
-        for code in (ix.AI_STI, ix.AI_LPI):
+        for code in ix.PUBLISHED_INDICES:
+            published_sources.update(method[code]["sources"])
             result = __import__("asyncio").run(ix.compute(code))
             published_sources.update(result["sources"])
         assert published_sources, "indices must report their sources"
-        known = {s.upstream for s in dl.SOURCES} | {
-            "Fiskeridir biomass (SSB)",
-            "lice_quota_tracker (lice emission quota framework)",
-        }
+        known = {s.upstream for s in dl.SOURCES} | {"Fiskeridir biomass (SSB)"}
         assert published_sources <= known, published_sources - known
 
     def test_register_has_no_duplicate_keys_and_a_label(self):

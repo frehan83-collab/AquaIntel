@@ -79,7 +79,7 @@ async def gtm_kit():
             "icps": ["producer", "processor", "desk", "insurer"],
         },
         "live_proof_points": [
-            "/api/indices — published AI-STI / AI-LPI with method version and provenance",
+            "/api/indices — published AI-STI with method version and provenance (AI-LPI v1.0 withdrawn, reason served)",
             "/api/accuracy — artifact-backed metrics, or an explicit 'not yet published'",
             "/api/data-freshness — per-source freshness, including synthetic-data flags",
             "/api/billing/catalog — real plans and prices",

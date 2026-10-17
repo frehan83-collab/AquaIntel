@@ -72,7 +72,7 @@ async def run_agents() -> None:
     hedger = MarketHedgerAgent()
     self_evolve = SelfEvolvingAgent()
     intelligence = IntelligenceAgent()
-    publisher = IndexPublisherAgent()  # WS-2: weekly AI-STI / AI-LPI publication
+    publisher = IndexPublisherAgent()  # WS-2: weekly AI-STI publication (AI-LPI v1.0 withdrawn, WS-19)
 
     agents = [
         ingest, exposure, correlation, signal_gen,

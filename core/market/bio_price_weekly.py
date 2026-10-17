@@ -1,10 +1,11 @@
 """Bio→Price Weekly v1 — the flagship weekly digest.
 
-Composes the two named indices with the supply and price panels into one weekly,
-versioned report whose every number carries its source. The point of the product
-is the *link*: biomass and lice pressure are leading indicators for price, and the
-report states the direction it reads — while refusing to claim causality it cannot
-evidence.
+Composes the published index (AI-STI) with the supply and price panels into one
+weekly, versioned report whose every number carries its source. The point of the
+product is the *link*: biomass and harvest momentum are leading indicators for
+price, and the report states the direction it reads — while refusing to claim
+causality it cannot evidence. AI-LPI v1.0 is withdrawn (WS-19) and named in
+``withdrawn``; no lice input enters the read.
 
 Published once per ISO week by the ``index_publisher`` agent (build → readiness
 → store_digest) or by ``publish_week()`` behind the admin endpoint; readable at
@@ -35,8 +36,15 @@ async def _supply_panel() -> dict:
     """Standing biomass + harvest, with the momentum a trading desk reads."""
     source = "Fiskeridir biomass (SSB)"
     try:
+        from core.market.biomass_tracker import biomass_tracker
+
         biomass = await indices.national_totals("standing_biomass_tonnes")
         harvest = await indices.national_totals("harvest_tonnes")
+        # The tracker's OWN lineage decides the live claim (it filters synthetic
+        # records and falls back to a historical-pattern estimate) — the same rule
+        # the AI-STI momentum components follow.
+        lineage_live = bool(getattr(biomass_tracker, "last_is_live", False))
+        lineage_source = getattr(biomass_tracker, "last_source", None) or source
         latest, prior = _latest_and_prior(biomass)
         if latest == (0, 0):
             raise RuntimeError("no biomass periods")
@@ -53,8 +61,15 @@ async def _supply_panel() -> dict:
             "harvest_tonnes": round(harvest.get(latest, 0.0), 1),
             "biomass_change_pct": None if growth_pct is None else round(growth_pct, 2),
             "prior_period": f"{prior[0]}-{prior[1]:02d}" if prior else None,
-            "source": source,
-            "provenance": DataProvenance.live(source, 0.9).to_dict(),
+            "source": source if lineage_live else lineage_source,
+            "provenance": (
+                DataProvenance.live(source, 0.9)
+                if lineage_live
+                else DataProvenance.degraded(
+                    source,
+                    f"biomass panel used the fallback '{lineage_source}', not reported biomass",
+                )
+            ).to_dict(),
         }
     except Exception as exc:
         return {
@@ -112,8 +127,10 @@ async def build(as_of: dt.datetime | None = None) -> dict:
     from core.source_lineage import to_utc
 
     stamp = to_utc(as_of)  # one week label, in UTC, for the digest and the store
-    sti = await indices.compute(indices.AI_STI, as_of=stamp)
-    lpi = await indices.compute(indices.AI_LPI, as_of=stamp)
+    published = {
+        code: await indices.compute(code, as_of=stamp) for code in indices.PUBLISHED_INDICES
+    }
+    sti = published[indices.AI_STI]
     supply = await _supply_panel()
     price = await _price_panel()
 
@@ -126,8 +143,8 @@ async def build(as_of: dt.datetime | None = None) -> dict:
     elif tension >= 60:
         read = "elevated"
         headline = (
-            "Supply tension is elevated: biomass and lice pressure support a firmer "
-            "price path."
+            "Supply tension is elevated: biomass and harvest momentum point to tighter "
+            "supply, which supports a firmer price path."
         )
     elif tension >= 40:
         read = "balanced"
@@ -139,14 +156,18 @@ async def build(as_of: dt.datetime | None = None) -> dict:
         )
 
     caveats: list[str] = []
-    if sti["components_missing"]:
-        caveats.append("AI-STI missing: " + ", ".join(sti["components_missing"]))
-    if lpi["components_missing"]:
-        caveats.append("AI-LPI missing: " + ", ".join(lpi["components_missing"]))
+    for code, result in published.items():
+        if result["components_missing"]:
+            caveats.append(f"{code} missing: " + ", ".join(result["components_missing"]))
+        # a value computed from a fallback is degraded too, and the read rests on it
+        caveats.extend(f"{code}: {note}" for note in result.get("lineage_notes") or [])
     if price["spot_nok_per_kg"] is None:
         caveats.append("no live spot quote — price panel degraded")
-    if not supply["standing_biomass_tonnes"]:
-        caveats.append("biomass panel degraded")
+    if not supply["provenance"].get("is_live"):
+        caveats.append(
+            "biomass panel degraded: "
+            + str(supply["provenance"].get("fallback_reason") or "no reported biomass")
+        )
 
     provenance = (
         DataProvenance.degraded(
@@ -170,7 +191,10 @@ async def build(as_of: dt.datetime | None = None) -> dict:
                 "investment advice; see /api/indices/methodology."
             ),
         },
-        "indices": {indices.AI_STI: sti, indices.AI_LPI: lpi},
+        "indices": published,
+        "withdrawn": {
+            code: entry["reason"] for code, entry in indices.WITHDRAWN_INDICES.items()
+        },
         "supply": supply,
         "price": price,
         "caveats": caveats,
@@ -182,13 +206,15 @@ async def build(as_of: dt.datetime | None = None) -> dict:
 
 async def store_digest(digest: dict, codes: tuple[str, ...] | list[str] | None = None) -> dict[str, str]:
     """Store the index observations of a BUILT digest (idempotent per index +
-    week + method version), for ``codes`` (default: both). Returns
+    week + method version), for ``codes`` (default: the published set). Returns
     ``{index_code: "stored" | "duplicate"}`` and annotates each stored index
     result with its ``storage`` outcome. Callers gate on
     ``index_publication.readiness()`` first — the store itself refuses only a
     null value."""
+    from core.market import index_publication
+
     statuses: dict[str, str] = {}
-    targets = (indices.AI_STI, indices.AI_LPI) if codes is None else tuple(codes)
+    targets = tuple(index_publication.INDEX_CODES) if codes is None else tuple(codes)
     for code in targets:
         storage = await indices.save_observation(digest["indices"][code])
         digest["indices"][code]["storage"] = storage

@@ -121,10 +121,10 @@ test runs with `Start-Process ... -RedirectStandardOutput` and poll the file.
 | `core/ml/` | Foundation-model wrappers (chronos, timesfm, moirai) |
 | `core/auth.py` | JWT, 4-tier access, `require_admin`, `is_admin` |
 | `core/entitlements.py` | **Single source of truth for plans/prices/quotas and the paywall boundary** (see `docs/ENTITLEMENTS.md`); `core/auth.TIERS` and `core/valuechain/subscription.TIERS` are projections of it |
-| `core/models.py` | SQLAlchemy models (31 tables, 19 Alembic migrations) |
+| `core/models.py` | SQLAlchemy models (31 tables, 20 Alembic migrations) |
 | `core/source_lineage.py` | **One definition of what a `lice_records.source` value means** (`barentswatch` / `demo_seed` / `unverified`), the synthetic markers, and the lineage-summary rule; the indices, quota tracker, freshness monitor and production-truth verifier project it |
 | `core/async_db.py` | `get_async_session()` — **never** sync `Session` in async code |
-| `agents/`, `main.py` | 13 background agents (asyncio; daemon-thread mode for dev only); `index_publisher` publishes AI-STI / AI-LPI once per ISO week (WS-2) |
+| `agents/`, `main.py` | 13 background agents (asyncio; daemon-thread mode for dev only); `index_publisher` publishes the published indices (AI-STI; AI-LPI v1.0 withdrawn by WS-19) once per ISO week (WS-2) |
 | `frontend/src/app/` | Next.js App Router pages (`"use client"`) |
 | `frontend/src/lib/api.ts` | Typed API client — every new endpoint gets a method here |
 | `tests/` | pytest (762 tests); add tests for every bugfix/feature |
