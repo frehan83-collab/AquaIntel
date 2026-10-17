@@ -55,6 +55,10 @@ class DecisionCardResponse(BaseModel):
     lice_current: Optional[float] = None
     lice_trend: Optional[str] = None
     lice_predicted_next_week: Optional[float] = None
+    # WS-22: age of the count the card was built on, and whether it was too old to
+    # act on (the action is then MONITOR with urgency "data_stale").
+    lice_data_age_days: Optional[int] = None
+    data_stale: Optional[bool] = None
     sea_temp_c: Optional[float] = None
     cost_of_treatment_nok: Optional[float] = None
     cost_of_inaction_nok: Optional[float] = None

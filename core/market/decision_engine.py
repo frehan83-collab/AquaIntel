@@ -21,7 +21,17 @@ from sqlalchemy import select, desc
 from core.models import LiceRecord, Locality, CompanyExposure
 from core.async_db import get_async_session
 from core.regulatory_facts import LiceLimit, breaches_limit, lice_limit as _lice_limit
-from core.source_lineage import merge_lineages, provenance_for, summarise_rows
+from core.source_lineage import (
+    merge_lineages,
+    observation_time,
+    provenance_for,
+    summarise_rows,
+)
+
+# WS-22: a card is only issued on a lice count somebody still refreshes. BarentsWatch
+# reports weekly, so a count older than two reporting periods cannot describe the
+# farm's lice level today; the card then issues no treatment action and says why.
+STALE_LICE_MAX_DAYS = 14
 
 
 def _now() -> dt.datetime:
@@ -147,6 +157,31 @@ class DecisionEngine:
             action, urgency, reasoning = self._compute_action(
                 current_lice, trend, sea_temp, gnn_prediction, limit=limit
             )
+            # WS-22: never recommend a treatment on a count nobody has refreshed.
+            # The level may have been treated, fallen or risen many times since.
+            lice_observed = self._lice_observation_time(lice_data)
+            lice_age_days = (
+                None if lice_observed is None
+                else max(0, (_now() - lice_observed).days)
+            )
+            data_stale = lice_age_days is None or lice_age_days > STALE_LICE_MAX_DAYS
+            if data_stale:
+                action, urgency = "MONITOR", "data_stale"
+                if lice_age_days is None:
+                    reasoning.append(
+                        "No lice observation week is recorded for this farm, so no "
+                        "treatment decision is issued — refresh the lice ingest and re-check."
+                    )
+                else:
+                    reasoning.append(
+                        f"The newest lice count is {lice_age_days} days old "
+                        f"({count_year}-W{count_week:02d}); no treatment decision is issued "
+                        f"on lice older than {STALE_LICE_MAX_DAYS} days — refresh the ingest "
+                        "and re-check."
+                    )
+                reasoning.append(
+                    "The next-week lice prediction is withheld until the ingest is refreshed."
+                )
             if count_breach and not breaches_limit(current_lice, limit.limit):
                 reasoning.append(
                     f"The {count_year}-W{count_week:02d} count {current_lice:.2f} breached that "
@@ -199,8 +234,13 @@ class DecisionEngine:
                 "lice_current": round(current_lice, 3),
                 "lice_trend": trend,
                 "lice_predicted_next_week": (
-                    round(gnn_prediction, 3) if gnn_prediction is not None else None
+                    None if data_stale
+                    else round(gnn_prediction, 3) if gnn_prediction is not None else None
                 ),
+                # WS-22: the age of the count this card is based on, and whether it
+                # was too old to act on (the action is then MONITOR / data_stale).
+                "lice_data_age_days": lice_age_days,
+                "data_stale": data_stale,
                 "sea_temp_c": round(sea_temp, 1) if sea_temp else None,
                 "regulatory_limit": limit_info,
                 "cost_of_treatment_nok": round(cost_treat),
@@ -372,6 +412,24 @@ class DecisionEngine:
         except Exception:
             pass
         return (None, None, None)
+
+    @staticmethod
+    def _lice_observation_time(lice_data: dict) -> Optional[dt.datetime]:
+        """When the newest lice count on the card was observed (ISO week's Monday).
+
+        The lineage carries the newest week when the engine recorded one; the card's
+        own ``current_year``/``current_week`` is the fallback, so a fake or legacy
+        payload still dates itself. ``None`` means the count cannot be dated at all.
+        """
+        observed = observation_time(lice_data.get("lineage"))
+        if observed is not None:
+            return observed
+        year, week = lice_data.get("current_year"), lice_data.get("current_week")
+        try:
+            monday = dt.date.fromisocalendar(int(year), int(week), 1)
+        except (TypeError, ValueError):
+            return None
+        return dt.datetime.combine(monday, dt.time.min, tzinfo=dt.UTC)
 
     async def _get_lice_data(self, locality_no: int) -> Optional[dict]:
         """Fetch recent lice records from DB, with the lineage of those rows."""

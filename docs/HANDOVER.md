@@ -118,15 +118,17 @@ Each item is self-contained: goal → files → steps → **acceptance criteria 
 test** → traps.
 
 **Where things stand (2026-10-17, origin/master `25f9616`):**
-- **Done:** WS-1, WS-2, WS-11, WS-19, WS-21. WS-21's entry lists its follow-ups.
+- **Done:** WS-1, WS-2, WS-11, WS-19, WS-21, WS-14 and WS-22's stale-decision-card
+  rule. WS-21's entry lists its follow-ups.
 - **Partly done:** WS-20 (left: one product name and the Desk/Operator price
-  inversion, both owner decisions, plus the OpenAPI `info.description`) and WS-23
-  (takedown done; the re-run half is open).
+  inversion, both owner decisions, plus the OpenAPI `info.description`), WS-22
+  (the decision-card rule shipped; the volume, smolt-pipeline, disease-order,
+  brief, competitiveness, model-availability and ROI-default items are open) and
+  WS-23 (takedown done; the re-run half is open).
 - **Waiting on the owner:** the WS-26 page-cut list, WS-27 layer 2, the WS-20
   decisions above, and the legal opinion that most of WS-28 waits on.
-- **Next without an owner decision:** WS-14 together with WS-22's stale-decision-card
-  rule, then the rest of WS-22, WS-23's re-run half, WS-16, WS-24 and WS-25, in the
-  order below.
+- **Next without an owner decision:** the rest of WS-22, WS-23's re-run half, WS-16,
+  WS-24 and WS-25, in the order below.
 
 **Priority changed 2026-10-17 by [`docs/VALUE_ANALYSIS.md`](VALUE_ANALYSIS.md).** The
 value analysis found buyer-visible defects that outrank the infrastructure items.
@@ -603,7 +605,18 @@ lakselusforskriften § 8) in both the decision engine and the reporter; the July
 tariffs (Norway 12.5%, Chile 12.5%, UK 10%; Faroes and Iceland outside the new
 measure; Canada USMCA-exempt), each payload citing its `source_url`.
 
-### WS-22 · Numbers buyers check
+### WS-22 · Numbers buyers check — **STALE-DECISION RULE DONE 2026-10-17**
+**Stale-decision rule shipped:** `core/market/decision_engine.py` dates the newest
+count on the card (`_lice_observation_time` — the card's lineage via
+`observation_time`, else its `current_year`/`current_week`) and refuses to
+recommend a treatment when that count is older than `STALE_LICE_MAX_DAYS = 14`
+(two BarentsWatch reporting periods): `action: "MONITOR"`, `urgency: "data_stale"`,
+the age/week/rule in `reasoning`, `lice_predicted_next_week` withheld (same stale
+rows), `data_stale` + `lice_data_age_days` on the payload, and zero costs (MONITOR
+already zeroes ROI). An undatable count is stale, never fresh. Cards no longer act
+on months-old rows; the treatment portfolio's `total_treatment_cost_nok` therefore
+stops counting farms nobody refreshes. `tests/test_decision_stale_data.py` (5).
+Remaining WS-22 items below are open.
 **Why:** Mowi shows 113,600 t because volume = localities x 800
 (`core/market/top50_engine.py:249-250`; Mowi harvested about 332 kt in Norway in
 2025). The supply balance's smolt pipeline is about 5.6x too low (140,450 t against

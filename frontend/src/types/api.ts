@@ -60,14 +60,21 @@ export interface LiceSummary {
 export interface DecisionCard {
   locality_no: number;
   action: "TREAT_NOW" | "SCHEDULE_TREATMENT" | "MONITOR" | "NO_ACTION";
-  urgency: "critical" | "high" | "medium" | "low";
+  /** Engine values; "data_stale" (WS-22) means the newest lice count is older
+   *  than 14 days, so no treatment is advised. */
+  urgency: "immediate" | "this_week" | "next_2_weeks" | "data_stale" | (string & {});
   recommended_method: string;
   success_probability: number;
   roi_estimate: number;
   reasoning: string[];
   lice_current: number;
   lice_trend: "increasing" | "stable" | "decreasing";
-  lice_predicted_next_week: number;
+  /** null when withheld: no prediction, or the inputs were stale (WS-22). */
+  lice_predicted_next_week: number | null;
+  /** WS-22: age of the count the card was built on; null when it cannot be dated. */
+  lice_data_age_days?: number | null;
+  /** WS-22: true when the count was too old to act on (action is then MONITOR). */
+  data_stale?: boolean;
   sea_temp_c: number;
   cost_of_treatment_nok: number;
   cost_of_inaction_nok: number;

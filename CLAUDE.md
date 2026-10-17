@@ -6,6 +6,25 @@
 ## What This Is
 Full-stack salmon aquaculture intelligence platform. ~300 API routes + 2 WebSockets, 24 router modules (incl. admin_routes, webhook_routes, apikey_routes; misc_routes 486 lines, 0 duplicates). 61 market engines (4 frozen, 1 offshore) + 3 ML engines (TimesFM 2.5, Chronos-2, Harvest Optimizer), 13 agents (incl. index_publisher). 59+ frontend pages, 38+ components (incl. RegionalHeatmap, useWebSocket, SupplyChainSankey, RadarChart, useTheme, ShortcutsHelp, KeyboardShortcuts). Dark/light theme toggle. Notification center with history. Webhook alerts (Slack/Teams/generic, auto-disable on failure). Farm Portfolio (multi-farm risk overview). API key management (bcrypt-hashed, rate limiting, rotation). API caching (ETag + 5-tier Cache-Control). Treatment cost comparison (7 methods). Company comparison (radar chart + metrics). Sidebar fuzzy search (Cmd+K). Keyboard shortcuts (vim-style navigation, Cmd+/, help modal). Custom alert rules (user-defined thresholds, live evaluation). Changelog page (release notes, What's New indicator). Batch data export (CSV/JSON admin compliance). i18n (NO/EN, 525 keys, all 59 pages wired, locale-aware formatting). Audit logging (admin trail with filters). Bookmarkable filters (URL-synced state). Dashboard customization (user-configurable widgets). Fully async DB (67+ refs, tuned pool). Gunicorn 4-worker production server. Production nginx (gzip, proxy cache, rate limiting, connection limits). Literature-cited treatment constants (Overton 2019, Mowi Handbook 2024). Stige lice model in treatment optimizer. Farm name search + "My Farms" saved list. Dashboard hero alert zone. InteractiveChart (crosshair hover, deployed on 7 pages) + ConfidenceBand + supply pipeline stacked bars. Disease PA grid overview. Market narrative banner. Brief dynamic section sorting + PDF export. Treatment history timeline. Bio Risk Map time slider (WIRED to backend, 8-week snapshots). 20 Alembic migrations, 31 DB tables (offshore columns, lice lineage, index supersession), 22 Pydantic schemas. 33 TypeScript API interfaces. OpenAPI v2.1.0 (/api/docs). Threshold alerts (WebSocket + TopBar + notification preferences). Error boundaries on 19 pages + 5 loading.tsx + 404. CI/CD 3 workflows + dependency scanning. Security headers. Mobile hamburger sidebar. PWA + offline. Demo mode + guided onboarding (80 seed treatment outcomes). GDPR privacy policy + data attribution footer. Data Honesty Layer (100+ provenance). YoY trends (6 pages). Decision Engine + MET.no with feedback loop (marketplace-learned profiles). Treatment Efficacy Marketplace (production: validated input, seed data, Pydantic schemas, learned profiles). Unified Scenario Sandbox. API Developer Portal. Multi-country (7). WebSocket Command Centre (real-time streaming + polling fallback). Excel export (SheetJS dynamic import .xlsx from DataTable). Regional Heatmap (PA-level disease/lice SVG). Satellite intelligence (SST, chlorophyll, farm clusters). Supply Chain Sankey (SVG flow diagram on Global Supply). Admin dashboard (data quality + platform health). WCAG accessibility (ARIA labels, skip-to-content, keyboard nav). Dynamic imports with loading placeholders. JWT bcrypt + rate limiting. Stripe. PostgreSQL/TimescaleDB. 418 tests (31 Hypothesis property-based). DataTable with pagination + Excel export. In-memory cache with @cached. Prometheus metrics. CONTRIBUTING.md + PROJECT_STATUS.md + DEPLOYMENT.md + .env.example. 5-agent deep research synthesis (30+ sources, docs/RESEARCH_SYNTHESIS.md). Python/FastAPI + Next.js/React/TypeScript. Zero pandas deprecation warnings.
 
+## Session Log — 2026-10-17 (WS-22: no treatment advice on stale lice data)
+
+- **CHANGED** `core/market/decision_engine.py` — a card is only issued on a count
+  somebody still refreshes. `_lice_observation_time()` dates the newest count from
+  the card's own lineage (`observation_time`) and falls back to the card's
+  `current_year`/`current_week`; a count older than `STALE_LICE_MAX_DAYS = 14`
+  (two BarentsWatch reporting periods) now returns `action: "MONITOR"`,
+  `urgency: "data_stale"` with the age, the week and the rule in `reasoning`
+  instead of a TREAT/SCHEDULE recommendation, and `lice_predicted_next_week` is
+  withheld because the same stale rows fed it. A count that cannot be dated at all
+  is treated as stale (never as fresh).
+- **NEW** `data_stale` (bool) and `lice_data_age_days` (int | null) on the card.
+  Costs/ROI are 0 on a stale card (`_compute_roi` returns zeros for MONITOR), and
+  `/api/decision/*` passes the fields through (no `response_model` to strip them).
+- Tests: `tests/test_decision_stale_data.py` (5) — fresh and exactly-14-days-old
+  counts still act, 201 days old does not, undatable does not, and the stale rule
+  composes with the WS-14 provenance rule. Frontend unchanged: `MONITOR` and the
+  `data_stale` urgency label were already rendered by `farmer-daily`.
+
 ## Session Log — 2026-10-17 (WS-14: lice lineage on every consumer)
 
 - **CHANGED** `core/source_lineage.py` — the shared entry points (`summarise_rows`,
