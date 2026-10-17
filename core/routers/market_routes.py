@@ -166,7 +166,7 @@ async def export_data():
 @router.get("/price-outlook", response_model=PriceOutlookResponse)
 async def price_outlook(horizon: int = 4, scenarios: int = 1000):
     """
-    ML ensemble price prediction with conformal uncertainty bands.
+    ML ensemble price prediction with uncertainty bands.
     Replaces the basic price-forecast for advanced consumers.
     """
     import structlog
@@ -288,31 +288,48 @@ async def price_outlook(horizon: int = 4, scenarios: int = 1000):
         }
 
     # --- Phase 4: Store prediction (non-critical) ---
+    # WS-23: at most one stored prediction per ISO week and horizon — a GET used to
+    # write a row (with a copy of the withdrawn backtest figure) on every request.
     try:
+        now = dt.datetime.now(dt.UTC)
+        iso = now.isocalendar()
+        week_start = dt.datetime.combine(
+            dt.date.fromisocalendar(iso[0], iso[1], 1), dt.time(), tzinfo=dt.UTC
+        )
         async with get_async_session() as s:
-            s.add(PricePrediction(
-                horizon_weeks=fc.horizon_weeks,
-                current_spot_nok=fc.current_spot_nok,
-                predicted_nok=fc.predicted_nok,
-                direction=fc.direction,
-                confidence=fc.confidence,
-                price_lo95=fc.price_lo95,
-                price_hi95=fc.price_hi95,
-                price_lo80=fc.price_lo80,
-                price_hi80=fc.price_hi80,
-                price_lo50=fc.price_lo50,
-                price_hi50=fc.price_hi50,
-                lice_signal=fc.lice_signal,
-                supply_signal=fc.supply_signal,
-                seasonal_signal=fc.seasonal_signal,
-                export_signal=fc.export_signal,
-                futures_signal=fc.futures_signal,
-                combined_signal=fc.combined_signal,
-                model_version=fc.model_version,
-                n_scenarios=fc.n_scenarios,
-                mape_backtest=fc.mape_backtest,
-                rationale=fc.rationale,
-            ))
+            stored_this_week = (await s.execute(
+                select(PricePrediction.id)
+                .where(
+                    PricePrediction.horizon_weeks == fc.horizon_weeks,
+                    PricePrediction.created_at >= week_start,
+                )
+                .limit(1)
+            )).first()
+            # a fallback spot (75.0) is not a forecast worth logging for the week
+            if stored_this_week is None and _ssb_live:
+                s.add(PricePrediction(
+                    horizon_weeks=fc.horizon_weeks,
+                    current_spot_nok=fc.current_spot_nok,
+                    predicted_nok=fc.predicted_nok,
+                    direction=fc.direction,
+                    confidence=fc.confidence,
+                    price_lo95=fc.price_lo95,
+                    price_hi95=fc.price_hi95,
+                    price_lo80=fc.price_lo80,
+                    price_hi80=fc.price_hi80,
+                    price_lo50=fc.price_lo50,
+                    price_hi50=fc.price_hi50,
+                    lice_signal=fc.lice_signal,
+                    supply_signal=fc.supply_signal,
+                    seasonal_signal=fc.seasonal_signal,
+                    export_signal=fc.export_signal,
+                    futures_signal=fc.futures_signal,
+                    combined_signal=fc.combined_signal,
+                    model_version=fc.model_version,
+                    n_scenarios=fc.n_scenarios,
+                    mape_backtest=fc.mape_backtest,
+                    rationale=fc.rationale,
+                ))
             await s.commit()
     except Exception as exc:
         log.warning("price_outlook_db_store_failed", error=str(exc))
@@ -554,7 +571,9 @@ async def prediction_history(horizon: int = 4, days: int = 30):
             "current_spot_nok": p.current_spot_nok,
             "direction": p.direction,
             "combined_signal": p.combined_signal,
-            "mape_backtest": p.mape_backtest,
+            # WS-23: rows written before 2026-10-17 copied the withdrawn backtest
+            # figure; an accuracy figure is served only from /api/accuracy.
+            "mape_backtest": None,
             "model_version": p.model_version,
         }
         for p in preds

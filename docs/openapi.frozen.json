@@ -8330,7 +8330,7 @@
     },
     "/api/market/price-outlook": {
       "get": {
-        "description": "ML ensemble price prediction with conformal uncertainty bands.\nReplaces the basic price-forecast for advanced consumers.",
+        "description": "ML ensemble price prediction with uncertainty bands.\nReplaces the basic price-forecast for advanced consumers.",
         "operationId": "price_outlook_api_market_price_outlook_get",
         "parameters": [
           {
@@ -8958,7 +8958,7 @@
     },
     "/api/ml/moirai/model-comparison": {
       "get": {
-        "description": "Compare MOIRAI-2 vs Chronos-2 vs TimesFM 2.5 vs TFT vs seasonal naive.\n\nHighlights MOIRAI-2's latency advantage (30M params, 2x faster).\nUses holdout window evaluation with MAPE, RMSE, and 80% interval\ncoverage metrics.",
+        "description": "Compare MOIRAI-2 vs Chronos-2 vs TimesFM 2.5 vs TFT vs seasonal naive.\n\nHighlights MOIRAI-2's latency advantage (30M params, 2x faster).\nShows each model's forecast over a holdout window; accuracy metrics are\nwithheld (published only through /api/accuracy).",
         "operationId": "moirai_model_comparison_api_ml_moirai_model_comparison_get",
         "parameters": [
           {
@@ -9165,7 +9165,7 @@
     },
     "/api/ml/timesfm/model-comparison": {
       "get": {
-        "description": "Compare TimesFM 2.5 vs Chronos-2 vs TFT vs seasonal naive.\n\nUses holdout window evaluation with MAPE, RMSE, and 80% interval\ncoverage metrics.",
+        "description": "Compare TimesFM 2.5 vs Chronos-2 vs TFT vs seasonal naive.\n\nShows each model's forecast over a holdout window; accuracy metrics are\nwithheld (published only through /api/accuracy).",
         "operationId": "timesfm_model_comparison_api_ml_timesfm_model_comparison_get",
         "parameters": [
           {
@@ -11621,7 +11621,7 @@
     },
     "/api/supply/demand-balance": {
       "get": {
-        "description": "Integrated supply-demand balance + 2-20 week price path (R7).\n\nLegacy fields (horizon_months, total_supply_tonnes, total_demand_tonnes,\nbalance_tonnes, balance_pct, signal, price_pressure) are unchanged;\neverything new is additive (contract: additive-v1):\n  balance_label, integration, supply_breakdown, demand_breakdown,\n  price_forecast (incl. empirical p10-p90 bands + validated backtest).",
+        "description": "Integrated supply-demand balance + 2-20 week price path (R7).\n\nLegacy fields (horizon_months, total_supply_tonnes, total_demand_tonnes,\nbalance_tonnes, balance_pct, signal, price_pressure) are unchanged;\neverything new is additive (contract: additive-v1):\n  balance_label, integration, supply_breakdown, demand_breakdown,\n  price_forecast (incl. empirical p10-p90 bands; a backtest is served only\n  once it is published in the accuracy registry).",
         "operationId": "supply_demand_balance_api_supply_demand_balance_get",
         "responses": {
           "200": {

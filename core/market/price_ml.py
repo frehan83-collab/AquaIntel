@@ -55,7 +55,7 @@ class EnsemblePriceForecast:
     direction: str = "neutral"
     confidence: float = 0.0
 
-    # Conformal prediction bands (calibrated coverage)
+    # Prediction bands (nominal levels; measured coverage only via /api/accuracy)
     price_lo95: float = 0.0
     price_hi95: float = 0.0
     price_lo80: float = 0.0
@@ -74,11 +74,11 @@ class EnsemblePriceForecast:
     # Model metadata
     model_version: str = "ensemble_v1"
     n_scenarios: int = 0
-    # Measured MAPE ONLY when a validated backtest artifact matched this
-    # model_version; None means "no validated backtest on record".
+    # WS-23: an accuracy figure is served only from the accuracy registry
+    # (/api/accuracy). No registered artifact covers this ensemble yet, so these
+    # stay None; the legacy data/models/price_backtest.json is never read for
+    # display (its run mixed demo rows into the price history).
     mape_backtest: Optional[float] = None
-    # Empirical band calibration from the validated backtest — the "trust"
-    # field (QUANT #2): per-horizon measured coverage_80 + sample size.
     band_trust: Optional[dict] = None
     rationale: str = ""
 
@@ -118,13 +118,15 @@ LICE_PRICE_ELASTICITY = {
     14: 0.5, 16: 0.3, 18: 0.2, 20: 0.1,
 }
 
-# ── Backtest artifact (optional) ──────────────────────────────────────────────
+# ── Backtest artifact (legacy, not served) ────────────────────────────────────
 # HORIZON_MAPE below is a REFERENCE table from an offline rule-tier analysis —
 # it is NOT a validated backtest of the model that runs in production, so it
-# must never be surfaced to users as "Backtested MAPE". Accuracy claims are
-# only allowed when a real artifact written by scripts/backtest_price_ml.py
-# exists (data/models/price_backtest.json) and matches the running
-# model_version.
+# must never be surfaced to users as "Backtested MAPE". WS-23: accuracy claims
+# come only from the accuracy registry (core/ml/accuracy_registry.py,
+# /api/accuracy). BACKTEST_ARTIFACT is what scripts/backtest_price_ml.py writes;
+# its 2026-10-12 run let the 52 demo_seed SSB rows override the real history, so
+# nothing reads it for display, and its conformal residuals load only from an
+# artifact that declares ``demo_rows_used == 0``.
 REFERENCE_HORIZON_MAPE = {
     2: 3.8, 4: 5.2, 6: 7.1, 8: 9.4, 10: 11.6,
     12: 13.5, 14: 15.2, 16: 16.8, 18: 18.1, 20: 19.3,
@@ -195,7 +197,17 @@ class PriceEnsemble:
         try:
             if residuals_path.exists():
                 data = json.loads(residuals_path.read_text())
-                if isinstance(data, dict) and "horizon_residuals" in data:
+                demo_rows = data.get("demo_rows_used") if isinstance(data, dict) else None
+                if isinstance(data, dict) and not (type(demo_rows) is int and demo_rows == 0):
+                    # WS-23: a calibration must declare it used no demo rows; the
+                    # 2026-10-12 run did not (it mixed 52 demo_seed SSB rows into
+                    # the history), so its residuals never set a band.
+                    log.warning(
+                        "price_ml.conformal_lineage_unproven",
+                        model_version=data.get("model_version"),
+                        generated_at=data.get("generated_at"),
+                    )
+                elif isinstance(data, dict) and "horizon_residuals" in data:
                     # Structured calibration (scripts/backtest_price_ml.py):
                     # per-horizon residuals, horizon-specific quantiles (MSCP).
                     if data.get("model_version") == self._model_version:
@@ -237,39 +249,6 @@ class PriceEnsemble:
                     log.warning("price_ml.conformal_legacy_format_refused")
         except Exception:
             pass
-
-    def _load_backtest(self) -> dict | None:
-        """Load the validated backtest artifact, if present and well-formed.
-
-        The artifact must be produced by scripts/backtest_price_ml.py for the
-        exact model_version being served. Absence (or malformed structure)
-        means: no accuracy claim may be made (see honesty contract in
-        forecast()). A malformed artifact must never fabricate "0.0% MAPE"
-        or crash the forecast path.
-        """
-        try:
-            if not BACKTEST_ARTIFACT.exists():
-                return None
-            data = json.loads(BACKTEST_ARTIFACT.read_text())
-        except Exception as e:
-            log.warning("price_ml.backtest_artifact_unreadable", error=str(e)[:100])
-            return None
-
-        # Structural validation: non-empty mape map, int-coercible horizon
-        # keys, numeric values. Anything else = no artifact.
-        if not isinstance(data, dict):
-            return None
-        mape_map = data.get("mape")
-        if not isinstance(mape_map, dict) or not mape_map:
-            log.warning("price_ml.backtest_artifact_invalid", reason="mape missing or empty")
-            return None
-        try:
-            validated = {int(k): float(v) for k, v in mape_map.items()}
-        except (TypeError, ValueError):
-            log.warning("price_ml.backtest_artifact_invalid", reason="non-numeric mape entries")
-            return None
-        data["mape"] = {str(k): v for k, v in validated.items()}
-        return data
 
     def _build_features(
         self,
@@ -444,49 +423,40 @@ class PriceEnsemble:
         )
 
         # ── Accuracy statement (honesty contract) ────────────────
-        # Only claim measured accuracy when a real backtest artifact exists
-        # AND it was produced for this exact model version. Otherwise state
-        # plainly that no validated backtest is on record — never fabricate
-        # MAPE or coverage numbers.
-        expected_version = (
-            f"ensemble_v2_{model_tag}" if model_tag == "tft"
-            else f"ensemble_v1_{model_tag}"
-        )
-        backtest = self._load_backtest()
+        # WS-23: no accuracy figure is served unless the accuracy registry holds
+        # an artifact for this model — none does yet, so the statement says so
+        # and never prints a MAPE or coverage number.
         mape_value: float | None = None
         band_trust: Optional[dict] = None
-
-        if backtest and backtest.get("model_version") == expected_version:
-            mape_map = backtest.get("mape", {})
-            nearest = min(mape_map.keys(), key=lambda k: abs(int(k) - horizon_weeks))
-            mape_value = float(mape_map[nearest])
-            coverage = backtest.get("coverage_80")
-            # Trust: empirical calibration of the uncertainty bands, per horizon
-            per_h = backtest.get("per_horizon", {})
-            if nearest in per_h:
-                band_trust = {
-                    "horizon_weeks": int(nearest),
-                    "measured_coverage_80": per_h[nearest].get("coverage_80"),
-                    "n_eval_points": per_h[nearest].get("n"),
-                    "backtest_run": backtest.get("generated_at"),
-                }
-            accuracy_stmt = (
-                f"Backtested {horizon_weeks}-week MAPE: {mape_value:.1f}% "
-                f"on {backtest.get('window', 'held-out data')} "
-                f"(run {backtest.get('generated_at', 'unknown date')}, {model_tag} model)."
+        if model_tag == "tft":
+            bands_note = (
+                "uncertainty bands are the TFT model's own quantiles; their coverage "
+                "has not been measured on real rows."
             )
-            if coverage is not None:
-                accuracy_stmt += f" {float(coverage):.0f}% of actual prices fell within the indicated band."
-        elif model_tag == "rule":
+        elif self._conformal_residuals_by_h:
+            bands_note = (
+                "uncertainty bands use backtest residuals declared free of demo rows; "
+                "their measured coverage is published only through the registry."
+            )
+        elif len(self._conformal_residuals) > 30:
+            bands_note = (
+                "uncertainty bands use residuals from the last retrain, whose data "
+                "lineage is not verified; their coverage is not published."
+            )
+        else:
+            bands_note = "uncertainty bands are heuristically widened, not calibrated."
+        if model_tag == "rule":
             accuracy_stmt = (
                 "Rule-based forecast (TFT and XGBoost models unavailable in this "
-                "deployment) — no validated backtest on record for this tier; "
-                "uncertainty bands are heuristically widened, not calibrated."
+                "deployment). No accuracy figure is shown here: validated accuracy "
+                "figures are published only in the accuracy registry (/api/accuracy); "
+                + bands_note
             )
         else:
             accuracy_stmt = (
-                f"{model_tag} model active, but no validated backtest artifact is "
-                "on record for this model version — treat accuracy as unverified."
+                f"{model_tag} model active. No accuracy figure is shown here and its "
+                "accuracy is unverified: validated accuracy figures are published only "
+                "in the accuracy registry (/api/accuracy); " + bands_note
             )
 
         model_quality = "rule_based_fallback" if model_tag == "rule" else "ml_model"

@@ -5,6 +5,53 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
+### WS-23 (takedown) — no accuracy figure outside the registry (2026-10-17)
+- **Why:** the price outlook printed "Backtested 4-week MAPE: 8.5% … 68% of actual
+  prices fell within the indicated band" and a `band_trust` coverage from
+  `data/models/price_backtest.json`, whose 2026-10-12 run let the 52 `demo_seed`
+  SSB rows override the real history; the conformal residuals that calibrated the
+  rule tier's bands came from the same run; the figure was copied into
+  `price_predictions` on every GET (888 rows on the dev box, 879 with a copied
+  MAPE) and re-served by `/api/market/prediction-history`. The model comparisons
+  and the supply-demand engine printed their own MAPE/coverage outside the
+  registry too.
+- **`core/market/price_ml.py`:** the legacy artifact is never read for display
+  (`_load_backtest` removed); `mape_backtest` / `band_trust` are null; the accuracy
+  statement says no backtest of the running tier is in the registry and points at
+  `/api/accuracy`; conformal residuals load only from an artifact that declares
+  `demo_rows_used: 0`, so the rule tier's bands are honestly "not calibrated".
+- **Routes:** `/api/market/price-outlook` stores at most one prediction per ISO week
+  and horizon; `/api/market/prediction-history` serves `mape_backtest: null`; the
+  three `/api/ml/*/model-comparison` routes withhold `mape`/`rmse`/`coverage_80`
+  with a `metrics_withheld` block (new
+  `accuracy_registry.withhold_unregistered_metrics`) — they scored a 4-point
+  holdout on the DB's (demo) SSB rows; the supply-demand price path drops its
+  "measured out-of-sample coverage ~80%" and serves its walk-forward artifact only
+  when registered (`served_backtest()`). The ML Baselines page shows why metrics
+  are withheld; the supply backtest text points at the registry.
+- **Review fixes:** the TFT tier's statement says its bands are the model's own
+  quantiles; the outlook stores no prediction on a fallback (75.0) spot;
+  `price_predictions` freshness cadence is now 168 h; the lineage gate accepts only
+  an integer 0; the price-outlook page says "nominal" intervals and its "Prediction
+  Track Record" (which showed the forecast move as an error %, colour-coded like
+  accuracy) is now a "Prediction Log" of forecast moves; `TestPriceOutlook` uses a
+  throwaway store; AGENTS.md rule 1, the API-docs copy and the comparison type
+  follow.
+- **OpenAPI re-freeze (deliberate):** the TimesFM and MOIRAI comparison
+  descriptions promised MAPE/RMSE/coverage, the outlook promised "conformal" bands
+  and the demand-balance route a "validated backtest"; the frozen diff is exactly
+  those four descriptions (payload shapes changed: metrics removed,
+  `metrics_withheld` added). `frontend/src/types/generated.ts` was not regenerated
+  (no openapi-typescript installed here; it already lagged).
+- **Tests:** `tests/test_accuracy_claims.py` (12) plants artifacts shaped
+  like the contaminated ones and binds the routes to a throwaway DB; 9 of the 10
+  initial tests failed on the old code (the chat case is a guard: that branch
+  imports a module that does not exist). Added to the fast gate.
+- **Not done (the re-run half, still WS-23):** fix the loader, re-run on real SSB
+  prices, publish the served model's backtest next to carry-forward with a
+  Diebold-Mariano test, re-derive the residuals with `demo_rows_used: 0`, start the
+  weekly forecast log. Until then no price-model accuracy figure is shown.
+
 ### WS-20 — SHORT equity signals taken down (2026-10-17)
 - **Why:** anonymous `GET /api/signals` served the signal generator's directional
   calls on listed salmon shares — on the dev box 1,238 rows, every one SHORT, on

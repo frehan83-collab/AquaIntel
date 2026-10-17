@@ -465,7 +465,7 @@ const translations: Record<string, Record<Locale, string>> = {
   "supply.spot_vs_seasonal": { en: "Spot vs seasonal", no: "Spot vs. sesong" },
   "supply.forecast_band": { en: "Empirical band", no: "Empirisk bånd" },
   "supply.backtest": { en: "Walk-forward backtest", no: "Walk-forward-backtest" },
-  "supply.backtest_missing": { en: "Backtest artifact not generated in this environment (run scripts/backtest_supply_demand.py)", no: "Backtest-artefakt ikke generert i dette miljøet (kjør scripts/backtest_supply_demand.py)" },
+  "supply.backtest_missing": { en: "No backtest in the accuracy registry yet — accuracy figures are published only through /api/accuracy", no: "Ingen backtest i nøyaktighetsregisteret ennå — nøyaktighetstall publiseres bare via /api/accuracy" },
   "supply.bands_fallback": { en: "Bands: in-sample history (too short for walk-forward calibration)", no: "Bånd: in-sample-historikk (for kort for walk-forward-kalibrering)" },
   "supply.smolt_model_tag": { en: "smolt pipeline model", no: "smolt-pipelinemodell" },
 

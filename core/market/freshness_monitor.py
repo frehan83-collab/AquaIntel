@@ -136,8 +136,9 @@ SOURCES: tuple[SourceSpec, ...] = (
         label="Price predictions",
         table="price_predictions",
         upstream="core.market.price_ml ensemble",
-        expected_cadence_hours=24,
-        refresh_hint="python scripts/backtest_price_ml.py, then the price agent",
+        # WS-23: the outlook stores at most one prediction per ISO week and horizon
+        expected_cadence_hours=168,
+        refresh_hint="GET /api/market/price-outlook stores one prediction per ISO week and horizon (live spot only)",
     ),
     SourceSpec(
         key="harvest_timing",

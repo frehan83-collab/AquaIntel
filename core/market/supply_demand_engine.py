@@ -20,7 +20,7 @@ Price path (2-20 weeks ahead):
   core(h)   = seasonal_median(week_t + h) * (1 + gap_rel * 0.5**(h/HALF_LIFE))
               where gap_rel = spot_t / seasonal_median(week_t) - 1
   bands(h)  = core(h) * (1 + q_h)   with q_h = WALK-FORWARD residual quantiles
-              (prior-only seasonal per origin; ~80% out-of-sample coverage;
+              (prior-only seasonal per origin; coverage published only via /api/accuracy;
               in-sample quantiles only when history < 2 years)
   tilt(h)   = clamp(global_deficit_tilt + lice_tilt, +/-5%) * min(1, h/4)
               heuristic overlays, explicitly NOT backtested
@@ -29,7 +29,7 @@ Honesty contract
 ----------------
 - `backtest` is only ever populated from the real walk-forward artifact
   written by `scripts/backtest_supply_demand.py` (validated on load, same
-  contract as price_ml's `_load_backtest_artifact`). Missing artifact ->
+  contract as the accuracy registry: served only once registered). Missing artifact ->
   null, never invented numbers.
 - Every composed source is recorded in `integration.sources`; any source
   that raised is recorded in `integration.fallbacks` and the response
@@ -76,7 +76,8 @@ METHOD_NOTE = (
     "Core: SSB weekly seasonal median + mean-reversion of the current "
     f"deviation (half-life {REVERSION_HALF_LIFE_WEEKS:g}w), measured from the "
     "latest published SSB week. Bands: walk-forward residual quantiles "
-    "p10-p90 (measured out-of-sample coverage ~80%); in-sample quantiles only "
+    "p10-p90 (their out-of-sample coverage is published only through "
+    "/api/accuracy); in-sample quantiles only "
     "when history is too short for a walk-forward fit (needs 104w train + 20w "
     "horizon). Heuristic overlays (not backtested): global supply-deficit tilt "
     f"{GLOBAL_DEFICIT_TILT_PER_PCT:g}%/deficit-point (cap {TILT_CAP_PCT:g}%) and "
@@ -162,7 +163,7 @@ def walk_forward_residual_quantiles(
 
     For every origin (>= min_train_weeks in), the seasonal pattern is computed
     strictly from PRIOR data, then residuals `actual / core - 1` are collected
-    per horizon. Measured out-of-sample coverage of the p10-p90 band: ~80%
+    per horizon. The p10-p90 band's coverage is published only via /api/accuracy
     (see the walk-forward backtest artifact). Returns {} when history is
     shorter than min_train_weeks + horizon.
     """
@@ -342,6 +343,25 @@ def load_backtest_artifact() -> dict | None:
         return None
     data["mape"] = {str(k): v for k, v in validated.items()}
     return data
+
+
+def served_backtest() -> dict | None:
+    """The walk-forward artifact as served: only once the accuracy registry holds it.
+
+    WS-23: a public accuracy figure comes only from the registry (/api/accuracy).
+    The artifact is served when its ``artifact_id`` names a registered artifact;
+    until scripts/backtest_supply_demand.py publishes there, its MAPE and coverage
+    stay off the payload.
+    """
+    artifact = load_backtest_artifact()
+    if artifact is None:
+        return None
+    from core.ml.accuracy_registry import registry
+
+    registered = {a.get("artifact_id") for a in registry().get("artifacts", [])}
+    if artifact.get("artifact_id") and artifact["artifact_id"] in registered:
+        return artifact
+    return None
 
 
 class SupplyDemandEngine:
@@ -684,7 +704,7 @@ class SupplyDemandEngine:
             "components_heuristic": COMPONENTS_HEURISTIC,
             "history_weeks_used": len(ordered),
             "weekly": weekly,
-            "backtest": load_backtest_artifact(),
+            "backtest": served_backtest(),  # WS-23: registry-backed only
         }
 
 

@@ -94,11 +94,11 @@ const CATEGORIES: EndpointCategory[] = [
     tag: "ML Models",
     icon: Sparkles,
     color: "text-violet-400",
-    description: "Zero-shot foundation-model forecasts when the models are installed, with a seasonal-naive fallback that is labelled is_live: false. Validated accuracy is published only in /api/accuracy; holdout errors returned by the comparison endpoint are per-call diagnostics, not validated accuracy.",
+    description: "Zero-shot foundation-model forecasts when the models are installed, with a seasonal-naive fallback that is labelled is_live: false. Validated accuracy is published only in /api/accuracy; the comparison endpoints show forecasts and withhold their per-call holdout metrics (metrics_withheld).",
     endpoints: [
       { method: "GET", path: "/api/ml/chronos/price-forecast", summary: "Chronos-2 zero-shot price forecast" },
       { method: "GET", path: "/api/ml/chronos/lice-forecast/{locality_no}", summary: "Chronos-2 zero-shot lice forecast for a farm" },
-      { method: "GET", path: "/api/ml/chronos/model-comparison", summary: "Side-by-side forecasts from the available models for one series, with per-call holdout errors on the last few points (diagnostic only)", sample: '{ "series": "price", "unit": "NOK/kg", "horizon": 4, "models": { "chronos-2": { "median": [] }, "seasonal-naive": { "median": [] } }, "fallback_members": [] }' },
+      { method: "GET", path: "/api/ml/chronos/model-comparison", summary: "Side-by-side forecasts from the available models for one series; per-call holdout metrics are withheld (metrics_withheld)", sample: '{ "series": "price", "unit": "NOK/kg", "horizon": 4, "models": { "chronos-2": { "median": [] }, "seasonal-naive": { "median": [] } }, "fallback_members": [] }' },
       { method: "GET", path: "/api/causal/granger", summary: "Granger causality relationships and lag structure" },
       { method: "GET", path: "/api/causal/summary", summary: "Summary of the causal analyses run so far" },
       { method: "POST", path: "/api/ml/chronos/custom-forecast", summary: "Custom time series forecast with Chronos-2" },

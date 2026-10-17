@@ -251,7 +251,7 @@ export default function PriceOutlookPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <ChartContainer
           title="Price Forecast Cone (NOK/kg)"
-          subtitle="ML ensemble with 80% and 95% conformal prediction bands"
+          subtitle="ML ensemble with nominal 80% and 95% prediction intervals"
           className="lg:col-span-2"
           delay={0.1}
           badge={
@@ -261,7 +261,7 @@ export default function PriceOutlookPage() {
           }
           footer={
             <p className="text-[10px] text-[var(--text-secondary)]">
-              Inner band: 80% coverage. Outer band: 95% coverage. Based on {outlook?.model?.n_scenarios || 1000} Monte Carlo scenarios.
+              Inner band: nominal 80%. Outer band: nominal 95% (measured coverage is published only at /api/accuracy). Based on {outlook?.model?.n_scenarios || 1000} Monte Carlo scenarios.
             </p>
           }
         >
@@ -537,12 +537,12 @@ export default function PriceOutlookPage() {
         </GlassCard>
       )}
 
-      {/* Prediction Track Record */}
+      {/* Prediction log (WS-23: forecasts as made — not scored; accuracy lives in /api/accuracy) */}
       {predHistory && (
         <GlassCard delay={0.32} accent="violet">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-violet-400" />
-            Prediction Track Record
+            Prediction Log
             <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20">
               Last 30 days
             </span>
@@ -550,10 +550,11 @@ export default function PriceOutlookPage() {
           <div className="space-y-1.5">
             {predHistory.slice(0, 10).map((r, i: number) => {
               // Real PricePrediction row keys: created_at / predicted_nok /
-              // current_spot_nok (the old code read date/actual -> "Actual: 0").
-              const actual = r.current_spot_nok ?? 0;
-              const errorPct = actual > 0
-                ? Math.abs((r.predicted_nok - actual) / actual) * 100
+              // current_spot_nok — the spot WHEN the forecast was made, not an
+              // outcome, so the difference is the forecast move, not an error.
+              const spotThen = r.current_spot_nok ?? 0;
+              const movePct = spotThen > 0
+                ? ((r.predicted_nok - spotThen) / spotThen) * 100
                 : 0;
               return (
               <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
@@ -565,10 +566,10 @@ export default function PriceOutlookPage() {
                     Pred: <span className="text-ocean-400 font-semibold">{formatNumber(r.predicted_nok ?? 0, locale, 1)}</span>
                   </span>
                   <span className="text-[11px] text-[var(--text-secondary)]">
-                    Actual: <span className="text-[var(--text-primary)] font-semibold">{formatNumber(actual, locale, 1)}</span>
+                    Spot then: <span className="text-[var(--text-primary)] font-semibold">{formatNumber(spotThen, locale, 1)}</span>
                   </span>
-                  <span className={`text-[10px] font-mono ${errorPct < 5 ? "text-emerald-400" : "text-amber-400"}`}>
-                    {errorPct.toFixed(1)}%
+                  <span className="text-[10px] font-mono text-[var(--text-secondary)]">
+                    move {movePct >= 0 ? "+" : ""}{movePct.toFixed(1)}%
                   </span>
                 </div>
               </div>

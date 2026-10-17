@@ -905,15 +905,14 @@ export interface EnsembleForecast {
 export interface ModelComparison {
   series: string;
   horizon: number;
-  models: Array<{
-    name: string;
-    mape: number;
-    rmse: number;
-    coverage_80: number;
+  /** keyed by model name; accuracy metrics are withheld (WS-23) */
+  models: Record<string, {
     median: number[];
-    lo80: number[];
-    hi80: number[];
+    lo80?: number[];
+    hi80?: number[];
   }>;
+  /** why the request-time metrics are not shown; figures live in /api/accuracy */
+  metrics_withheld?: { metrics: string[]; reason: string; registry: string };
   data_provenance: DataProvenance;
 }
 

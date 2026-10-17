@@ -661,3 +661,30 @@ added `tests/test_migrations.py`.
   Simulator, the agents that write directional rows, the Streamlit dashboard, the
   admin export, the TopBar call, the legal opinion.
 
+## WS-23 (takedown) — no accuracy figure outside the registry — 2026-10-17
+
+- **Reproduced before the change:** `price_ensemble.predict(current_spot=72.55,
+  horizon_weeks=4)` on the dev box returned `ensemble_v1_rule`, `mape_backtest`
+  8.49, `band_trust` {coverage 75.0, n 88} and "Backtested 4-week MAPE: 8.5% on
+  2020W01–2026W40 … 68% of actual prices fell within the indicated band", with the
+  same run's conformal residuals loaded for horizons 2-20; `price_predictions` held
+  888 rows, 879 with a copied MAPE (5.2 ×499, 8.49 ×308, …).
+- **Failing first:** 9 of 10 tests in `tests/test_accuracy_claims.py` failed on the
+  old code (the chat case is a guard only).
+- **Verified after:** the same call returns `mape_backtest` None, `band_trust` None,
+  no residuals ("price_ml.conformal_lineage_unproven" logged) and "Rule-based
+  forecast … No backtest of this tier is in the accuracy registry (/api/accuracy),
+  so no accuracy figure is shown; uncertainty bands are heuristically widened, not
+  calibrated." Fast gate (with the new file) 274 passed + 1 skip; adjacent price/supply
+  suites green; OpenAPI contract re-frozen for two descriptions.
+- **Independent review:** no blockers; 5 should-fix (TFT statement, the week's row
+  could be a fallback or test row, freshness cadence, price-outlook page copy and
+  its pseudo track record, a weak supply test) and the real nits fixed with tests.
+  The dev DB's `price_predictions` count stayed at 888 across the isolated
+  outlook tests.
+- **Left:** the re-run half of WS-23 (loader, real-row backtest, registry artifacts
+  with carry-forward + Diebold-Mariano, residuals with `demo_rows_used: 0`, weekly
+  forecast log); the 879 stored copies stay in `price_predictions`, unserved;
+  `tests/test_entitlements.py` and `tests/test_price_outlook_resilience.py` still
+  call the outlook against the real store (WS-24).
+

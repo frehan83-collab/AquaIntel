@@ -157,3 +157,44 @@ def summary() -> dict:
             "'not yet published' rather than estimate."
         ),
     }
+
+
+# ── Serving rule for request-time metrics (WS-23) ─────────────────────────────
+
+#: Accuracy keys a forecast payload may carry only when a registered artifact
+#: produced them. Computed at request time (a short holdout of whatever the
+#: database holds, which may be demo rows) they are withheld, never shown.
+UNREGISTERED_METRIC_KEYS: tuple[str, ...] = ("mape", "rmse", "mae", "smape", "coverage_80")
+REGISTRY_URL = "/api/accuracy"
+
+
+def withhold_unregistered_metrics(result: dict, *, surface: str) -> dict:
+    """Remove request-time accuracy figures from a model-comparison payload.
+
+    Forecasts (medians, bands) stay; the per-model metric keys go, and
+    ``metrics_withheld`` says which and why, pointing at the registry — the only
+    source allowed to back a public accuracy claim (AGENTS.md rule 1).
+    """
+    models = result.get("models")
+    if isinstance(models, dict):
+        entries = list(models.values())
+    elif isinstance(models, list):
+        entries = models
+    else:
+        return result
+    withheld: set[str] = set()
+    for entry in entries:
+        if isinstance(entry, dict):
+            for key in UNREGISTERED_METRIC_KEYS:
+                if entry.pop(key, None) is not None:
+                    withheld.add(key)
+    result["metrics_withheld"] = {
+        "metrics": sorted(withheld),
+        "reason": (
+            f"{surface} computes its metrics at request time on a short holdout of the "
+            "database series, which may hold demo rows; an accuracy figure is published "
+            "only from a validated artifact in the accuracy registry"
+        ),
+        "registry": REGISTRY_URL,
+    }
+    return result

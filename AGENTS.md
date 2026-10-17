@@ -70,8 +70,10 @@ test runs with `Start-Process ... -RedirectStandardOutput` and poll the file.
    - Any ML result tagged `model="...-fallback"` MUST surface as
      `DataProvenance.degraded`, never `.live`. Use
      `DataProvenance.from_model_result(result, source)`.
-   - Never display MAPE/coverage/backtest numbers unless produced by a real
-     artifact (see `price_ml.BACKTEST_ARTIFACT` contract).
+   - Never display MAPE/coverage/backtest numbers unless a validated artifact in
+     the accuracy registry (`core/ml/accuracy_registry.py`, `/api/accuracy`)
+     produced them; request-time metrics are withheld
+     (`accuracy_registry.withhold_unregistered_metrics`, WS-23).
    - Never claim "3 foundation models" if fewer actually loaded; report
      `models_used` vs `models_fallback` truthfully.
    - Lice-derived values claim live only through a lineage summary from

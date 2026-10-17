@@ -93,6 +93,37 @@ The publisher also refuses to run on the demo-seeded rows
 (`source='demo_seed'`) and reports how many synthetic rows it ignored — publishing
 a MAPE from those would fabricate a claim.
 
+### Withdrawn claims (WS-23, 2026-10-17)
+
+The price outlook used to print "Backtested 4-week MAPE: 8.5% … 68% of actual
+prices fell within the indicated band" and a per-horizon `band_trust` coverage from
+`data/models/price_backtest.json`. That run (2026-10-12, `scripts/backtest_price_ml.py`)
+let the 52 `demo_seed` SSB rows override the real history, the claim sat outside
+this registry, and it was copied into `price_predictions` on every outlook request.
+Taken down everywhere:
+
+- `core/market/price_ml.py` never reads that artifact for display:
+  `mape_backtest` and `band_trust` are `null`, and the accuracy statement points
+  here. Its conformal residuals (same run) load only from an artifact that declares
+  `demo_rows_used: 0`, so the rule tier's bands are honestly "not calibrated".
+- `GET /api/market/price-outlook` stores at most one prediction per ISO week and
+  horizon; `GET /api/market/prediction-history` serves `mape_backtest: null` for
+  every row (the 879 stored copies on the dev box stay in the table, unserved).
+- The three `/api/ml/*/model-comparison` routes show forecasts but withhold
+  `mape`/`rmse`/`coverage_80` (`metrics_withheld`, via
+  `accuracy_registry.withhold_unregistered_metrics`): they scored a 4-point holdout
+  on the database's SSB rows, which are demo rows here.
+- The supply-demand price path no longer states "measured out-of-sample coverage
+  ~80%", and its walk-forward artifact is served only when its `artifact_id` is
+  registered here.
+
+**Still to do (the re-run half of WS-23):** make the backtest loader skip
+`demo_seed`, re-run it on real SSB prices, write `demo_rows_used: 0` into the
+conformal residuals, publish the served model's backtest here next to a
+horizon-matched carry-forward artifact with a Diebold-Mariano test, and start a
+weekly forecast log scored against carry-forward. Until then no price-model
+accuracy figure is shown anywhere.
+
 ## Why this is a sales asset
 
 Enterprise buyers, insurers and auditors do not accept "trust us". The artifact

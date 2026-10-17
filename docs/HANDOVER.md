@@ -10,6 +10,8 @@
 > method-1.0.0 observations superseded; fast gate 247 passed + 1 skip.
 > **WS-20's signals takedown landed 2026-10-17:** `GET /api/signals` serves no
 > signal; `tests/test_signals_takedown.py` joined the fast gate (262 passed + 1 skip).
+> **WS-23's takedown landed 2026-10-17:** no accuracy figure outside the registry;
+> `tests/test_accuracy_claims.py` joined the fast gate (274 passed + 1 skip).
 > Every number below was measured, not copied from an older doc. Re-verify with the
 > commands in §2 before trusting them.
 >
@@ -49,7 +51,7 @@ python -m pytest tests/test_entitlements.py tests/test_billing_money_path.py \
   tests/test_indices.py tests/test_accuracy_registry.py tests/test_production_truth.py \
   tests/test_partner_pilots.py tests/test_legal.py tests/test_provenance_ratchet.py \
   tests/test_gtm_roi.py tests/test_migrations.py tests/test_openapi_contract.py \
-  tests/test_signals_takedown.py -q   # 262 passed + 1 skip (network), ~25s (after WS-20 signals)
+  tests/test_signals_takedown.py tests/test_accuracy_claims.py -q   # 274 passed + 1 skip (network), ~26s (after WS-23 takedown)
 
 # the full suite (≈4.5 min) — command runners time out at ~30s, so background it:
 #   Start-Process -FilePath python -ArgumentList '-m','pytest','tests/','-q' \
@@ -548,7 +550,29 @@ WOAH and Sernapesca, yet the route's provenance names Mattilsynet
 source, and degrade when the WOAH fetch fails. The subscription's `api_calls_month`
 is never incremented (only read), so any monthly-usage display is always 0.
 
-### WS-23 · Accuracy against a strong baseline (contaminated backtest)
+### WS-23 · Accuracy against a strong baseline (contaminated backtest) — **TAKEDOWN DONE 2026-10-17**
+**Takedown shipped:** no route prints an accuracy figure the registry does not
+hold. `core/market/price_ml.py` never reads `data/models/price_backtest.json` for
+display (`mape_backtest`/`band_trust` null; the statement points at
+`/api/accuracy`), and loads conformal residuals only from an artifact declaring
+`demo_rows_used: 0` (the 2026-10-12 one does not, so the rule tier's bands are
+honestly uncalibrated); `/api/market/price-outlook` stores at most one prediction
+per ISO week and horizon; `/api/market/prediction-history` serves
+`mape_backtest: null`; the `/api/ml/*/model-comparison` routes withhold their
+request-time MAPE/RMSE/coverage (`accuracy_registry.withhold_unregistered_metrics`);
+the supply-demand path dropped its "~80% coverage" claim and serves its artifact
+only when registered. `tests/test_accuracy_claims.py` (in the fast gate).
+**Left (the re-run half, steps below):** loader skips `demo_seed`; carry-forward
+artifact; `publish_accuracy.py` publishes the served model's backtest on the same
+weeks with a Diebold-Mariano test; residuals re-derived with `demo_rows_used: 0`;
+serve only the backtested configuration; weekly forecast log;
+`scripts/backtest_price_ml.py` must write `demo_rows_used: 0` or its residuals
+never load. Also: the in-process `PriceEnsemble.retrain()` sets residuals without a
+lineage declaration (its bands then say so); the 879 stored MAPE copies stay in
+`price_predictions`, unserved; `tests/test_entitlements.py` and
+`tests/test_price_outlook_resilience.py` still call the outlook against the real
+store (WS-24); on Python 3.14 `predict()` reaches the TFT tier only inside a running
+event loop (`asyncio.get_event_loop()` raises outside one).
 **Why:** the price outlook prints "Backtested 4-week MAPE: 8.5%" from
 `data/models/price_backtest.json` (2026-10-12). That run merged the database's SSB
 rows over the real CSV, database winning (`scripts/backtest_price_ml.py`,

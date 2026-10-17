@@ -199,9 +199,11 @@ async def chronos_supply_forecast(horizon: int = 6):
 @router.get("/ml/chronos/model-comparison")
 async def chronos_model_comparison(series: str = "price", horizon: int = 4):
     """Compare Chronos-2 vs TFT vs seasonal naive on holdout window."""
+    from core.ml.accuracy_registry import withhold_unregistered_metrics
     from core.ml.chronos_baseline import chronos_baseline
     result = await chronos_baseline.compare_models(series, horizon)
     if isinstance(result, dict):
+        withhold_unregistered_metrics(result, surface="the Chronos model comparison")  # WS-23
         result["data_provenance"] = DataProvenance.from_model_result(result, "Amazon Chronos zero-shot", confidence=0.70).to_dict()
     return result
 
@@ -287,12 +289,14 @@ async def timesfm_supply_forecast(horizon: int = 6):
 async def timesfm_model_comparison(series: str = "price", horizon: int = 4):
     """Compare TimesFM 2.5 vs Chronos-2 vs TFT vs seasonal naive.
 
-    Uses holdout window evaluation with MAPE, RMSE, and 80% interval
-    coverage metrics.
+    Shows each model's forecast over a holdout window; accuracy metrics are
+    withheld (published only through /api/accuracy).
     """
+    from core.ml.accuracy_registry import withhold_unregistered_metrics
     from core.ml.timesfm_engine import timesfm_engine
     result = await timesfm_engine.compare_models(series, horizon)
     if isinstance(result, dict):
+        withhold_unregistered_metrics(result, surface="the TimesFM model comparison")  # WS-23
         result["data_provenance"] = DataProvenance.from_model_result(result, 
             _TIMESFM_PROVENANCE, confidence=_TIMESFM_CONFIDENCE
         ).to_dict()
@@ -378,12 +382,14 @@ async def moirai_model_comparison(series: str = "price", horizon: int = 4):
     """Compare MOIRAI-2 vs Chronos-2 vs TimesFM 2.5 vs TFT vs seasonal naive.
 
     Highlights MOIRAI-2's latency advantage (30M params, 2x faster).
-    Uses holdout window evaluation with MAPE, RMSE, and 80% interval
-    coverage metrics.
+    Shows each model's forecast over a holdout window; accuracy metrics are
+    withheld (published only through /api/accuracy).
     """
+    from core.ml.accuracy_registry import withhold_unregistered_metrics
     from core.ml.moirai_engine import moirai_engine
     result = await moirai_engine.compare_models(series, horizon)
     if isinstance(result, dict):
+        withhold_unregistered_metrics(result, surface="the MOIRAI model comparison")  # WS-23
         result["data_provenance"] = DataProvenance.from_model_result(result, 
             _MOIRAI_PROVENANCE, confidence=_MOIRAI_CONFIDENCE
         ).to_dict()

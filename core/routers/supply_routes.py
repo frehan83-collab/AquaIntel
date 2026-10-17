@@ -156,7 +156,8 @@ async def supply_demand_balance():
     balance_tonnes, balance_pct, signal, price_pressure) are unchanged;
     everything new is additive (contract: additive-v1):
       balance_label, integration, supply_breakdown, demand_breakdown,
-      price_forecast (incl. empirical p10-p90 bands + validated backtest).
+      price_forecast (incl. empirical p10-p90 bands; a backtest is served only
+      once it is published in the accuracy registry).
     """
     from core.market.supply_demand_engine import supply_demand_engine
     from core.valuechain.smolt_model import smolt_model

@@ -123,6 +123,41 @@ class TestDecisionEndpoints:
 
 
 class TestPriceOutlook:
+    @pytest.fixture(autouse=True)
+    def _throwaway_prediction_store(self, tmp_path, monkeypatch):
+        """WS-23: the outlook stores one prediction per ISO week and horizon, so a
+        test-written row in the real store would become the week's prediction."""
+        import asyncio
+        from contextlib import asynccontextmanager
+
+        from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+        from sqlalchemy.orm import sessionmaker
+
+        from core.models import Base
+
+        engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'predictions.db'}")
+
+        async def setup():
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+
+        asyncio.run(setup())
+        factory = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+        @asynccontextmanager
+        async def session():
+            async with factory() as s:
+                try:
+                    yield s
+                    await s.commit()
+                except Exception:
+                    await s.rollback()
+                    raise
+
+        monkeypatch.setattr("core.routers.market_routes.get_async_session", session)
+        yield
+        asyncio.run(engine.dispose())
+
     def test_price_outlook_returns_forecast(self, client):
         r = client.get("/api/market/price-outlook?horizon=4&scenarios=100")
         assert r.status_code == 200

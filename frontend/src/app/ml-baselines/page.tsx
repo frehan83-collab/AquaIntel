@@ -278,25 +278,18 @@ export default function MLBaselinesPage() {
             <p className="text-xs text-rose-400">{comparison.error}</p>
           ) : (
             <>
-              {/* Metrics table */}
-              <div className="space-y-1">
-                <div className="flex text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider pb-1 border-b border-white/[0.06]">
-                  <span className="flex-1">Model</span>
-                  <span className="w-20 text-right">MAPE %</span>
-                  <span className="w-20 text-right">RMSE</span>
-                  <span className="w-24 text-right">80% Coverage</span>
-                </div>
-                {Object.entries(comparison.models || {}).map(([name, m]: [string, any]) => (
-                  <div key={name} className="flex items-center text-xs py-1.5 border-b border-white/[0.03]">
-                    <span className="flex-1 text-[var(--text-primary)] font-medium">{name}</span>
-                    <span className="w-20 text-right text-[var(--text-primary)]">{m.mape?.toFixed(2)}%</span>
-                    <span className="w-20 text-right text-[var(--text-primary)]">{m.rmse?.toFixed(2)}</span>
-                    <span className="w-24 text-right text-[var(--text-primary)]">
-                      {m.coverage_80 !== undefined ? `${m.coverage_80}%` : "\u2014"}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              {/* WS-23: accuracy figures come only from the accuracy registry; the
+                  comparison shows forecasts, and says why its metrics are withheld */}
+              {comparison.metrics_withheld ? (
+                <p className="text-[11px] text-amber-400/80">
+                  Accuracy metrics withheld: {comparison.metrics_withheld.reason}. See{" "}
+                  {comparison.metrics_withheld.registry}.
+                </p>
+              ) : (
+                <p className="text-[11px] text-[var(--text-secondary)]">
+                  Accuracy figures are published only through /api/accuracy.
+                </p>
+              )}
 
               {/* Actual vs predicted overlay */}
               <div className="mt-4">
