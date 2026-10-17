@@ -266,7 +266,7 @@ returned; 204 routes are baselined and the real residue is only known by probing
 fail when the count increases.
 **Acceptance:** a deliberately provenance-free route makes CI fail naming it.
 
-### WS-11 · Remove the last hardcoded tier table (frontend)
+### WS-11 · Remove the last hardcoded tier table (frontend) — **DONE 2026-10-17 (with WS-20)**
 **Why:** `frontend/src/app/billing/page.tsx` still carries its own `TIER_DETAILS`
 feature/price lists while `/pricing` is catalog-driven — the same drift the backend
 SSOT killed.
@@ -449,7 +449,15 @@ direction and can reach its full 0-100 range; a publisher tick on this box store
 nothing built on the quota tracker. **Traps:** never edit stored observations; the
 method version keeps old and new apart.
 
-### WS-20 · Public honesty: landing page, API docs, plan ladder, one name
+### WS-20 · Public honesty: landing page, API docs, plan ladder, one name — **PARTLY DONE 2026-10-17**
+**Done:** testimonials, typed counts, unproven claims and the fake waitlist removed
+from the landing page; plans render from the catalog on landing and billing (WS-11
+closed); the API reference matches the frozen contract and real response shapes;
+plan-catalog wording corrected; `tests/test_public_claims.py` guards page sources
+and rendered catalog text. **Left:** the SHORT-signals takedown (in progress in its
+own change); one product name and the Desk/Operator inversion (owner decisions); the
+OpenAPI `info.description` "real-time salmon market intelligence" (`core/api.py`,
+needs a deliberate re-freeze of `docs/openapi.frozen.json`).
 **Why:** the public landing page shows invented testimonials under "Trusted by
 Industry Leaders", one credited to Nordic Investment Bank
 (`frontend/src/app/landing/page.tsx:47-66, 264`); stale counts ("229 API Endpoints"
@@ -523,6 +531,12 @@ zero until the customer supplies it (the processor's hard-coded 0.5 becomes a na
 input), and each ICP reports the break-even value of its main assumption; a decision card on lice data older than 14 days
 returns no TREAT/SCHEDULE action and says why; the disease list is sorted newest
 first.
+**Added 2026-10-17 (WS-20 review):** `/api/disease/alerts` returns "no outbreaks"
+while Mattilsynet has active ISA cases: `core/market/disease_alerts.py` queries only
+WOAH and Sernapesca, yet the route's provenance names Mattilsynet
+(`core/routers/disease_routes.py`). Merge the Mattilsynet cases or stop claiming the
+source, and degrade when the WOAH fetch fails. The subscription's `api_calls_month`
+is never incremented (only read), so any monthly-usage display is always 0.
 
 ### WS-23 · Accuracy against a strong baseline (contaminated backtest)
 **Why:** the price outlook prints "Backtested 4-week MAPE: 8.5%" from
@@ -551,6 +565,11 @@ carry-forward, stored where tests cannot write.
 **Acceptance:** `/api/accuracy` lists carry-forward and the served model on one
 window with the test result; no route prints an accuracy figure the registry does
 not hold; a test that the backtest loader refuses `demo_seed` rows.
+**Added 2026-10-17 (WS-20 review):** `/api/ml/chronos/model-comparison` returns
+`mape`/`rmse`/`coverage_80` per model from a single holdout of `horizon` points
+(`core/ml/chronos_baseline.py::compare_models`), on a series whose newest weeks are
+the `demo_seed` DB rows. It is covered by the acceptance above: drop the figures or
+label them as per-call diagnostics on real rows only.
 
 ### WS-24 · Test isolation for the dev database
 **Why:** test runs wrote all 260 `design_partners` rows ("X", "Scorecard Co", "Recip

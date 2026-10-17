@@ -9,51 +9,24 @@ import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
-import { useTranslation, formatDate } from "@/lib/i18n";
+import { useTranslation, formatDate, formatNumber } from "@/lib/i18n";
+import type { BillingCatalog } from "@/types/api";
 
-const TIER_DETAILS: Record<string, { icon: any; color: string; features: string[] }> = {
-  professional: {
-    icon: Zap,
-    color: "ocean",
-    features: [
-      "Real-time alerts (15-min polling)",
-      "Farm-level lice forecasts",
-      "Harvest timing optimizer",
-      "ML baselines (Chronos-2)",
-      "Treatment recommendations",
-      "5,000 API calls/month",
-    ],
-  },
-  enterprise: {
-    icon: Building2,
-    color: "emerald",
-    features: [
-      "Everything in Professional",
-      "Market Terminal &amp; signals",
-      "EU Traceability tools",
-      "Supply chain intelligence",
-      "Global supply monitoring",
-      "50,000 API calls/month",
-    ],
-  },
-  investor: {
-    icon: Crown,
-    color: "amber",
-    features: [
-      "Everything in Enterprise",
-      "Trading signals &amp; execution",
-      "Performance tracking",
-      "Full API access",
-      "Custom datasets &amp; reports",
-      "100,000 API calls/month",
-    ],
-  },
+// Presentation only (icon + accent per plan key). Names, prices and features come
+// from /api/billing/catalog, the canonical plan catalog (WS-11 / WS-20).
+const PLAN_STYLE: Record<string, { icon: any; color: string }> = {
+  operator: { icon: CreditCard, color: "violet" },
+  professional: { icon: Zap, color: "ocean" },
+  enterprise: { icon: Building2, color: "emerald" },
+  investor: { icon: Crown, color: "amber" },
+  intelligence: { icon: TrendingUp, color: "ocean" },
 };
 
 export default function BillingPage() {
   const { t, locale } = useTranslation();
   const [status, setStatus] = useState<any>(null);
   const [invoices, setInvoices] = useState<any>(null);
+  const [catalog, setCatalog] = useState<BillingCatalog | null>(null);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [showCancel, setShowCancel] = useState(false);
@@ -61,12 +34,14 @@ export default function BillingPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [s, inv] = await Promise.allSettled([
+      const [s, inv, cat] = await Promise.allSettled([
         api.billingSubscriptionStatus(),
         api.billingInvoiceHistory(),
+        api.billingCatalog(),
       ]);
       if (s.status === "fulfilled") setStatus(s.value);
       if (inv.status === "fulfilled") setInvoices(inv.value);
+      if (cat.status === "fulfilled") setCatalog(cat.value);
     } catch { /* empty */ }
     setLoading(false);
   };
@@ -77,10 +52,12 @@ export default function BillingPage() {
     setUpgrading(tier);
     try {
       const result = await api.billingCreateCheckout(tier);
-      if (result?.checkout_url) {
-        window.location.href = result.checkout_url;
-      } else if (result?.demo_mode) {
+      // Demo mode first: without Stripe the API also returns a mock checkout URL
+      // that has no page behind it (same order as /pricing).
+      if (result?.demo_mode) {
         alert("Stripe not configured. Set STRIPE_SECRET_KEY to enable payments.");
+      } else if (result?.checkout_url) {
+        window.location.href = result.checkout_url;
       }
     } catch { /* empty */ }
     setUpgrading(null);
@@ -95,6 +72,11 @@ export default function BillingPage() {
   };
 
   const currentTier = status?.tier || "free";
+  const currentPlanName =
+    catalog?.plans.find((p) => p.plan === currentTier)?.name
+    ?? currentTier.charAt(0).toUpperCase() + currentTier.slice(1);
+  const paidPlans = (catalog?.plans ?? []).filter((p) => p.amount_nok > 0);
+  const currentPlan = catalog?.plans.find((p) => p.plan === currentTier) ?? null;
   const sub = status?.subscription;
 
   return (
@@ -120,7 +102,7 @@ export default function BillingPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KPICard
           label="Current Tier"
-          value={currentTier.charAt(0).toUpperCase() + currentTier.slice(1)}
+          value={currentPlanName}
           icon={CreditCard}
           delay={0}
         />
@@ -132,7 +114,14 @@ export default function BillingPage() {
         />
         <KPICard
           label="API Calls"
-          value={sub ? `${sub.api_calls_month} / ${sub.api_calls_limit}` : "0 / 100"}
+          value={
+            currentPlan
+              ? currentPlan.api_calls_per_day > 0
+                ? currentPlan.api_calls_per_day
+                : "Unlimited"
+              : "\u2014"
+          }
+          unit={currentPlan && currentPlan.api_calls_per_day > 0 ? "calls/day" : undefined}
           icon={TrendingUp}
           delay={0.1}
         />
@@ -220,28 +209,28 @@ export default function BillingPage() {
         Available Plans
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {Object.entries(TIER_DETAILS).map(([tier, info], i) => {
-          const Icon = info.icon;
-          const price = status?.available_tiers?.[tier]?.price_nok
-            ?? (tier === "professional" ? 2990 : tier === "enterprise" ? 14900 : 24900);
-          const isCurrent = currentTier === tier;
+        {paidPlans.map((plan, i) => {
+          const style = PLAN_STYLE[plan.plan] ?? { icon: Zap, color: "ocean" };
+          const Icon = style.icon;
+          const isCurrent = currentTier === plan.plan;
 
           return (
-            <GlassCard key={tier} delay={0.1 * (i + 1)} accent={info.color as any}>
-              <div className="flex items-center gap-2 mb-3">
+            <GlassCard key={plan.plan} delay={0.1 * (i + 1)} accent={style.color as any}>
+              <div className="flex items-center gap-2 mb-1">
                 <Icon className="w-5 h-5 text-ocean-400" />
                 <h3 className="text-base font-semibold text-[var(--text-primary)]">
-                  {tier.charAt(0).toUpperCase() + tier.slice(1)}
+                  {plan.name}
                 </h3>
               </div>
+              <p className="text-[11px] text-[var(--text-secondary)] mb-2">{plan.audience}</p>
               <div className="text-2xl font-bold text-[var(--text-primary)] mb-1">
-                {price.toLocaleString()} <span className="text-sm font-normal text-[var(--text-secondary)]">NOK/mo</span>
+                {formatNumber(plan.amount_nok, locale, 0)} <span className="text-sm font-normal text-[var(--text-secondary)]">NOK/mo</span>
               </div>
               <ul className="space-y-1.5 mt-3 mb-4">
-                {info.features.map((f, j) => (
-                  <li key={j} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
+                {plan.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
                     <Check className="w-3 h-3 text-emerald-400 mt-0.5 flex-shrink-0" />
-                    <span dangerouslySetInnerHTML={{ __html: f }} />
+                    <span>{f}</span>
                   </li>
                 ))}
               </ul>
@@ -251,8 +240,8 @@ export default function BillingPage() {
                 </div>
               ) : (
                 <OcButton
-                  onClick={() => handleUpgrade(tier)}
-                  loading={upgrading === tier}
+                  onClick={() => handleUpgrade(plan.plan)}
+                  loading={upgrading === plan.plan}
                   className="w-full"
                   leftIcon={<ArrowUpRight className="w-4 h-4" />}
                 >
@@ -262,12 +251,15 @@ export default function BillingPage() {
             </GlassCard>
           );
         })}
+        {catalog === null && !loading && (
+          <p className="text-sm text-[var(--text-secondary)]">The plan catalog could not be loaded.</p>
+        )}
       </div>
 
       <p className="text-[10px] text-[var(--text-secondary)] opacity-60 mt-2">
-        Enforcement note: daily API quotas are enforced for authenticated API
-        usage (JWT / API key). Route-level tier gating is not yet enforced
-        during beta &mdash; all pages remain publicly browsable.
+        Enforcement note: daily API quotas apply to authenticated API usage (JWT /
+        API key), and premium outputs answer 402 to signed-in plans that do not
+        include them. Anonymous browsing is not gated.
       </p>
 
       {/* Invoice History */}

@@ -25,22 +25,21 @@ const CATEGORIES: EndpointCategory[] = [
     tag: "Lice Intelligence",
     icon: Bug,
     color: "text-rose-400",
-    description: "Real-time sea lice data from 1,815 Norwegian farms via BarentsWatch. GNN spread prediction and anomaly detection.",
+    description: "Weekly adult female lice counts per farm from BarentsWatch, with the reporting week and provenance on every response. Optional GNN spread forecast.",
     endpoints: [
-      { method: "GET", path: "/api/lice/summary", summary: "Aggregated lice statistics by production area", sample: '{ "pa": 3, "avg_adult_female": 0.12, "farms_above_limit": 4, "data_provenance": { "source": "BarentsWatch", "confidence": 0.95 } }' },
-      { method: "GET", path: "/api/lice/weekly?pa={pa}", summary: "Weekly lice time series for a production area" },
-      { method: "GET", path: "/api/gnn/predict?locality={id}", summary: "GNN-based lice spread forecast for a farm" },
+      { method: "GET", path: "/api/lice/summary", summary: "National lice statistics for the newest reported week", sample: '{ "year": 2026, "week": 15, "avg_adult_female_lice": 0.09, "records": 34, "data_provenance": { "source": "BarentsWatch Fishhealth API", "is_live": false, "confidence": 0.4, "fallback_reason": "27 weeks stale" } }' },
+      { method: "GET", path: "/api/gnn/predict/{locality_no}", summary: "GNN lice spread forecast for a farm (503 unless torch_geometric is installed)" },
     ],
   },
   {
     tag: "Disease Monitoring",
     icon: Shield,
     color: "text-amber-400",
-    description: "ISA, PD, and other disease alerts from Mattilsynet, WOAH, and Sernapesca. Per-company exposure tracking.",
+    description: "Norwegian ISA and PD cases from Mattilsynet, international outbreak alerts from WOAH and Sernapesca, and per-company exposure.",
     endpoints: [
-      { method: "GET", path: "/api/disease/alerts", summary: "Active disease outbreaks across all monitored countries", sample: '{ "alerts": [{ "country": "Norway", "disease": "ISA", "pa": 4, "date": "2026-03-28" }], "total": 3 }' },
+      { method: "GET", path: "/api/disease/alerts", summary: "International outbreak alerts (WOAH, Sernapesca); Norwegian cases are in /api/disease/norway", sample: '{ "active_outbreaks": 0, "countries_affected": [], "risk_level": "low", "alerts": [] }' },
       { method: "GET", path: "/api/disease/norway", summary: "Norwegian disease cases from Mattilsynet" },
-      { method: "GET", path: "/api/disease/treatments/{year}", summary: "Treatment and resistance data by year" },
+      { method: "GET", path: "/api/disease/treatments?year={year}", summary: "Treatment and resistance data by year" },
       { method: "GET", path: "/api/disease/by-company", summary: "Per-company disease exposure counts" },
       { method: "GET", path: "/api/anomaly/scores", summary: "Composite anomaly scores (lice + SST + mortality + disease)" },
     ],
@@ -49,9 +48,9 @@ const CATEGORIES: EndpointCategory[] = [
     tag: "Market & Pricing",
     icon: DollarSign,
     color: "text-emerald-400",
-    description: "SSB spot prices, TFT price predictions, feed cost models, forward curves, and sentiment analysis. 12 FRED series.",
+    description: "SSB weekly export prices, a 2-20 week price outlook, feed cost models from FRED ingredient prices, a synthetic forward curve (labelled as such) and sentiment analysis.",
     endpoints: [
-      { method: "GET", path: "/api/market/price-outlook", summary: "Current spot price + TFT prediction with quantile bands", sample: '{ "spot_nok": 94.4, "prediction": { "horizon_weeks": 8, "median": 97.2, "q10": 88.1, "q90": 105.3 }, "data_provenance": { "source": "SSB + TFT" } }' },
+      { method: "GET", path: "/api/market/price-outlook", summary: "Current SSB spot price + price outlook with scenario bands", sample: '{ "horizon_weeks": 4, "current_spot_nok": 72.5, "predicted_nok": 74.1, "bands": { "p80": [66.0, 82.3] }, "model": { "version": "ensemble_v1_rule" }, "data_provenance": { "source": "SSB Table 03024 + price ensemble (ensemble_v1_rule)", "is_live": false } }' },
       { method: "GET", path: "/api/feed-cost/composite-index", summary: "Proprietary weighted feed cost index from 5 FRED ingredients" },
       { method: "GET", path: "/api/competitiveness/origin-index", summary: "FX-adjusted cost ranking across 6 origins" },
       { method: "GET", path: "/api/market/spot-price", summary: "Latest SSB salmon spot price in NOK and USD" },
@@ -65,29 +64,29 @@ const CATEGORIES: EndpointCategory[] = [
     tag: "Decision Engine",
     icon: Brain,
     color: "text-cyan-400",
-    description: "Farm-level decision cards combining GNN, lice data, SST, MET.no forecasts, and treatment economics into actionable TREAT/MONITOR/WAIT signals.",
+    description: "Farm-level decision cards combining lice data, sea temperature, MET.no forecasts and treatment economics into TREAT / SCHEDULE / MONITOR / NO_ACTION signals.",
     endpoints: [
-      { method: "GET", path: "/api/decision/{locality_no}", summary: "Decision card for a specific farm", sample: '{ "action": "TREAT_NOW", "method": "MECHANICAL", "roi": 3.2, "lice_current": 0.45, "ocean_forecast": { "sst": 11.2 } }' },
+      { method: "GET", path: "/api/decision/{locality_no}", summary: "Decision card for a specific farm", sample: '{ "action": "SCHEDULE_TREATMENT", "recommended_method": "medicinal", "roi_estimate": 2.2, "lice_current": 0.43, "sea_temp_c": 6.7 }' },
       { method: "GET", path: "/api/decision/portfolio/{company}", summary: "All decision cards for a company portfolio" },
       { method: "POST", path: "/api/treatment/log-outcome", summary: "Log farmer-reported treatment outcome" },
       { method: "GET", path: "/api/treatment/efficacy-by-method", summary: "Aggregated efficacy statistics per treatment method" },
       { method: "GET", path: "/api/ocean/forecast/pa/{pa}", summary: "MET.no ocean forecast for a production area" },
-      { method: "GET", path: "/api/traffic-light/current", summary: "Current traffic light status for all 13 PAs" },
+      { method: "GET", path: "/api/regulatory/traffic-light/current", summary: "Traffic light status for all 13 production areas" },
     ],
   },
   {
     tag: "Supply Chain",
     icon: Ship,
     color: "text-blue-400",
-    description: "7-country supply balance model, smolt-to-harvest forecasting, AIS vessel tracking, and global disruption monitoring.",
+    description: "Multi-country supply balance, smolt-to-harvest forecasting, AIS harvest intelligence (needs an AIS position feed) and disruption monitoring.",
     endpoints: [
       { method: "GET", path: "/api/supply/summary", summary: "Global supply balance across 7 countries" },
-      { method: "GET", path: "/api/supply/smolt-forecast", summary: "18-month cohort-based supply pipeline", sample: '{ "pipeline": [{ "month_label": "2026-06", "projected_harvest_tonnes": 142000, "lo80": 118000, "hi80": 166000 }], "horizon_months": 18, "total_harvest_tonnes": 1720000, "data_provenance": { "source": "Smolt model + Fiskeridirektoratet + BarentsWatch", "is_live": true, "confidence": 0.75 } }' },
+      { method: "GET", path: "/api/supply/smolt-forecast", summary: "18-month cohort-based supply pipeline", sample: '{ "pipeline": [{ "month_label": "2026-10", "projected_harvest_tonnes": 30686, "lo80": 26083, "hi80": 35288 }], "horizon_months": 18, "total_harvest_tonnes": 934581 }' },
       { method: "GET", path: "/api/supply/demand-balance", summary: "Supply-demand balance with price pressure signal" },
-      { method: "GET", path: "/api/ais/harvest-intelligence", summary: "AIS vessel activity and harvest signal detection" },
+      { method: "GET", path: "/api/ais/harvest-intelligence", summary: "AIS vessel activity and harvest signals (empty until AIS positions are ingested)" },
       { method: "GET", path: "/api/canada/snapshot", summary: "Canada/BC aquaculture intelligence from DFO" },
       { method: "GET", path: "/api/scotland/snapshot", summary: "Scotland aquaculture snapshot" },
-      { method: "GET", path: "/api/iceland/snapshot", summary: "Iceland aquaculture snapshot (5 live sources)" },
+      { method: "GET", path: "/api/iceland/snapshot", summary: "Iceland aquaculture snapshot" },
       { method: "GET", path: "/api/faroe/snapshot", summary: "Faroe Islands aquaculture snapshot" },
     ],
   },
@@ -95,14 +94,14 @@ const CATEGORIES: EndpointCategory[] = [
     tag: "ML Models",
     icon: Sparkles,
     color: "text-violet-400",
-    description: "Temporal Fusion Transformer, Chronos-2 zero-shot baselines, XGBoost fallback, and model comparison framework.",
+    description: "Zero-shot foundation-model forecasts when the models are installed, with a seasonal-naive fallback that is labelled is_live: false. Validated accuracy is published only in /api/accuracy; holdout errors returned by the comparison endpoint are per-call diagnostics, not validated accuracy.",
     endpoints: [
-      { method: "GET", path: "/api/ml/chronos/price", summary: "Chronos-2 zero-shot price forecast" },
-      { method: "GET", path: "/api/ml/chronos/lice", summary: "Chronos-2 zero-shot lice forecast" },
-      { method: "GET", path: "/api/ml/chronos/compare", summary: "Model comparison: Chronos vs TFT vs naive (MAPE, RMSE)", sample: '{ "models": [{ "name": "TFT", "mape": 4.2, "rmse": 3.1 }, { "name": "Chronos", "mape": 5.8, "rmse": 4.0 }] }' },
+      { method: "GET", path: "/api/ml/chronos/price-forecast", summary: "Chronos-2 zero-shot price forecast" },
+      { method: "GET", path: "/api/ml/chronos/lice-forecast/{locality_no}", summary: "Chronos-2 zero-shot lice forecast for a farm" },
+      { method: "GET", path: "/api/ml/chronos/model-comparison", summary: "Side-by-side forecasts from the available models for one series, with per-call holdout errors on the last few points (diagnostic only)", sample: '{ "series": "price", "unit": "NOK/kg", "horizon": 4, "models": { "chronos-2": { "median": [] }, "seasonal-naive": { "median": [] } }, "fallback_members": [] }' },
       { method: "GET", path: "/api/causal/granger", summary: "Granger causality relationships and lag structure" },
-      { method: "GET", path: "/api/causal/transfer-entropy", summary: "Transfer entropy lice-to-price lag analysis" },
-      { method: "POST", path: "/api/ml/chronos/custom", summary: "Custom time series forecast with Chronos-2" },
+      { method: "GET", path: "/api/causal/summary", summary: "Summary of the causal analyses run so far" },
+      { method: "POST", path: "/api/ml/chronos/custom-forecast", summary: "Custom time series forecast with Chronos-2" },
     ],
   },
   {
@@ -122,7 +121,7 @@ const CATEGORIES: EndpointCategory[] = [
     color: "text-teal-400",
     description: "Per-country intelligence for Norway, Canada/BC, Scotland, Iceland, Faroe Islands, Chile, and China demand indicators.",
     endpoints: [
-      { method: "GET", path: "/api/norway/production/monthly", summary: "Norwegian monthly production volumes" },
+      { method: "GET", path: "/api/production/monthly", summary: "Norwegian monthly production volumes" },
       { method: "GET", path: "/api/canada/lice", summary: "Canada DFO per-farm monthly lice data" },
       { method: "GET", path: "/api/canada/farms", summary: "BC farm GeoJSON with DFO-extracted locations" },
       { method: "GET", path: "/api/iceland/production", summary: "Iceland production from Statistics Iceland PxWeb" },
@@ -136,7 +135,7 @@ const CATEGORIES: EndpointCategory[] = [
     color: "text-orange-400",
     description: "Event impact modeling, compound scenario sandbox, and saved scenario management for what-if analysis.",
     endpoints: [
-      { method: "POST", path: "/api/scenarios/compound", summary: "Run compound multi-event scenario simulation", sample: '{ "events": ["ISA_OUTBREAK", "FEED_SHOCK"], "compound_multiplier": 1.15, "total_impact_nok": -2400000000 }' },
+      { method: "POST", path: "/api/scenarios/compound", summary: "Run compound multi-event scenario simulation", sample: '{ "compound_impact": { "interaction_multiplier": 1.15 }, "total_revenue_delta_nok": -2400000000 }' },
       { method: "POST", path: "/api/scenarios/save", summary: "Save a scenario configuration" },
       { method: "GET", path: "/api/scenarios/list", summary: "List saved scenarios for current user" },
       { method: "DELETE", path: "/api/scenarios/{id}", summary: "Delete a saved scenario" },
@@ -146,9 +145,9 @@ const CATEGORIES: EndpointCategory[] = [
     tag: "Efficacy Marketplace",
     icon: FlaskConical,
     color: "text-lime-400",
-    description: "Crowdsourced treatment efficacy data with privacy-preserving aggregation. Minimum 3 data points per cell.",
+    description: "Treatment outcomes reported by farms, aggregated per method with a minimum of 3 outcomes per cell. Demo deployments ship seeded example outcomes.",
     endpoints: [
-      { method: "GET", path: "/api/efficacy/benchmarks", summary: "Industry-wide efficacy benchmarks per treatment method", sample: '{ "methods": [{ "method": "MECHANICAL", "avg_reduction": 78.2, "sample_size": 142 }] }' },
+      { method: "GET", path: "/api/efficacy/benchmarks", summary: "Efficacy benchmarks per treatment method", sample: '{ "methods": [{ "method": "mechanical", "avg_reduction_pct": 81.0, "sample_size": 104 }], "total_outcomes": 150 }' },
       { method: "GET", path: "/api/efficacy/by-region", summary: "PA x method efficacy matrix" },
       { method: "GET", path: "/api/efficacy/by-season", summary: "Monthly/seasonal efficacy patterns" },
       { method: "GET", path: "/api/efficacy/explore", summary: "Multi-dimensional efficacy query (method, PA, temp, season)" },
@@ -171,15 +170,15 @@ client = httpx.Client(
     headers={"X-API-Key": "oc_live_your_key_here"}
 )
 
-# Fetch lice summary for Production Area 3
-resp = client.get("/api/lice/summary", params={"pa": 3})
+# National lice summary for the newest reported week
+resp = client.get("/api/lice/summary")
 data = resp.json()
-print(f"Avg adult female lice: {data['avg_adult_female']}")
-print(f"Source: {data['data_provenance']['source']}")`,
+print(f"Week {data['week']}: avg adult female lice {data['avg_adult_female_lice']}")
+print(f"Live: {data['data_provenance']['is_live']} ({data['data_provenance']['fallback_reason']})")`,
 
   javascript: `// Using API Key
 const response = await fetch(
-  "${BASE_URL}/api/market/price-outlook",
+  "${BASE_URL}/api/market/spot-price",
   {
     headers: {
       "X-API-Key": "oc_live_your_key_here",
@@ -189,8 +188,8 @@ const response = await fetch(
 );
 
 const data = await response.json();
-console.log(\`Spot: \${data.spot_nok} NOK/kg\`);
-console.log(\`8-week forecast: \${data.prediction.median}\`);`,
+console.log(\`Spot \${data.year}-\${data.week}: \${data.price_nok_kg} NOK/kg\`);
+console.log(\`Source: \${data.data_provenance.source}\`);`,
 
   curl: `# Using API Key header
 curl -X GET "${BASE_URL}/api/decision/12345" \\
@@ -199,12 +198,13 @@ curl -X GET "${BASE_URL}/api/decision/12345" \\
 # Or using query parameter
 curl "${BASE_URL}/api/decision/12345?api_key=oc_live_your_key_here"
 
-# Response:
+# Response (abridged):
 # {
-#   "action": "TREAT_NOW",
-#   "method": "MECHANICAL",
-#   "roi": 3.2,
-#   "lice_current": 0.45
+#   "action": "SCHEDULE_TREATMENT",
+#   "recommended_method": "medicinal",
+#   "roi_estimate": 2.2,
+#   "lice_current": 0.43,
+#   "data_provenance": { ... }
 # }`,
 };
 
@@ -597,7 +597,7 @@ export default function APIDocsPage() {
           </div>
           <div className="flex items-center gap-2 sm:ml-auto">
             <span className="px-2.5 py-1 rounded-full bg-ocean-500/[0.12] text-ocean-400 text-[11px] font-semibold border border-ocean-500/20">
-              v2.1.0
+              OpenAPI 3
             </span>
             <a href="/api/docs" target="_blank" className="px-3 py-1.5 rounded-lg bg-white/[0.06] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-[11px] font-medium flex items-center gap-1.5 hover:bg-white/[0.1] transition-colors border border-white/[0.06]">
               Swagger <ExternalLink className="w-3 h-3" />
@@ -658,7 +658,7 @@ export default function APIDocsPage() {
               { tier: "Global", limit: "200/min" },
               { tier: "Login", limit: "10/min" },
               { tier: "Register", limit: "5/min" },
-              { tier: "Institutional", limit: "50K/day" },
+              { tier: "Daily quota", limit: "per plan (see Pricing)" },
             ].map((r) => (
               <span key={r.tier} className="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[11px] text-[var(--text-secondary)]">
                 <span className="text-[var(--text-primary)] font-medium">{r.tier}:</span> {r.limit}
@@ -685,7 +685,7 @@ export default function APIDocsPage() {
         <div className="flex items-center gap-2 mb-4">
           <BookOpen className="w-4 h-4 text-ocean-400" />
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">Endpoint Reference</h2>
-          <span className="text-[11px] text-[var(--text-secondary)] ml-1">229 endpoints across 10 categories</span>
+          <span className="text-[11px] text-[var(--text-secondary)] ml-1">{CATEGORIES.reduce((n, c) => n + c.endpoints.length, 0)} documented endpoints across {CATEGORIES.length} categories</span>
         </div>
         <div className="space-y-3">
           {CATEGORIES.map((cat) => (
@@ -739,14 +739,17 @@ export default function APIDocsPage() {
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">Data Provenance</h2>
         </div>
         <p className="text-[12px] text-[var(--text-secondary)] leading-relaxed mb-4">
-          Every FishIntel API response includes a <code className="text-ocean-400 bg-ocean-500/10 px-1 rounded">data_provenance</code> field
-          that tells you exactly where the data comes from, how fresh it is, and how confident the system is in the result.
+          Market, index and most data responses include a <code className="text-ocean-400 bg-ocean-500/10 px-1 rounded">data_provenance</code> block
+          that says where the data comes from, whether it is live, when the answer was computed and how confident the system is.
+          Account, billing and list endpoints do not carry it.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {[
-            { field: "source", desc: "Origin of the data (e.g., BarentsWatch, SSB, FRED, MET.no)", example: '"BarentsWatch NLOD 2.0"' },
-            { field: "confidence", desc: "0.0 to 1.0 confidence score. Below 0.5 indicates degraded or simulated data.", example: "0.95" },
-            { field: "freshness", desc: "How recently the data was fetched: live, recent, stale, or historical.", example: '"live"' },
+            { field: "source", desc: "Origin of the data (e.g., BarentsWatch, SSB, FRED, MET.no)", example: '"SSB Table 03024 (Statistics Norway)"' },
+            { field: "is_live", desc: "false when a fallback, a stale input or a synthetic value was used; fallback_reason then says which.", example: "false" },
+            { field: "freshness", desc: "When this answer was computed (or last cached). It is not the age of the underlying data.", example: '"2026-10-17T14:12:37Z"' },
+            { field: "confidence", desc: "0.0 to 1.0 confidence score set by the route.", example: "0.9" },
+            { field: "fallback_reason", desc: "Why the answer is not live, or null.", example: '"27 weeks stale"' },
           ].map((f) => (
             <div key={f.field} className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-3">
               <code className="text-[12px] text-ocean-400 font-mono font-semibold">{f.field}</code>
@@ -755,25 +758,19 @@ export default function APIDocsPage() {
             </div>
           ))}
         </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <span className="px-2 py-1 rounded-lg text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">LIVE: confidence &ge; 0.8</span>
-          <span className="px-2 py-1 rounded-lg text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">DEGRADED: 0.5 &ndash; 0.8</span>
-          <span className="px-2 py-1 rounded-lg text-[10px] font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">SIMULATED: &lt; 0.5</span>
-          <span className="px-2 py-1 rounded-lg text-[10px] font-medium bg-violet-500/10 text-violet-400 border border-violet-500/20">SYNTHETIC: model-generated</span>
-        </div>
       </motion.div>
 
       {/* Bottom Links */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
         className="flex flex-col sm:flex-row gap-3"
       >
-        <a href="/billing" className="flex-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] p-5 hover:bg-white/[0.05] transition-colors group">
+        <a href="/pricing" className="flex-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] p-5 hover:bg-white/[0.05] transition-colors group">
           <div className="flex items-center gap-2 mb-1">
             <DollarSign className="w-4 h-4 text-amber-400" />
             <h3 className="text-sm font-semibold text-[var(--text-primary)]">Pricing &amp; Plans</h3>
           </div>
           <p className="text-[11px] text-[var(--text-secondary)]">
-            From free exploration to Institutional tier with 50K API calls/day. View plans and upgrade.
+            Plans, prices and daily API quotas, from the live plan catalog.
           </p>
         </a>
         <a href="/api/docs" target="_blank" className="flex-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] p-5 hover:bg-white/[0.05] transition-colors group">

@@ -5,6 +5,47 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
+### WS-20 — public honesty on the landing, API docs, billing and pricing pages (2026-10-17)
+- **Why:** the pages a prospect reads first carried invented testimonials (one
+  credited to Nordic Investment Bank), stale typed counts ("229 API Endpoints",
+  "53 Market Engines", "1,815 farms"), claims the platform does not serve ("real-time",
+  "TFT price prediction", a causal "z=3.26", "418 vessels"), price tables that
+  disagreed with the plan catalog, a waitlist form that confirmed sign-ups it never
+  stored, and an API reference in which 10 of 53 documented endpoints did not exist,
+  one with invented accuracy figures (docs/VALUE_ANALYSIS.md section 3).
+- **Landing:** testimonials, stat strips and the fake waitlist removed; feature and
+  hero copy rewritten to what is served; plans render from `/api/billing/catalog`
+  with loading and failure states; links to Accuracy & method, the published
+  indices, data sources and licences, and pricing.
+- **Billing (closes WS-11):** `TIER_DETAILS` deleted, plans render from the catalog
+  with a presentation-only icon map; demo mode is handled before the mock checkout
+  URL (which has no page behind it); the API-calls figure shows the plan's daily
+  quota instead of a never-incremented monthly counter; the enforcement note
+  describes what is enforced.
+- **API docs:** the 10 missing endpoints corrected or removed; the endpoint count is
+  computed; samples and the Python, JavaScript and cURL examples use real response
+  keys; the invented model-comparison MAPE sample removed and the holdout errors
+  described as diagnostics; the disease-alerts source, AIS and efficacy descriptions
+  corrected; the stale `v2.1.0` badge, the non-existent "Institutional" plan and the
+  provenance explainer (freshness is the compute time, not data age) corrected.
+- **Plan catalog (`core/entitlements.py`, rendered on /pricing, /billing, /landing):**
+  "Real-time supply tension" → weekly; "conformal bands" → scenario bands; "SSO"
+  removed (WS-6 is open); the lice-quota line says the quota system is a proposal.
+- **Privacy:** the AI Act model disclosure names the models that are served.
+- **Tests:** `tests/test_public_claims.py` (20): page sources and the rendered catalog
+  strings carry none of the removed claims; plan prices are never typed into a page
+  (derived from `PLANS`, any separator); every documented endpoint and every
+  code-example path exists in `docs/openapi.frozen.json`; samples print no accuracy
+  figures. The tests fail on the previous page versions.
+- **Review:** an adversarial review (3 lenses, 2 verifiers per finding) confirmed 17
+  findings, all addressed here or recorded as backlog; 5 split findings handled.
+- **Not done (owner decisions):** one product name; the Desk/Operator price
+  inversion. **Recorded:** the disease-alerts engine never queries Mattilsynet but its
+  provenance says it does (WS-22); the model-comparison route prints holdout MAPE on
+  four demo rows (WS-23); the OpenAPI description still says "real-time" (needs a
+  deliberate re-freeze); the SHORT-signals takedown is in progress in a separate
+  change.
+
 ### WS-19 — the index history is guarded before any agent runs (2026-10-17)
 - **Why:** AI-STI read 100 "severe" from one component, `quota_pressure`, fed by the
   lice-quota tracker's national utilisation (238,367 % on the dev box: a lice count

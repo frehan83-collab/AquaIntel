@@ -618,3 +618,22 @@ added `tests/test_migrations.py`.
   exists — the honest state; it read a false "fresh" before).
 - **Keep `--api-only`** until WS-16's completeness rule lands (WS-19 is done).
 
+## WS-20 — public honesty on the public pages (part 1) — 2026-10-17
+
+- **Shipped:** landing page without testimonials, typed counts, unproven claims or
+  the fake waitlist, plans from the catalog; billing from the catalog (WS-11 closed),
+  demo-mode checkout order fixed, quota figure from the plan; API reference fixed
+  (10 non-existent endpoints, invented accuracy sample, wrong response keys in
+  samples and code examples, stale version, "Institutional" plan, provenance
+  explainer); plan-catalog wording corrected; privacy AI Act disclosure corrected.
+- **Verified:** `tests/test_public_claims.py` 20 passed (and fails on the previous
+  page versions); fast gate 267 passed + 1 skip (with the new test); `tsc --noEmit`
+  clean; landing, billing and API docs rendered in a headless browser (the in-app
+  pane cannot verify routes with a `loading.tsx` while it is hidden: the fallback
+  never swaps, an environment effect, not a page bug).
+- **Review:** 3 lenses x 2 verifiers: 17 confirmed findings, all fixed or recorded
+  (WS-22, WS-23); the running API still serves the old catalog wording until it is
+  restarted (no auto-reload).
+- **Left:** SHORT-signals takedown (separate change in progress), product name and
+  Desk/Operator inversion (owner decisions), OpenAPI description (re-freeze).
+

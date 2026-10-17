@@ -169,7 +169,7 @@ const sections = [
         <ul className="space-y-1.5 list-disc list-inside marker:text-violet-400/60">
           <li>All AI-generated predictions are clearly labelled with confidence scores and data provenance.</li>
           <li>Predictions are <strong>advisory only</strong> and must never be the sole basis for operational decisions.</li>
-          <li>Model types include: XGBoost price forecasting, GNN farm network risk, TFT time series, and rule-based decision engines.</li>
+          <li>Model types include rule-based price and decision engines, plus optional machine-learning tiers (gradient-boosted trees, a graph neural network, foundation-model forecasts) that run only when installed and are labelled when they do not.</li>
           <li>Data quality badges indicate whether outputs are derived from live data, degraded sources, or simulated fallbacks.</li>
           <li>Users can inspect the data sources and confidence level behind any recommendation via the Data Provenance system.</li>
         </ul>
