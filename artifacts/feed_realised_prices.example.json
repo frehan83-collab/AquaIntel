@@ -1,0 +1,9 @@
+{
+  "_comment": "Template for artifacts/feed_realised_prices.json (WS-29b). Copy this file to feed_realised_prices.json and replace the figures with a realised cost you are allowed to use — your own accounts, a design partner's (aggregated and agreed), or a licensed series. The margin bridge compares its modelled feed leg against this figure instead of the audited survey, and prints the gap. Rules enforced by core/market/feed_anchor.py: the value must be NOK per kg of HARVESTED SALMON (not per kg of feed), between 10 and 60; the year must be 2008 or later and not in the future; an anchor older than 2 years is still used but flagged stale. A malformed file is ignored with a logged reason and the bridge falls back to Fiskeridirektoratet's last survey year.",
+  "year": 2025,
+  "feed_nok_per_kg_salmon": 21.5,
+  "scope": "Norway, grow-out, realised delivered feed per kg harvested (example only)",
+  "source": "EXAMPLE — replace with your own realised figure and cite it here",
+  "source_url": null,
+  "registered_at": "2026-10-18"
+}

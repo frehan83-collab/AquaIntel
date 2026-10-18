@@ -117,6 +117,18 @@ satellite page **fabricated per-farm readings with a seeded RNG** and rendered
   `production_volume_tonnes: null` with a `volume_basis` block that says so (never 0,
   which would read as a measurement), sub-entities do not repeat the group figure, and
   unknown volumes sort last. `tests/test_company_volumes.py` (11).
+- **WS-29b — the realised feed anchor.** The margin bridge's feed leg is a model, and
+  its last audited anchor is Fiskeridirektoratet's 2024 survey; the 2025/2026 figures are
+  not published (checked 2026-10-18), so the platform does not invent them. New
+  `core/market/feed_anchor.py` reads an operator-registered realised figure from
+  `artifacts/feed_realised_prices.json` (template: `feed_realised_prices.example.json`)
+  — NOK per kg of *harvested salmon*, 10–60, year 2008+ and not in the future — and the
+  bridge prefers it to the survey, reporting `anchor_source`, `anchor_scope`,
+  `anchor_is_registered` and `anchor_stale`. A malformed file is ignored with a reason
+  and the payload falls back to the survey, naming it; with no anchor at all the note
+  tells the operator how to register one. `tests/test_feed_anchor.py` (10).
+  **Still open:** obtain a defensible realised figure, recalibrate the multiplier against
+  it, bump `MARGIN_METHOD_VERSION` and republish the validation.
 
 ### WS-29 — the weekly margin bridge (2026-10-18)
 - **Why:** the platform held the two inputs that decide a salmon producer's week —

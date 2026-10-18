@@ -64,6 +64,26 @@ break-even relationship and the levers are differential and survive a level erro
 the level does not.** Until the multiplier is recalibrated against realised contract
 prices, the level stays flagged `modelled`.
 
+### Registering a realised figure (the WS-29b mechanism)
+
+The 2025/2026 official survey figures are not published as this is written (checked
+2026-10-18), so the platform does not invent them. Instead an operator drops a realised
+figure — their own accounts, a design partner's aggregated accounts, or a licensed
+series — into `artifacts/feed_realised_prices.json` (copy
+`feed_realised_prices.example.json`). The bridge then validates its modelled level
+against **that** figure rather than the 2024 survey, names the scope and source, and
+keeps printing the gap — so a customer can see the model's error against their own cost
+before trusting the headline.
+
+Read rules (`core/market/feed_anchor.py`, `tests/test_feed_anchor.py`): NOK per kg of
+*harvested salmon* (not per kg of feed), 10–60; year 2008+ and not in the future; an
+anchor older than two years is used but flagged `anchor_stale`; a malformed file is
+ignored with a logged reason and the payload falls back to the survey, naming it.
+
+What remains for WS-29b: obtain a defensible realised figure (a design partner's
+aggregate, or a licensed price series) and — once the model is recalibrated against it —
+bump `MARGIN_METHOD_VERSION` and republish the validation.
+
 ## 2. Honesty rules (enforced by `tests/test_margin_bridge.py`)
 
 * **`margin.quality`** is `modelled` unless the caller supplies *both* the price and

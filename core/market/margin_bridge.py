@@ -832,54 +832,101 @@ class MarginBridgeEngine:
         caller_feed_per_kg_salmon: float | None,
         as_of: Any,
     ) -> dict:
-        """Compare the modelled feed leg with the last audited realised cost.
+        """Compare the feed leg with the newest realised cost we are allowed to use.
 
-        The feed leg is a FRED proxy basket times a learned multiplier, so its
-        *level* is a model. The last audited anchor is Fiskeridirektoratet's realised
-        feed cost per kg salmon. Publishing the gap lets a buyer see whether the
-        level is drifting away from the audited series instead of trusting a number
-        with no external check — the deltas, the break-even relationship and the
-        levers are differential and survive a level error, the level does not.
+        The feed leg is a FRED proxy basket times a learned multiplier, so its *level*
+        is a model. The anchor, in order of preference:
+
+        1. a realised figure an operator registered in
+           ``artifacts/feed_realised_prices.json`` (WS-29b — a design partner's accounts,
+           or a licensed series), because it is newer than the survey; then
+        2. Fiskeridirektoratet's last audited survey year.
+
+        Publishing the gap lets a buyer see whether the level is drifting instead of
+        trusting a number with no external check. The deltas, the break-even
+        relationship and the levers are differential and survive a level error; the
+        level does not. When no recent anchor exists the payload says so rather than
+        implying the model is validated.
         """
+        from core.market.feed_anchor import load_anchor
         from core.market.feed_cost_engine import OFFICIAL_COST_HISTORY
 
-        if not OFFICIAL_COST_HISTORY:
-            return {"available": False, "reason": "no official cost series is loaded"}
-        anchor_year = max(OFFICIAL_COST_HISTORY)
-        anchor = OFFICIAL_COST_HISTORY[anchor_year]
-        official_feed = _finite(anchor.get("feed"))
+        realised = load_anchor()
+        anchor_year: int | None
+        official_feed: float | None
+        official_total: float | None
+        anchor_source: str
+        if realised:
+            anchor_year = realised["year"]
+            official_feed = realised["feed_nok_per_kg_salmon"]
+            official_total = None
+            anchor_source = "registered realised price (artifacts/feed_realised_prices.json)"
+        elif OFFICIAL_COST_HISTORY:
+            anchor_year = max(OFFICIAL_COST_HISTORY)
+            anchor = OFFICIAL_COST_HISTORY[anchor_year]
+            official_feed = _finite(anchor.get("feed"))
+            official_total = _finite(anchor.get("total"))
+            anchor_source = (
+                "Fiskeridirektoratet lonnsomhetsundersokelse "
+                "(feed_cost_engine.OFFICIAL_COST_HISTORY)"
+            )
+        else:
+            return {"available": False, "reason": "no cost anchor is loaded"}
+
         # The check is about the MODEL. When the caller supplied the feed leg there is
-        # nothing to validate against the audited series, so say which one was compared.
+        # nothing to validate against the anchor, so say which one was compared.
         compared = "caller_inputs" if caller_feed_per_kg_salmon else "model"
-        measured = caller_feed_per_kg_salmon if compared == "caller_inputs" else modelled_feed_per_kg_salmon
+        measured = (
+            caller_feed_per_kg_salmon if compared == "caller_inputs"
+            else modelled_feed_per_kg_salmon
+        )
         gap_pct = None
         if measured and official_feed:
             gap_pct = round((measured - official_feed) / official_feed * 100, 1)
         within = None if gap_pct is None else abs(gap_pct) <= FEED_LEVEL_VALIDATION_TOLERANCE_PCT
+        stale_note = ""
+        if realised and realised.get("stale"):
+            stale_note = (
+                f" The registered anchor is {realised['age_years']} years old; a newer "
+                "realised figure would sharpen the comparison."
+            )
+        elif not realised:
+            stale_note = (
+                " No realised price beyond the audited survey is registered, so the "
+                "comparison lags the market by design (WS-29b): drop "
+                "artifacts/feed_realised_prices.json to check the model against your own "
+                "accounts."
+            )
         return {
             "available": True,
             "compared": compared,
             "anchor_year": anchor_year,
+            "anchor_source": anchor_source,
+            "anchor_is_registered": bool(realised),
+            "anchor_scope": (realised or {}).get("scope"),
+            "anchor_source_note": (realised or {}).get("source"),
+            "anchor_stale": bool((realised or {}).get("stale")),
             "official_feed_nok_per_kg_salmon": official_feed,
-            "official_total_nok_per_kg_salmon": _finite(anchor.get("total")),
+            "official_total_nok_per_kg_salmon": official_total,
             "modelled_feed_nok_per_kg_salmon": _round(modelled_feed_per_kg_salmon),
             "caller_feed_nok_per_kg_salmon": _round(caller_feed_per_kg_salmon),
             "gap_pct": gap_pct,
             "within_tolerance": within,
             "tolerance_pct": FEED_LEVEL_VALIDATION_TOLERANCE_PCT,
             "observed_at": as_of.isoformat() if hasattr(as_of, "isoformat") else None,
-            "source": "Fiskeridirektoratet lonnsomhetsundersokelse (feed_cost_engine.OFFICIAL_COST_HISTORY)",
+            "source": anchor_source,
             "note": (
                 (
-                    "the caller supplied the feed leg, so the gap compares your figure with the "
-                    f"{anchor_year} audited realised cost, not the model"
+                    "the caller supplied the feed leg, so the gap compares your figure with "
+                    f"the {anchor_year} realised cost, not the model"
                     if compared == "caller_inputs" else
                     "the modelled feed leg is a FRED proxy basket x a learned multiplier; the "
-                    f"audited anchor is the {anchor_year} realised cost"
+                    f"realised anchor is {anchor_year}"
                 )
                 + f". A gap outside {FEED_LEVEL_VALIDATION_TOLERANCE_PCT:.0f} % means the level is "
                 "indicative only — the week-on-week and month-on-month deltas, the break-even "
                 "relationship and the levers are differential and do not depend on it"
+                + stale_note
             ),
         }
 

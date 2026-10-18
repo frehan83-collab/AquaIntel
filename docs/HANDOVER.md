@@ -34,13 +34,13 @@
 |---|---|
 | Platform version | `2.6.0` |
 | OpenAPI surface | **348 paths** (`docs/openapi.frozen.json`; WS-29 added two, WS-34 one) |
-| Tests | **1355 collected** (`pytest --collect-only`, 2026-10-18 after WS-28a/30–35) |
+| Tests | **1365 collected** (`pytest --collect-only`, 2026-10-18 after WS-28a/30–35) |
 | Alembic migrations | **21** (head `021`, WS-33) |
 | Router modules | **38** (`core/routers/`) |
 | Engine modules | **80** (`core/market/`, +`margin_bridge.py`, +`fx_rates.py`, +`company_facts.py`) |
 | Frontend routes | **68** page files |
 | Production topology | `docker-compose.prod.yml`: `api` + `agents` + `db` (TimescaleDB) + `web` |
-| Last full-suite run | **1331 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 4m25s (2026-10-18, after WS-31b and WS-35) |
+| Last full-suite run | **1341 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 4m29s (2026-10-18, after WS-29b, WS-31b and WS-35) |
 
 **What this session delivered** (all pushed): 10 commercial-hardening steps plus 3
 follow-up fixes â€” see Â§3 for the doc to read per area.
@@ -143,8 +143,8 @@ test** â†’ traps.
   are done).
 - **Waiting on the owner:** the WS-26 page-cut list, WS-27 layer 2, the WS-20
   decisions above, and the legal opinion that the rest of WS-28 waits on.
-- **Next without an owner decision:** WS-29b (recalibrate the feed level against
-  realised contract prices), then WS-22's smolt pipeline, then WS-16, WS-24 and WS-25,
+- **Next without an owner decision:** WS-29b's data step (obtain a realised feed figure;
+  the mechanism ships), then WS-22's smolt pipeline, then WS-16, WS-24 and WS-25,
   in the order below. WS-31b is done (Yahoo removed from
   every data path); the only licence item left is negotiating NQSALMON/SISALMONI if a
   benchmark display is ever wanted.
@@ -334,17 +334,26 @@ when both the price and the feed numbers are caller-supplied; a stale/undated/de
 basket degrades the leg with the month named; no volume means no NOK totals; live
 payload on 2026-10-18 reads price 72.55 (W41), feed âˆ’29.39 (FRED 2026-07), cost 74.03,
 margin âˆ’1.48, break-even 74.03, 5.0 % feed-cut or FCR 1.23 to close it.
-**Open â€” WS-29b (level calibration):** the feed leg (29.39 NOK/kg salmon, +14.5 % over
-the 2024 audited 25.67) looks high against market evidence â€” BioMar's salmon-feed price
-fell below NOK 15/kg in Q1 2026 (iLaks, 2026-05-08) and realised feed cost was ~25
-NOK/kg in 2025 with âˆ’3.5 to âˆ’4.0 expected in 2026 (Fearnley via iLaks, 2025-08-18). If
-the 2026 realised figure is ~21.5, the model overstates the feed leg by about a third.
-**The deltas, break-even relationship and levers are differential and survive a level
-error; the level does not.** Steps: collect realised delivered-feed prices (producer
-contracts or a licensed series), recalibrate `INGREDIENT_TO_DELIVERED` (currently a
-2024-derived 1.86) and/or replace the fixed 2.00 USD/kg "other" line, add the resulting
-artifact to the accuracy registry, then bump `MARGIN_METHOD_VERSION`. Until then the
-level stays `modelled`, and the validation block keeps printing the gap.
+**WS-29b — mechanism shipped, data still open.** The feed leg (29.39 NOK/kg salmon,
++14.5 % over the 2024 audited 25.67) looks high against market evidence — BioMar's
+salmon-feed price fell below NOK 15/kg in Q1 2026 (iLaks, 2026-05-08) and realised feed
+cost was ~25 NOK/kg in 2025 with −3.5 to −4.0 expected in 2026 (Fearnley via iLaks,
+2025-08-18). If the 2026 realised figure is ~21.5, the model overstates the feed leg by
+about a third. **The deltas, break-even relationship and levers are differential and
+survive a level error; the level does not.**
+**Shipped (2026-10-18):** `core/market/feed_anchor.py` reads an operator-registered
+realised figure from `artifacts/feed_realised_prices.json` (template
+`feed_realised_prices.example.json`; NOK per kg of *harvested salmon*, 10–60, year 2008+
+and not in the future, stale after two years) and the bridge prefers it to the survey,
+reporting `anchor_source`, `anchor_scope`, `anchor_is_registered` and `anchor_stale`. A
+malformed file is ignored with a logged reason; with no anchor the note tells the
+operator how to register one. `tests/test_feed_anchor.py` (10). Checked 2026-10-18: the
+official 2025/2026 survey figures are not published, so none were added.
+**Still open:** obtain a defensible realised figure (a design partner's aggregate, or a
+licensed price series), recalibrate `INGREDIENT_TO_DELIVERED` (currently a 2024-derived
+1.86) and/or replace the fixed 2.00 USD/kg "other" line, add the resulting artifact to
+the accuracy registry, then bump `MARGIN_METHOD_VERSION`. Until then the level stays
+`modelled`, and the validation block keeps printing the gap.
 **Also open:** no premium gate was added for `/api/margin/*` â€” the paywall ladder is the
 owner's WS-20/26 decision; the bridge is ungated like the other cost-desk routes.
 
