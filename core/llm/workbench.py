@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 
 import structlog
 
+from core.llm.claim_check import verify
 from core.llm.grounding import PlatformContext, build_context
 
 log = structlog.get_logger(__name__)
@@ -47,9 +48,18 @@ RUN_KINDS: dict[str, dict] = {
     "lice_pressure_review": {
         "key": "lice_pressure_review",
         "name": "Lice pressure review",
-        "blurb": "Verified lice coverage against the weekly limit, and what the data cannot say",
+        "blurb": "Withdrawn until a verified lice source returns — see the notice",
         "reads": "Verified lice rows, § 8 limit, traffic-light decision, 2019/2025 event history",
         "credits": 1,
+        # WS-43: the last verified lice row on this deployment is 2026-W15. Selling a document
+        # whose subject feed is seven months dead is the cardinal sin with an invoice, so the
+        # run stays in the catalogue with its reason and does not take credits.
+        "sellable": False,
+        "withdrawn_reason": (
+            "no verified lice report exists on this deployment since 2026-W15, so the review "
+            "would describe dead data; credits already bought are redeemable against the "
+            "margin dossier or the origin landed-cost run"
+        ),
     },
 }
 
@@ -77,6 +87,7 @@ class WorkbenchDocument:
     mode: str  # model | digest
     sources: list[dict] = field(default_factory=list)
     usage: dict = field(default_factory=dict)
+    verification: dict = field(default_factory=dict)
     credits_spent: int = 0
     credits_after: int | None = None
     generated_at: str = ""
@@ -91,6 +102,7 @@ class WorkbenchDocument:
             "mode": self.mode,
             "sources": self.sources,
             "usage": self.usage,
+            "verification": self.verification,
             "credits_spent": self.credits_spent,
             "credits_after": self.credits_after,
             "generated_at": self.generated_at,
@@ -131,6 +143,11 @@ def _competitiveness_payload(index: dict) -> str:
         f"US spot used: {index.get('us_spot_usd_kg')} USD/kg",
         f"Duty basis: {index.get('tariff_basis')}",
         f"FX: {index.get('fx_rates')}",
+        # WS-43: the engine's own honesty fields, so the model cannot present a fallback
+        # spot or a constant FX rate as verified data.
+        f"Data quality: {index.get('data_quality')}",
+        f"FX fallbacks: {index.get('fx_fallbacks')}",
+        f"Fallback reason: {index.get('fallback_reason')}",
     ]
     for origin in index.get("origins") or []:
         lines.append(
@@ -149,8 +166,9 @@ def _digest(kind: str, context: PlatformContext, payload: str) -> str:
     lines = [
         f"# {RUN_KINDS[kind]['name']}",
         "",
-        "A model was not reachable, so this run returns the verified data itself rather than "
-        "generated prose. Every figure below is real; none is estimated.",
+        "A verified model document was not delivered for this run, so the verified data itself "
+        "is returned instead of generated prose. Every figure below carries its as_of and its "
+        "basis; none is estimated.",
         "",
         "## Verified facts",
     ]
@@ -233,6 +251,21 @@ class Workbench:
             document = _digest(kind, context, detail)
             mode = "digest"
 
+        # WS-43: verify the document before anyone is charged for it. An unmatched number
+        # withholds the prose — a caveat does not travel with a forwarded PDF, and the
+        # verified data does.
+        verification = verify(document, [fact.to_dict() for fact in context.facts])
+        if mode == "model" and not verification.clean:
+            log.warning(
+                "workbench.withheld",
+                kind=kind,
+                unmatched=len(verification.unverified),
+                numbers=verification.checked,
+            )
+            document = _digest(kind, context, detail)
+            mode = "withheld"
+            usage = {"input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
+
         elapsed = (dt.datetime.now(dt.UTC) - started).total_seconds() * 1000
         return WorkbenchDocument(
             kind=kind,
@@ -241,6 +274,7 @@ class Workbench:
             mode=mode,
             sources=context.sources(),
             usage=usage,
+            verification=verification.to_dict(),
             generated_at=dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
             degraded=context.degraded,
             latency_ms=round(elapsed, 1),

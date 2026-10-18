@@ -166,12 +166,15 @@ class LLMClient:
         max_tokens = max_tokens or settings.llm_max_tokens
         temperature = temperature if temperature is not None else settings.llm_temperature
 
-        # Budget check
+        # Budget check. An ops sentence must never travel as an answer (WS-43): it would be
+        # rendered as a document, labelled a model run and charged for.
         if not self.usage.within_budget():
             log.warning("llm.budget_exceeded", spent=self.usage.total_cost_usd)
             return LLMResponse(
-                content="[LLM budget limit reached for this month. Contact admin.]",
+                content="",
                 model=model,
+                error="monthly model budget exhausted; ask an admin to raise "
+                      "llm_monthly_budget_usd",
             )
 
         start = dt.datetime.now(dt.UTC)

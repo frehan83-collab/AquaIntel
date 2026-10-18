@@ -65,6 +65,17 @@ async def workbench_run(
             status_code=422,
             content={"error": "unknown_run", "available": list(RUN_KINDS.keys())},
         )
+    if not RUN_KINDS[kind].get("sellable", True):
+        # WS-43: a withdrawn run is refused with its reason, and takes no credit.
+        return JSONResponse(
+            status_code=409,
+            content={
+                "error": "run_withdrawn",
+                "kind": kind,
+                "message": RUN_KINDS[kind].get("withdrawn_reason"),
+                "runs_url": "/api/workbench/catalog",
+            },
+        )
     if user is None:
         return JSONResponse(
             status_code=402,
@@ -111,10 +122,15 @@ async def workbench_run(
     document.credits_after = credits_after
     payload = document.to_dict()
     payload["charged"] = document.mode == "model"
-    payload["charge_note"] = (
-        "one credit spent"
-        if document.mode == "model"
-        else "no credit spent: the model was unreachable, so this run returned the verified data itself"
+    payload["charge_note"] = {
+        "model": "one credit spent",
+        "withheld": (
+            "no credit spent: the generated document contained a number the verified data "
+            "could not support, so the prose was withheld and the verified data delivered"
+        ),
+    }.get(
+        document.mode,
+        "no credit spent: the model was unreachable, so this run returned the verified data itself",
     )
     return payload
 

@@ -1,0 +1,133 @@
+"""WS-43 — a document is verified before it is charged, or it is withheld.
+
+The council's rank 1. The chat had a numeric checker; the NOK 149 credit run did not, so an
+invented number returned `degraded: False`, was labelled a model run and spent a credit. And
+the budget sentinel was returned as *content*, so an ops sentence could be written as the
+document and billed.
+
+These tests pin the four consequences: an unsupported number withholds the prose and costs
+nothing, a verified document is charged, the budget sentinel never becomes content, and a
+withdrawn run is refused without taking a credit.
+"""
+from __future__ import annotations
+
+import pytest
+from fastapi.testclient import TestClient
+
+from core.auth import create_token
+from core.llm import credits as ledger
+from core.llm.client import LLMClient
+from core.llm.workbench import RUN_KINDS, Workbench
+
+FACTS_DOC = "## What the numbers say\n- Spot 72.55 NOK/kg (2026-W41).\n"
+
+
+class _Response:
+    model = "test-model"
+    input_tokens = 18000
+    output_tokens = 900
+    cost_usd = 0.067
+    error = None
+
+    def __init__(self, content: str) -> None:
+        self.content = content
+
+
+@pytest.fixture()
+def client():
+    from core.api import app
+
+    return TestClient(app)
+
+
+@pytest.mark.asyncio
+async def test_a_document_with_an_unsupported_number_is_withheld_and_free():
+    async def complete(**kwargs):
+        return _Response(FACTS_DOC + "- Mortality ran at 30 % this year.\n")
+
+    document = await Workbench(complete=complete).run("margin_dossier")
+
+    assert document.mode == "withheld"
+    assert document.credits_spent == 0
+    assert document.usage["cost_usd"] == 0.0
+    assert document.verification["clean"] is False
+    assert any(claim["token"] == "30" for claim in document.verification["unverified"])
+    # The verified data still reaches the customer.
+    assert "as_of" in document.document.lower() or "verified facts" in document.document.lower()
+
+
+@pytest.mark.asyncio
+async def test_a_clean_document_is_a_model_run_and_is_charged_later_by_the_route():
+    async def complete(**kwargs):
+        return _Response(FACTS_DOC)
+
+    document = await Workbench(complete=complete).run("margin_dossier")
+
+    assert document.mode == "model"
+    assert document.verification["clean"] is True
+    assert document.usage["cost_usd"] == pytest.approx(0.067)
+
+
+@pytest.mark.asyncio
+async def test_the_budget_sentinel_is_an_error_not_a_document(monkeypatch):
+    client_llm = LLMClient()
+
+    def over_budget() -> bool:
+        return False
+
+    monkeypatch.setattr(client_llm.usage, "within_budget", over_budget)
+    response = await client_llm.complete(prompt="q", system="s")
+
+    assert response.content == ""
+    assert response.error and "budget" in response.error
+    assert response.ok is False
+
+
+def test_a_withdrawn_run_is_refused_without_taking_a_credit(client, monkeypatch):
+    spent = {"called": False}
+
+    async def five(user_key):
+        return 5
+
+    async def fake_spend(*args, **kwargs):  # pragma: no cover - must not run
+        spent["called"] = True
+        return 4
+
+    monkeypatch.setattr(ledger, "balance", five)
+    monkeypatch.setattr(ledger, "spend", fake_spend)
+
+    response = client.post(
+        "/api/workbench/run",
+        json={"kind": "lice_pressure_review"},
+        headers={"Authorization": f"Bearer {create_token(7, 'a@b.no', 'operator')}"},
+    )
+    assert response.status_code == 409
+    body = response.json()
+    assert body["error"] == "run_withdrawn"
+    assert "2026-W15" in body["message"]
+    assert spent["called"] is False
+
+
+def test_the_withdrawn_run_states_a_redemption_path():
+    reason = RUN_KINDS["lice_pressure_review"]["withdrawn_reason"]
+    assert RUN_KINDS["lice_pressure_review"]["sellable"] is False
+    assert "redeemable" in reason
+
+
+def test_the_origin_payload_carries_the_engine_provenance():
+    from core.llm.workbench import _competitiveness_payload
+
+    text = _competitiveness_payload(
+        {
+            "us_spot_usd_kg": 8.5,
+            "tariff_basis": "assessed on transaction value",
+            "fx_rates": {"NOK": 0.106},
+            "data_quality": "partial_fallback",
+            "fx_fallbacks": ["CLP"],
+            "fallback_reason": "US spot fell back to the undated constant",
+            "origins": [],
+        }
+    )
+    assert "partial_fallback" in text
+    assert "CLP" in text
+    assert "undated constant" in text
