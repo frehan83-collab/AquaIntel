@@ -131,3 +131,51 @@ def test_the_origin_payload_carries_the_engine_provenance():
     assert "partial_fallback" in text
     assert "CLP" in text
     assert "undated constant" in text
+
+def test_a_document_gets_a_receipt_so_it_can_be_traced(client, monkeypatch):
+    """WS-54: a forwarded PDF must be traceable to the facts and verdict it was built from."""
+    from core.llm import credits as ledger
+    from core.llm import receipts as receipts_module
+    from core.llm.workbench import WorkbenchDocument
+
+    recorded = {}
+
+    async def one_credit(user_key):
+        return 5
+
+    async def fake_spend(*args, **kwargs):
+        return 4
+
+    async def fake_run(kind, *, user_id="anonymous"):
+        return WorkbenchDocument(
+            kind=kind,
+            title="Origin landed cost",
+            document="## What the numbers say",
+            mode="model",
+            sources=[{"key": "tariff.us_norway", "as_of": "2026-07-24"}],
+            verification={"checked": 4, "unverified": [], "clean": True},
+            usage={"input_tokens": 1200, "output_tokens": 400, "cost_usd": 0.02},
+        )
+
+    async def fake_record(user_key, answer, *, kind="chat"):
+        recorded["kind"] = kind
+        recorded["sources"] = answer.get("sources")
+        return 99
+
+    monkeypatch.setattr(ledger, "balance", one_credit)
+    monkeypatch.setattr(ledger, "spend", fake_spend)
+    monkeypatch.setattr(receipts_module, "record", fake_record)
+    monkeypatch.setattr(
+        "core.routers.workbench_routes.workbench",
+        type("W", (), {"run": staticmethod(fake_run)})(),
+    )
+
+    response = client.post(
+        "/api/workbench/run",
+        json={"kind": "origin_landed_cost"},
+        headers={"Authorization": f"Bearer {create_token(7, 'a@b.no', 'operator')}"},
+    )
+    assert response.status_code == 200
+    assert response.json()["receipt_id"] == 99
+    assert recorded["kind"] == "document"
+    assert recorded["sources"][0]["key"] == "tariff.us_norway"

@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 from core.auth import TokenPayload, get_current_user
 from core.billing.credits_catalog import CREDIT_VALIDITY_NOTE, catalog, pack
 from core.llm import credits as credit_ledger
+from core.llm import receipts as answer_receipts
 from core.llm.workbench import RUN_KINDS, workbench
 
 log = structlog.get_logger(__name__)
@@ -121,6 +122,21 @@ async def workbench_run(
         document.credits_spent = 1
     document.credits_after = credits_after
     payload = document.to_dict()
+    # WS-54: a document is an answer too — same receipt, so a forwarded PDF can be traced to
+    # the facts, their dates and the claim-check verdict it was built from.
+    payload["receipt_id"] = await answer_receipts.record(
+        key,
+        {
+            "mode": "model" if document.mode == "model" else "unavailable",
+            "model": "",
+            "sources": document.sources,
+            "verification": document.verification,
+            "usage": document.usage,
+            "latency_ms": document.latency_ms,
+            "question": f"{kind} for {user.user_id}",
+        },
+        kind="document",
+    )
     payload["charged"] = document.mode == "model"
     payload["charge_note"] = {
         "model": "one credit spent",
