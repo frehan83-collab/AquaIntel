@@ -96,6 +96,20 @@ added `tests/test_migrations.py`.
 
 ## Session log
 
+- 2026-10-18 · **Autonomous hardening round 2** (research → council → execution).
+  Research: satellite/HAB data prices and licences, a data-API price catalogue, and a
+  decision-grade review of HAB science; a three-lens council rejected a new
+  finer-grained satellite product and ordered *fix before add*. Shipped: **WS-28a**
+  (one gate stops four agents writing directional rows on listed shares; 14 tests),
+  **WS-30** (ROI calculator defaults to zero and reports a break-even instead of a 228x
+  multiple; 17 tests), **WS-31** (FX from Norges Bank official rates, Yahoo FX removed,
+  attribution + FRED notice; open: Yahoo equity/commodity quotes), **WS-32**
+  (satellite simulator deleted, verified-scene provenance, no "Action required" from
+  simulated values; 8 tests), **WS-33** (bloom page crash, freshness from the newest
+  observation, dead trend + Alembic 021, alert delivery truth, brief count; 17 tests +
+  migration test) and **WS-34** (`/api/bloom/context`: dated IMR Algestatus link, sourced
+  event history, stated limits). New docs: `docs/DATA_SOURCES_COST.md`, new tests
+  `test_directional_writes_gate`, `test_satellite_honesty`, `test_bloom_honesty`.
 - 2026-10-18 · **WS-29 weekly margin bridge** (commercial hardening, not a RUN-1
   workstream). `core/market/margin_bridge.py` (method `1.0.0`), `GET /api/margin/bridge`
   + `/api/margin/bridge/{locality_no}`, `MarginBridgePanel` on `/feed-cost` replacing

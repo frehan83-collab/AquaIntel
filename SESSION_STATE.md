@@ -1,9 +1,36 @@
-CURRENT: WS-29 weekly margin bridge shipped (2026-10-18) — see docs/HANDOVER.md §5
+CURRENT: WS-28a + WS-30–34 shipped (2026-10-18) — see docs/HANDOVER.md §5
 LAST_UPDATED: 2026-10-18
-SESSIONS: 38+ (15 commits pushed; WS-29 pending commit)
+SESSIONS: 38+ (15 commits pushed; WS-29 and the WS-28a/30–34 round pending commit)
 REPOSITORY: https://github.com/frehan83-collab/AquaIntel (public)
-HANDOVER: docs/HANDOVER.md — verified state, gate commands, workstream backlog WS-1..WS-29b, trap list (21 traps)
-VERSION: 2.6.0 · 347 paths · 1276 tests collected · 20 migrations (head 020)
+HANDOVER: docs/HANDOVER.md — verified state, gate commands, workstream backlog WS-1..WS-34b, trap list (23 traps)
+VERSION: 2.6.0 · 348 paths · 1334 tests collected · 21 migrations (head 021)
+
+## WS-28a + WS-30–34 (2026-10-18) — fix before add
+
+Research (satellite/HAB prices, data licences, decision-grade HAB science) + a
+three-lens council. The council rejected a new finer-grained satellite product and
+ordered: remove fabrication, fix the bloom surface, license the FX, then add dated
+context.
+
+- **WS-32** satellite honesty: seeded-RNG simulator deleted, no scene = no reading
+  (`n_readings_verified`, `scene_dates`, `missing_reason`), `is_live` from verified
+  scenes, NDVI relabelled surface scum, catalogue drops the fabricated products,
+  provenance on all `/api/satellite/*`. 8 tests.
+- **WS-33** bloom truth: `/bloom` crash fixed, freshness from the newest observation
+  (196 days → degraded with age), dead self-compared trend fixed + **Alembic 021**
+  (nulls 123 045 rows, relabels 842 undeliverable alerts `legacy_unknown`), alert
+  delivery statuses, real Mattilsynet disease count, brief counts distinct localities.
+  17 tests + migration test.
+- **WS-34** bloom context: `/api/bloom/context` — dated IMR Algestatus link (no API),
+  three sourced mortality events, five stated limits.
+- **WS-28a** one gate (`equity_signals.may_persist_directional`) stops four agents
+  writing trade directions on listed shares. 14 tests.
+- **WS-30** ROI calculator: claim inputs default to zero, break-even reported
+  (`benefit_needed_nok`) instead of a 228x/1 693x multiple. 17 tests.
+- **WS-31** FX from official Norges Bank rates (Yahoo FX removed, licence), fallbacks
+  recorded, attribution footer + FRED notice. Open: Yahoo equity/commodity quotes.
+- Docs: `docs/DATA_SOURCES_COST.md` (prices and licences, the answer to "what does
+  satellite/algae data cost"). Open: WS-31b, WS-29b, the remaining WS-22 numbers.
 
 ## WS-29 (2026-10-18) — the weekly margin bridge
 `core/market/margin_bridge.py` (method 1.0.0) + `GET /api/margin/bridge[/{locality_no}]`

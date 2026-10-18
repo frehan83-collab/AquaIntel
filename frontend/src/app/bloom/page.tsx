@@ -29,7 +29,8 @@ interface RiskAssessment {
   risk_score: number;
   chl_a: number;
   sst: number | null;
-  chl_a_trend: number;
+  /** null when no earlier observation exists — unknown, not "no change" (WS-33). */
+  chl_a_trend: number | null;
   chl_a_sparkline: number[];
   assessed_at: string;
   factors: string;
@@ -68,7 +69,15 @@ function RiskBadge({ level }: { level: string }) {
   );
 }
 
-function TrendIcon({ trend }: { trend: number }) {
+function TrendIcon({ trend }: { trend: number | null }) {
+  // WS-33: null means "no earlier observation", not "no change" — show that.
+  if (trend == null) {
+    return (
+      <span className="text-[10px] text-[var(--text-secondary)]" title="No earlier observation for this cell">
+        n/a
+      </span>
+    );
+  }
   if (trend > 0.3) return <ArrowUp className="w-3.5 h-3.5 text-rose-400" />;
   if (trend < -0.3) return <ArrowDown className="w-3.5 h-3.5 text-emerald-400" />;
   return <Minus className="w-3.5 h-3.5 text-[var(--text-secondary)]" />;
@@ -125,14 +134,31 @@ export default function BloomPage() {
   const [filter, setFilter] = useState<string>("ALL");
   const [sortAsc, setSortAsc] = useState(false); // false = high risk first
   const [loading, setLoading] = useState(true);
+  // WS-33: the routes return {items, data_provenance, observed_at, age_days, dataset_note};
+  // the page used to assign the envelope to `risks` and call .filter() on it, which threw
+  // for every user. The provenance is now rendered instead of a hardcoded live badge.
+  const [provenance, setProvenance] = useState<any>(null);
+  const [observedAt, setObservedAt] = useState<string | null>(null);
+  const [ageDays, setAgeDays] = useState<number | null>(null);
+  const [datasetNote, setDatasetNote] = useState<string | null>(null);
+  // WS-34: dated context (IMR Algestatus link, regional event history, stated limits).
+  const [context, setContext] = useState<any>(null);
 
   useEffect(() => {
     Promise.all([
-      api.bloomRisk().catch(() => []),
-      api.bloomAlerts().catch(() => []),
-    ]).then(([r, a]) => {
-      setRisks(r);
-      setAlerts(a);
+      api.bloomRisk().catch(() => null),
+      api.bloomAlerts().catch(() => null),
+      api.bloomContext().catch(() => null),
+    ]).then(([riskPayload, alertPayload, contextPayload]) => {
+      const riskBody: any = riskPayload ?? {};
+      const alertBody: any = alertPayload ?? {};
+      setRisks(Array.isArray(riskBody) ? riskBody : riskBody.items ?? []);
+      setAlerts(Array.isArray(alertBody) ? alertBody : alertBody.items ?? []);
+      setContext(contextPayload ?? null);
+      setProvenance(riskBody?.data_provenance ?? null);
+      setObservedAt(riskBody?.observed_at ?? null);
+      setAgeDays(typeof riskBody?.age_days === "number" ? riskBody.age_days : null);
+      setDatasetNote(riskBody?.dataset_note ?? null);
       setLoading(false);
     });
   }, []);
@@ -179,7 +205,8 @@ export default function BloomPage() {
             Algal Bloom Early Warning
           </h1>
           <p className="text-[var(--text-secondary)] text-sm mt-1">
-            Satellite chlorophyll-a monitoring via Copernicus Marine Service
+            Satellite chlorophyll-a monitoring via Copernicus Marine Service &mdash; a
+            chlorophyll band, not a toxicity measurement
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -201,12 +228,72 @@ export default function BloomPage() {
             )}>
             CSV
           </OcButton>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] backdrop-blur border border-white/[0.06]">
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-            <span className="text-xs text-emerald-400 font-medium">Live monitoring</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border bg-white/[0.03]"
+            title={provenance?.fallback_reason ?? undefined}>
+            <div className={`w-2 h-2 rounded-full ${
+              provenance?.is_live ? "bg-emerald-400" : "bg-amber-400"
+            }`} />
+            <span className={`text-xs font-medium ${
+              provenance?.is_live ? "text-emerald-400" : "text-amber-400"
+            }`}>
+              {/* WS-33: freshness is the served observation, never a literal badge. */}
+              {provenance?.is_live
+                ? "Current observation"
+                : ageDays != null
+                  ? `Stale — ${observedAt ? String(observedAt).slice(0, 10) : "last scene"} (${ageDays} days)`
+                  : "No current observation"}
+            </span>
           </div>
         </div>
       </motion.div>
+
+      {/* WS-33: what this surface is and is not. Chlorophyll is biomass; the band is not
+          a toxicity or mortality probability, and it cannot see beneath the surface. */}
+      <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 text-[10px] text-[var(--text-secondary)] space-y-1">
+        <p>
+          <strong className="text-[var(--text-primary)]">What this shows:</strong> a
+          satellite chlorophyll-a product banded against fixed thresholds (2 / 5 / 10
+          mg/m³). Chlorophyll is <em>biomass</em>, not toxicity: a high band means more
+          phytoplankton, not a harmful bloom, and it names no species.
+        </p>
+        <p>
+          <strong className="text-[var(--text-primary)]">What it cannot show:</strong>{" "}
+          species or toxin, cell counts, fish welfare, subsurface/pycnocline blooms (the
+          2019 <em>Chrysochromulina</em> event was concentrated around 12 m), or a
+          farm-level measurement — one pixel spans kilometres. Confirm with cell counts and
+          the IMR Algestatus report before acting.
+        </p>
+        {datasetNote && <p className="text-amber-300/80">{datasetNote}</p>}
+        {context?.imr_algeinfo && (
+          <p>
+            <strong className="text-[var(--text-primary)]">Official advisory:</strong>{" "}
+            <a
+              href={context.imr_algeinfo.url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-ocean-300 underline"
+            >
+              {context.imr_algeinfo.name}
+            </a>{" "}
+            ({context.imr_algeinfo.publisher}, weekly, no API — link checked{" "}
+            {context.imr_algeinfo.checked_at}).
+          </p>
+        )}
+        {Array.isArray(context?.regional_events) && context.regional_events.length > 0 && (
+          <div>
+            <strong className="text-[var(--text-primary)]">Regional history:</strong>{" "}
+            {context.regional_events.map((event: any, index: number) => (
+              <span key={index}>
+                {index > 0 && " · "}
+                {event.period} {event.species} ({event.areas}) — {event.loss}
+              </span>
+            ))}
+            <span className="block opacity-70">
+              {context.note} Not a probability, and no bloom is predicted here.
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -418,7 +505,7 @@ export default function BloomPage() {
                           {r.chl_a_sparkline && r.chl_a_sparkline.length >= 2 ? (
                             <ChlSparkline data={r.chl_a_sparkline} />
                           ) : (
-                            <TrendIcon trend={r.chl_a_trend || 0} />
+                            <TrendIcon trend={r.chl_a_trend ?? null} />
                           )}
                         </td>
                       </motion.tr>

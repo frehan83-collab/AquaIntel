@@ -71,6 +71,60 @@ class TestValidation:
             roi.calculate("producer", {"annual_tonnes": 1, "made_up": 2})
 
 
+class TestBreakEven:
+    """WS-30: claim-like inputs start at zero; the calculator answers the useful
+    question ("what would have to be true?") instead of printing a 228x multiple."""
+
+    CLAIM_KEYS = {
+        "producer": ("treatments_avoidable_pct", "harvest_timing_gain_pct"),
+        "processor": ("contract_risk_avoided_nok", "share_of_volume_affected"),
+        "desk": ("basis_improvement_nok_kg", "minutes_saved_per_decision"),
+        "insurer": ("loss_ratio_improvement_pct", "admin_hours_saved"),
+    }
+
+    def test_every_claim_defaults_to_zero(self):
+        for icp, keys in self.CLAIM_KEYS.items():
+            defaults = roi.ICP_DEFAULTS[icp]
+            for key in keys:
+                assert defaults[key] == 0, f"{icp}.{key} still defaults to a claim"
+
+    def test_default_answer_is_awaiting_inputs_not_a_multiple(self):
+        for icp in roi.CALCULATORS:
+            result = roi.calculate(icp)
+            assert result["status"] == "awaiting_customer_inputs", icp
+            assert result["benefit_nok"] == 0, icp
+            assert result["paid_back"] is None, icp
+            assert result["net_nok"] == -result["cost_nok"], icp
+            # and it always says what would be needed instead
+            assert result["break_even"]["benefit_needed_nok"] == result["cost_nok"], icp
+
+    def test_supplying_the_break_even_value_reaches_payback(self):
+        for icp, driver in roi.PRIMARY_DRIVER.items():
+            awaiting = roi.calculate(icp)
+            target = awaiting["break_even"]["value"]
+            assert target is not None and target > 0, icp
+            paid = roi.calculate(icp, {driver: target})
+            assert paid["status"] == "computed", icp
+            assert paid["benefit_nok"] >= paid["cost_nok"] * 0.999, icp
+            assert paid["paid_back"] is True, icp
+
+    def test_the_processors_hardcoded_half_is_gone(self):
+        source = roi.PROCESSOR_DEFAULTS
+        assert "share_of_volume_affected" in source
+        assert source["share_of_volume_affected"] == 0
+        line = next(
+            item for item in roi.calculate("processor")["lines"] if "Margin protected" in item["name"]
+        )
+        assert "0.5" not in line["formula"]
+        assert "share_of_volume_affected" in line["formula"]
+
+    def test_a_supplied_claim_produces_a_computed_result(self):
+        result = roi.calculate("producer", {"treatments_avoidable_pct": 10})
+        assert result["status"] == "computed"
+        assert result["benefit_nok"] > 0
+        assert result["roi_multiple"] is not None
+
+
 class TestRoiEndpoints:
     def test_get_roi_defaults(self, client):
         body = client.get("/api/gtm/roi", params={"icp": "producer"}).json()

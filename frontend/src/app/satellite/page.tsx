@@ -524,13 +524,15 @@ export default function SatellitePage() {
             ? "bg-emerald-500/[0.06] border-emerald-500/20"
             : "bg-amber-500/[0.06] border-amber-500/20"
         }`}>
-          <Satellite className={`w-4 h-4 ${status.configured ? "text-emerald-400" : "text-amber-400"}`} />
+          <Satellite className={`w-4 h-4 ${status.is_live ? "text-emerald-400" : "text-amber-400"}`} />
           <div className="flex-1">
-            <span className={`text-xs font-semibold ${status.configured ? "text-emerald-400" : "text-amber-400"}`}>
-              {status.configured ? "LIVE" : "SIMULATED MODE"}
+            {/* WS-32: "LIVE" is a property of the data (a scene with a date), never of
+                the configuration. Without a verified scene there is nothing to show. */}
+            <span className={`text-xs font-semibold ${status.is_live ? "text-emerald-400" : "text-amber-400"}`}>
+              {status.is_live ? "VERIFIED SCENES" : "NO VERIFIED SCENE"}
             </span>
             <span className="text-[10px] text-[var(--text-secondary)] ml-2">
-              {status.note}
+              {status.missing_reason || status.note}
             </span>
           </div>
           <span className="text-[10px] text-[var(--text-secondary)]">
@@ -546,18 +548,26 @@ export default function SatellitePage() {
             value={snapshot.n_farms_queried || 0}
             icon={Satellite} delay={0} />
           <KPICard label="Readings"
-            value={snapshot.n_readings || 0}
+            value={snapshot.n_readings_verified ?? snapshot.n_readings ?? 0}
             icon={Eye} delay={0.03} />
           <KPICard label="Anomalies"
             value={snapshot.n_anomalies || 0}
-            deltaType={snapshot.n_anomalies > 0 ? "negative" : "positive"}
-            delta={snapshot.n_anomalies > 0 ? "Action required" : "All clear"}
+            deltaType={snapshot.n_anomalies > 0 ? "negative" : undefined}
+            // A surface anomaly is a pointer to look at, not an instruction.
+            delta={
+              snapshot.n_readings
+                ? snapshot.n_anomalies > 0
+                  ? "Surface signal — confirm with counts"
+                  : "No surface anomaly in the scenes returned"
+                : "No scene returned"
+            }
             icon={AlertTriangle} delay={0.06} />
           <KPICard label="Cloud-Free"
-            value={`${snapshot.cloud_free_pct || 0}%`}
+            value={snapshot.n_readings ? `${snapshot.cloud_free_pct || 0}%` : "\u2014"}
             icon={Cloud} delay={0.09} />
           <KPICard label="Data Source"
-            value={summary.is_live ? "Sentinel-2" : "Simulated"}
+            value={summary.is_live ? "Sentinel-2" : "No scene"}
+            delta={summary.is_live ? undefined : snapshot.missing_reason || undefined}
             icon={Activity} delay={0.12} />
         </div>
       )}
@@ -664,9 +674,11 @@ export default function SatellitePage() {
             <Satellite className="w-10 h-10 mx-auto text-violet-400/30 mb-3" />
             <p className="text-sm text-[var(--text-secondary)] mb-1">Run a satellite scan for detailed farm-level imagery analysis</p>
             <p className="text-[10px] text-[var(--text-secondary)] mb-4 max-w-md mx-auto">
-              Queries Sentinel-2 imagery for water quality indices (NDWI, NDVI, turbidity),
-              surface anomaly detection, and bloom confirmation. Currently in simulated mode
-              &mdash; configure CDSE credentials for live 10m imagery.
+              A scan requests Sentinel-2 L2A scenes and reports the surface indices it
+              receives (NDWI, NDVI, turbidity). It shows no reading without a verified
+              scene, and a surface anomaly is a pointer to look &mdash; not a bloom
+              confirmation, a species identification or a toxicity measurement. Configure
+              the CDSE credentials to request imagery.
             </p>
             <OcButton variant="primary" size="md" onClick={runScan} loading={scanning}
               leftIcon={<Eye className="w-4 h-4" />}>

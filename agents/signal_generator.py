@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from agents.base import BaseAgent
 from agents.correlation_engine import CorrelationEngineAgent, ImpactScore
+from core.legal.equity_signals import may_persist_directional
 from core.models import Signal, AuditLog
 from core.async_db import get_async_session
 
@@ -108,6 +109,19 @@ class SignalGeneratorAgent(BaseAgent):
 
     @staticmethod
     async def _persist(signal: Signal) -> None:
+        """Persist a directional row — withheld while the WS-20/WS-28 withdrawal stands.
+
+        The gate is ``core.legal.equity_signals.may_persist_directional``; every writer
+        checks the same definition, and the audit row records that the write was
+        skipped so an operator can see the agent is alive and deliberately quiet.
+        """
+        if not may_persist_directional(instrument="equity"):
+            async with get_async_session() as s:
+                s.add(AuditLog(
+                    event_type="signal_withheld",
+                    detail=f"{signal.ticker} {signal.direction} not persisted (WS-28)",
+                ))
+            return
         async with get_async_session() as s:
             s.add(signal)
             s.add(AuditLog(

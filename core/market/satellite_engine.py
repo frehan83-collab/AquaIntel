@@ -102,12 +102,23 @@ class SatelliteSnapshot:
     readings: list[dict] = field(default_factory=list)
     anomalies: list[dict] = field(default_factory=list)
     summary: dict = field(default_factory=dict)
+    # WS-32: a reading exists only where a scene was actually returned. These fields
+    # let a caller tell "no scene" from "no anomaly" — the engine used to invent
+    # readings with a seeded RNG when CDSE was unconfigured.
+    n_readings_verified: int = 0
+    n_readings_unverified: int = 0
+    scene_dates: list[str] = field(default_factory=list)
+    missing_reason: str | None = None
 
 
 class SatelliteEngine:
     """
     Queries Sentinel-2 imagery for salmon farm locations.
-    Falls back to simulated data if CDSE credentials not configured.
+
+    WS-32 (2026-10-18): there is no simulated fallback. A farm without a real scene
+    produces no reading and the snapshot names why (``missing_reason``). Sentinel-2
+    NDVI is a surface-scum/vegetation signal, not a chlorophyll or toxicity
+    measurement, and the anomaly labels now say that instead of calling a bloom.
     """
 
     def __init__(self) -> None:
@@ -188,51 +199,6 @@ class SatelliteEngine:
             return None
         return None
 
-    def _simulate_reading(self, farm: dict, date: str) -> FarmSatelliteReading:
-        """Generate realistic simulated satellite reading when CDSE not configured."""
-        rng = np.random.default_rng(hash(farm["locality_no"]) % 2**31)
-
-        # Realistic coastal water values
-        ndwi = round(float(rng.normal(0.3, 0.08)), 4)  # Water-dominant
-        ndvi = round(float(rng.normal(-0.15, 0.05)), 4)  # Low for water
-        turbidity = round(float(rng.normal(0.6, 0.15)), 4)
-        nir = round(float(rng.normal(0.05, 0.02)), 4)
-        cloud_pct = round(float(rng.uniform(0, 40)), 1)
-
-        # Detect anomalies
-        anomaly = False
-        anomaly_type = ""
-        anomaly_detail = ""
-
-        if ndvi > 0.05:  # Unusual vegetation signal in water = possible HAB
-            anomaly = True
-            anomaly_type = "possible_bloom"
-            anomaly_detail = f"Elevated NDVI ({ndvi}) in water — possible algal bloom"
-        elif turbidity > 0.9:  # High turbidity = vessel activity or mortality
-            anomaly = True
-            anomaly_type = "surface_disturbance"
-            anomaly_detail = f"High turbidity ({turbidity}) — possible harvest/treatment activity"
-        elif nir > 0.12:  # High NIR reflectance in water = surface material
-            anomaly = True
-            anomaly_type = "surface_anomaly"
-            anomaly_detail = f"Elevated NIR ({nir}) — possible surface material (mortality/debris)"
-
-        return FarmSatelliteReading(
-            locality_no=farm["locality_no"],
-            name=farm["name"],
-            lat=farm["lat"],
-            lon=farm["lon"],
-            date=date,
-            ndwi=ndwi,
-            ndvi=ndvi,
-            turbidity=turbidity,
-            cloud_pct=cloud_pct,
-            nir_reflectance=nir,
-            anomaly_detected=anomaly,
-            anomaly_type=anomaly_type,
-            anomaly_detail=anomaly_detail,
-        )
-
     async def scan_farms(self, n_farms: int = 50) -> SatelliteSnapshot:
         """Scan farm locations for satellite anomalies."""
         now = dt.datetime.now(dt.UTC)
@@ -258,6 +224,40 @@ class SatelliteEngine:
 
         date_str = now.strftime("%Y-%m-%d")
         readings: list[FarmSatelliteReading] = []
+        unverified = 0
+        if not SH_CONFIGURED:
+            # Without credentials no scene was requested at all: return an empty,
+            # explicitly unavailable snapshot rather than invented values.
+            snapshot = SatelliteSnapshot(
+                generated_at=now.isoformat(),
+                date_range="",
+                n_farms_queried=len(farms),
+                n_readings=0,
+                n_anomalies=0,
+                cloud_free_pct=0.0,
+                readings=[],
+                anomalies=[],
+                summary={
+                    "data_source": "none (CDSE credentials not configured)",
+                    "is_live": False,
+                    "data_quality": "unavailable",
+                    "confidence": 0.0,
+                    # Sentinel-2 NDVI is not a chlorophyll measurement; say what the
+                    # product would be if it existed.
+                    "measurement": "surface NDVI/turbidity (Sentinel-2), not chlorophyll",
+                },
+                n_readings_verified=0,
+                n_readings_unverified=0,
+                scene_dates=[],
+                missing_reason=(
+                    "CDSE credentials are not configured, so no Sentinel-2 scene was "
+                    "requested; there is no reading to show"
+                ),
+            )
+            self._cache = snapshot
+            self._cache_time = now
+            log.info("satellite.scan_unconfigured", n_farms=len(farms))
+            return snapshot
 
         for farm in farms:
             if SH_CONFIGURED:
@@ -269,10 +269,17 @@ class SatelliteEngine:
                     anomaly = False
                     anomaly_type = ""
                     anomaly_detail = ""
+                    # WS-32: NDVI over water is a surface scum/vegetation signal,
+                    # not a bloom confirmation. The label must not imply a species,
+                    # toxicity or a harmful algal bloom.
                     if result["ndvi"] > 0.05:
                         anomaly = True
-                        anomaly_type = "possible_bloom"
-                        anomaly_detail = f"Elevated NDVI ({result['ndvi']}) in water"
+                        anomaly_type = "surface_scum_or_vegetation"
+                        anomaly_detail = (
+                            f"Elevated NDVI ({result['ndvi']}) over water — possible surface "
+                            "scum or floating vegetation; not a chlorophyll or toxicity "
+                            "measurement"
+                        )
                     elif result["turbidity"] > 0.9:
                         anomaly = True
                         anomaly_type = "surface_disturbance"
@@ -295,8 +302,9 @@ class SatelliteEngine:
                     ))
                     continue
 
-            # Fallback: simulated reading
-            readings.append(self._simulate_reading(farm, date_str))
+            # No scene for this farm: no reading. Counting it keeps "no scene" apart
+            # from "no anomaly" in the summary.
+            unverified += 1
 
         # Build snapshot
         anomalies = [r for r in readings if r.anomaly_detected]
@@ -324,11 +332,24 @@ class SatelliteEngine:
                 "avg_ndvi": round(float(np.mean(ndvi_vals)), 4) if ndvi_vals else 0,
                 "avg_turbidity": round(float(np.mean(turb_vals)), 4) if turb_vals else 0,
                 "anomaly_rate_pct": round(len(anomalies) / max(len(readings), 1) * 100, 1),
-                "data_source": "Sentinel-2 L2A (CDSE)" if SH_CONFIGURED else "Simulated (configure CDSE credentials for live data)",
-                "is_live": bool(SH_CONFIGURED),
-                "data_quality": "live" if SH_CONFIGURED else "simulated",
-                "confidence": 0.9 if SH_CONFIGURED else 0.0,
+                "data_source": "Sentinel-2 L2A (CDSE)" if readings else "none",
+                # Live means a scene with a date, never that credentials exist.
+                "is_live": bool(readings),
+                "data_quality": "live" if readings else "unavailable",
+                "confidence": 0.6 if readings else 0.0,
+                "measurement": "surface NDVI/turbidity (Sentinel-2), not chlorophyll",
+                "anomaly_meaning": (
+                    "surface scum / turbidity / surface material — not a harmful algal "
+                    "bloom confirmation, species identification or toxicity measurement"
+                ),
             },
+            n_readings_verified=len(readings),
+            n_readings_unverified=unverified,
+            scene_dates=sorted({r.date for r in readings}),
+            missing_reason=(
+                None if readings
+                else "no farm returned a Sentinel-2 scene for this window"
+            ),
         )
 
         self._cache = snapshot
@@ -344,38 +365,48 @@ class SatelliteEngine:
 
     def get_products(self) -> list[dict]:
         """List available satellite intelligence products."""
+        # WS-32: what Sentinel-2 can actually show at 10-20 m. It cannot confirm a
+        # harmful algal bloom, identify a species or measure toxicity; a surface
+        # anomaly is a pointer to look, not a diagnosis. The cage-census product was
+        # removed: no object detection is implemented and it returned no imagery.
         return [
             {
-                "id": "hab_confirmation",
-                "name": "HAB Bloom Confirmation",
-                "description": "Confirm CMEMS chlorophyll alerts with Sentinel-2 RGB true-color imagery",
-                "index": "NDVI > 0.05 in water",
+                "id": "surface_scum_signal",
+                "name": "Surface scum / vegetation signal",
+                "description": (
+                    "Elevated NDVI over water points at surface scum or floating "
+                    "vegetation. It is not a chlorophyll measurement, a species "
+                    "identification or a toxicity test — confirm with cell counts."
+                ),
+                "index": "NDVI > 0.05 over water",
                 "resolution": "10m",
-                "revisit": "5 days",
+                "revisit": "~5 days at Norwegian latitudes",
+                "validated": False,
             },
             {
-                "id": "harvest_detection",
-                "name": "Harvest Activity Detection",
-                "description": "Detect vessel activity and surface disturbance near farm cages",
-                "index": "Turbidity > 0.9",
+                "id": "turbidity_disturbance",
+                "name": "Turbidity / surface disturbance",
+                "description": (
+                    "A red/green ratio change can indicate vessel activity, a "
+                    "treatment, or sediment. It does not identify which."
+                ),
+                "index": "Red/Green > 0.9",
                 "resolution": "10m",
-                "revisit": "5 days",
+                "revisit": "~5 days at Norwegian latitudes",
+                "validated": False,
             },
             {
-                "id": "mortality_surface",
-                "name": "Surface Mortality Detection",
-                "description": "Detect fish at surface via elevated NIR reflectance",
+                "id": "surface_material_signal",
+                "name": "Surface material signal",
+                "description": (
+                    "Elevated near-infrared reflectance over water can indicate "
+                    "floating material. It is an unvalidated indicator, not a "
+                    "mortality detection."
+                ),
                 "index": "NIR B08 > 0.12",
                 "resolution": "10m",
-                "revisit": "5 days",
-            },
-            {
-                "id": "cage_census",
-                "name": "Cage Infrastructure Census",
-                "description": "Verify cage presence and count at licensed farm locations",
-                "index": "Object detection (future: YOLO)",
-                "resolution": "10m",
-                "revisit": "Monthly",
+                "revisit": "~5 days at Norwegian latitudes",
+                "validated": False,
             },
         ]
 
@@ -390,8 +421,21 @@ class SatelliteEngine:
             "free_tier": "10,000 credits/month",
             "last_scan": self._cache.generated_at if self._cache else None,
             "cached_readings": self._cache.n_readings if self._cache else 0,
+            "cached_readings_verified": self._cache.n_readings_verified if self._cache else 0,
             "cached_anomalies": self._cache.n_anomalies if self._cache else 0,
-            "note": "Set SENTINEL_HUB_CLIENT_ID and SENTINEL_HUB_CLIENT_SECRET for live imagery" if not SH_CONFIGURED else "Live Sentinel-2 access active",
+            "scene_dates": self._cache.scene_dates if self._cache else [],
+            "missing_reason": (self._cache.missing_reason if self._cache else "no scan has run yet"),
+            # "Live" is a property of the data, never of the configuration.
+            "is_live": bool(self._cache and self._cache.n_readings_verified),
+            "measurement": "surface NDVI/turbidity (Sentinel-2), not chlorophyll",
+            "note": (
+                "Set SENTINEL_HUB_CLIENT_ID and SENTINEL_HUB_CLIENT_SECRET to request "
+                "imagery; without them the platform shows no reading rather than a "
+                "simulated one"
+                if not SH_CONFIGURED
+                else "CDSE credentials are configured; a scan returns only the scenes it "
+                     "actually receives"
+            ),
         }
 
 

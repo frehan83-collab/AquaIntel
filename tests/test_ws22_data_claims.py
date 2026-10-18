@@ -64,22 +64,30 @@ class TestCompetitivenessFxHonesty:
         assert "NOK" in out["fallback_reason"]
 
     def test_fetch_records_every_currency_that_fell_back(self, monkeypatch):
-        from core.market.macro_intelligence import macro_intelligence
+        # WS-31: NOK now comes from Norges Bank; the crosses still come from the quote
+        # client. Both failing must name every currency.
+        from core.market import fx_rates
 
-        async def macro_down():
-            raise RuntimeError("macro down")
+        async def official_down():
+            return {
+                "currency": "USD",
+                "nok_per_unit": None,
+                "observed_at": None,
+                "is_fallback": True,
+                "fallback_reason": "official feed unreachable",
+            }
 
         class _BoomClient:
             def __init__(self, *args, **kwargs):
                 pass
 
             async def __aenter__(self):
-                raise RuntimeError("yahoo down")
+                raise RuntimeError("quote client down")
 
             async def __aexit__(self, *exc):
                 return False
 
-        monkeypatch.setattr(macro_intelligence, "fetch", macro_down)
+        monkeypatch.setattr(fx_rates, "usd_nok", official_down)
         monkeypatch.setattr(
             "core.market.competitiveness_engine.httpx.AsyncClient", _BoomClient
         )
@@ -148,27 +156,30 @@ class TestFoundationModelDisclosure:
 
 
 class TestCompetitivenessLivePath:
-    def test_live_nok_rate_is_used_when_macro_answers(self, monkeypatch):
-        """The macro import name was wrong, so NOK always fell back."""
-        from core.market.macro_intelligence import macro_intelligence
-
-        class _Snapshot:
-            series = {"nok_usd": 9.57, "global_salmon": 9.1}
+    def test_live_nok_rate_is_used_when_the_official_feed_answers(self, monkeypatch):
+        """WS-31: NOK comes from Norges Bank; a live rate must be used, not the constant."""
+        from core.market import fx_rates
 
         async def fake_fetch():
-            return _Snapshot()
+            return {
+                "currency": "USD",
+                "nok_per_unit": 9.57,
+                "observed_at": "2026-10-16",
+                "is_fallback": False,
+                "fallback_reason": None,
+            }
 
         class _BoomClient:
             def __init__(self, *args, **kwargs):
                 pass
 
             async def __aenter__(self):
-                raise RuntimeError("yahoo down")
+                raise RuntimeError("quote client down")
 
             async def __aexit__(self, *exc):
                 return False
 
-        monkeypatch.setattr(macro_intelligence, "fetch", fake_fetch)
+        monkeypatch.setattr(fx_rates, "usd_nok", fake_fetch)
         monkeypatch.setattr(
             "core.market.competitiveness_engine.httpx.AsyncClient", _BoomClient
         )
@@ -177,6 +188,7 @@ class TestCompetitivenessLivePath:
         rates = run_async(engine._fetch_fx_rates())
 
         assert rates["NOK"] == pytest.approx(1.0 / 9.57)
+        assert engine._fx_observations.get("NOK") == "2026-10-16"
         assert "NOK" not in engine._fx_fallbacks
         assert set(engine._fx_fallbacks) == set(FALLBACK_FX) - {"NOK"}
 

@@ -18,6 +18,7 @@ import pandas as pd
 from sqlalchemy import select
 
 from agents.base import BaseAgent
+from core.legal.equity_signals import may_persist_directional
 from core.models import (
     Locality, LiceRecord, CompanyExposure, Signal, AuditLog,
 )
@@ -330,7 +331,19 @@ class PredictionAgent(BaseAgent):
 
     @staticmethod
     async def _persist_signal(arb: ArbitrageSignal) -> None:
-        """Store prediction-based signal in DB."""
+        """Store prediction-based signal in DB.
+
+        Withheld while the WS-20/WS-28 withdrawal stands (``core.legal.equity_signals``):
+        this row carries a trade direction on a listed share. The harvest-impact
+        numbers this agent produces are still published through the investor surface.
+        """
+        if not may_persist_directional(instrument="equity"):
+            log.info(
+                "prediction.equity_signal_withheld",
+                ticker=arb.ticker,
+                direction=arb.direction,
+            )
+            return
         async with get_async_session() as s:
             s.add(Signal(
                 ticker=arb.ticker,

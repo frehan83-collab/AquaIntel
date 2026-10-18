@@ -21,6 +21,91 @@ from core.source_lineage import provenance_for, summarise_rows
 
 router = APIRouter(prefix="/api/bloom", tags=["bloom"])
 
+#: CMEMS gap-free L4 publishes daily. A week without a new observation means the
+#: ingest stopped; the payload then says so instead of wearing a live badge (WS-33).
+BLOOM_MAX_AGE_DAYS = 7
+
+#: The dataset the *client* fetches. Stored rows may carry another id (the model default
+#: was the Atlantic 1 km L3 product while the client reads the global 4 km L4 one), so a
+#: payload must name the datasets it is actually built from rather than assume one.
+CLIENT_DATASET_ID = "cmems_obs-oc_glo_bgc-plankton_nrt_l4-gapfree-multi-4km_P1D"
+
+
+async def _bloom_freshness() -> dict:
+    """Newest observation behind the bloom payload, and how old it is.
+
+    The observation is the newest chlorophyll reading; when the table is empty the
+    assessment time is the fallback, and when both are empty the payload is dateless
+    (``observed_at`` None, ``age_days`` None) and therefore never live.
+    """
+    observed = None
+    datasets: dict[str, int] = {}
+    try:
+        async with get_async_session() as s:
+            newest = (await s.execute(
+                select(func.max(ChlorophyllReading.date))
+            )).scalar()
+            observed = newest
+            rows = (await s.execute(
+                select(ChlorophyllReading.dataset_id, func.count(ChlorophyllReading.id))
+                .group_by(ChlorophyllReading.dataset_id)
+            )).all()
+            datasets = {str(k or "unknown"): int(v) for k, v in rows}
+            if observed is None:
+                observed = (await s.execute(
+                    select(func.max(BloomRiskAssessment.assessed_at))
+                )).scalar()
+    except Exception:  # noqa: BLE001 — a diagnostic never sinks the payload
+        return {"observed_at": None, "age_days": None, "datasets": {}, "dataset_note": None}
+
+    moment = None
+    if observed is not None:
+        moment = _as_utc_datetime(observed)
+    age_days = None
+    if moment is not None:
+        age_days = max(0, (dt.datetime.now(dt.UTC) - moment).days)
+    note = None
+    if datasets:
+        ids = sorted(datasets)
+        if len(ids) > 1 or ids[0] != CLIENT_DATASET_ID:
+            note = (
+                "stored rows were fetched from "
+                + ", ".join(f"{k} ({v} rows)" for k, v in sorted(datasets.items()))
+                + f"; the client currently requests {CLIENT_DATASET_ID}. The products are "
+                "not interchangeable (1 km L3 vs 4 km gap-free L4), so the record is mixed."
+            )
+    return {
+        "observed_at": moment.isoformat() if moment else None,
+        "age_days": age_days,
+        "datasets": datasets,
+        "dataset_note": note,
+    }
+
+
+def _as_utc_datetime(value) -> dt.datetime | None:
+    """Coerce SQLite's strings / PostgreSQL's datetimes to an aware datetime."""
+    from core.source_lineage import parse_timestamp
+
+    return parse_timestamp(value)
+
+
+def _bloom_provenance(freshness: dict) -> dict:
+    """Live only when the newest observation is current; otherwise degraded with the age."""
+    label = "Copernicus CMEMS chlorophyll-a (biomass, not toxicity)"
+    age = freshness.get("age_days")
+    observed = freshness.get("observed_at")
+    if age is not None and age <= BLOOM_MAX_AGE_DAYS:
+        return DataProvenance.live(label, confidence=0.85, observed_at=observed).to_dict()
+    if age is None:
+        reason = "no chlorophyll observation is stored, so there is nothing current to show"
+    else:
+        reason = (
+            f"the newest chlorophyll observation is {observed} ({age} days old; the ingest "
+            f"is expected daily, this payload allows {BLOOM_MAX_AGE_DAYS})"
+        )
+    return DataProvenance.degraded(label, reason=reason, confidence=0.3, observed_at=observed).to_dict()
+
+
 # Secondary router for bio-risk namespace (registered separately in api.py)
 bio_risk_router = APIRouter(prefix="/api/bio-risk", tags=["bio-risk"])
 
@@ -78,8 +163,12 @@ async def bloom_risk_map(limit: int = Query(1500, ge=1, le=10000)):
             for loc_no, vals in by_loc.items():
                 sparklines[loc_no] = vals[-8:]  # last 8 readings
 
+    freshness = await _bloom_freshness()
     return {
-        "data_provenance": DataProvenance.live("Copernicus CMEMS chlorophyll-a", confidence=0.85).to_dict(),
+        "data_provenance": _bloom_provenance(freshness),
+        "observed_at": freshness["observed_at"],
+        "age_days": freshness["age_days"],
+        "dataset_note": freshness["dataset_note"],
         "items": [
             {
                 "locality_no": a.locality_no,
@@ -115,8 +204,12 @@ async def bloom_risk_locality(locality_no: int, days: int = 30):
             .order_by(BloomRiskAssessment.assessed_at.desc())
         )).scalars().all()
 
+    freshness = await _bloom_freshness()
     return {
-        "data_provenance": DataProvenance.live("Copernicus CMEMS chlorophyll-a", confidence=0.85).to_dict(),
+        "data_provenance": _bloom_provenance(freshness),
+        "observed_at": freshness["observed_at"],
+        "age_days": freshness["age_days"],
+        "dataset_note": freshness["dataset_note"],
         "items": [
             {
                 "risk_level": a.risk_level,
@@ -144,8 +237,26 @@ async def bloom_alerts(
             q = q.where(BloomAlert.risk_level == risk_level)
         alerts = (await s.execute(q)).scalars().all()
 
+    # The alert log is an internal delivery record, not a measurement. Its provenance
+    # says what it is, and "live" only when at least one alert was actually dispatched.
+    dispatched = [a for a in alerts if (a.delivery_status or "") in ("sent", "delivered")]
+    if dispatched:
+        alert_prov = DataProvenance.live(
+            "Bloom alert log (chlorophyll watch; not a toxicity warning)",
+            confidence=0.5,
+            observed_at=dispatched[0].sent_at,
+        ).to_dict()
+    else:
+        alert_prov = DataProvenance.degraded(
+            "Bloom alert log (chlorophyll watch; not a toxicity warning)",
+            reason=(
+                "no alert has been dispatched — this box has no SMS/email channel "
+                "configured, so rows record a watch, not a delivery"
+            ),
+            confidence=0.3,
+        ).to_dict()
     return {
-        "data_provenance": DataProvenance.live("Copernicus CMEMS chlorophyll-a", confidence=0.85).to_dict(),
+        "data_provenance": alert_prov,
         "items": [
             {
                 "id": a.id,
@@ -173,8 +284,12 @@ async def chlorophyll_data(days: int = 7, limit: int = Query(5000, ge=1, le=5000
             .limit(limit)
         )).scalars().all()
 
+    freshness = await _bloom_freshness()
     return {
-        "data_provenance": DataProvenance.live("Copernicus CMEMS chlorophyll-a", confidence=0.85).to_dict(),
+        "data_provenance": _bloom_provenance(freshness),
+        "observed_at": freshness["observed_at"],
+        "age_days": freshness["age_days"],
+        "dataset_note": freshness["dataset_note"],
         "items": [
             {
                 "latitude": r.latitude,
@@ -291,15 +406,25 @@ async def _snapshot_live(week_label: str) -> dict:
             bloom_data["risk_level"] = "ELEVATED"
 
     # Disease count from Mattilsynet
-    disease_data = {"outbreak_count": 0, "types": []}
+    # WS-33: this used to call `mattilsynet_client.get_active_outbreaks()`, which does
+    # not exist, inside `except Exception: pass` — so the disease count was always 0
+    # while the payload claimed Mattilsynet. Use the client's real two-step API and say
+    # when it failed instead of reporting a zero as a measurement.
+    disease_data = {"outbreak_count": None, "types": [], "status": "unavailable"}
     try:
         from core.market.mattilsynet_client import mattilsynet_client
-        norway = mattilsynet_client.get_active_outbreaks()
-        disease_data["outbreak_count"] = norway.get("active_cases", 0)
-        by_disease = norway.get("by_disease", {})
-        disease_data["types"] = list(by_disease.keys())[:5]
-    except Exception:
-        pass
+        cases = await mattilsynet_client.fetch_disease_cases(limit=200)
+        summary = await mattilsynet_client.get_disease_summary(cases)
+        if summary and summary.get("active_cases") is not None:
+            disease_data["outbreak_count"] = int(summary.get("active_cases") or 0)
+            disease_data["types"] = list((summary.get("by_disease") or {}).keys())[:5]
+            disease_data["status"] = "ok"
+            disease_data["source"] = summary.get("source", "Mattilsynet")
+        else:
+            disease_data["status"] = "empty"
+    except Exception as exc:  # noqa: BLE001 — reported, not swallowed
+        disease_data["status"] = "failed"
+        disease_data["reason"] = f"Mattilsynet unavailable ({str(exc)[:80]})"
 
     # Regime status
     regime_data = {"status": "normal", "pa_summary": {}}
@@ -396,10 +521,12 @@ async def _snapshot_historical(target_year: int, target_week: int, week_label: s
                 bloom_data["risk_level"] = "ELEVATED"
 
     # ── Disease: use Mattilsynet cache filtered by date ─────────────
-    disease_data = {"outbreak_count": 0, "types": []}
+    disease_data = {"outbreak_count": None, "types": [], "status": "unavailable"}
     try:
         from core.market.mattilsynet_client import mattilsynet_client
-        norway = mattilsynet_client.get_active_outbreaks()
+        cases = await mattilsynet_client.fetch_disease_cases(limit=200)
+        norway = await mattilsynet_client.get_disease_summary(cases)
+        disease_data["status"] = "ok"
         # Filter active outbreaks to those that were active during target week
         active = norway.get("active_outbreaks", [])
         week_end_str = week_end.strftime("%Y-%m-%d")
@@ -448,3 +575,27 @@ async def _snapshot_historical(target_year: int, target_week: int, week_label: s
             confidence=confidence,
         ).to_dict(),
     }
+
+
+# ── Bloom context (WS-34) ────────────────────────────────────────────
+@router.get("/context")
+async def bloom_context():
+    """Dated, sourced context for reading the chlorophyll band.
+
+    The IMR advisory is a manual weekly map with no API, so this endpoint links to it
+    and states when the link was checked; it never serves a scraped copy as current.
+    The regional event list is a base rate with citations, not a probability.
+    """
+    from core.bloom.context import context as bloom_context_block
+    from core.market.data_provenance import DataProvenance
+
+    block = bloom_context_block()
+    block["data_provenance"] = DataProvenance.degraded(
+        "IMR Algestatus (manual weekly map) + published event records",
+        reason=(
+            "Algestatus has no machine-readable interface: this is a dated link, not a "
+            "live feed, and the event records are published history rather than a forecast"
+        ),
+        confidence=0.5,
+    ).to_dict()
+    return block

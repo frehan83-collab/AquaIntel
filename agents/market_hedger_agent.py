@@ -19,6 +19,7 @@ import structlog
 from sqlalchemy import select, func
 
 from agents.base import BaseAgent
+from core.legal.equity_signals import may_persist_directional
 from core.models import LiceRecord, Signal, CompanyExposure
 from core.async_db import get_async_session
 
@@ -302,7 +303,20 @@ class MarketHedgerAgent(BaseAgent):
         return signals
 
     async def _store_signals(self, signals: list[dict]) -> None:
-        """Store hedging signals to database."""
+        """Store hedging signals to database.
+
+        Listed-equity direction rows are withheld while the WS-20/WS-28 withdrawal
+        stands (``core.legal.equity_signals``); the salmon-price rows this agent also
+        produces are unaffected.
+        """
+        if not may_persist_directional(instrument="equity"):
+            equities = [
+                s.get("ticker") for s in signals
+                if s.get("ticker") and s.get("ticker") != "SALMON_SPOT"
+            ]
+            if equities:
+                self.log.info("hedger.equity_signals_withheld", tickers=equities)
+            return
         async with get_async_session() as s:
             for sig in signals:
                 ticker = sig.get("ticker")

@@ -80,3 +80,37 @@ def advice_boundary_entry() -> dict:
         "surfaces": list(SURFACES),
         "under_review": list(UNDER_REVIEW),
     }
+
+
+# ── The write gate (WS-28, 2026-10-18) ───────────────────────────────────────────
+# The surfaces were taken down, but four agents still *wrote* directional rows on
+# listed shares: the signal generator (SHORT/LONG), the market hedger (any equity
+# ticker), the prediction agent (arbitrage direction) and the bloom agent (SHORT on a
+# CRITICAL bloom). They only run with the agents service, so the rows would reappear
+# the moment it starts — a withdrawal that only hides the output is not a withdrawal.
+# One definition, checked by every writer, so there is no fifth place to remember.
+
+#: Whether new directional rows on listed securities may be written at all. Off until a
+#: legal opinion says what may return (docs/HANDOVER.md WS-28); existing rows are kept.
+DIRECTIONAL_WRITES_ENABLED = False
+
+WRITE_GATE_REASON = (
+    "Writing new directional calls on listed securities is disabled while the "
+    "withdrawal stands (WS-20/WS-28): the output may count as an investment "
+    "recommendation under EU MAR Art. 3(1)(34)."
+)
+
+#: Instrument classes that are NOT listed securities and stay allowed.
+NON_EQUITY_INSTRUMENTS: frozenset[str] = frozenset({"spot", "futures", "physical", "fx"})
+
+
+def may_persist_directional(*, instrument: str = "equity") -> bool:
+    """May a new directional signal row be written for this instrument class?
+
+    ``instrument="equity"`` is the withdrawal's subject and returns False. Salmon spot
+    and futures rows are not shares and are not affected — the gate only governs the
+    listed-equity direction output.
+    """
+    if instrument in NON_EQUITY_INSTRUMENTS:
+        return True
+    return DIRECTIONAL_WRITES_ENABLED

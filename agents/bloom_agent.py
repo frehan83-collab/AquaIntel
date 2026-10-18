@@ -13,6 +13,7 @@ from sqlalchemy import select, desc, and_
 
 from agents.base import BaseAgent
 from config.settings import settings
+from core.legal.equity_signals import WRITE_GATE_REASON, may_persist_directional
 from core.models import Locality, LiceRecord, Signal
 from core.async_db import get_async_session
 from core.bloom.copernicus import CopernicusClient, ChlGridPoint
@@ -69,8 +70,10 @@ class BloomAgent(BaseAgent):
             if nearest is None:
                 continue
 
-            # Get trend: compare with previous day's reading for this cell
-            chl_trend = await self._compute_trend(nearest.grid_cell_id, nearest.chl_a_mg_m3)
+            # Get trend: compare with the previous day's reading for this cell
+            chl_trend = await self._compute_trend(
+                nearest.grid_cell_id, nearest.chl_a_mg_m3, nearest.date
+            )
 
             # Get latest sea temperature from lice records
             sst = await self._get_latest_sst(loc.locality_no)
@@ -154,23 +157,35 @@ class BloomAgent(BaseAgent):
                         chl_a_mg_m3=pt.chl_a_mg_m3,
                     ))
 
-    async def _compute_trend(self, grid_cell_id: str, current_value: float) -> float:
-        """Compute chl-a trend as mg/m3 per day vs previous reading."""
+    async def _compute_trend(
+        self, grid_cell_id: str, current_value: float, current_date: dt.date
+    ) -> float | None:
+        """Chl-a trend in mg/m3 per day against the previous *distinct* observation.
+
+        WS-33: the old version read "the latest row for this cell" *after* the new
+        reading had been committed, so it compared the value with itself and returned
+        0.0 for every row ever stored. It now skips today's date, uses that row's own
+        date for the interval, and returns None when there is no earlier observation
+        (unknown, not "no change").
+        """
+        current_dt = dt.datetime.combine(current_date, dt.time())
         async with get_async_session() as session:
             result = await session.execute(
                 select(ChlorophyllReading)
-                .where(ChlorophyllReading.grid_cell_id == grid_cell_id)
+                .where(
+                    ChlorophyllReading.grid_cell_id == grid_cell_id,
+                    ChlorophyllReading.date < current_dt,
+                )
                 .order_by(desc(ChlorophyllReading.date))
                 .limit(1)
             )
             prev = result.scalars().first()
 
         if prev is None:
-            return 0.0
+            return None
 
-        days_diff = max(
-            (dt.datetime.now(dt.UTC).replace(tzinfo=None) - prev.date).total_seconds() / 86400, 0.1
-        )
+        prev_date = prev.date.date() if hasattr(prev.date, "date") else prev.date
+        days_diff = max((current_date - prev_date).days, 1)
         return (current_value - prev.chl_a_mg_m3) / days_diff
 
     async def _get_latest_sst(self, locality_no: int) -> float | None:
@@ -188,7 +203,21 @@ class BloomAgent(BaseAgent):
             return result.scalars().first()
 
     async def _inject_bloom_signals(self, tickers: set[str]) -> None:
-        """Create bearish trading signals for companies hit by CRITICAL bloom."""
+        """Create bearish trading signals for companies hit by CRITICAL bloom.
+
+        **Disabled (WS-28, 2026-10-18).** A bloom is a farm-welfare event, not a trade
+        call: writing a SHORT row on a listed share from a satellite chlorophyll
+        reading may count as an investment recommendation under EU MAR Art. 3(1)(34).
+        The farm-side alert in the tick loop is unaffected — it is the legitimate
+        output. The gate lives in ``core.legal.equity_signals`` so no writer can drift.
+        """
+        if not may_persist_directional(instrument="equity"):
+            self.log.info(
+                "bloom.equity_signals_withheld",
+                tickers=sorted(tickers),
+                reason=WRITE_GATE_REASON,
+            )
+            return
         async with get_async_session() as session:
             for ticker in tickers:
                 # Don't duplicate if a bloom signal already pending

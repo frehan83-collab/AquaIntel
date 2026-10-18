@@ -33,14 +33,14 @@
 | Dimension | Value |
 |---|---|
 | Platform version | `2.6.0` |
-| OpenAPI surface | **347 paths** (`docs/openapi.frozen.json`, after WS-29 added two) |
-| Tests | **1289 collected** (`pytest --collect-only`, 2026-10-18 after WS-29) |
-| Alembic migrations | **20** (head `020`, since WS-19) |
+| OpenAPI surface | **348 paths** (`docs/openapi.frozen.json`; WS-29 added two, WS-34 one) |
+| Tests | **1334 collected** (`pytest --collect-only`, 2026-10-18 after WS-28a/30–34) |
+| Alembic migrations | **21** (head `021`, WS-33) |
 | Router modules | **38** (`core/routers/`) |
-| Engine modules | **78** (`core/market/`, +`margin_bridge.py`) |
+| Engine modules | **79** (`core/market/`, +`margin_bridge.py`, +`fx_rates.py`) |
 | Frontend routes | **68** page files |
 | Production topology | `docker-compose.prod.yml`: `api` + `agents` + `db` (TimescaleDB) + `web` |
-| Last full-suite run | **1265 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 4m45s (2026-10-18, after WS-29 and both review rounds) |
+| Last full-suite run | **1310 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 4m28s (2026-10-18, after WS-28a/30–34) |
 
 **What this session delivered** (all pushed): 10 commercial-hardening steps plus 3
 follow-up fixes â€” see Â§3 for the doc to read per area.
@@ -130,22 +130,121 @@ writable workspace directory and a `sitecustomize.py` on `PYTHONPATH` that drops
 Each item is self-contained: goal â†’ files â†’ steps â†’ **acceptance criteria you can
 test** â†’ traps.
 
-**Where things stand (2026-10-18, after WS-29):**
+**Where things stand (2026-10-18, after WS-29 and the WS-28a/30-34 round):**
 - **Done:** WS-1, WS-2, WS-11, WS-19, WS-21, WS-14, WS-29 (the weekly margin bridge),
-  WS-22's stale-decision-card rule and its data-claim fixes (competitiveness FX
-  fallbacks, per-model model availability, disease list order, disease-alert
-  sources), and both halves of WS-23 (takedown, then the real-row backtest published
-  against carry-forward). WS-21's entry lists its follow-ups.
-- **Partly done:** WS-20 (left: one product name and the Desk/Operator price
-  inversion, both owner decisions, plus the OpenAPI `info.description`) and WS-22
-  (the company-volume, smolt-pipeline, brief bloom-count and ROI-default items are
-  open; the disease items are done).
+  WS-28a (the directional-write gate), WS-30 (ROI break-even), WS-31 (licensed FX +
+  attribution), WS-32 (satellite honesty), WS-33 (bloom truth, Alembic 021) and WS-34
+  (bloom context), WS-22's stale-decision-card rule and its data-claim fixes, and both
+  halves of WS-23. WS-21's entry lists its follow-ups.
+- **Partly done:** WS-20 (left: one product name and the Desk/Operator price inversion,
+  both owner decisions, plus the OpenAPI `info.description`) and WS-22 (the
+  company-volume and smolt-pipeline items are open; the brief bloom count and the ROI
+  defaults are done).
 - **Waiting on the owner:** the WS-26 page-cut list, WS-27 layer 2, the WS-20
-  decisions above, and the legal opinion that most of WS-28 waits on.
-- **Next without an owner decision:** WS-29b (recalibrate the feed level against
-  realised contract prices â€” the one number the bridge flags as a model), then the
-  rest of WS-22 (company volumes, smolt pipeline, brief bloom counts, ROI defaults),
+  decisions above, and the legal opinion that the rest of WS-28 waits on.
+- **Next without an owner decision:** WS-31b (remove the remaining Yahoo equity and
+  commodity quotes, or license them), WS-29b (recalibrate the feed level against
+  realised contract prices), then the rest of WS-22 (company volumes, smolt pipeline),
   then WS-16, WS-24 and WS-25, in the order below.
+
+### WS-32 · Satellite honesty — **DONE 2026-10-18**
+**Why:** without CDSE credentials the engine fabricated every per-farm reading with
+`np.random.default_rng(hash(locality_no))`, and with credentials a farm whose query
+failed silently fell back to the same simulation; `is_live` was `bool(credentials)`.
+The page turned those values into an "Action required" KPI. It was the only invented
+measurement on the platform.
+**Shipped:** `core/market/satellite_engine.py` (simulator deleted; no scene → no
+reading; `n_readings_verified` / `n_readings_unverified` / `scene_dates` /
+`missing_reason`; `is_live` from verified scenes; NDVI anomaly relabelled
+`surface_scum_or_vegetation`; catalogue drops HAB-confirmation and cage-census and marks
+the rest `validated: false`), provenance on all four `/api/satellite/*` routes, page
+states "NO VERIFIED SCENE" / dated scenes, and the "what this shows / cannot show"
+panel. 8 tests (`tests/test_satellite_honesty.py`).
+**Acceptance met:** unconfigured scan → `n_readings: 0`, `is_live: false`, a named
+reason, zero anomalies; configured with every query failing → same, with
+`n_readings_unverified` = farms; one mocked scene → `is_live: true`, its date in
+`scene_dates`, anomaly type `surface_scum_or_vegetation`.
+**Council decision:** the proposed finer-grained 300 m per-farm OLCI layer was
+**rejected for this session and not queued** — a cage is sub-pixel at 300 m, 52–90 % of
+ocean-colour pixels are gap-filled (more at high latitude), and the 2019 bloom was
+concentrated around 12 m, below what ocean colour sees. Building it would assert
+farm-level certainty the science rejects.
+
+### WS-33 · Bloom truth (freshness, trend, delivery) — **DONE 2026-10-18**
+**Why:** `/bloom` crashed for every user on the response envelope; 196-day-old
+chlorophyll wore a live badge with request-time freshness; `chl_a_trend` was computed
+after the new row was committed, so it compared the value with itself (0.0 on all
+123 045 rows); 842 alerts said `sent` with no channel configured; the bio-risk disease
+count called a non-existent method inside `except: pass`; the brief counted every row
+ever stored; and the stored `dataset_id` (Atl 1 km L3) described a different product
+from the one the client fetches (global 4 km L4).
+**Shipped:** one `_bloom_freshness()` + `_bloom_provenance()` pair (live only within
+7 days, else degraded naming the date and age), `dataset_note` on a mixed store, the
+alert log's provenance declaring itself a delivery record, the real Mattilsynet API for
+the disease count with `status: unavailable` instead of a silent zero, the trend
+computed against the previous **distinct** date with `None` when absent, notification
+statuses `not_configured` / `sent`+`delivered_at` / `failed` / `dashboard` and a
+"CHLOROPHYLL WATCH … not a toxicity measurement" message, the brief counting distinct
+localities in the last week with the data age, the page unwrapping `.items`, showing the
+served freshness, "n/a" for an unknown trend and the limits panel, and **Alembic 021**
+(`delivered_at`; pre-fix alerts `legacy_unknown`; self-compared trends `NULL`; the
+downgrade keeps both corrections). 17 tests (`tests/test_bloom_honesty.py`) plus a 021
+migration test.
+**Acceptance met:** a 196-day-old store returns 200 with `is_live: false` and the age in
+the reason; a fresh one is live; no stored 0.0 trend remains after 021; a missing prior
+observation yields `chl_a_trend: null` and no trend bonus; an unconfigured channel
+records `not_configured` and never `sent`; the brief's count is distinct localities
+within the week.
+**Open:** the ingest still needs CMEMS credentials and an agents run (WS-16); until then
+the page honestly says the data is stale.
+
+### WS-34 · Bloom context (dated facts, no forecast) — **DONE 2026-10-18**
+**Why:** the chlorophyll band alone cannot tell a farmer whether the region has killed
+fish before, what the official advisory says, or what the instrument cannot see.
+**Shipped:** `core/bloom/context.py` and `GET /api/bloom/context` — the IMR Algestatus
+link with `checked_at` and an explicit "no API" note, three documented mortality events
+with source URLs (2019 *C. leadbeateri* 8 M fish / NOK 2.4 bn potential sales value;
+2025 *C. leadbeateri* + *Phaeocystis* >2 M fish / ≥NOK 300 M; March 2026
+*Pseudochattonella* PO1 ~1.7 M fish), and five stated limits. The payload is degraded
+by design (a dated link, not a feed) and is rendered on `/bloom` beside the band.
+**Do not claim:** species-level prediction, a mortality probability, "72-hour warning",
+an AUC for HAB risk, that gap-filled chlorophyll shows a bloom, or that a bloom will kill
+fish. Sources and prices: [`docs/DATA_SOURCES_COST.md`](DATA_SOURCES_COST.md).
+
+### WS-28a · No agent writes directional rows on listed shares — **DONE 2026-10-18**
+**Why:** WS-20 took the surfaces down but four agents still wrote the rows (signal
+generator, market hedger, prediction agent, bloom agent); they run only with the agents
+service, so the calls would reappear the moment it started.
+**Shipped:** `core/legal/equity_signals.DIRECTIONAL_WRITES_ENABLED = False` +
+`may_persist_directional(instrument=...)`; each writer checks it and logs or audits the
+skip; non-equity instruments are unaffected. 14 tests
+(`tests/test_directional_writes_gate.py`).
+**Still open (WS-28):** the remaining equity-direction *surfaces* (pairs, sentiment,
+event impact, paper orders) and the legal opinion. This item only stops new writes.
+
+### WS-30 · ROI calculator tells the truth — **DONE 2026-10-18**
+**Why:** defaults produced 228x / 491x / 1 693x multiples from unproven uplifts; a
+finance buyer reads that as a red flag, and it made the demo worse, not better.
+**Shipped:** claim-like inputs default to **zero**; the processor's hard-coded 0.5 is
+now `share_of_volume_affected`; each ICP reports `status`, `paid_back` and a
+`break_even` (`input`, `value`, `feasible`, `benefit_needed_nok`) — the producer needs
+1.31 % of treatments avoided for Operator to pay for itself at 18 treatments a year.
+17 tests (`tests/test_gtm_roi.py`).
+
+### WS-31 · Licensed FX + attribution — **DONE (FX) / OPEN (equities)**
+**Why:** Yahoo's API terms forbid deriving income from its data, and the platform
+priced Norwegian costs from its USD/NOK. FRED's terms require a notice the site did not
+show.
+**Shipped:** `core/market/fx_rates.py` (Norges Bank official daily rates, observation
+date attached, recorded fallback), wired into `feed_cost_engine` (and therefore the
+margin bridge) and `competitiveness_engine`; `usd_nok_is_fallback` / reason / observation
+date on the payload; the attribution footer gains Norges Bank, Mattilsynet and the FRED
+notice and drops the Yahoo claim.
+**Open (WS-31b):** Yahoo **equity and commodity** quotes remain on the market, feed-cost
+and investor surfaces; they are unlicensed for resale. Remove them or license them before
+the product is sold as licence-clean. The two salmon benchmark indices (NQSALMON,
+SISALMONI) have no published price or redistribution right — a negotiated agreement is
+required before either can appear in a paid surface.
 
 **Priority changed 2026-10-17 by [`docs/VALUE_ANALYSIS.md`](VALUE_ANALYSIS.md).** The
 value analysis found buyer-visible defects that outrank the infrastructure items.
@@ -914,6 +1013,7 @@ a directional row on a listed security; the opinion's conclusion recorded in
 | 20 | **`pytest tmp_path` on Windows under this harness** | `os.mkdir(path, 0o700)` (what pytest's basetemp does) creates a directory whose DACL excludes the signed-in user on this box (Python 3.14), so every `tmp_path` fixture errors at setup with `PermissionError: [WinError 5]` and the run reports `E` for a large slice of the suite. Workaround used here and NOT committed: put a `sitecustomize.py` on `PYTHONPATH` that forces `os.mkdir(path, 0o777, dir_fd=...)`, and point `TMP`/`TEMP` at a writable **workspace** directory (a fresh one: an already-broken `pytest-of-<user>` makes `make_numbered_dir` fail again). Diagnostic: a directory created by `os.mkdir(p, 0o700)` cannot be listed even by PowerShell (`icacls` reports access denied). |
 | 21 | **A fetch time is not an observation date** | `feed_cost_engine.get_latest()` stamped `data_freshness.feed_prices` with the request time while the FRED "global price" series end **2026-07** â€” a three-month-old observation presented as current on the flagship cost surface. Any monthly/lagged source must carry the observation date (`IngredientPrice.observed_at`, `feed_prices_as_of`) and the payload must degrade with the month named (WS-29, `FEED_PRICE_MAX_AGE_DAYS`). Same rule as the lice lineage: freshness is when the data was *observed*. |
 | 22 | **PowerShell string surgery re-encodes UTF-8 files** | Editing a UTF-8 source with `(Get-Content -Raw).Replace(...) \| Set-Content` silently rewrote the file in the console code page (one em dash became byte `0x97`) and every later tool failed with `E902 stream did not contain valid UTF-8`. Use the editor/`write` tool for code, or Python with `encoding="utf-8"`; never `Set-Content` on a file containing non-ASCII. Recovery: decode the bytes as UTF-8 and map the stray `0x80â€“0x9F` bytes back to their CP1252 punctuation. |
+| 23 | **A column default is not a data source** | `chlorophyll_readings.dataset_id` defaulted to the Atlantic 1 km L3 product while the client fetches the global 4 km gap-free L4 one, so 613 141 stored rows described a dataset that was never read — and the two products are not interchangeable (resolution, gap-filling). Record the identifier the fetch actually used, never a model default; the bloom payload now groups stored ids and warns when they disagree with the client (WS-33). |
 
 ## 7. Definition of done for the next module
 

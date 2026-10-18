@@ -277,30 +277,64 @@ class MorningBriefEngine:
 
         # ── 7. Bloom Risk ────────────────────────────────────────────
         try:
-            from core.bloom.models import BloomRiskAssessment
+            from core.bloom.models import BloomRiskAssessment, ChlorophyllReading
             from core.async_db import get_async_session
             from sqlalchemy import select, func
             async with get_async_session() as s:
+                # WS-33: count the CURRENT week's sites, not every row ever stored. The
+                # old query counted all history and reported "5108 sites at HIGH/CRITICAL
+                # bloom risk" from rows up to six months old.
+                newest_week = (await s.execute(
+                    select(func.max(ChlorophyllReading.date))
+                )).scalar()
+                if newest_week is None:
+                    sections.append(BriefSection(
+                        title="Bloom Status",
+                        icon="leaf",
+                        headline=(
+                            "No chlorophyll observation is stored — the bloom monitor has "
+                            "not run"
+                        ),
+                        sentiment="neutral",
+                    ))
+                    raise StopIteration
+                week_start = newest_week - dt.timedelta(days=7)
                 high_risk = (await s.execute(
-                    select(func.count()).select_from(BloomRiskAssessment).where(
-                        BloomRiskAssessment.risk_level.in_(["HIGH", "CRITICAL"])
+                    select(func.count(func.distinct(BloomRiskAssessment.locality_no))).where(
+                        BloomRiskAssessment.risk_level.in_(["HIGH", "CRITICAL"]),
+                        BloomRiskAssessment.assessed_at >= week_start,
                     )
                 )).scalar() or 0
+            age_days = max(0, (dt.datetime.now(dt.UTC) - newest_week.replace(tzinfo=dt.UTC)).days)
+            stale = age_days > 7
             if high_risk > 0:
                 signals_bearish += 1
                 sections.append(BriefSection(
                     title="Bloom Risk",
                     icon="leaf",
-                    headline=f"{high_risk} sites at HIGH/CRITICAL bloom risk",
-                    sentiment="alert",
+                    headline=(
+                        f"{high_risk} sites at HIGH/CRITICAL chlorophyll band "
+                        f"(not a toxicity call)"
+                        + (f" — data {age_days} days old" if stale else "")
+                    ),
+                    sentiment="alert" if not stale else "neutral",
+                    detail=(
+                        "Chlorophyll is biomass, not toxicity; confirm species and "
+                        "toxicity with cell counts and the IMR Algestatus report."
+                    ),
                 ))
             else:
                 sections.append(BriefSection(
                     title="Bloom Status",
                     icon="leaf",
-                    headline="All clear — no high-risk bloom events",
+                    headline=(
+                        "No sites above the chlorophyll threshold in the last week"
+                        + (f" (data {age_days} days old)" if stale else "")
+                    ),
                     sentiment="neutral",
                 ))
+        except StopIteration:
+            pass
         except Exception as exc:
             log.debug("brief.bloom_failed", error=str(exc)[:60])
 

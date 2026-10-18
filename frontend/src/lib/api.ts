@@ -176,6 +176,9 @@ export const api = {
     fetchAPI(`/api/bloom/alerts${riskLevel ? `?risk_level=${riskLevel}` : ""}`),
   bloomChlorophyll: (days?: number) =>
     fetchAPI(`/api/bloom/chlorophyll${days ? `?days=${days}` : ""}`),
+  /** Dated context: IMR Algestatus link (manual, no API), regional event history,
+   *  and the stated limits of a satellite chlorophyll band (WS-34). */
+  bloomContext: () => fetchAPI("/api/bloom/context"),
 
   // Bio Risk Snapshot (time slider)
   bioRiskSnapshot: (weekOffset = 0) =>

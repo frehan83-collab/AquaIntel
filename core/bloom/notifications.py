@@ -1,8 +1,20 @@
 """
 Bloom alert notification dispatch.
 
-Sends SMS (Twilio) and email (SMTP) alerts to fish farmers when bloom
-risk crosses thresholds. Includes deduplication to avoid alert fatigue.
+Sends SMS (Twilio) and email (SMTP) alerts to fish farmers when the chlorophyll watch
+crosses a threshold. Includes deduplication to avoid alert fatigue.
+
+WS-33 (2026-10-18): **delivery truth**. The old code set ``delivery_status = "sent"``
+before dispatch, and both senders returned silently when unconfigured, so 842 rows
+claimed a delivery that never happened. Now a row is:
+
+  * ``not_configured`` — the channel has no credentials on this deployment;
+  * ``sent`` — the provider accepted it, with ``delivered_at`` set;
+  * ``failed`` — the provider raised;
+  * ``dashboard`` — an in-app record with no push attempt.
+
+The message is a **chlorophyll watch**, not a toxicity warning: satellite chlorophyll
+is biomass, and no Norwegian chlorophyll threshold for farm mortality is published.
 
 Escalation policy:
   CRITICAL → SMS + email
@@ -77,13 +89,23 @@ async def send_bloom_alert(
     message = _format_message(locality_name, locality_no, risk_level, risk_score, chl_a)
 
     for channel in channels:
-        status = "sent"
+        status = "unknown"
+        delivered_at = None
         try:
             if channel == "sms":
-                await _send_sms(message)
+                if not _sms_configured():
+                    status = "not_configured"
+                else:
+                    await _send_sms(message)
+                    status, delivered_at = "sent", dt.datetime.now(dt.UTC)
             elif channel == "email":
-                await _send_email(locality_name, risk_level, message)
-            # "dashboard" channel requires no push — just stored in DB
+                if not _email_configured():
+                    status = "not_configured"
+                else:
+                    await _send_email(locality_name, risk_level, message)
+                    status, delivered_at = "sent", dt.datetime.now(dt.UTC)
+            else:  # "dashboard" — an in-app record, no push attempted
+                status = "dashboard"
         except Exception as exc:
             log.error("bloom.alert_send_failed", channel=channel, error=str(exc))
             status = "failed"
@@ -95,6 +117,7 @@ async def send_bloom_alert(
             sent_at=dt.datetime.now(dt.UTC),
             channel=channel,
             delivery_status=status,
+            delivered_at=delivered_at,
             message_text=message,
         )
         alerts.append(alert)
@@ -117,17 +140,28 @@ def _format_message(
 ) -> str:
     emoji = {"CRITICAL": "!!!", "HIGH": "!!", "ELEVATED": "!"}.get(risk_level, "")
     return (
-        f"BLOOM ALERT {emoji}\n"
+        f"CHLOROPHYLL WATCH {emoji}\n"
         f"Locality: {name} ({locality_no})\n"
-        f"Risk: {risk_level} (score {score:.0f}/100)\n"
-        f"Chl-a: {chl_a:.1f} mg/m3\n"
-        f"Check dashboard for details and recommended actions."
+        f"Band: {risk_level} (index {score:.0f}/100, chlorophyll only)\n"
+        f"Chl-a: {chl_a:.1f} mg/m3 — biomass, not a toxicity measurement\n"
+        f"This is not a harmful-algal-bloom confirmation. Confirm species and toxicity "
+        f"with cell counts and the IMR Algestatus report, then act per site procedure."
     )
 
 
+def _sms_configured() -> bool:
+    """Whether an SMS can actually be attempted on this deployment."""
+    return bool(getattr(settings, "twilio_sid", "") and getattr(settings, "twilio_token", ""))
+
+
+def _email_configured() -> bool:
+    """Whether SMTP can actually be attempted on this deployment."""
+    return bool(getattr(settings, "smtp_user", "") and getattr(settings, "smtp_host", ""))
+
+
 async def _send_sms(message: str) -> None:
-    """Send SMS via Twilio."""
-    if not settings.twilio_sid:
+    """Send SMS via Twilio. Caller checks _sms_configured() first."""
+    if not _sms_configured():
         log.warning("bloom.twilio_not_configured")
         return
 
@@ -143,8 +177,8 @@ async def _send_sms(message: str) -> None:
 
 
 async def _send_email(locality_name: str, risk_level: str, body: str) -> None:
-    """Send email via SMTP."""
-    if not settings.smtp_user:
+    """Send email via SMTP. Caller checks _email_configured() first."""
+    if not _email_configured():
         log.warning("bloom.smtp_not_configured")
         return
 

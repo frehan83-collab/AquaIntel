@@ -139,14 +139,18 @@ class CompetitivenessEngine:
         """Fetch live FX rates: NOK from macro engine, others from Yahoo."""
         rates: dict[str, float] = {}
         self._fx_fallbacks: list[str] = []
+        self._fx_observations: dict[str, str | None] = getattr(self, "_fx_observations", {})
 
-        # Get NOK/USD from macro_intelligence (already cached)
+        # NOK/USD from the official Norges Bank rate (WS-31). The macro series it
+        # used to read is derived from the same kind of upstream quote, and the Yahoo
+        # terms forbid deriving income from their data in a paid product.
         try:
-            from core.market.macro_intelligence import macro_intelligence
-            macro = await macro_intelligence.fetch()
-            nok_usd = macro.series.get("nok_usd", 0)
-            if nok_usd and nok_usd > 0:
-                rates["NOK"] = 1.0 / nok_usd  # Convert NOK per USD → USD per NOK
+            from core.market.fx_rates import usd_nok as official_usd_nok
+            official = await official_usd_nok()
+            nok_per_usd = official.get("nok_per_unit")
+            if nok_per_usd and nok_per_usd > 0:
+                rates["NOK"] = 1.0 / float(nok_per_usd)  # NOK per USD → USD per NOK
+                self._fx_observations["NOK"] = official.get("observed_at")
             else:
                 rates["NOK"] = FALLBACK_FX["NOK"]
                 self._fx_fallbacks.append("NOK")

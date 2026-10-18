@@ -15,7 +15,8 @@ interface RiskAssessment {
   risk_score: number;
   chl_a: number;
   sst: number | null;
-  chl_a_trend: number;
+  /** null when no earlier observation exists — unknown, not "no change" (WS-33). */
+  chl_a_trend: number | null;
   assessed_at: string;
   factors: string;
 }

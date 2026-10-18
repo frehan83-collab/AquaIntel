@@ -5,6 +5,93 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
+### WS-32/33/34 — the bloom and satellite surfaces stop inventing things (2026-10-18)
+**Why:** an audit + a three-lens council found the algae surface would not survive a
+buyer's first five minutes. `/bloom` **crashed for every user** (`api.bloomRisk()`
+returns `{items, data_provenance}` and the page called `.filter()` on the envelope);
+six-month-old chlorophyll wore a pulsing "Live monitoring" badge; `chl_a_trend` was
+computed against the row the agent had just written (0.0 on all 123 045 rows); 842
+alerts said `sent` with no SMS/email channel configured; the bio-risk disease count
+called a method that does not exist (always 0, claiming Mattilsynet); the brief
+reported "5108 sites at HIGH/CRITICAL bloom risk" from every row ever stored; and the
+satellite page **fabricated per-farm readings with a seeded RNG** and rendered
+"Action required" from them.
+- **WS-32 satellite honesty.** `core/market/satellite_engine.py`: `_simulate_reading`
+  deleted; a farm without a scene produces **no reading**; `SatelliteSnapshot` gained
+  `n_readings_verified`, `n_readings_unverified`, `scene_dates`, `missing_reason`;
+  `is_live` follows verified scenes, never `bool(credentials)`; an NDVI anomaly is
+  labelled `surface_scum_or_vegetation` ("not a chlorophyll or toxicity measurement"),
+  not `possible_bloom`; the catalogue drops the fabricated HAB-confirmation and
+  cage-census products and marks every remaining product `validated: false`.
+  `core/routers/ocean_routes.py` gives `/api/satellite/{status,products,scan,anomalies}`
+  provenance — degraded with a reason when no scene exists. The page shows
+  "NO VERIFIED SCENE" instead of "LIVE"/"SIMULATED MODE" and no longer prints
+  "Action required" from an anomaly.
+- **WS-33 bloom truth.** `core/routers/bloom_routes.py`: one `_bloom_freshness()` +
+  `_bloom_provenance()` pair; live only when the newest chlorophyll observation is
+  ≤ 7 days old, otherwise degraded naming the date and age; payloads carry
+  `observed_at`, `age_days` and a `dataset_note` when stored rows came from a different
+  CMEMS product than the client fetches (the model defaulted to the Atl 1 km L3 id while
+  the client reads the global 4 km L4 one). The alert log's provenance now states it is
+  a delivery record, not a measurement. The bio-risk disease count calls the real
+  `fetch_disease_cases`/`get_disease_summary` pair and reports `status: unavailable`
+  instead of a silent zero. `agents/bloom_agent.py` computes the trend against the
+  previous **distinct** observation date (never the row it just wrote); the model
+  returns `None` when no earlier observation exists and the payload says "trend
+  unavailable". `core/bloom/notifications.py` records `not_configured` / `sent` +
+  `delivered_at` / `failed` / `dashboard` instead of stamping `sent` before dispatch,
+  and the message reads "CHLOROPHYLL WATCH … not a toxicity measurement". The brief
+  counts distinct localities inside the last week and names the data age.
+  **Alembic 021** adds `bloom_alerts.delivered_at`, relabels pre-fix `sent`/`delivered`
+  rows `legacy_unknown` (nobody can prove they were delivered) and nulls the
+  self-compared `chl_a_trend` values; the downgrade keeps both corrections.
+- **WS-34 bloom context.** `core/bloom/context.py` + `GET /api/bloom/context`: the IMR
+  Algestatus link with its `checked_at` and an explicit "no API" note, the documented
+  regional mortality events (2019 *C. leadbeateri* 8 M fish / NOK 2.4 bn potential
+  sales value; 2025 *C. leadbeateri* + *Phaeocystis* >2 M fish / ≥NOK 300 M; March 2026
+  *Pseudochattonella* PO1 ~1.7 M fish) each with a source URL, and the five limits of a
+  satellite chlorophyll band (biomass not toxicity; kilometre pixels; subsurface
+  blooms; gap-filled product; no published Norwegian threshold or operational
+  species-level forecast). The endpoint is degraded by design — it is a dated link, not
+  a feed.
+- **Frontend** `frontend/src/app/bloom/page.tsx` unwraps the envelope (the crash), renders
+  the served provenance instead of a live badge, shows "n/a" for an unknown trend, and
+  adds a "what this shows / what it cannot show" panel plus the dated advisory and event
+  history. `BloomMap.tsx` accepts `chl_a_trend: number | null`.
+- **Docs:** `docs/DATA_SOURCES_COST.md` — what satellite/HAB data costs (CDSE free quota,
+  CMEMS free with redistribution rights, MET free, Earth Engine $500/month, Sentinel
+  Hub/Planet quote-only) and which sources a paid product may display.
+- Tests: `tests/test_satellite_honesty.py` (8), `tests/test_bloom_honesty.py` (17), a
+  021 migration test. **Council record:** three lenses agreed to fix before adding; the
+  proposed finer-grained 300 m per-farm OLCI layer was **rejected** (a cage is
+  sub-pixel, the product is largely gap-filled, and the 2019 bloom was subsurface at a
+  pycnocline that ocean colour cannot see).
+
+### WS-28a/30/31 — stop writing calls, stop printing multiples, stop using Yahoo FX (2026-10-18)
+- **WS-28a directional-write gate.** `core/legal/equity_signals.py` gained
+  `DIRECTIONAL_WRITES_ENABLED = False` and `may_persist_directional(instrument=...)`.
+  The four agents that still wrote trade directions on listed shares — signal
+  generator, market hedger, prediction agent and the bloom agent's SHORT injection —
+  now check it and skip, leaving an audit row or a log line. The surfaces were taken
+  down in WS-20; the writers were not, so the rows would have reappeared the moment the
+  agents service started. Non-equity instruments (spot, futures) are unaffected.
+  `tests/test_directional_writes_gate.py` (14).
+- **WS-30 ROI calculator.** `core/gtm/roi.py`: claim-like inputs (avoidable share,
+  harvest-timing gain, basis improvement, affected volume share, loss-ratio
+  improvement, minutes saved, admin hours) **default to zero**, the processor's
+  hard-coded 0.5 became `share_of_volume_affected`, and each ICP reports the
+  **break-even** value of its primary driver plus `benefit_needed_nok` — "you need this
+  product to create NOK 35 880 a year to pay for itself" instead of a 228x/491x/1 693x
+  multiple that a finance buyer reads as a red flag. `tests/test_gtm_roi.py` (17).
+- **WS-31 licensed FX + attribution.** `core/market/fx_rates.py` (new) reads the
+  official daily NOK rates from Norges Bank (open data, observation date attached);
+  `feed_cost_engine` and `competitiveness_engine` now convert through it instead of
+  Yahoo Finance, whose terms forbid deriving income from its data. Fallbacks are still
+  recorded and degrade the payload (`usd_nok_is_fallback`, reason included). The
+  attribution footer gains Norges Bank, Mattilsynet and the FRED notice the API terms
+  require, and drops the Yahoo claim. Known open item: Yahoo equity/commodity quotes
+  remain elsewhere (HANDOVER WS-31).
+
 ### WS-29 — the weekly margin bridge (2026-10-18)
 - **Why:** the platform held the two inputs that decide a salmon producer's week —
   the live SSB export price and the live feed ingredient basket — and never turned

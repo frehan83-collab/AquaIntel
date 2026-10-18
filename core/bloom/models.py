@@ -61,5 +61,9 @@ class BloomAlert(Base):
     risk_level = Column(String(16), nullable=False)
     sent_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC), nullable=False)
     channel = Column(String(16), nullable=False)  # sms / email / dashboard
-    delivery_status = Column(String(16), default="sent")  # sent / delivered / failed
+    #: WS-33: "sent" means the provider accepted it, and only then is delivered_at set.
+    #: Unconfigured channels record ``not_configured``; pre-fix rows are
+    #: ``legacy_unknown`` (Alembic 021) because nobody can prove they were delivered.
+    delivery_status = Column(String(16), default="unknown")
+    delivered_at = Column(DateTime)  # when a provider confirmed dispatch
     message_text = Column(Text)

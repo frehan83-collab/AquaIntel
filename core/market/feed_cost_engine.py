@@ -206,6 +206,10 @@ class FeedCostSnapshot:
     undated_live_ingredients: list[str] = field(default_factory=list)
     #: True when USD/NOK fell back to ``DEFAULT_USDNOK``; invalidates the NOK level.
     usd_nok_is_fallback: bool = False
+    #: When the official rate was observed (Norges Bank publishes daily) and, if it
+    #: fell back, why. WS-31: provenance for the conversion, not just the number.
+    usd_nok_observed_at: str | None = None
+    usd_nok_fallback_reason: str | None = None
 
     def price_provenance(self) -> dict:
         """Honest provenance for the ingredient basket — dated, never assumed current.
@@ -255,12 +259,14 @@ class FeedCostSnapshot:
                 observed_at=observed_at,
             ).to_dict()
         if getattr(self, "usd_nok_is_fallback", False):
+            reason = getattr(self, "usd_nok_fallback_reason", None) or (
+                "the live Norges Bank rate was unavailable"
+            )
             return DataProvenance.degraded(
                 label,
                 reason=(
-                    "USD/NOK fell back to the constant "
-                    f"{DEFAULT_USDNOK} (the live rate was unavailable), so the NOK level is "
-                    "converted at a stale rate"
+                    f"USD/NOK fell back to the constant {DEFAULT_USDNOK} ({reason}), so the "
+                    "NOK level is converted at a stale rate"
                 ),
                 confidence=0.5,
                 observed_at=observed_at,
@@ -437,6 +443,8 @@ class FeedCostEngine:
         # The whole basket is converted at this rate; a constant fallback invalidates
         # the NOK level even when every ingredient price is live (WS-22 class).
         snapshot.usd_nok_is_fallback = bool(getattr(self, "_usd_nok_is_fallback", False))
+        snapshot.usd_nok_observed_at = getattr(self, "_usd_nok_observed_at", None)
+        snapshot.usd_nok_fallback_reason = getattr(self, "_usd_nok_fallback_reason", None)
         # The month the basket describes, not the fetch time: the FRED "global
         # price" series are monthly and publish with a lag, so a fetch-time stamp
         # would report a three-month-old observation as current.
@@ -602,31 +610,33 @@ class FeedCostEngine:
         return result
 
     async def _fetch_usdnok(self) -> float:
-        """Get USD/NOK exchange rate.
+        """Official USD/NOK from Norges Bank, with a recorded fallback.
 
-        Records ``usd_nok_is_fallback`` when the live rate is unavailable: the whole
-        NOK cost base is converted at this rate, so a constant silently substituted
-        here would misstate every NOK figure while the prices themselves stayed live
-        (the same defect class as the competitiveness engine's NOK/USD 0.093).
+        WS-31: this used to read Yahoo Finance, whose API terms forbid deriving income
+        from its data — a paid product may not price Norwegian costs from it. Norges
+        Bank publishes the official daily rate as open data and attaches the
+        observation date, which the payload carries.
+
+        ``usd_nok_is_fallback`` is still recorded: the whole NOK cost base is converted
+        at this rate, so a constant substituted here must degrade the basket (the same
+        defect class as the competitiveness engine's NOK/USD 0.093).
         """
+        from core.market.fx_rates import usd_nok as official_usd_nok
+
         self._usd_nok_is_fallback = False
+        self._usd_nok_observed_at = None
         try:
-            async with httpx.AsyncClient(timeout=10) as client:
-                resp = await client.get(
-                    "https://query1.finance.yahoo.com/v8/finance/chart/USDNOK=X?interval=1d&range=5d",
-                    headers={"User-Agent": "AquaIntel/1.0"},
-                )
-                if resp.status_code == 200:
-                    data = resp.json()
-                    closes = data.get("chart", {}).get("result", [{}])[0]\
-                        .get("indicators", {}).get("quote", [{}])[0]\
-                        .get("close", [])
-                    valid = [c for c in closes if c is not None]
-                    if valid:
-                        return float(valid[-1])
-        except Exception:
-            pass
-        self._usd_nok_is_fallback = True
+            rate = await official_usd_nok()
+            value = rate.get("nok_per_unit")
+            if value and float(value) > 0:
+                self._usd_nok_observed_at = rate.get("observed_at")
+                self._usd_nok_is_fallback = bool(rate.get("is_fallback"))
+                return float(value)
+            self._usd_nok_is_fallback = True
+            self._usd_nok_fallback_reason = rate.get("fallback_reason")
+        except Exception as exc:  # noqa: BLE001 — the constant below is the fallback
+            self._usd_nok_is_fallback = True
+            self._usd_nok_fallback_reason = f"official rate unavailable ({str(exc)[:80]})"
         log.debug("feed_cost.usd_nok_fallback", value=DEFAULT_USDNOK)
         return DEFAULT_USDNOK
 
@@ -701,6 +711,8 @@ class FeedCostEngine:
             "default_ingredients": list(getattr(s, "default_ingredients", []) or []),
             "undated_live_ingredients": list(getattr(s, "undated_live_ingredients", []) or []),
             "usd_nok_is_fallback": bool(getattr(s, "usd_nok_is_fallback", False)),
+            "usd_nok_source": "Norges Bank EXR (official daily NOK rate)",
+            "usd_nok_observed_at": getattr(s, "usd_nok_observed_at", None),
             "data_provenance": s.price_provenance(),
         }
 

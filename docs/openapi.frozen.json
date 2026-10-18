@@ -3415,6 +3415,26 @@
         ]
       }
     },
+    "/api/bloom/context": {
+      "get": {
+        "description": "Dated, sourced context for reading the chlorophyll band.\n\nThe IMR advisory is a manual weekly map with no API, so this endpoint links to it\nand states when the link was checked; it never serves a scraped copy as current.\nThe regional event list is a base rate with citations, not a probability.",
+        "operationId": "bloom_context_api_bloom_context_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Bloom Context",
+        "tags": [
+          "bloom"
+        ]
+      }
+    },
     "/api/bloom/risk": {
       "get": {
         "description": "Latest bloom risk assessment per locality.",

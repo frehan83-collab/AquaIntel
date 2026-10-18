@@ -258,3 +258,80 @@ def test_019_repairs_a_reconciled_column_and_keeps_real_labels(tmp_path):
     assert rows == [(10001, "barentswatch"), (10002, "demo_seed")], rows
     assert column[3] == 1 and column[4] == "'unverified'", column
 
+
+
+def test_021_relabels_undeliverable_alerts_and_nulls_fake_trends(tmp_path):
+    """WS-33: a "sent" alert nobody can prove was delivered becomes legacy_unknown,
+    and every self-compared chl_a_trend (always 0.0) becomes NULL — never a measurement.
+
+    The downgrade drops delivered_at but must not restore the false claims.
+    """
+    import sqlite3
+
+    db_file = tmp_path / "bloom_truth.db"
+    result = _alembic(db_file, "upgrade", "020")
+    assert result.returncode == 0, f"upgrade to 020 failed:\n{result.stderr}"
+
+    conn = sqlite3.connect(db_file)
+    try:
+        conn.execute(
+            "INSERT INTO localities (locality_no, name) VALUES (10029, 'Testfjord')"
+        )
+        # The pre-fix shape: no delivered_at, delivery_status "sent", trend 0.0.
+        conn.executemany(
+            "INSERT INTO bloom_alerts (locality_no, risk_level, sent_at, channel, "
+            "delivery_status) VALUES (10029, 'CRITICAL', '2026-03-01 00:00:00', ?, 'sent')",
+            [("sms",), ("email",)],
+        )
+        conn.execute(
+            "INSERT INTO bloom_alerts (locality_no, risk_level, sent_at, channel, "
+            "delivery_status) VALUES (10029, 'HIGH', '2026-03-01 00:00:00', 'dashboard', 'dashboard')"
+        )
+        conn.executemany(
+            "INSERT INTO bloom_risk_assessments (locality_no, assessed_at, risk_level, "
+            "risk_score, chl_a_value, chl_a_trend) VALUES "
+            "(10029, '2026-03-01 00:00:00', 'HIGH', 60, 6.1, ?)",
+            [(0.0,), (0.0,)],
+        )
+        conn.execute(
+            "INSERT INTO bloom_risk_assessments (locality_no, assessed_at, risk_level, "
+            "risk_score, chl_a_value, chl_a_trend) VALUES "
+            "(10029, '2026-03-02 00:00:00', 'LOW', 10, 1.1, 0.4)"
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    result = _alembic(db_file, "upgrade", "head")
+    assert result.returncode == 0, f"upgrade 020->head failed:\n{result.stderr}"
+    conn = sqlite3.connect(db_file)
+    try:
+        statuses = conn.execute(
+            "SELECT channel, delivery_status, delivered_at FROM bloom_alerts ORDER BY channel"
+        ).fetchall()
+        trends = conn.execute(
+            "SELECT chl_a_trend FROM bloom_risk_assessments ORDER BY assessed_at"
+        ).fetchall()
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(bloom_alerts)")}
+    finally:
+        conn.close()
+
+    assert ("sms", "legacy_unknown", None) in statuses, statuses
+    assert ("email", "legacy_unknown", None) in statuses, statuses
+    # A dashboard record is not a push attempt and keeps its own status.
+    assert ("dashboard", "dashboard", None) in statuses, statuses
+    assert trends == [(None,), (None,), (0.4,)], trends
+    assert "delivered_at" in columns
+
+    result = _alembic(db_file, "downgrade", "020")
+    assert result.returncode == 0, f"downgrade failed:\n{result.stderr}"
+    conn = sqlite3.connect(db_file)
+    try:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(bloom_alerts)")}
+        unchanged = conn.execute(
+            "SELECT COUNT(*) FROM bloom_alerts WHERE delivery_status = 'legacy_unknown'"
+        ).fetchone()[0]
+    finally:
+        conn.close()
+    assert "delivered_at" not in columns
+    assert unchanged == 2, "the downgrade must not restore a delivery claim nobody proved"

@@ -71,32 +71,82 @@ async def ocean_forecast_pa(pa: int):
 
 
 # ── Satellite ────────────────────────────────────────────────────────
+def _satellite_provenance(snapshot=None, *, reason: str | None = None) -> dict:
+    """Provenance for a Sentinel-2 payload (WS-32).
+
+    ``is_live`` means a scene came back with a date — never that credentials exist.
+    A payload with no verified reading is degraded with the reason, so a caller can
+    tell "no scene" from "no anomaly".
+    """
+    from core.market.data_provenance import DataProvenance
+
+    verified = int(getattr(snapshot, "n_readings_verified", 0) or 0)
+    dates = list(getattr(snapshot, "scene_dates", []) or [])
+    note = reason or getattr(snapshot, "missing_reason", None) or "no verified scene"
+    observed = dates[-1] if dates else None
+    label = "Copernicus Sentinel-2 L2A (CDSE) — surface NDVI/turbidity, not chlorophyll"
+    if verified:
+        return DataProvenance.live(label, confidence=0.6, observed_at=observed).to_dict()
+    return DataProvenance.degraded(
+        label, reason=str(note), confidence=0.2, observed_at=observed
+    ).to_dict()
+
+
 @router.get("/api/satellite/status")
 async def satellite_status():
     from core.market.satellite_engine import satellite_engine
-    return satellite_engine.get_status()
+    status = satellite_engine.get_status()
+    status["data_provenance"] = _satellite_provenance(
+        satellite_engine._cache,
+        reason=status.get("missing_reason") or "no verified scene",
+    )
+    return status
 
 
 @router.get("/api/satellite/products")
 async def satellite_products():
     from core.market.satellite_engine import satellite_engine
-    return satellite_engine.get_products()
+    products = satellite_engine.get_products()
+    return {
+        "products": products,
+        "note": (
+            "Sentinel-2 at 10-20 m shows surface reflectance. It cannot confirm a harmful "
+            "algal bloom, identify a species or measure toxicity; every product here is "
+            "an unvalidated pointer to look, not a diagnosis."
+        ),
+        "data_provenance": _satellite_provenance(
+            satellite_engine._cache, reason="catalogue — no measurement in this payload"
+        ),
+    }
 
 
 @router.post("/api/satellite/scan")
 async def satellite_scan(n_farms: int = 50):
-    from core.market.satellite_engine import satellite_engine
     from dataclasses import asdict
+
+    from core.market.satellite_engine import satellite_engine
+
     snapshot = await satellite_engine.scan_farms(n_farms=n_farms)
-    return asdict(snapshot) if hasattr(snapshot, '__dataclass_fields__') else snapshot
+    payload = asdict(snapshot) if hasattr(snapshot, "__dataclass_fields__") else snapshot
+    if isinstance(payload, dict):
+        payload["data_provenance"] = _satellite_provenance(snapshot)
+    return payload
 
 
 @router.get("/api/satellite/anomalies")
 async def satellite_anomalies():
     from core.market.satellite_engine import satellite_engine
-    if satellite_engine._cache:
-        return satellite_engine._cache.anomalies
-    return []
+    cache = satellite_engine._cache
+    if not cache:
+        return {
+            "anomalies": [],
+            "data_provenance": _satellite_provenance(None, reason="no scan has run yet"),
+        }
+    return {
+        "anomalies": cache.anomalies,
+        "scene_dates": cache.scene_dates,
+        "data_provenance": _satellite_provenance(cache),
+    }
 
 
 # ══════════════════════════════════════════════════════════════════════

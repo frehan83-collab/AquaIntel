@@ -20,13 +20,23 @@ from dataclasses import dataclass, field
 
 @dataclass
 class BloomRiskResult:
-    """Output of the bloom risk assessment for one locality."""
-    risk_level: str  # LOW / ELEVATED / HIGH / CRITICAL
-    risk_score: float  # 0-100
+    """Output of the bloom risk assessment for one locality.
+
+    WS-33: this is a **chlorophyll band**, not a toxicity or mortality probability.
+    ``risk_level`` and ``risk_score`` describe how far the satellite chlorophyll
+    reading sits above the configured thresholds; they carry no species, toxin or
+    harm information, and ``chl_a_trend`` is ``None`` when no earlier observation
+    exists (never a silent 0.0).
+    """
+    risk_level: str  # LOW / ELEVATED / HIGH / CRITICAL — a chlorophyll band
+    risk_score: float  # 0-100 index, NOT a probability
     chl_a_value: float
     sst_value: float | None
-    chl_a_trend: float  # mg/m3 per day
+    chl_a_trend: float | None  # mg/m3 per day; None = no previous observation
     contributing_factors: list[str] = field(default_factory=list)
+    #: What the number is and is not — travels with every payload.
+    measurement: str = "chlorophyll-a concentration (biomass), not toxicity"
+    is_toxicity_measurement: bool = False
 
     def factors_json(self) -> str:
         return json.dumps(self.contributing_factors)
@@ -47,7 +57,7 @@ SST_BLOOM_FAVORABLE_MAX = 15.0
 def compute_bloom_risk(
     chl_a: float,
     sst: float | None = None,
-    chl_a_trend: float = 0.0,
+    chl_a_trend: float | None = None,
     chl_elevated: float = DEFAULT_CHL_ELEVATED,
     chl_high: float = DEFAULT_CHL_HIGH,
     chl_critical: float = DEFAULT_CHL_CRITICAL,
@@ -81,7 +91,13 @@ def compute_bloom_risk(
         factors.append(f"Chl-a {chl_a:.1f} mg/m3 within normal range")
 
     # ── Trend bonus (0-20 points) ────────────────────────────────────
-    if chl_a_trend > 1.0:
+    # WS-33: None means "no earlier observation", not "no change". A missing trend
+    # earns no bonus and says so, instead of scoring a fabricated 0.0.
+    if chl_a_trend is None:
+        factors.append(
+            "No previous chlorophyll observation for this cell — trend unavailable"
+        )
+    elif chl_a_trend > 1.0:
         score += 20.0
         factors.append(f"Rapid chl-a increase: +{chl_a_trend:.2f} mg/m3/day")
     elif chl_a_trend > 0.3:
