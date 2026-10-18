@@ -1,10 +1,28 @@
-CURRENT: WS-28a + WS-30–35 shipped (2026-10-18) — see docs/HANDOVER.md §5
+CURRENT: WS-28a + WS-30–37 shipped (2026-10-18) — see docs/HANDOVER.md §5
 LAST_UPDATED: 2026-10-18
 SESSIONS: 38+ (15 commits pushed; WS-29 and the WS-28a/30–35 round pending commit)
 REPOSITORY: https://github.com/frehan83-collab/AquaIntel (public)
 HANDOVER: docs/HANDOVER.md — verified state, gate commands, workstream backlog WS-1..WS-35, trap list (23 traps)
 VERSION: 2.6.0 · 348 paths · 1355 tests collected · 21 migrations (head 021)
 
+## WS-29b/36/37 (2026-10-18, final packages of the round)
+
+- **WS-29b mechanism:** `core/market/feed_anchor.py` reads
+  `artifacts/feed_realised_prices.json` (template shipped); the bridge validates its
+  modelled feed leg against that figure, preferring it to the 2024 survey, and reports
+  `anchor_source`/`anchor_scope`/`anchor_is_registered`/`anchor_stale`. Malformed files
+  are ignored with a reason. 10 tests. Open: obtain a realised figure.
+- **WS-36:** `SmoltModel.validation()` compares the 12-month projection with the 1.7 M t
+  national reference (0.46×) and `/api/supply/smolt-forecast` degrades with the reason
+  instead of a live badge. 8 tests. Open: calibrate the release/yield constants.
+- **WS-37:** US duty charged on the customs value — the live SSB export price for Norway
+  (USD via Norges Bank), production cost elsewhere with a note; every row carries
+  `tariff_base`, `export_price_usd`, `tariff_at_export_price_usd`, `duty_base_note`, the
+  snapshot `tariff_basis`, and `/competitiveness` prints it. 6 tests.
+- Gates: full suite **1355 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed**
+  (4m22s, 1379 collected); ruff clean; provenance ratchet 206/0; tsc 0 errors.
+- Six commits local: `f218e79`, `8dc439c`, `6bf7b07`, `62a6de9`, `d6ce9a2`, `9b9ea16`.
+  Push blocked by the environment (`SEC_E_NO_CREDENTIALS`).
 ## WS-31b + WS-35 (2026-10-18, later the same day) — licensed sources, reported volumes
 
 - **WS-31b:** Yahoo Finance removed from every data path. `fx_rates.rate_to_usd()`

@@ -121,6 +121,17 @@ added `tests/test_migrations.py`.
   (Mowi read 113 600 t vs ~332 000 t harvested in Norway 2025), unknown volumes are
   `null` with a `volume_basis` block, sub-entities do not repeat the group figure
   (11 tests, `test_company_volumes`).
+- 2026-10-18 · **WS-29b mechanism, WS-36, WS-37.** `core/market/feed_anchor.py` lets an
+  operator register a realised feed cost (`artifacts/feed_realised_prices.json`) and the
+  margin bridge validates its modelled level against it, naming scope, source and
+  staleness (10 tests, `test_feed_anchor`); the official 2025/2026 survey figures were
+  checked and are not published, so none were invented. The smolt pipeline is now checked
+  against the 1.7 M t national reference before it is served — 12-month total 789 987 t
+  (0.46×), so `/api/supply/smolt-forecast` degrades with the reason instead of wearing a
+  live badge (8 tests, `test_smolt_validation`). And the US duty is charged on the customs
+  value: the rate goes on the live SSB export price for Norway rather than production
+  cost, every row labels its `tariff_base` and publishes `tariff_at_export_price_usd`
+  with a note stating the direction (6 tests, `test_tariff_basis`).
 - 2026-10-18 · **WS-29 weekly margin bridge** (commercial hardening, not a RUN-1
   workstream). `core/market/margin_bridge.py` (method `1.0.0`), `GET /api/margin/bridge`
   + `/api/margin/bridge/{locality_no}`, `MarginBridgePanel` on `/feed-cost` replacing
