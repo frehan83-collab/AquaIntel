@@ -155,6 +155,35 @@ satellite page **fabricated per-farm readings with a seeded RNG** and rendered
   the snapshot carries `tariff_basis`. `/competitiveness` marks export-price rows with
   `*` and prints the basis under the table. `tests/test_tariff_basis.py` (6).
 
+- **WS-43/44/45 — the council's round: verify before charging, fail closed, bind the limit.**
+  A four-lens council (commercial, aquaculture domain, ML grounding, legal) plus a chair ranked
+  the next moves; the chair's verdict was "fix, do not build". Three of its five items shipped
+  here.
+  **WS-43 (verified or free).** `Workbench.run()` never called `verify()`, so a document with an
+  invented number returned `degraded: False`, was labelled a model run and spent a credit. Now a
+  document is verified against the same facts its prompt was built from; an unmatched number
+  withholds the prose, delivers the deterministic digest instead (`mode: "withheld"`), spends no
+  credit and states why. The budget sentinel is an error rather than content (it used to be
+  written as the document), the origin run hands the model its own `data_quality` /
+  `fx_fallbacks` / `fallback_reason` instead of presenting a fallback spot as verified, and the
+  lice-pressure review is withdrawn from sale (`sellable: False`, 409 with its reason and the
+  redemption path) because no verified lice row exists since 2026-W15.
+  **WS-44 (signed, bound, closed).** The checker was blind to the three most likely lies: it
+  compared absolute values (a −1.69 margin written as "+1.69 profit" verified), it pooled every
+  number so spot 72.55 and cost 74.24 could be swapped, and 0/100 were exempt. Comparison is now
+  signed, each candidate carries a role from its fact key, each claim is attributed to the role
+  hint nearest before it, and 0/100 are claims. In the chat an unsupported number now loses its
+  sentence (`strip_unsupported`) and the answer says how many were withheld. Offline gate: 18/18,
+  0 unmatched. `tests/test_claim_check_strictness.py` (8).
+  **WS-45 (site-bound limit).** The chat printed both § 8 limits and let the farmer choose. The
+  request now carries `locality_no`; with a site bound the fact states one limit, its region,
+  whether the week is in the spring window and the trigger (0.6×), and the answer names the site;
+  an unresolved production area returns `unavailable` and the chat refuses to quote a limit; with
+  no site the fact says the limit depends on the site and asks for one. The golden case was
+  replaced by a PA × ISO-week matrix (`tests/test_lice_limit_binding.py`, 11).
+  Council items not taken this round: lawful inference (needs counsel's signature, not code) and
+  the alert evaluator's provenance (rank 5).
+
 - **WS-42 — a free OpenRouter chain, and what the live model taught the checker.** The
   OpenRouter catalogue was fetched live (2026-10-18): 16 free models, of which the chain now
   shipped is `google/gemma-4-26b-a4b-it:free` (tools + response_format),

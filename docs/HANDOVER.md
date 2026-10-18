@@ -1806,6 +1806,25 @@ costs NOK 7–74/user/month by plan.
 **Open:** a 150-question live-model golden set; prompt caching; overage billing and annual
 answer packs (both need a stored payment method).
 
+### WS-43/44/45 · The council's round — **DONE 2026-10-18**
+**Council.** Four lenses (commercial, aquaculture domain, ML grounding, legal) and a chair,
+convened over the current state. Verdict: **fix, do not build**. Ranked plan: (1) verify a
+document before charging it; (2) make customer-content inference lawful, then delete the question
+quota; (3) teach the checker sign, binding and round numbers; (4) bind § 8 to the customer's site
+and ISO week; (5) one verified_current() for alerts.
+**Shipped this round: 1, 3, 4.** (2) is a contract signature, not code, and (5) remains open.
+- WS-43: document verification + withholding (`mode: "withheld"`, no credit), the budget sentinel
+  as an error, engine provenance in the origin payload, and the lice review withdrawn from sale
+  with a redemption path (no verified lice row since 2026-W15).
+- WS-44: signed comparison, role-bound candidates, nearest-hint attribution, 0/100 as claims,
+  and fail-closed stripping in the chat ("N numbers were withheld"). Offline gate 18/18, 0
+  unmatched.
+- WS-45: `locality_no` on the chat request; one limit, region, spring flag and trigger for a
+  bound site; `unavailable` (refuse) for an unresolved PA; an explicit "depends on the site" with
+  no site. Golden case replaced by the PA × week matrix.
+**Open from the council:** lawful inference + quota removal (counsel), alert-evaluator provenance,
+answer receipts, and the fix for the Desk/Operator ladder.
+
 ### WS-42 · A free OpenRouter chain — **DONE 2026-10-18**
 **Why:** the paid model ran out of credit on this deployment and every answer degraded to the
 deterministic path. OpenRouter's free tier (20 req/min, 50 req/day, 1,000/day after a $10
