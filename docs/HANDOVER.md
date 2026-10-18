@@ -33,14 +33,14 @@
 | Dimension | Value |
 |---|---|
 | Platform version | `2.6.0` |
-| OpenAPI surface | **348 paths** (`docs/openapi.frozen.json`; WS-29 added two, WS-34 one) |
-| Tests | **1379 collected** (`pytest --collect-only`, 2026-10-18 after WS-28a/30–37) |
-| Alembic migrations | **21** (head `021`, WS-33) |
+| OpenAPI surface | **352 paths** (`docs/openapi.frozen.json`; WS-29 added two, WS-34 one) |
+| Tests | **1435 collected** (pytest --collect-only, 2026-10-18 after WS-28a/30-40) |
+| Alembic migrations | **23** (head 023, WS-39) |
 | Router modules | **38** (`core/routers/`) |
 | Engine modules | **80** (`core/market/`, +`margin_bridge.py`, +`fx_rates.py`, +`company_facts.py`) |
 | Frontend routes | **68** page files |
 | Production topology | `docker-compose.prod.yml`: `api` + `agents` + `db` (TimescaleDB) + `web` |
-| Last full-suite run | **1355 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 4m22s (2026-10-18, after WS-29b, WS-31b, WS-35, WS-36 and WS-37) |
+| Last full-suite run | **1411 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 5m04s (2026-10-18, after WS-29b, WS-31b, WS-35–40) |
 
 **What this session delivered** (all pushed): 10 commercial-hardening steps plus 3
 follow-up fixes â€” see Â§3 for the doc to read per area.
