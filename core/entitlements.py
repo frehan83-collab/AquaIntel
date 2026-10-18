@@ -96,6 +96,10 @@ class Plan:
     premium: bool = False               # True = may call PREMIUM_PREFIXES
     upgrade_to: str | None = None       # suggested next plan for the 402 payload
     roles: tuple[str, ...] = ()
+    #: Grounded chat questions per month. <= 0 means unlimited. The allowance is a
+    #: fair-use meter, not a revenue line: it stops one power user consuming the
+    #: platform's model budget (see core/llm/usage.py).
+    chat_questions_per_month: int = 0
 
     @property
     def api_calls_per_month(self) -> int:
@@ -111,6 +115,7 @@ PLANS: dict[str, Plan] = {
         audience="Analysts, journalists, evaluation",
         price_nok_month=0,
         api_calls_per_day=100,
+        chat_questions_per_month=0,
         seats=1,
         sites=0,
         features=(
@@ -128,6 +133,7 @@ PLANS: dict[str, Plan] = {
         audience="Farm operations, lice/welfare/quota managers",
         price_nok_month=4900,
         api_calls_per_day=5000,
+        chat_questions_per_month=100,
         seats=3,
         sites=25,
         features=(
@@ -146,6 +152,7 @@ PLANS: dict[str, Plan] = {
         audience="Trading desks, buyers, sales planners, analysts",
         price_nok_month=2990,
         api_calls_per_day=20000,
+        chat_questions_per_month=300,
         seats=5,
         sites=0,
         premium=True,
@@ -165,6 +172,7 @@ PLANS: dict[str, Plan] = {
         name="Enterprise",
         audience="Integrated producers, large processors",
         price_nok_month=14900,
+        chat_questions_per_month=1000,
         api_calls_per_day=50000,
         seats=0,
         sites=0,
@@ -184,6 +192,7 @@ PLANS: dict[str, Plan] = {
         name="Investor",
         audience="Investors and funds",
         price_nok_month=24900,
+        chat_questions_per_month=300,
         api_calls_per_day=100000,
         seats=0,
         sites=0,
@@ -201,6 +210,7 @@ PLANS: dict[str, Plan] = {
         name="Intelligence",
         audience="AI-first customers",
         price_nok_month=39900,
+        chat_questions_per_month=-1,
         api_calls_per_day=100000,
         seats=0,
         sites=0,
@@ -219,6 +229,7 @@ PLANS: dict[str, Plan] = {
         name="Data & Assurance",
         audience="Insurers, banks, assurance providers",
         price_nok_month=0,  # licensed per contract (EUR 25k-150k/yr)
+        chat_questions_per_month=-1,
         api_calls_per_day=250000,
         seats=0,
         sites=0,
@@ -259,6 +270,9 @@ _PLAN_ROUTE_ALLOWLIST: dict[str, tuple[str, ...]] = {
         "/api/regulatory/", "/api/compliance/", "/api/ocean/", "/api/climate/",
         "/api/alerts", "/api/notifications/", "/api/analytics/", "/api/anomaly/",
         "/api/ras/", "/api/twin/", "/api/efficacy/",
+        # WS-38: a farmer paying NOK 4,900 must not lack the chat a desk gets at
+        # NOK 2,990. The per-plan allowance meters it (chat_questions_per_month).
+        "/api/chat", "/api/chat/",
     ),
     "professional": (
         "/api/health", "/api/brief", "/api/lice/", "/api/signals",
@@ -283,7 +297,8 @@ _PLAN_ROUTE_ALLOWLIST: dict[str, tuple[str, ...]] = {
 _PLAN_PAGES: dict[str, object] = {
     "free": ("/", "/brief", "/settings", "/billing", "/accuracy", "/indices"),
     "operator": ("/", "/brief", "/settings", "/billing", "/disease", "/lice-quota",
-                 "/farmer-daily", "/harvest", "/compliance", "/accuracy", "/indices"),
+                 "/farmer-daily", "/harvest", "/compliance", "/accuracy",
+                 "/indices", "/chat"),
     "professional": "all",
 }
 

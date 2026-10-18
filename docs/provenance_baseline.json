@@ -3,8 +3,8 @@
   "note": "Non-exempt /api GET routes. A route may only be added here after a deliberate provenance decision (provenance attached, or an exemption added to core/provenance_register.py). Regenerate with `python scripts/provenance_ratchet.py --update`.",
   "counts": {
     "total_routes": 239,
-    "exempt": 33,
-    "registered": 206
+    "exempt": 34,
+    "registered": 205
   },
   "exempt_prefixes": [
     "/api/accuracy/artifacts",
@@ -14,6 +14,7 @@
     "/api/auth/",
     "/api/billing/",
     "/api/cache/",
+    "/api/chat/usage",
     "/api/data-freshness",
     "/api/disclaimer",
     "/api/entitlements",
@@ -57,7 +58,6 @@
     "/api/canada/snapshot",
     "/api/causal/granger",
     "/api/causal/summary",
-    "/api/chat/history",
     "/api/chile/disease-history",
     "/api/chile/export-history",
     "/api/chile/farms",

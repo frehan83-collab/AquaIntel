@@ -14,7 +14,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -24,7 +23,7 @@ from sqlalchemy import select, func
 from config.settings import settings
 from core.version import PLATFORM_VERSION
 from core.models import (
-    LiceRecord, Locality, init_db,
+    LiceRecord, init_db,
 )
 
 import structlog
@@ -344,6 +343,7 @@ from core.routers.ocean_routes import router as ocean_router
 from core.routers.macro_routes import router as macro_router
 from core.routers.causal_routes import router as causal_router
 from core.routers.ras_routes import router as ras_router
+from core.routers.chat_routes import router as chat_router
 from core.routers.entitlements_routes import router as entitlements_router
 from core.routers.indices_routes import router as indices_router
 from core.routers.accuracy_routes import router as accuracy_router
@@ -392,6 +392,7 @@ app.include_router(ocean_router)
 app.include_router(macro_router)
 app.include_router(causal_router)
 app.include_router(ras_router)
+app.include_router(chat_router)
 
 # ── Models ────────────────────────────────────────────────────────────
 
@@ -517,180 +518,12 @@ async def cache_invalidate(request: Request):
 # Moved to core/routers/misc_routes.py, analytics_routes.py, farm_routes.py
 
 # ══════════════════════════════════════════════════════════════════════
-# AI CHAT ENDPOINT
+# AI CHAT
+# Moved to core/routers/chat_routes.py (WS-38): one grounded path, metered
+# against the plan's chat_questions_per_month allowance. The old handler here
+# interpolated a national lice average over every row (demo seeds included), a
+# latest week with no age, and a wrong traffic-light sentence into the prompt.
 # ══════════════════════════════════════════════════════════════════════
-
-class ChatRequest(BaseModel):
-    message: str
-    history: list[dict] = []
-
-
-@app.post("/api/chat")
-async def chat_endpoint(req: ChatRequest):
-    """AI chat with full platform context via OpenRouter/Anthropic."""
-    import httpx as hx
-    # Build platform context from live data
-    from core.async_db import get_async_session
-    async with get_async_session() as s:
-        lice_stats = (await s.execute(
-            select(
-                func.count(LiceRecord.id),
-                func.avg(LiceRecord.avg_adult_female_lice),
-                func.max(LiceRecord.avg_adult_female_lice),
-            ).where(LiceRecord.avg_adult_female_lice.isnot(None))
-        )).one()
-
-        latest_week = (await s.execute(
-            select(LiceRecord.year, LiceRecord.week)
-            .order_by(LiceRecord.year.desc(), LiceRecord.week.desc())
-            .limit(1)
-        )).first()
-
-        n_localities = (await s.execute(
-            select(func.count(func.distinct(Locality.locality_no)))
-        )).scalar() or 0
-
-    # Get real SSB spot price
-    try:
-        from core.market.ssb_price_client import ssb_price_client
-        spot = await ssb_price_client.get_current_spot()
-    except Exception:
-        spot = 0
-
-    avg_lice = lice_stats[1] or 0
-    max_lice = lice_stats[2] or 0
-    n_records = lice_stats[0] or 0
-
-    system_prompt = f"""You are the AquaIntel AI — an expert analyst for Norwegian salmon aquaculture.
-You have access to real-time platform data:
-- {n_records:,} lice records across {n_localities} localities
-- Latest data: {f"Y{latest_week[0]}W{latest_week[1]}" if latest_week else "N/A"}
-- National avg adult female lice: {avg_lice:.3f} per fish (threshold: 0.5)
-- Maximum observed: {max_lice:.3f}
-- Equity direction signals: withdrawn on 2026-10-17 pending a legal opinion (WS-20)
-- Current SSB salmon spot price: {spot:.1f} NOK/kg
-- Data sources: BarentsWatch (NLOD 2.0), SSB (Statistics Norway), Fiskeridirektoratet
-
-Key domain knowledge:
-- Norwegian regulatory threshold: 0.5 adult female lice per fish
-- Traffic light system: green (< 0.2), yellow (0.2-0.5), red (> 0.5) per production area
-- Major listed companies: MOWI, SALM (SalMar), LSG (Lerøy), GSF (Grieg Seafood)
-- Treatment types: mechanical (Hydrolicer/Thermolicer), cleaner fish (wrasse/lumpfish), medicinal (bath/in-feed)
-- High lice → forced harvest → supply disruption → price increase (4-8 week lag)
-
-Always provide data-backed answers. Include accuracy caveats where relevant. Never give financial advice, and never say whether to buy, sell or short a listed security."""
-
-    # Build messages
-    messages = [{"role": "system", "content": system_prompt}]
-    for h in req.history[-10:]:  # last 10 messages for context
-        messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
-    messages.append({"role": "user", "content": req.message})
-
-    # Call LLM via OpenRouter (or Anthropic)
-    if settings.llm_provider == "openrouter" and settings.openrouter_api_key:
-        api_url = f"{settings.openrouter_base_url}/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {settings.openrouter_api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://aquaintel.no",
-            "X-Title": "AquaIntel",
-        }
-    elif settings.llm_provider == "anthropic" and settings.anthropic_api_key:
-        api_url = "https://api.anthropic.com/v1/messages"
-        headers = {
-            "x-api-key": settings.anthropic_api_key,
-            "Content-Type": "application/json",
-            "anthropic-version": "2023-06-01",
-        }
-    else:
-        # No LLM key — fall through to rule-based data response
-        return await _rule_based_chat_response(req.message)
-
-    try:
-        async with hx.AsyncClient(timeout=60.0) as client:
-            if settings.llm_provider == "anthropic":
-                # Anthropic Messages API format
-                resp = await client.post(api_url, headers=headers, json={
-                    "model": settings.llm_model.replace("anthropic/", ""),
-                    "max_tokens": settings.llm_max_tokens,
-                    "temperature": settings.llm_temperature,
-                    "system": system_prompt,
-                    "messages": [m for m in messages if m["role"] != "system"],
-                })
-                if resp.status_code == 200:
-                    data = resp.json()
-                    content = data.get("content", [{}])[0].get("text", "")
-                    return {"response": content}
-            else:
-                # OpenAI-compatible (OpenRouter)
-                resp = await client.post(api_url, headers=headers, json={
-                    "model": settings.llm_model,
-                    "messages": messages,
-                    "max_tokens": settings.llm_max_tokens,
-                    "temperature": settings.llm_temperature,
-                })
-                if resp.status_code == 200:
-                    data = resp.json()
-                    content = data["choices"][0]["message"]["content"]
-                    return {"response": content}
-
-            log.warning("chat.llm_error", status=resp.status_code)
-            # Fallback to rule-based on LLM error
-            return await _rule_based_chat_response(req.message)
-
-    except Exception as e:
-        log.warning("chat.connection_error", error=str(e)[:100])
-        return await _rule_based_chat_response(req.message)
-
-
-@app.post("/api/chat/briefing")
-async def chat_briefing(request: Request):
-    """Generate a personalized intelligence briefing."""
-    try:
-        body = await request.json()
-    except Exception:
-        body = {}
-    pas = body.get("pas", [3, 4, 5, 6])
-    companies = body.get("companies", ["Mowi", "SalMar", "Lerøy"])
-
-    # Build context from live data
-    context_parts = []
-    try:
-        from core.market.farm_graph import farm_graph
-        summary = await farm_graph.get_summary()
-        context_parts.append(f"Farm network: {summary.get('n_farms', 0)} farms, {summary.get('n_above_threshold', 0)} above lice threshold")
-    except Exception:
-        pass
-    try:
-        from core.valuechain.smolt_model import smolt_model
-        balance = smolt_model.get_demand_balance()
-        context_parts.append(f"Supply balance: {balance.get('signal', 'unknown')}, price pressure: {balance.get('price_pressure', 'unknown')}")
-    except Exception:
-        pass
-
-    briefing_prompt = (
-        f"Generate a concise intelligence briefing for a salmon industry professional "
-        f"monitoring production areas {pas} and companies {companies}. "
-        f"Current data: {'; '.join(context_parts)}. "
-        f"Include: market outlook, key risks, and recommended actions."
-    )
-
-    try:
-        from core.llm.chat_agent import chat_agent
-        response = await chat_agent.ask(briefing_prompt)
-        return {"briefing": response, "context": context_parts, "pas": pas, "companies": companies}
-    except Exception as e:
-        return {"briefing": f"Briefing generation unavailable: {str(e)[:100]}", "context": context_parts}
-
-@app.get("/api/chat/history")
-async def chat_history(limit: int = 20):
-    """Return recent conversation history."""
-    try:
-        from core.llm.chat_agent import chat_agent
-        history = getattr(chat_agent, "conversation_history", [])
-        return {"messages": history[-limit:], "total": len(history)}
-    except Exception:
-        return {"messages": [], "total": 0}
 
 
 # ══════════════════════════════════════════════════════════════════════

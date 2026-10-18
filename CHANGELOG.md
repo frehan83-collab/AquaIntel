@@ -155,6 +155,37 @@ satellite page **fabricated per-farm readings with a seeded RNG** and rendered
   the snapshot carries `tariff_basis`. `/competitiveness` marks export-price rows with
   `*` and prints the basis under the table. `tests/test_tariff_basis.py` (6).
 
+- **WS-38 — the chat became a product: grounded, metered, and convertible into an alert.**
+  The chat was the one surface that bypassed the honesty layer: `/api/chat` in
+  `core/api.py` string-interpolated a national lice average over **every** row (demo seeds
+  included), a latest week with no age, and a hardcoded "traffic light: green < 0.2"
+  sentence that is not how the Norwegian system works — then billed nothing and counted
+  nothing, on a USD 100/month model budget that a dozen users could exhaust. It was also
+  available to Desk (NOK 2,990) but **not** to Operator (NOK 4,900).
+  **Grounded:** `core/llm/grounding.py` assembles seven facts — verified-only lice (with the
+  week and its age), the § 8 limit for the current week, the SSB export price, the margin
+  bridge (with the feed month and its quality verdict), satellite chlorophyll (with the
+  scene date), the latest traffic-light decision and the dated US tariff — each with
+  `as_of`, `source` and `live`/`degraded`/`stale`/`unavailable`, gathered concurrently so a
+  dead engine degrades only its own fact. The prompt forbids numbers outside that block.
+  **One path:** `core/llm/chat_service.py` replaces both old entries; `mode` says whether a
+  model wrote the prose (`grounded`), the deterministic assembler did because no model was
+  reachable (`grounded_fallback` — the numbers still arrive, labelled), the legal notice did
+  (`refusal`, no tokens spent) or nothing (`unavailable`).
+  **Metered:** Alembic **022** adds `chat_usage` (one row per user per month); each plan
+  states `chat_questions_per_month` (free 0, Operator 100, Desk 300, Enterprise 1000,
+  Intelligence unlimited); the route answers a structured 402 naming the allowance, the
+  reset date and the upgrade, and only a model-backed answer consumes the allowance.
+  **Useful:** `POST /api/chat/save-alert` turns "tell me when lice in PA 3 goes above 0.4"
+  into a **running** `CustomAlertRule` (metric, operator, threshold, production area, seeded
+  from the current verified value when the question gives no number) — and refuses to
+  invent a metric or a threshold when the question does not support one.
+  `/api/chat/usage` serves the meter; `/chat` is rebuilt around it (allowance meter,
+  sources with provenance chips, "watch this", a locked state that explains the plan).
+  Measured on 2026-10-18: one grounded answer = **1 070 input + 188 output tokens =
+  USD 0.0082**, so 100 questions/month ≈ USD 0.8 of model cost.
+  Tests: `tests/test_chat_grounding.py` (22) + `tests/test_chat_metering.py` (15).
+
 ### WS-29 — the weekly margin bridge (2026-10-18)
 - **Why:** the platform held the two inputs that decide a salmon producer's week —
   the live SSB export price and the live feed ingredient basket — and never turned

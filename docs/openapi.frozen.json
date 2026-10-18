@@ -368,7 +368,6 @@
       "ChatRequest": {
         "properties": {
           "history": {
-            "default": [],
             "items": {
               "additionalProperties": true,
               "type": "object"
@@ -377,6 +376,7 @@
             "type": "array"
           },
           "message": {
+            "maxLength": 4000,
             "title": "Message",
             "type": "string"
           }
@@ -1181,6 +1181,32 @@
           "password"
         ],
         "title": "RegisterRequest",
+        "type": "object"
+      },
+      "SaveAlertRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "question": {
+            "maxLength": 2000,
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "SaveAlertRequest",
         "type": "object"
       },
       "SignalConfirmRequest": {
@@ -3762,8 +3788,8 @@
     },
     "/api/chat": {
       "post": {
-        "description": "AI chat with full platform context via OpenRouter/Anthropic.",
-        "operationId": "chat_endpoint_api_chat_post",
+        "description": "Answer a question from the platform's verified data, within the plan's allowance.",
+        "operationId": "chat_api_chat_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3794,42 +3820,31 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Chat Endpoint"
-      }
-    },
-    "/api/chat/briefing": {
-      "post": {
-        "description": "Generate a personalized intelligence briefing.",
-        "operationId": "chat_briefing_api_chat_briefing_post",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Chat Briefing"
-      }
-    },
-    "/api/chat/history": {
-      "get": {
-        "description": "Return recent conversation history.",
-        "operationId": "chat_history_api_chat_history_get",
-        "parameters": [
+        "security": [
           {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 20,
-              "title": "Limit",
-              "type": "integer"
-            }
+            "HTTPBearer": []
           }
         ],
+        "summary": "Chat",
+        "tags": [
+          "chat"
+        ]
+      }
+    },
+    "/api/chat/save-alert": {
+      "post": {
+        "description": "Turn a question into a running alert rule, or say why it cannot be one.",
+        "operationId": "save_alert_api_chat_save_alert_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAlertRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
@@ -3850,7 +3865,40 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Chat History"
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Save Alert",
+        "tags": [
+          "chat"
+        ]
+      }
+    },
+    "/api/chat/usage": {
+      "get": {
+        "description": "The meter the UI renders: allowance, used, remaining, cost, reset date.",
+        "operationId": "chat_usage_status_api_chat_usage_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Chat Usage Status",
+        "tags": [
+          "chat"
+        ]
       }
     },
     "/api/chile/disease-history": {

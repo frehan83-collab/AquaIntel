@@ -38,6 +38,13 @@ EXEMPT: dict[str, dict[str, str]] = {
     },
     "/api/tiers": {"category": "catalogue_and_meta", "reason": "plan catalogue"},
     "/api/disclaimer": {"category": "catalogue_and_meta", "reason": "static legal text"},
+    "/api/chat/usage": {
+        "category": "catalogue_and_meta",
+        "reason": (
+            "the caller's own chat meter (questions used, tokens, cost) — it "
+            "describes the account, not a measured part of the sea or the market"
+        ),
+    },
     "/api/meta/": {"category": "catalogue_and_meta", "reason": "build/version metadata"},
     "/api/legal/": {
         "category": "catalogue_and_meta",

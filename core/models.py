@@ -718,3 +718,26 @@ class PartnerMetric(Base):
     unit = Column(String(32))
     note = Column(Text)
     recorded_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC))
+
+class ChatUsage(Base):
+    """One row per user per month: the grounded-chat meter (WS-38).
+
+    The allowance is a fair-use meter, not a revenue line — it stops one power user
+    consuming the platform's model budget and gives the plan a number it can state.
+    ``user_key`` is the authenticated user (or an API-key principal); anonymous
+    visitors are never metered because they never get an answer.
+    """
+    __tablename__ = "chat_usage"
+    __table_args__ = (
+        UniqueConstraint("user_key", "month", name="uq_chat_usage_user_month"),
+        Index("ix_chat_usage_month", "month"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_key = Column(String(128), nullable=False)
+    month = Column(String(7), nullable=False)          # YYYY-MM
+    questions = Column(Integer, default=0)
+    input_tokens = Column(Integer, default=0)
+    output_tokens = Column(Integer, default=0)
+    cost_usd = Column(Float, default=0.0)
+    updated_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC))

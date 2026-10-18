@@ -357,6 +357,35 @@ the accuracy registry, then bump `MARGIN_METHOD_VERSION`. Until then the level s
 **Also open:** no premium gate was added for `/api/margin/*` â€” the paywall ladder is the
 owner's WS-20/26 decision; the bridge is ungated like the other cost-desk routes.
 
+### WS-38 · Grounded, metered chat — **DONE 2026-10-18**
+**Why:** chat was the only surface outside the honesty layer. `core/api.py` built its prompt
+from a national lice average over **every** row (demo seeds included), a latest week with no
+age, and a "traffic light: green < 0.2" sentence that is not how the Norwegian system works.
+Nothing counted tokens per user against a USD 100/month budget, and the feature was in the
+Desk plan (NOK 2,990) but not the Operator plan (NOK 4,900).
+**Shipped:**
+- `core/llm/grounding.py` — seven facts (verified-only lice + age, § 8 limit for the week,
+  SSB price, margin bridge with feed month and quality, chlorophyll with scene date,
+  traffic-light decision, dated US tariff), each with `as_of`/`source`/provenance, built
+  concurrently, one engine's failure degrading only its own fact. The prompt forbids numbers
+  outside the block and requires stale facts to be stated with their age.
+- `core/llm/chat_service.py` — one answer path with `mode` ∈ {grounded, grounded_fallback,
+  refusal, unavailable}; the fallback assembles the verified numbers deterministically so an
+  outage never yields nothing, and says a model did not write it.
+- `core/llm/usage.py` + Alembic **022** (`chat_usage`) — per-user, per-month meter of
+  questions and tokens; unreadable meter is reported as unknown, never assumed.
+- `core/routers/chat_routes.py` — `POST /api/chat`, `GET /api/chat/usage`,
+  `POST /api/chat/save-alert`; allowance in `entitlements.Plan.chat_questions_per_month`
+  (free 0, Operator 100, Desk 300, Enterprise 1000, Intelligence unlimited); chat opened to
+  Operator in both the route allowlist and the page list.
+- `/chat` rebuilt: allowance meter with reset date and model cost, per-answer provenance
+  chips, "watch this", a locked state that names the plan and the upgrade.
+**Measured:** one grounded answer = 1 070 in + 188 out tokens = **USD 0.0082**; the whole
+100-question Operator allowance costs ~USD 0.8 of model spend.
+**Open:** credit packs and a deep-analysis run (WS-39); an evaluation set for answer
+accuracy (WS-40); anonymous trial questions (a marketing decision, deliberately not taken —
+chat is a paid surface from Operator up).
+
 ### WS-37 · US duty is assessed on the customs value — **DONE 2026-10-18**
 **Why:** `competitiveness_engine` computed `tariff_cost = production_cost * rate`. US duty
 is assessed on the **transaction value** of the imported good — the price the importer

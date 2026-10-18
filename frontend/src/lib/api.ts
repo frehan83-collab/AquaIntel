@@ -34,6 +34,7 @@ import type {
   CompetitivenessScenarioResponse,
   MarketSpotPrice, MarketForwardCurve, FeedCostCompositeIndex,
   MarginBridge,
+  ChatAnswerResponse, ChatHistoryTurn, ChatUsageStatus, ChatSaveAlertResponse,
   EventImpactResult, SavedScenario, SignalsWithdrawn,
 } from "@/types/api";
 
@@ -115,6 +116,32 @@ async function fetchAPI<T = any>(
     throw err;
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+/** Like fetchAPI but never throws on 4xx: returns the status and parsed body.
+
+ * The chat's 402 is a product surface (plan, allowance, upgrade path), not an error.
+ */
+export async function fetchAPIRaw<T = unknown>(
+  path: string,
+  options?: RequestInit,
+): Promise<{ ok: boolean; status: number; body: T | null }> {
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: { ...authHeaders(), "Content-Type": "application/json", ...options?.headers },
+    });
+    if (res.status === 401) handleUnauthorized();
+    let body: T | null = null;
+    try {
+      body = (await res.json()) as T;
+    } catch {
+      body = null;
+    }
+    return { ok: res.ok, status: res.status, body };
+  } catch {
+    return { ok: false, status: 0, body: null };
   }
 }
 
@@ -406,15 +433,19 @@ export const api = {
   globalDiseaseGeo: () => fetchAPI("/api/global/disease-geo"),
   globalLice: () => fetchAPI("/api/global/lice"),
 
-  // AI Chat
-  chat: (message: string, contextLevel?: string) =>
-    fetchAPI("/api/chat", {
+  // AI Chat (WS-38): one grounded path, metered against the plan allowance, and the
+  // 402 body is returned rather than thrown so the page can explain the upgrade.
+  chat: (message: string, history: ChatHistoryTurn[] = []) =>
+    fetchAPIRaw<ChatAnswerResponse>("/api/chat", {
       method: "POST",
-      body: JSON.stringify({ message, context_level: contextLevel || "full" }),
+      body: JSON.stringify({ message, history }),
     }),
-  chatBriefing: (watchlist?: { pas?: number[]; companies?: string[] }) =>
-    fetchAPI("/api/chat/briefing", { method: "POST", body: JSON.stringify(watchlist || {}) }),
-  chatHistory: (limit?: number) => fetchAPI(`/api/chat/history?limit=${limit || 20}`),
+  chatUsage: () => fetchAPI<ChatUsageStatus>("/api/chat/usage"),
+  chatSaveAlert: (question: string, name?: string) =>
+    fetchAPI<ChatSaveAlertResponse>("/api/chat/save-alert", {
+      method: "POST",
+      body: JSON.stringify({ question, name }),
+    }),
 
   // Alert Notification System
   alerts: (category?: string, severity?: string, unreadOnly?: boolean, limit?: number) =>

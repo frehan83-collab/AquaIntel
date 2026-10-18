@@ -1,669 +1,544 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bot, Send, Circle, Zap, Activity, Fish } from "lucide-react";
+import {
+  AlertTriangle,
+  BellPlus,
+  Bot,
+  Check,
+  ChevronDown,
+  Copy,
+  Database,
+  Loader2,
+  Lock,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  User,
+} from "lucide-react";
 import GlassCard from "@/components/GlassCard";
-import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import type {
+  ChatAnswerResponse,
+  ChatFactSource,
+  ChatHistoryTurn,
+  ChatSaveAlertResponse,
+  ChatUsageStatus,
+} from "@/types/api";
 
-// ─────────────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────────────
+const SUGGESTIONS = [
+  "What is the margin per kg right now?",
+  "When was the last verified lice report?",
+  "How old is the newest chlorophyll scene?",
+  "Which origin is cheapest to land in the US?",
+];
 
-interface Message {
+const PROVENANCE_STYLE: Record<string, string> = {
+  live: "bg-emerald-400/10 text-emerald-300 border-emerald-400/20",
+  degraded: "bg-amber-400/10 text-amber-300 border-amber-400/20",
+  stale: "bg-rose-400/10 text-rose-300 border-rose-400/20",
+  unavailable: "bg-white/5 text-[var(--text-secondary)] border-white/10",
+};
+
+interface Turn {
   id: string;
-  role: "user" | "ai";
-  content: string;
-  timestamp: Date;
+  role: "user" | "assistant";
+  text: string;
+  answer?: ChatAnswerResponse;
+  pending?: boolean;
 }
 
-interface ContextStatus {
-  liceActive: boolean;
-  pricesActive: boolean;
-  signalCount: number;
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────
-
-function genId(): string {
+function newId(): string {
   return Math.random().toString(36).slice(2, 10);
 }
 
-function formatNum(n: number, decimals = 1): string {
-  return n.toFixed(decimals);
+function provenanceLabel(value: string): string {
+  if (value === "live") return "live";
+  if (value === "degraded") return "modelled";
+  if (value === "stale") return "stale";
+  return "missing";
 }
 
-function formatLice(n: number): string {
-  return n.toFixed(3);
-}
-
-/** Render **bold** markdown spans inline */
-function BoldText({ text }: { text: string }) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+function SourceRow({ source }: { source: ChatFactSource }) {
   return (
-    <>
-      {parts.map((part, i) => {
-        if (part.startsWith("**") && part.endsWith("**")) {
-          return (
-            <strong key={i} className="text-ocean-300 font-semibold">
-              {part.slice(2, -2)}
-            </strong>
-          );
-        }
-        return <span key={i}>{part}</span>;
-      })}
-    </>
-  );
-}
-
-/** Render multi-line AI message with bold + bullet + heading support */
-function AIMessageContent({ content }: { content: string }) {
-  const lines = content.split("\n");
-  return (
-    <div className="space-y-1 leading-relaxed text-sm text-white/80">
-      {lines.map((line, i) => {
-        if (line === "") return <div key={i} className="h-1" />;
-        // Standalone heading: entire line is **text**
-        if (/^\*\*[^*]+\*\*$/.test(line.trim())) {
-          return (
-            <p key={i} className="font-semibold text-white/95 mt-2 text-[13px]">
-              {line.trim().slice(2, -2)}
-            </p>
-          );
-        }
-        // Bullet point
-        if (/^- /.test(line)) {
-          return (
-            <div key={i} className="flex items-start gap-1.5">
-              <span className="text-ocean-400 mt-0.5 flex-shrink-0 select-none">•</span>
-              <p><BoldText text={line.slice(2)} /></p>
-            </div>
-          );
-        }
-        return <p key={i}><BoldText text={line} /></p>;
-      })}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Smart AI response engine
-// ─────────────────────────────────────────────────────────────────
-
-// State to carry follow-up suggestions out of getAIResponse
-let _lastFollowUps: string[] = [];
-
-async function getAIResponse(message: string): Promise<string> {
-  // ── Primary: use server-side intelligence chat endpoint ───────────
-  try {
-    const result = await api.chat(message);
-    const text = result?.answer || result?.response;
-    if (text) {
-      _lastFollowUps = result.follow_up || [];
-      return text;
-    }
-  } catch {
-    // Fall through to client-side fallback
-  }
-
-  // ── Fallback: lightweight client-side rule-based responses ────────
-  const isLice = /lice|sea lice|caligus|parasite/i.test(message);
-  const isPrice = /price|market|nok|eur|salmon|cost|value|spot/i.test(message);
-  const isSignal = /signal|trade|trading|buy|sell|position|alert/i.test(message);
-  const isRisk = /risk|farm|locality|exposure|high.risk|dangerous/i.test(message);
-  const isRegime = /regime|regulation|regulatory|barentswatch|authority|zone|production area/i.test(message);
-  const isForecast = /forecast|predict|outlook|future|expect|model|projection/i.test(message);
-
-  try {
-    if (isLice) {
-      const data = await api.liceSummary();
-      const areas: any[] = data?.production_areas ?? data?.areas ?? [];
-      const overall: any = data?.overall ?? data?.summary ?? {};
-      const avgLice: number = overall?.avg_lice ?? overall?.average_lice ?? 0;
-      const threshold: number = overall?.threshold ?? 0.5;
-      const aboveThreshold: number = overall?.above_threshold ?? overall?.farms_above ?? 0;
-
-      let resp = `**Sea Lice Intelligence Report**\n\n`;
-      resp += `Current average lice count across Norwegian production areas: **${formatLice(avgLice)} lice/fish** (regulatory threshold: ${formatLice(threshold)}).\n`;
-
-      if (aboveThreshold > 0) {
-        resp += `\n⚠ **${aboveThreshold} farms** are currently above the treatment threshold.\n`;
-      } else {
-        resp += `\nAll monitored farms are currently within regulatory limits.\n`;
-      }
-
-      if (areas.length > 0) {
-        resp += `\n**Production Area Breakdown:**\n`;
-        areas.slice(0, 6).forEach((a: any) => {
-          const name = a.name ?? a.area_name ?? `PA ${a.pa ?? a.id}`;
-          const count: number = a.avg_lice ?? a.lice_count ?? a.value ?? 0;
-          const status = count > threshold ? "⚠ Above limit" : "✓ Within limit";
-          resp += `  • ${name}: **${formatLice(count)}** — ${status}\n`;
-        });
-      }
-
-      resp += `\nData sourced from BarentsWatch weekly lice monitoring. Updated every 7 days.`;
-      return resp;
-    }
-
-    if (isPrice) {
-      const data = await api.intelligenceSummary();
-      const prices: any = data?.prices ?? data?.market ?? {};
-      const spot: number = prices?.spot ?? prices?.current ?? prices?.spot_price ?? 0;
-      const weekChange: number = prices?.week_change ?? prices?.weekly_change ?? 0;
-      const outlook: string = prices?.outlook ?? prices?.trend ?? "";
-
-      let resp = `**Salmon Market Intelligence**\n\n`;
-
-      if (spot > 0) {
-        resp += `Current NorSalmon spot price: **NOK ${formatNum(spot, 1)}/kg**.\n`;
-        if (weekChange !== 0) {
-          const dir = weekChange > 0 ? "up" : "down";
-          resp += `Prices are **${dir} ${formatNum(Math.abs(weekChange), 1)}%** from last week.\n`;
-        }
-      } else {
-        resp += `Live price data is sourced from SSB and Fish Pool Index.\n`;
-      }
-
-      resp += `\n**Key Market Drivers:**\n`;
-      resp += `  • Norwegian harvest volumes and seasonal supply cycles\n`;
-      resp += `  • European and Asian export demand dynamics\n`;
-      resp += `  • Lice treatment pressure reducing harvest capacity\n`;
-      resp += `  • Currency movements (EUR/NOK)\n`;
-
-      if (outlook) {
-        resp += `\n**Near-term outlook:** ${outlook.charAt(0).toUpperCase() + outlook.slice(1)}. Our ML price model runs Monte Carlo across 1,000 scenarios.`;
-      }
-
-      return resp;
-    }
-
-    if (isSignal) {
-      // WS-20: equity direction signals are withdrawn; the server-side chat says
-      // the same (core/legal/equity_signals.py).
-      return `**Equity signals withdrawn**\n\nThe signal generator's directional calls on listed salmon shares were withdrawn on 17 October 2026 pending a legal opinion. What was withdrawn, why, and what is still under review is published at /api/legal/advice-boundary.`;
-    }
-
-    if (isRisk) {
-      const data = await api.intelligenceSummary();
-      const farms: any[] = data?.high_risk_farms ?? data?.risk_farms ?? data?.farms ?? [];
-      const riskSummary: any = data?.risk ?? {};
-
-      let resp = `**Farm Risk Assessment**\n\n`;
-
-      if (farms.length > 0) {
-        resp += `**Highest Risk Localities:**\n`;
-        farms.slice(0, 5).forEach((f: any) => {
-          const name = f.name ?? f.locality ?? `Locality ${f.locality_no ?? f.id}`;
-          const score: number = f.risk_score ?? f.score ?? f.lice ?? 0;
-          const flag: string = f.flag ?? f.issue ?? "";
-          resp += `  • **${name}** — Risk score: ${formatNum(score, 1)}`;
-          if (flag) resp += ` (${flag})`;
-          resp += `\n`;
-        });
-      } else {
-        resp += `Risk data aggregates lice counts, bloom alerts, vessel signals, and regulatory regime states.\n`;
-      }
-
-      const cascades = riskSummary?.cascade_risk ?? riskSummary?.network_risk ?? null;
-      if (cascades) {
-        resp += `\n**Network Cascade Risk:** ${cascades}. Farm-to-farm lice transmission is modeled via our graph neural network.\n`;
-      }
-
-      resp += `\nRisk factors include: sea lice pressure, algal bloom proximity, vessel treatment activity, and regulatory zone classification.`;
-      return resp;
-    }
-
-    if (isRegime) {
-      const data = await api.intelligenceSummary();
-      const regimes: any[] = data?.regimes ?? data?.regime_states ?? [];
-
-      let resp = `**Regulatory Regime Intelligence**\n\n`;
-      resp += `Norway's aquaculture production areas use a traffic light system:\n`;
-      resp += `  • **Red zones** — capacity must decrease 6%\n`;
-      resp += `  • **Yellow zones** — no change, under monitoring\n`;
-      resp += `  • **Green zones** — capacity may increase 6%\n\n`;
-
-      if (Array.isArray(regimes) && regimes.length > 0) {
-        resp += `**Current Zone Status:**\n`;
-        regimes.slice(0, 6).forEach((r: any) => {
-          const pa = r.pa ?? r.production_area ?? r.id ?? "—";
-          const name = r.name ?? r.area ?? `Production Area ${pa}`;
-          const color: string = r.color ?? r.status ?? r.regime ?? "yellow";
-          const emoji = color === "red" ? "🔴" : color === "green" ? "🟢" : "🟡";
-          resp += `  ${emoji} PA ${pa} — ${name}: **${color.toUpperCase()}**\n`;
-        });
-      } else {
-        resp += `Live regime data is sourced from BarentsWatch, updated each regulatory cycle.\n`;
-      }
-
-      resp += `\nRegime classifications directly affect equity valuations — a red zone reduces production license value.`;
-      return resp;
-    }
-
-    if (isForecast) {
-      const data = await api.intelligenceSummary();
-      const priceOutlook: any = data?.price_outlook ?? {};
-      const forecast: any = data?.forecast ?? data?.supply_forecast ?? {};
-
-      let resp = `**Intelligence Forecast Summary**\n\n`;
-      resp += `FishIntel runs multiple predictive models in parallel:\n\n`;
-      resp += `**1. Supply Forecast**\n`;
-      resp += `  ML models trained on Norwegian slaughter volumes, sea temperature, and lice treatment cycles.\n\n`;
-      resp += `**2. Price Outlook**\n`;
-
-      const horizon: number = priceOutlook?.horizon ?? 4;
-      const scenarios: number = priceOutlook?.scenarios ?? 1000;
-      resp += `  Monte Carlo simulation: **${scenarios.toLocaleString()} scenarios** over **${horizon}-week horizon**.\n\n`;
-
-      resp += `**3. Lice GNN Predictions**\n`;
-      resp += `  Graph Neural Network models lice spread across the farm network via ocean currents and treatment cascades.\n\n`;
-
-      const bias: string = forecast?.bias ?? priceOutlook?.bias ?? "";
-      if (bias) {
-        resp += `**Current Forecast Bias:** ${bias}\n\n`;
-      }
-
-      resp += `Navigate to **Forecast** or **Price Outlook** in the sidebar for interactive charts and scenario breakdowns.`;
-      return resp;
-    }
-
-    // General fallback
-    const data = await api.intelligenceSummary();
-    const avgLice: number = data?.avg_lice ?? data?.lice?.average ?? 0;
-
-    let resp = `**FishIntel Intelligence Overview**\n\n`;
-    resp += `I'm here to help navigate Norwegian salmon market intelligence. Live status:\n\n`;
-
-    if (avgLice > 0) {
-      resp += `  • **Average lice count:** ${formatLice(avgLice)} lice/fish across production areas\n`;
-    }
-
-    resp += `  • Real-time price tracking via Fish Pool Index and SSB data\n`;
-    resp += `  • Regulatory regime monitoring across 13 production areas\n`;
-    resp += `  • AIS vessel tracking for harvest and treatment activity\n\n`;
-    resp += `Ask me about **lice levels**, **salmon prices**, **trading signals**, **farm risk**, **regulatory regimes**, or **supply forecasts**. What would you like to explore?`;
-    return resp;
-  } catch {
-    return `I encountered an issue reaching the FishIntel data services right now. The API endpoint may be temporarily unavailable.\n\nYou can try:\n  • Refreshing the page to re-establish the data connection\n  • Checking system health in the Settings panel\n  • Browsing the dashboards directly for live data\n\nI'll respond normally once the data services reconnect.`;
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Suggested question chips
-// ─────────────────────────────────────────────────────────────────
-
-const SUGGESTIONS = [
-  { label: "What's the current lice situation?", icon: Fish },
-  { label: "What's the 8-week price outlook?", icon: Zap },
-  { label: "What's driving salmon prices?", icon: Activity },
-  { label: "Which farms have the highest risk?", icon: Circle },
-] as const;
-
-// ─────────────────────────────────────────────────────────────────
-// Thinking indicator
-// ─────────────────────────────────────────────────────────────────
-
-function ThinkingDots() {
-  return (
-    <div className="flex items-center gap-1 py-0.5">
-      {[0, 1, 2].map((i) => (
-        <motion.span
-          key={i}
-          className="w-1.5 h-1.5 rounded-full bg-ocean-400"
-          animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.1, 0.8] }}
-          transition={{
-            duration: 1,
-            repeat: Infinity,
-            delay: i * 0.18,
-            ease: "easeInOut",
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Message bubble
-// ─────────────────────────────────────────────────────────────────
-
-function MessageBubble({ msg }: { msg: Message }) {
-  const isUser = msg.role === "user";
-  const [showTime, setShowTime] = useState(false);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.32, ease: "easeOut" }}
-      className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}
-    >
-      {/* Avatar — AI only */}
-      {!isUser && (
-        <div className="flex-shrink-0 mt-1">
-          <div className="w-8 h-8 rounded-xl bg-ocean-500/20 border border-ocean-500/30 flex items-center justify-center">
-            <Bot className="w-4 h-4 text-ocean-400" />
-          </div>
-        </div>
-      )}
-
-      {/* Bubble */}
-      <div
-        className={`relative max-w-[78%] flex flex-col ${isUser ? "items-end" : "items-start"}`}
-        onMouseEnter={() => setShowTime(true)}
-        onMouseLeave={() => setShowTime(false)}
+    <li className="flex items-start gap-2 border-b border-white/[0.04] py-1.5 last:border-0">
+      <span
+        className={`mt-0.5 shrink-0 rounded-md border px-1.5 py-0.5 text-[9px] uppercase tracking-wide ${
+          PROVENANCE_STYLE[source.provenance] || PROVENANCE_STYLE.unavailable
+        }`}
       >
+        {provenanceLabel(source.provenance)}
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[11px] leading-snug text-[var(--text-primary)]">
+          {source.label}
+        </span>
+        <span className="block text-[10px] leading-snug text-[var(--text-secondary)]">
+          {source.source}
+          {source.as_of ? ` · as of ${source.as_of}` : ""}
+          {source.age_days != null ? ` · ${source.age_days}d old` : ""}
+        </span>
+      </span>
+    </li>
+  );
+}
+
+function AnswerCard({
+  answer,
+  onSaveAlert,
+  saved,
+}: {
+  answer: ChatAnswerResponse;
+  onSaveAlert: (question: string) => Promise<ChatSaveAlertResponse | null>;
+  saved: ChatSaveAlertResponse | null;
+}) {
+  const [showSources, setShowSources] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const copy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(answer.answer);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable — no state change */
+    }
+  }, [answer.answer]);
+
+  const save = useCallback(async () => {
+    setSaving(true);
+    try {
+      await onSaveAlert(answer.question);
+    } finally {
+      setSaving(false);
+    }
+  }, [answer.question, onSaveAlert]);
+
+  const numbersOnly = answer.mode === "grounded_fallback";
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 text-[10px]">
+        <span className="inline-flex items-center gap-1 rounded-md border border-ocean-400/20 bg-ocean-400/10 px-1.5 py-0.5 text-ocean-300">
+          <ShieldCheck className="h-3 w-3" />
+          {answer.mode === "refusal" ? "policy answer" : numbersOnly ? "numbers only" : "grounded"}
+        </span>
+        {answer.degraded && !numbersOnly ? (
+          <span className="inline-flex items-center gap-1 rounded-md border border-amber-400/20 bg-amber-400/10 px-1.5 py-0.5 text-amber-300">
+            <AlertTriangle className="h-3 w-3" /> some data is old
+          </span>
+        ) : null}
+        {answer.latency_ms ? (
+          <span className="text-[var(--text-secondary)]">{Math.round(answer.latency_ms)} ms</span>
+        ) : null}
+      </div>
+
+      <div className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--text-primary)]">
+        {answer.answer}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 pt-1">
+        {answer.sources?.length ? (
+          <button
+            type="button"
+            onClick={() => setShowSources((value) => !value)}
+            aria-expanded={showSources}
+            className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1 text-[10px] text-[var(--text-secondary)] hover:bg-white/[0.06]"
+          >
+            <Database className="h-3 w-3" />
+            {answer.sources.length} sources
+            <ChevronDown
+              className={`h-3 w-3 transition-transform ${showSources ? "rotate-180" : ""}`}
+            />
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={copy}
+          className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1 text-[10px] text-[var(--text-secondary)] hover:bg-white/[0.06]"
+        >
+          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          {copied ? "copied" : "copy"}
+        </button>
+        {answer.mode !== "refusal" && answer.mode !== "unavailable" ? (
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving}
+            className="inline-flex items-center gap-1 rounded-lg border border-ocean-400/20 bg-ocean-400/10 px-2 py-1 text-[10px] text-ocean-300 hover:bg-ocean-400/20 disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <BellPlus className="h-3 w-3" />}
+            watch this
+          </button>
+        ) : null}
+      </div>
+
+      <AnimatePresence initial={false}>
+        {showSources ? (
+          <motion.ul
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden rounded-lg border border-white/[0.06] bg-black/20 px-2"
+          >
+            {answer.sources.map((source) => (
+              <SourceRow key={source.key} source={source} />
+            ))}
+          </motion.ul>
+        ) : null}
+      </AnimatePresence>
+
+      {saved ? (
         <div
-          className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
-            isUser
-              ? "bg-ocean-500/20 border border-ocean-500/25 text-white rounded-tr-sm"
-              : "bg-white/[0.05] border border-white/[0.07] rounded-tl-sm"
+          className={`rounded-lg border px-2.5 py-2 text-[11px] ${
+            saved.saved
+              ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-200"
+              : "border-amber-400/20 bg-amber-400/10 text-amber-200"
           }`}
         >
-          {isUser ? (
-            <span className="text-white/90">{msg.content}</span>
-          ) : (
-            <AIMessageContent content={msg.content} />
-          )}
+          {saved.message}
         </div>
-
-        {/* Timestamp on hover */}
-        <AnimatePresence>
-          {showTime && (
-            <motion.span
-              initial={{ opacity: 0, y: -3 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -3 }}
-              transition={{ duration: 0.13 }}
-              className={`text-[10px] text-white/25 mt-1 px-1 ${isUser ? "text-right" : "text-left"}`}
-            >
-              {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </div>
-    </motion.div>
+      ) : null}
+    </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Initial greeting message
-// ─────────────────────────────────────────────────────────────────
+function AllowanceMeter({ usage }: { usage: ChatUsageStatus | null }) {
+  if (!usage) return null;
+  const unlimited = usage.unlimited;
+  const allowance = usage.allowance;
+  const used = usage.used ?? 0;
+  const pct = unlimited ? 8 : allowance > 0 ? Math.min(100, (used / allowance) * 100) : 100;
+  const tone = unlimited || pct < 70 ? "bg-emerald-400" : pct < 95 ? "bg-amber-400" : "bg-rose-400";
+  return (
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+      <div className="flex items-baseline justify-between">
+        <p className="text-[10px] uppercase tracking-wide text-[var(--text-secondary)]">
+          {usage.plan_name || usage.plan} allowance
+        </p>
+        <p className="text-[11px] font-semibold text-[var(--text-primary)]">
+          {unlimited ? "unlimited" : `${used} / ${allowance}`}
+        </p>
+      </div>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+        <div className={`h-full rounded-full ${tone}`} style={{ width: `${pct}%` }} />
+      </div>
+      <p className="mt-1.5 text-[9px] text-[var(--text-secondary)]">
+        {unlimited
+          ? "fair-use metered; no monthly cap on this plan"
+          : `resets ${usage.resets_on}${
+              usage.cost_usd ? ` · $${usage.cost_usd.toFixed(2)} of model cost this month` : ""
+            }`}
+      </p>
+    </div>
+  );
+}
 
-const GREETING: Message = {
-  id: "greeting",
-  role: "ai",
-  content:
-    "Hello! I'm FishIntel's intelligence assistant. I can answer questions about lice levels, salmon prices, trading signals, regulatory regimes, and market conditions. What would you like to know?",
-  timestamp: new Date(),
-};
-
-// ─────────────────────────────────────────────────────────────────
-// Chat page
-// ─────────────────────────────────────────────────────────────────
+function LockedPanel({
+  payload,
+  usage,
+}: {
+  payload: Record<string, unknown> | null;
+  usage: ChatUsageStatus | null;
+}) {
+  const message =
+    (payload?.message as string) ||
+    "Grounded chat is included from Operator upwards: 100 questions a month on Operator, 300 on Desk.";
+  const upgrade = (payload?.upgrade_url as string) || "/billing";
+  const planName = (payload?.suggested_plan_name as string) || "Operator";
+  return (
+    <GlassCard delay={0.1}>
+      <div className="flex items-start gap-3">
+        <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-2">
+          <Lock className="h-5 w-5 text-amber-300" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+            Chat is a paid surface, and it says why
+          </h2>
+          <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">{message}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <a
+              href={upgrade}
+              className="rounded-lg bg-ocean-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-ocean-400"
+            >
+              Add {planName}
+            </a>
+            <a
+              href="/accuracy"
+              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:bg-white/[0.04]"
+            >
+              See the method first
+            </a>
+          </div>
+          <p className="mt-3 text-[10px] leading-relaxed text-[var(--text-secondary)]">
+            Every answer is assembled from the platform&apos;s verified feeds — the feed index,
+            the SSB export price, the margin bridge, lice reports, the traffic-light decisions
+            and the US tariff register — and each number keeps its observation date. Nothing is
+            estimated to fill a gap.
+          </p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <AllowanceMeter usage={usage} />
+      </div>
+    </GlassCard>
+  );
+}
 
 export default function ChatPage() {
-  const { t } = useTranslation();
-  const [messages, setMessages] = useState<Message[]>([GREETING]);
+  const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
-  const [thinking, setThinking] = useState(false);
-  const [briefingLoading, setBriefingLoading] = useState(false);
-  const [contextStatus, setContextStatus] = useState<ContextStatus>({
-    liceActive: false,
-    pricesActive: false,
-    signalCount: 0,
-  });
+  const [busy, setBusy] = useState(false);
+  const [usage, setUsage] = useState<ChatUsageStatus | null>(null);
+  const [locked, setLocked] = useState<Record<string, unknown> | null>(null);
+  const [lastSaved, setLastSaved] = useState<Record<string, ChatSaveAlertResponse>>({});
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  const hasOnlyGreeting = messages.length === 1 && messages[0].id === "greeting";
-
-  const generateBriefing = async () => {
-    setBriefingLoading(true);
-    try {
-      const result = await api.chatBriefing({ pas: [3, 4, 5, 6], companies: ["Mowi", "SalMar", "Lerøy"] });
-      setMessages((prev: any[]) => [...prev, {
-        id: genId(),
-        role: "ai",
-        content: result.briefing || "Briefing generated.",
-        timestamp: new Date(),
-      }]);
-    } catch { /* empty */ }
-    setBriefingLoading(false);
-  };
-
-  // Fetch context status on mount
   useEffect(() => {
+    let cancelled = false;
     api
-      .intelligenceSummary()
-      .then((data: any) => {
-        setContextStatus({
-          liceActive: true,
-          pricesActive: !!(data?.prices || data?.market || data?.spot_price),
-          signalCount: data?.signal_count ?? data?.active_signals ?? 0,
-        });
+      .chatUsage()
+      .then((status) => {
+        if (!cancelled) setUsage(status);
       })
       .catch(() => {
-        // Context bar stays with defaults on failure
+        /* the meter is not critical to rendering */
       });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // Scroll to bottom whenever messages or thinking state changes
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, thinking]);
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [turns]);
 
-  const sendMessage = useCallback(
-    async (text: string) => {
-      const trimmed = text.trim();
-      if (!trimmed || thinking) return;
-
-      const userMsg: Message = {
-        id: genId(),
-        role: "user",
-        content: trimmed,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, userMsg]);
-      setInput("");
-      setThinking(true);
-
-      // Simulated thinking delay: 800–1500 ms
-      const delay = 800 + Math.random() * 700;
-      await new Promise((resolve) => setTimeout(resolve, delay));
-
-      const responseText = await getAIResponse(trimmed);
-
-      const aiMsg: Message = {
-        id: genId(),
-        role: "ai",
-        content: responseText,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, aiMsg]);
-      setThinking(false);
-
-      setTimeout(() => inputRef.current?.focus(), 60);
-    },
-    [thinking]
+  const history: ChatHistoryTurn[] = useMemo(
+    () =>
+      turns
+        .filter((turn) => !turn.pending)
+        .slice(-6)
+        .map((turn) => ({
+          role: turn.role === "assistant" ? ("assistant" as const) : ("user" as const),
+          content: turn.text,
+        })),
+    [turns],
   );
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(input);
-    }
-  };
+  const ask = useCallback(
+    async (question: string) => {
+      const trimmed = question.trim();
+      if (!trimmed || busy) return;
+      setBusy(true);
+      setInput("");
+      setTurns((prev) => [
+        ...prev,
+        { id: newId(), role: "user", text: trimmed },
+        { id: newId(), role: "assistant", text: "", pending: true },
+      ]);
+      try {
+        const result = await api.chat(trimmed, history);
+        if (!result.ok) {
+          setTurns((prev) => prev.filter((turn) => !turn.pending));
+          const body = (result.body as unknown as Record<string, unknown>) || {};
+          setLocked(body);
+          if (body.chat) setUsage(body.chat as ChatUsageStatus);
+          return;
+        }
+        const answer = result.body as ChatAnswerResponse;
+        setTurns((prev) =>
+          prev.map((turn) =>
+            turn.pending ? { ...turn, pending: false, text: answer.answer, answer } : turn,
+          ),
+        );
+        if (answer.chat) setUsage(answer.chat);
+        setLocked(null);
+      } catch {
+        setTurns((prev) =>
+          prev.map((turn) =>
+            turn.pending
+              ? {
+                  ...turn,
+                  pending: false,
+                  text: "The request failed before it reached the platform. Nothing was charged and no answer was produced.",
+                }
+              : turn,
+          ),
+        );
+      } finally {
+        setBusy(false);
+      }
+    },
+    [busy, history],
+  );
+
+  const saveAlert = useCallback(async (question: string) => {
+    const result = await api.chatSaveAlert(question);
+    setLastSaved((prev) => ({ ...prev, [question]: result }));
+    return result;
+  }, []);
+
+  const suggestions = useMemo(() => {
+    const latest = [...turns].reverse().find((turn) => turn.answer?.followups?.length);
+    return latest?.answer?.followups?.length ? latest.answer.followups : SUGGESTIONS;
+  }, [turns]);
 
   return (
-    <div className="flex flex-col h-screen bg-[#040d14] text-white overflow-hidden">
-      {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 border-b border-white/[0.06] bg-white/[0.02] backdrop-blur-md px-6 py-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-ocean-500/15 border border-ocean-500/25 flex items-center justify-center">
-            <Bot className="w-5 h-5 text-ocean-400" />
-          </div>
-          <div>
-            <h1 className="text-base font-semibold text-white tracking-tight">
-              {t("nav.ai_chat")}
-            </h1>
-            <p className="text-xs text-white/35 mt-0.5">Powered by FishIntel Intelligence</p>
-          </div>
-
-          {/* Live badge */}
-          <div className="ml-auto flex items-center gap-2">
-            <motion.span
-              className="w-2 h-2 rounded-full bg-emerald-400"
-              animate={{ opacity: [1, 0.35, 1] }}
-              transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <span className="text-[11px] text-white/35 font-mono">LIVE</span>
-          </div>
+    <div className="mx-auto w-full max-w-6xl px-4 py-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="flex items-center gap-2 text-xl font-semibold text-[var(--text-primary)]">
+            <Sparkles className="h-5 w-5 text-ocean-400" />
+            Ask the data
+          </h1>
+          <p className="mt-1 text-xs text-[var(--text-secondary)]">
+            Answers are built from verified platform feeds. Every number carries its source and
+            observation date, and gaps are named rather than filled.
+          </p>
+        </div>
+        <div className="w-full max-w-[260px]">
+          <AllowanceMeter usage={usage} />
         </div>
       </div>
 
-      {/* ── Message list ────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-5 scroll-smooth">
-        <AnimatePresence initial={false}>
-          {messages.map((msg) => (
-            <MessageBubble key={msg.id} msg={msg} />
-          ))}
-        </AnimatePresence>
-
-        {/* Thinking bubble */}
-        <AnimatePresence>
-          {thinking && (
-            <motion.div
-              key="thinking"
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 14 }}
-              transition={{ duration: 0.25 }}
-              className="flex items-start gap-3"
-            >
-              <div className="flex-shrink-0 mt-1 w-8 h-8 rounded-xl bg-ocean-500/20 border border-ocean-500/30 flex items-center justify-center">
-                <Bot className="w-4 h-4 text-ocean-400" />
+      <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
+        <GlassCard delay={0.05} className="flex min-h-[520px] flex-col">
+          <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto pr-1">
+            {turns.length === 0 && !locked ? (
+              <div className="flex h-full flex-col items-center justify-center gap-3 py-10 text-center">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                  <Bot className="h-6 w-6 text-ocean-300" />
+                </div>
+                <p className="max-w-sm text-sm text-[var(--text-secondary)]">
+                  Ask about lice pressure, the margin bridge, feed costs, bloom coverage,
+                  regulation or origin competitiveness. If the data cannot settle it, the answer
+                  says what is missing.
+                </p>
               </div>
-              <div className="bg-white/[0.05] border border-white/[0.07] rounded-2xl rounded-tl-sm px-4 py-3.5">
-                <ThinkingDots />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            ) : null}
 
-        {/* Suggestion chips — only visible with just the greeting */}
-        <AnimatePresence>
-          {hasOnlyGreeting && !thinking && (
-            <motion.div
-              key="suggestions"
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.4, delay: 0.25 }}
-              className="pt-2"
-            >
-              <p className="text-[11px] text-white/25 mb-3 pl-11 tracking-wide uppercase">
-                Suggested questions
-              </p>
-              <div className="flex flex-wrap gap-2 pl-11">
-                {SUGGESTIONS.map(({ label, icon: Icon }) => (
-                  <button
-                    key={label}
-                    onClick={() => sendMessage(label)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-ocean-300 bg-ocean-500/[0.07] border border-ocean-500/20 hover:bg-ocean-500/[0.14] hover:border-ocean-500/30 transition-all duration-200 cursor-pointer"
-                    aria-label={`Ask: ${label}`}
-                  >
-                    <Icon className="w-3 h-3 opacity-60" />
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            {turns.map((turn) =>
+              turn.role === "user" ? (
+                <div key={turn.id} className="flex justify-end">
+                  <div className="max-w-[85%] rounded-2xl rounded-br-md border border-ocean-400/20 bg-ocean-400/10 px-3 py-2">
+                    <div className="mb-1 flex items-center gap-1 text-[9px] uppercase tracking-wide text-ocean-300">
+                      <User className="h-3 w-3" /> you
+                    </div>
+                    <p className="whitespace-pre-wrap text-sm text-[var(--text-primary)]">
+                      {turn.text}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div key={turn.id} className="flex gap-2">
+                  <div className="mt-1 h-7 w-7 shrink-0 rounded-lg border border-white/10 bg-white/[0.03] p-1.5">
+                    <Bot className="h-full w-full text-ocean-300" />
+                  </div>
+                  <div className="min-w-0 flex-1 rounded-2xl rounded-bl-md border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+                    {turn.pending ? (
+                      <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        reading the verified feeds…
+                      </div>
+                    ) : turn.answer ? (
+                      <AnswerCard
+                        answer={turn.answer}
+                        onSaveAlert={saveAlert}
+                        saved={lastSaved[turn.answer.question] || null}
+                      />
+                    ) : (
+                      <p className="text-sm text-[var(--text-primary)]">{turn.text}</p>
+                    )}
+                  </div>
+                </div>
+              ),
+            )}
+          </div>
 
-        <div ref={bottomRef} />
-      </div>
-
-      {/* ── Context status bar ──────────────────────────────────── */}
-      <div className="flex-shrink-0 border-t border-white/[0.04] bg-white/[0.01] px-6 py-2 flex items-center gap-6">
-        <div className="flex items-center gap-1.5">
-          <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              contextStatus.liceActive ? "bg-emerald-400" : "bg-white/20"
-            }`}
-          />
-          <span className="text-[11px] text-white/30">Lice data: live</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              contextStatus.pricesActive ? "bg-emerald-400" : "bg-white/20"
-            }`}
-          />
-          <span className="text-[11px] text-white/30">Prices: live</span>
-        </div>
-      </div>
-
-      {/* ── Quick Actions ──────────────────────────────────────── */}
-      <div className="flex-shrink-0 px-4 md:px-6 pt-3 pb-1">
-        <div className="flex flex-wrap gap-2">
-          <OcButton variant="primary" size="sm" loading={briefingLoading}
-            onClick={generateBriefing} leftIcon={<Zap className="w-3.5 h-3.5" />}>
-            Generate Briefing
-          </OcButton>
-          {["Why did lice spike in PA-6?", "What is the price outlook?", "Show disease risk for Mowi"].map((q) => (
-            <button key={q} onClick={() => { setInput(q); }}
-              className="text-[11px] px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.06] text-[var(--text-secondary)] hover:text-ocean-400 hover:border-ocean-500/30 transition-colors"
-              aria-label={`Set question: ${q}`}>
-              {q}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Input bar ───────────────────────────────────────────── */}
-      <div className="flex-shrink-0 border-t border-white/[0.06] bg-white/[0.02] backdrop-blur-md px-4 md:px-6 py-4">
-        <GlassCard className="p-0 flex items-end gap-2" hover={false} accent="none">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={thinking}
-            rows={1}
-            placeholder="Ask about lice levels, salmon prices, trading signals…"
-            className={[
-              "flex-1 resize-none bg-transparent px-4 py-3",
-              "text-sm text-white/85 placeholder:text-white/22",
-              "focus:outline-hidden leading-relaxed",
-              "min-h-[46px] max-h-[130px] overflow-y-auto",
-              "disabled:opacity-40 disabled:cursor-not-allowed",
-            ].join(" ")}
-          />
-          <div className="flex-shrink-0 pr-3 pb-3">
-            <OcButton
-              variant="primary"
-              size="icon_md"
-              disabled={thinking || !input.trim()}
-              onClick={() => sendMessage(input)}
-              aria-label="Send message"
-            >
-              <Send className="w-4 h-4" />
-            </OcButton>
+          <div className="mt-3 border-t border-white/[0.06] pt-3">
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {suggestions.slice(0, 4).map((suggestion) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  onClick={() => ask(suggestion)}
+                  disabled={busy || Boolean(locked)}
+                  className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[10px] text-[var(--text-secondary)] hover:bg-white/[0.06] disabled:opacity-40"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-end gap-2">
+              <textarea
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    void ask(input);
+                  }
+                }}
+                rows={2}
+                placeholder={
+                  locked ? "Chat is not included in your plan" : "Ask a question… (Enter to send)"
+                }
+                disabled={Boolean(locked)}
+                aria-label="Ask a question"
+                className="min-h-[52px] flex-1 resize-none rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:border-ocean-400/40 focus:outline-none disabled:opacity-50"
+              />
+              <button
+                type="button"
+                onClick={() => ask(input)}
+                disabled={busy || !input.trim() || Boolean(locked)}
+                className="inline-flex h-[52px] items-center gap-1.5 rounded-xl bg-ocean-500 px-4 text-sm font-semibold text-white hover:bg-ocean-400 disabled:opacity-40"
+              >
+                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                Ask
+              </button>
+            </div>
           </div>
         </GlassCard>
-        <p className="text-[10px] text-white/18 text-center mt-2 select-none">
-          Enter to send · Shift+Enter for new line
-        </p>
+
+        <div className="space-y-3">
+          {locked ? <LockedPanel payload={locked} usage={usage} /> : null}
+          <GlassCard delay={0.1}>
+            <h2 className="text-xs font-semibold text-[var(--text-primary)]">What it reads</h2>
+            <ul className="mt-2 space-y-1.5 text-[11px] leading-snug text-[var(--text-secondary)]">
+              <li>• Lice reports: verified rows only, with the week they cover</li>
+              <li>• SSB export price and the margin bridge, with the feed month named</li>
+              <li>• Satellite chlorophyll, with the scene date and its age</li>
+              <li>• Traffic-light decisions and the § 8 lice limit per week</li>
+              <li>• The dated US tariff register</li>
+            </ul>
+            <h2 className="mt-3 text-xs font-semibold text-[var(--text-primary)]">
+              What it will not
+            </h2>
+            <ul className="mt-2 space-y-1.5 text-[11px] leading-snug text-[var(--text-secondary)]">
+              <li>• Give a buy / sell / hold call on a listed company</li>
+              <li>• Estimate a number that is not in its sources</li>
+              <li>• Speak about stale data in the present tense</li>
+            </ul>
+          </GlassCard>
+          {usage && !usage.included ? (
+            <GlassCard delay={0.15}>
+              <p className="text-[11px] leading-relaxed text-[var(--text-secondary)]">
+                Your plan does not include grounded chat. Operator includes 100 questions a month
+                and every Operator surface (lice forecasting, treatment costs, compliance pack) at
+                NOK 4,900.
+              </p>
+              <a
+                href="/billing"
+                className="mt-2 inline-block rounded-lg bg-ocean-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-ocean-400"
+              >
+                Compare plans
+              </a>
+            </GlassCard>
+          ) : null}
+        </div>
       </div>
     </div>
   );

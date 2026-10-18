@@ -1946,3 +1946,74 @@ export interface ChinaDemandImpact {
   assessment?: string;
   data_provenance?: DataProvenance;
 }
+
+// ── Grounded chat (WS-38) ────────────────────────────────────────────────
+
+/** One fact an answer was built from, with its provenance and observation date. */
+export interface ChatFactSource {
+  key: string;
+  label: string;
+  source: string;
+  as_of: string | null;
+  provenance: "live" | "degraded" | "stale" | "unavailable";
+  age_days: number | null;
+}
+
+export interface ChatHistoryTurn {
+  role: "user" | "assistant";
+  content: string;
+}
+
+/** The per-plan meter: allowance, used, remaining, and what it cost. */
+export interface ChatUsageStatus {
+  plan: string;
+  plan_name?: string;
+  month: string;
+  allowance: number;
+  unlimited: boolean;
+  included: boolean;
+  used: number | null;
+  remaining: number | null;
+  meter_available: boolean;
+  input_tokens?: number | null;
+  output_tokens?: number | null;
+  cost_usd?: number | null;
+  resets_on: string;
+}
+
+/**
+ * An answer. `mode` says who wrote the prose: a model over the verified block
+ * (`grounded`), the deterministic assembler because no model was reachable
+ * (`grounded_fallback`), the legal notice (`refusal`), or nothing (`unavailable`).
+ */
+export interface ChatAnswerResponse {
+  answer: string;
+  sources: ChatFactSource[];
+  followups: string[];
+  usage: { input_tokens: number; output_tokens: number; cost_usd: number };
+  model: string;
+  mode: "grounded" | "grounded_fallback" | "refusal" | "unavailable";
+  degraded: boolean;
+  refusal?: string | null;
+  latency_ms: number;
+  question: string;
+  chat?: ChatUsageStatus;
+  request_id?: string | null;
+}
+
+/** A saved watch: either a running rule or a refusal that names the missing metric. */
+export interface ChatSaveAlertResponse {
+  saved: boolean;
+  alert_id?: number;
+  name?: string;
+  metric?: string;
+  operator?: string;
+  threshold?: number;
+  production_area?: number | null;
+  is_active?: boolean;
+  seeded_from?: string;
+  duplicate?: boolean;
+  reason?: string;
+  available_metrics?: string[];
+  message?: string;
+}
