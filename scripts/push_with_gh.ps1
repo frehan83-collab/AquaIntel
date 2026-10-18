@@ -51,8 +51,14 @@ if ($DryRun) {
     exit 0
 }
 
+# Windows PowerShell turns a native program's stderr into a terminating error when
+# $ErrorActionPreference is "Stop". git writes progress to stderr even on success, so the call is
+# made under "Continue" and judged by its exit code alone.
+$previousPreference = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 $output = & git @gitArgs push $Remote $Branch 2>&1
 $code = $LASTEXITCODE
+$ErrorActionPreference = $previousPreference
 
 # Scrub the encoded token from anything git prints, then show it.
 $output | ForEach-Object {
