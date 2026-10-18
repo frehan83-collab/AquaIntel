@@ -120,30 +120,23 @@ class EuronextFuturesEngine:
             return self._eur_nok_rate
 
         try:
-            # Try Yahoo Finance for EURNOK=X
-            resp = await self._client.get(
-                "https://query1.finance.yahoo.com/v8/finance/chart/EURNOK=X",
-                params={"interval": "1d", "range": "5d"},
-                headers={"User-Agent": "AquaIntel/2.5"},
-            )
-            if resp.status_code == 200:
-                data = resp.json()
-                closes = (
-                    data.get("chart", {})
-                    .get("result", [{}])[0]
-                    .get("indicators", {})
-                    .get("quote", [{}])[0]
-                    .get("close", [])
+            # WS-31b: official Norges Bank EUR/NOK instead of a Yahoo chart call.
+            from core.market.fx_rates import nok_rate
+
+            official = await nok_rate("EUR")
+            rate = official.get("nok_per_unit")
+            if rate and float(rate) > 0 and not official.get("is_fallback"):
+                self._eur_nok_rate = round(float(rate), 4)
+                self._eur_nok_ts = now
+                log.info(
+                    "euronext.fx_fetched",
+                    rate=self._eur_nok_rate,
+                    source="norges_bank",
+                    observed_at=official.get("observed_at"),
                 )
-                valid = [c for c in closes if c is not None and c > 0]
-                if valid:
-                    rate = valid[-1]
-                    self._eur_nok_rate = round(rate, 4)
-                    self._eur_nok_ts = now
-                    log.info("euronext.fx_fetched", rate=self._eur_nok_rate, source="yahoo")
-                    return self._eur_nok_rate
+                return self._eur_nok_rate
         except Exception as e:
-            log.warning("euronext.fx_yahoo_error", error=str(e)[:80])
+            log.warning("euronext.fx_error", error=str(e)[:80])
 
         # Fallback: try deriving from FRED NOK/USD if available
         try:

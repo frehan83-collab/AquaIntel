@@ -34,13 +34,13 @@
 |---|---|
 | Platform version | `2.6.0` |
 | OpenAPI surface | **348 paths** (`docs/openapi.frozen.json`; WS-29 added two, WS-34 one) |
-| Tests | **1334 collected** (`pytest --collect-only`, 2026-10-18 after WS-28a/30–34) |
+| Tests | **1355 collected** (`pytest --collect-only`, 2026-10-18 after WS-28a/30–35) |
 | Alembic migrations | **21** (head `021`, WS-33) |
 | Router modules | **38** (`core/routers/`) |
-| Engine modules | **79** (`core/market/`, +`margin_bridge.py`, +`fx_rates.py`) |
+| Engine modules | **80** (`core/market/`, +`margin_bridge.py`, +`fx_rates.py`, +`company_facts.py`) |
 | Frontend routes | **68** page files |
 | Production topology | `docker-compose.prod.yml`: `api` + `agents` + `db` (TimescaleDB) + `web` |
-| Last full-suite run | **1310 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 4m28s (2026-10-18, after WS-28a/30–34) |
+| Last full-suite run | **1331 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 4m25s (2026-10-18, after WS-31b and WS-35) |
 
 **What this session delivered** (all pushed): 10 commercial-hardening steps plus 3
 follow-up fixes â€” see Â§3 for the doc to read per area.
@@ -130,22 +130,24 @@ writable workspace directory and a `sitecustomize.py` on `PYTHONPATH` that drops
 Each item is self-contained: goal â†’ files â†’ steps â†’ **acceptance criteria you can
 test** â†’ traps.
 
-**Where things stand (2026-10-18, after WS-29 and the WS-28a/30-34 round):**
+**Where things stand (2026-10-18, after WS-29 and the WS-28a/30-35 round):**
 - **Done:** WS-1, WS-2, WS-11, WS-19, WS-21, WS-14, WS-29 (the weekly margin bridge),
   WS-28a (the directional-write gate), WS-30 (ROI break-even), WS-31 (licensed FX +
-  attribution), WS-32 (satellite honesty), WS-33 (bloom truth, Alembic 021) and WS-34
-  (bloom context), WS-22's stale-decision-card rule and its data-claim fixes, and both
-  halves of WS-23. WS-21's entry lists its follow-ups.
+  attribution, Yahoo removed), WS-32 (satellite honesty), WS-33 (bloom truth, Alembic
+  021), WS-34 (bloom context) and WS-35 (reported company volumes), WS-22's
+  stale-decision-card rule and its data-claim fixes, and both halves of WS-23. WS-21's
+  entry lists its follow-ups.
 - **Partly done:** WS-20 (left: one product name and the Desk/Operator price inversion,
   both owner decisions, plus the OpenAPI `info.description`) and WS-22 (the
-  company-volume and smolt-pipeline items are open; the brief bloom count and the ROI
-  defaults are done).
+  smolt-pipeline item is open; the company volume, brief bloom count and ROI defaults
+  are done).
 - **Waiting on the owner:** the WS-26 page-cut list, WS-27 layer 2, the WS-20
   decisions above, and the legal opinion that the rest of WS-28 waits on.
-- **Next without an owner decision:** WS-31b (remove the remaining Yahoo equity and
-  commodity quotes, or license them), WS-29b (recalibrate the feed level against
-  realised contract prices), then the rest of WS-22 (company volumes, smolt pipeline),
-  then WS-16, WS-24 and WS-25, in the order below.
+- **Next without an owner decision:** WS-29b (recalibrate the feed level against
+  realised contract prices), then WS-22's smolt pipeline, then WS-16, WS-24 and WS-25,
+  in the order below. WS-31b is done (Yahoo removed from
+  every data path); the only licence item left is negotiating NQSALMON/SISALMONI if a
+  benchmark display is ever wanted.
 
 ### WS-32 · Satellite honesty — **DONE 2026-10-18**
 **Why:** without CDSE credentials the engine fabricated every per-farm reading with
@@ -231,7 +233,25 @@ now `share_of_volume_affected`; each ICP reports `status`, `paid_back` and a
 1.31 % of treatments avoided for Operator to pay for itself at 18 treatments a year.
 17 tests (`tests/test_gtm_roi.py`).
 
-### WS-31 · Licensed FX + attribution — **DONE (FX) / OPEN (equities)**
+### WS-35 · Company volumes are reported facts — **DONE 2026-10-18**
+**Why:** `top50_engine` computed annual production as `n_localities * 800` and shipped it
+as a volume. Mowi read **113 600 t** against ~**332 000 t** harvested in Norway in 2025 —
+a 3× understatement of the largest producer, on the desk an analyst opens first.
+**Shipped:** `core/market/company_facts.py` — one row per reporting entity with year,
+**scope** (Norway vs group; a Norway figure must never be read as a group figure), the
+figure and a source URL. `production_volume_tonnes` is `None` when no fact is registered,
+paired with a `volume_basis` block (`basis: reported | sub_entity | unknown`) that says
+why; sub-entities do not repeat the group figure; unknown volumes sort last and serialise
+as `null`, never `0` (which reads as a measurement). 11 tests
+(`tests/test_company_volumes.py`).
+**Acceptance met:** Mowi ASA reports 332 000 t / Norway / 2025 with a source URL; an
+unregistered company reports `null` and names the retired multiplier as the reason it is
+not estimated; `MOWI FEED AS` reports `sub_entity`, not the group harvest; the string
+`* 800` no longer appears in any compute line of the engine.
+**Open:** add rows for SalMar, Lerøy, Grieg, Bakkafrost and Måsøval as their 2025 figures
+are verified (the module takes one row each; do not estimate between them).
+
+### WS-31 · Licensed FX + attribution — **DONE 2026-10-18**
 **Why:** Yahoo's API terms forbid deriving income from its data, and the platform
 priced Norwegian costs from its USD/NOK. FRED's terms require a notice the site did not
 show.
@@ -240,11 +260,22 @@ date attached, recorded fallback), wired into `feed_cost_engine` (and therefore 
 margin bridge) and `competitiveness_engine`; `usd_nok_is_fallback` / reason / observation
 date on the payload; the attribution footer gains Norges Bank, Mattilsynet and the FRED
 notice and drops the Yahoo claim.
-**Open (WS-31b):** Yahoo **equity and commodity** quotes remain on the market, feed-cost
-and investor surfaces; they are unlicensed for resale. Remove them or license them before
-the product is sold as licence-clean. The two salmon benchmark indices (NQSALMON,
-SISALMONI) have no published price or redistribution right — a negotiated agreement is
-required before either can appear in a paid surface.
+**WS-31b (same day) — Yahoo removed from every data path.** `rate_to_usd()` in the same
+module resolves USD, EUR, GBP, DKK, SEK, ISK, CAD and PLN from Norges Bank (the per-100
+convention for DKK/SEK/ISK handled once) through the official USD/NOK rate, and flags the
+one currency with no licensed daily source (CLP, documented constant). Wired into
+`competitiveness_engine` (every currency, with per-currency observation dates and
+reasons), `euronext_futures` (EUR/NOK), `macro_intelligence` (NOK/EUR from Norges Bank,
+USD/CNY from FRED `DEXCHUS`) and the feed engine (Yahoo commodity gap fill deleted).
+`salmon_price.get_latest_prices()` now returns **only** the SSB spot: the Oslo equity
+quotes are gone, and so is the fallback that *derived* share prices by multiplying the
+salmon spot by fixed multiples — a fabricated market price; the pairs agent skips
+explicitly instead of trading on it, and `/api/market/equity-prices` reports
+`equity_quotes: "unavailable"` with a degraded provenance.
+`tests/test_licensed_sources.py` (11) plus the WS-22 FX tests.
+**Still open:** the two salmon benchmark indices (NQSALMON, SISALMONI) publish no price
+or redistribution right — a negotiated agreement is required before either can appear in
+a paid surface, and the synthetic forward curve must never be presented as a real one.
 
 **Priority changed 2026-10-17 by [`docs/VALUE_ANALYSIS.md`](VALUE_ANALYSIS.md).** The
 value analysis found buyer-visible defects that outrank the infrastructure items.

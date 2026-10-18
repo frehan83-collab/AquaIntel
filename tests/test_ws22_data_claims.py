@@ -64,33 +64,20 @@ class TestCompetitivenessFxHonesty:
         assert "NOK" in out["fallback_reason"]
 
     def test_fetch_records_every_currency_that_fell_back(self, monkeypatch):
-        # WS-31: NOK now comes from Norges Bank; the crosses still come from the quote
-        # client. Both failing must name every currency.
+        # WS-31b: every currency now converts through the licensed FX module. With the
+        # official feed down, each one must be named, not silently substituted.
         from core.market import fx_rates
 
-        async def official_down():
+        async def official_down(currency="USD", *, timeout=8.0):
             return {
-                "currency": "USD",
+                "currency": currency,
                 "nok_per_unit": None,
                 "observed_at": None,
                 "is_fallback": True,
                 "fallback_reason": "official feed unreachable",
             }
 
-        class _BoomClient:
-            def __init__(self, *args, **kwargs):
-                pass
-
-            async def __aenter__(self):
-                raise RuntimeError("quote client down")
-
-            async def __aexit__(self, *exc):
-                return False
-
-        monkeypatch.setattr(fx_rates, "usd_nok", official_down)
-        monkeypatch.setattr(
-            "core.market.competitiveness_engine.httpx.AsyncClient", _BoomClient
-        )
+        monkeypatch.setattr(fx_rates, "nok_rate", official_down)
 
         engine = CompetitivenessEngine()
         rates = run_async(engine._fetch_fx_rates())
@@ -160,37 +147,27 @@ class TestCompetitivenessLivePath:
         """WS-31: NOK comes from Norges Bank; a live rate must be used, not the constant."""
         from core.market import fx_rates
 
-        async def fake_fetch():
+        async def fake_fetch(currency="USD", *, timeout=8.0):
+            table = {"USD": 9.57, "GBP": 12.6, "DKK": 140.0, "ISK": 7.8, "CAD": 6.7}
+            value = table.get(currency)
             return {
-                "currency": "USD",
-                "nok_per_unit": 9.57,
-                "observed_at": "2026-10-16",
-                "is_fallback": False,
-                "fallback_reason": None,
+                "currency": currency,
+                "nok_per_unit": value,
+                "observed_at": "2026-10-16" if value else None,
+                "is_fallback": value is None,
+                "fallback_reason": None if value else "no quote",
             }
 
-        class _BoomClient:
-            def __init__(self, *args, **kwargs):
-                pass
-
-            async def __aenter__(self):
-                raise RuntimeError("quote client down")
-
-            async def __aexit__(self, *exc):
-                return False
-
-        monkeypatch.setattr(fx_rates, "usd_nok", fake_fetch)
-        monkeypatch.setattr(
-            "core.market.competitiveness_engine.httpx.AsyncClient", _BoomClient
-        )
+        monkeypatch.setattr(fx_rates, "nok_rate", fake_fetch)
 
         engine = CompetitivenessEngine()
         rates = run_async(engine._fetch_fx_rates())
 
         assert rates["NOK"] == pytest.approx(1.0 / 9.57)
         assert engine._fx_observations.get("NOK") == "2026-10-16"
+        # Only the Chilean peso has no licensed quote, so only it may fall back.
+        assert engine._fx_fallbacks == ["CLP"]
         assert "NOK" not in engine._fx_fallbacks
-        assert set(engine._fx_fallbacks) == set(FALLBACK_FX) - {"NOK"}
 
     def test_untracked_spot_fallback_degrades_quality(self, monkeypatch):
         from core.market.macro_intelligence import macro_intelligence

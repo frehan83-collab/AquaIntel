@@ -89,8 +89,34 @@ satellite page **fabricated per-farm readings with a seeded RNG** and rendered
   Yahoo Finance, whose terms forbid deriving income from its data. Fallbacks are still
   recorded and degrade the payload (`usd_nok_is_fallback`, reason included). The
   attribution footer gains Norges Bank, Mattilsynet and the FRED notice the API terms
-  require, and drops the Yahoo claim. Known open item: Yahoo equity/commodity quotes
-  remain elsewhere (HANDOVER WS-31).
+  require, and drops the Yahoo claim.
+- **WS-31b — Yahoo removed from every data path.** `core/market/fx_rates.py` gained
+  `rate_to_usd()`: Norges Bank quotes for USD, EUR, GBP, DKK, SEK, ISK, CAD and PLN
+  (with the per-100 convention for DKK/SEK/ISK handled in one place) converted through
+  the official USD/NOK rate, and a documented constant — always flagged — where no
+  licensed daily source exists (CLP only). `competitiveness_engine` resolves every
+  currency through it and records `_fx_observations` / `_fx_reasons`; `euronext_futures`
+  takes EUR/NOK from Norges Bank; `macro_intelligence` derives NOK/EUR and USD/CNY
+  (FRED `DEXCHUS`) instead of Yahoo; the feed engine's Yahoo commodity gap fill is
+  deleted (FRED covers all five ingredients); and `salmon_price.get_latest_prices()`
+  returns **only** the SSB spot — the Oslo equity quotes are gone, together with the
+  fallback that *derived* share prices by multiplying the salmon spot by fixed
+  multiples (MOWI 2.8x, SALM 3.4x …), which was a fabricated market price. The pairs
+  agent now skips explicitly rather than trading on proxies, and `/api/market/equity-prices`
+  serves `equity_quotes: "unavailable"` with the reason and a degraded provenance.
+  Live state: USD/NOK 9.44 (observed 2026-10-16, Norges Bank), competitiveness
+  `partial_fallback` naming CLP alone, macro `nok_eur` 0.0941 and `nok_cny` 1.43 from
+  licensed sources. Tests: `tests/test_licensed_sources.py` (11) plus the WS-22 FX
+  tests updated to the new module.
+- **WS-35 — company volumes are reported facts.** `top50_engine` derived annual
+  production as `n_localities * 800` and shipped it as a volume: Mowi read **113 600 t**
+  against ~**332 000 t** harvested in Norway in 2025 — a 3× understatement of the largest
+  producer on the analyst desk. The multiplier is retired and replaced by
+  `core/market/company_facts.py`: one row per reporting entity with the year, **scope**
+  (Norway vs group), figure and source URL. A company without a registered fact reports
+  `production_volume_tonnes: null` with a `volume_basis` block that says so (never 0,
+  which would read as a measurement), sub-entities do not repeat the group figure, and
+  unknown volumes sort last. `tests/test_company_volumes.py` (11).
 
 ### WS-29 — the weekly margin bridge (2026-10-18)
 - **Why:** the platform held the two inputs that decide a salmon producer's week —

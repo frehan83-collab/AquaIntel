@@ -308,75 +308,27 @@ price_engine = SalmonPriceEngine()
 
 
 async def get_latest_prices() -> dict[str, float]:
-    """
-    Convenience function for the IntelligenceAgent to get latest
-    salmon-related stock prices for the PairsEngine.
+    """The licensed salmon price: SSB weekly export price, in NOK/kg.
 
-    Priority waterfall:
-    1. Yahoo Finance v8 API (Oslo Børs .OL tickers) — daily, ~15min delay
-    2. SSB Table 03024 — weekly NOK/kg spot as proxy if equities fail
+    WS-31b (2026-10-18). This function used to fetch Oslo-listed equity quotes from
+    Yahoo Finance and, when that failed, **derive** share prices by multiplying the
+    salmon spot by hard-coded multiples (MOWI 2.8x, SALM 3.4x, …). A share price is
+    not a multiple of the salmon spot, so that was a fabricated quote presented as a
+    market price, and Yahoo's terms forbid deriving income from its data.
 
-    Returns dict mapping short ticker → price (NOK for equities).
+    Equity quotes now require a licensed display feed. Until one exists this returns
+    only the SSB spot and callers see an empty equity set — the pairs engine therefore
+    produces no signals, which is the honest state of a withdrawn surface (WS-28).
     """
-    import httpx as hx
     prices: dict[str, float] = {}
-
-    # 1. Yahoo Finance v8 for Oslo-listed salmon equities
-    # Confirmed: Oslo Børs suffix is .OL (not .OS)
-    # Confirmed tickers as of 2025: MOWI.OL, SALM.OL, LSG.OL, GSF.OL, BAKKA.OL
-    _OL_TICKERS = {
-        "MOWI.OL": "MOWI",
-        "SALM.OL": "SALM",
-        "LSG.OL": "LSG",
-        "GSF.OL": "GSF",
-        "BAKKA.OL": "BAKKA",  # Bakkafrost (Faroe/Oslo dual-listed)
-    }
-
     try:
-        async with hx.AsyncClient(
-            timeout=20,
-            follow_redirects=True,
-            headers={
-                "User-Agent": "Mozilla/5.0 (compatible; AquaIntel/1.0)",
-                "Accept": "application/json",
-            },
-        ) as client:
-            for ol_ticker, short in _OL_TICKERS.items():
-                try:
-                    resp = await client.get(
-                        f"https://query1.finance.yahoo.com/v8/finance/chart/{ol_ticker}",
-                        params={"interval": "1d", "range": "5d"},
-                        timeout=8,
-                    )
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        result = data.get("chart", {}).get("result")
-                        if result:
-                            closes = result[0]["indicators"]["quote"][0].get("close", [])
-                            closes = [c for c in closes if c is not None]
-                            if closes:
-                                prices[short] = round(closes[-1], 2)
-                except Exception:
-                    continue
-    except Exception as exc:
-        log.debug("prices.yahoo_error", error=str(exc)[:80])
+        from core.market.ssb_price_client import ssb_price_client
 
-    # 2. SSB spot price (primary salmon price benchmark)
-    if len(prices) < 2:
-        try:
-            from core.market.ssb_price_client import ssb_price_client
-            spot = await ssb_price_client.get_current_spot()
-            if spot > 0:
-                prices["SSB_NOK"] = round(spot, 2)
-                # Derive approximate equity prices using historical price-to-spot multiples
-                # WARNING: These are rough proxies only — use Yahoo equity prices when available
-                log.warning("prices.using_ssb_proxies", msg="Yahoo Finance unavailable; deriving equity proxies from SSB spot")
-                _SPOT_MULTIPLES = {"MOWI": 2.8, "SALM": 3.4, "LSG": 0.95, "GSF": 1.15}
-                for tk, mult in _SPOT_MULTIPLES.items():
-                    if tk not in prices:
-                        prices[tk] = round(spot * mult, 2)
-        except Exception:
-            pass
+        spot = await ssb_price_client.get_current_spot()
+        if spot and spot > 0:
+            prices["SSB_NOK"] = round(float(spot), 2)
+    except Exception as exc:  # noqa: BLE001 — an outage yields an empty mapping
+        log.debug("prices.ssb_failed", error=str(exc)[:80])
 
     log.debug("prices.fetched", tickers=list(prices.keys()), n=len(prices))
     return prices

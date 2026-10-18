@@ -8,14 +8,13 @@ Rankings show which origins deliver cheapest to the US market in real-time.
 Norway cost is LIVE from feed_cost_engine; others use industry benchmarks
 in local currency, converted via live FX.
 
-Data sources: FRED (via macro_intelligence), Yahoo Finance FX, feed_cost_engine.
+Data sources: Norges Bank official FX, FRED/SSB via macro_intelligence, feed_cost_engine.
 """
 from __future__ import annotations
 
 import datetime as dt
 from dataclasses import dataclass, field
 
-import httpx
 import structlog
 
 from core.regulatory_facts import us_salmon_tariff
@@ -76,15 +75,6 @@ ORIGIN_BASELINES = {
     },
 }
 
-# Yahoo Finance tickers for FX rates not in FRED
-YAHOO_FX_TICKERS = {
-    "CLP": "CLPUSD=X",
-    "GBP": "GBPUSD=X",
-    "DKK": "DKKUSD=X",
-    "ISK": "ISKUSD=X",
-    "CAD": "CADUSD=X",
-}
-
 # Undated approximate constants, used only when a live quote is unavailable.
 # They are never silent: `_to_dict` reports `data_quality: partial_fallback`,
 # names the currencies in `fx_fallbacks` and degrades `data_provenance`.
@@ -136,10 +126,11 @@ class CompetitivenessEngine:
     _cache_ttl = dt.timedelta(hours=2)
 
     async def _fetch_fx_rates(self) -> dict[str, float]:
-        """Fetch live FX rates: NOK from macro engine, others from Yahoo."""
+        """Fetch live FX rates: Norges Bank for NOK and the crosses it quotes, documented constants otherwise (WS-31b)."""
         rates: dict[str, float] = {}
         self._fx_fallbacks: list[str] = []
         self._fx_observations: dict[str, str | None] = getattr(self, "_fx_observations", {})
+        self._fx_reasons: dict[str, str | None] = getattr(self, "_fx_reasons", {})
 
         # NOK/USD from the official Norges Bank rate (WS-31). The macro series it
         # used to read is derived from the same kind of upstream quote, and the Yahoo
@@ -158,35 +149,33 @@ class CompetitivenessEngine:
             rates["NOK"] = FALLBACK_FX["NOK"]
             self._fx_fallbacks.append("NOK")
 
-        # Fetch remaining currencies from Yahoo Finance
-        try:
-            async with httpx.AsyncClient(timeout=10) as client:
-                for currency, ticker in YAHOO_FX_TICKERS.items():
-                    try:
-                        resp = await client.get(
-                            f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range=5d",
-                            headers={"User-Agent": "FishIntel/1.0"},
-                        )
-                        if resp.status_code == 200:
-                            data = resp.json()
-                            closes = (
-                                data.get("chart", {}).get("result", [{}])[0]
-                                .get("indicators", {}).get("quote", [{}])[0]
-                                .get("close", [])
-                            )
-                            valid = [c for c in closes if c is not None]
-                            if valid:
-                                rates[currency] = valid[-1]
-                                continue
-                    except Exception:
-                        pass
-                    rates[currency] = FALLBACK_FX.get(currency, 0.01)
+        # Remaining currencies from the licensed FX module (Norges Bank where it
+        # quotes the currency, otherwise a documented constant flagged as a fallback).
+        # WS-31b: the Yahoo Finance chart calls are gone — its terms forbid deriving
+        # income from the data, and a paid product cannot rest on them.
+        from core.market.fx_rates import rate_to_usd
+
+        for currency in FALLBACK_FX:
+            if currency == "NOK" or currency in rates:
+                continue
+            try:
+                converted = await rate_to_usd(currency)
+            except Exception:  # noqa: BLE001 — reported through the fallback list
+                converted = {}
+            value = converted.get("usd_per_unit")
+            if value and value > 0:
+                rates[currency] = float(value)
+                if converted.get("observed_at"):
+                    self._fx_observations[currency] = converted.get("observed_at")
+                if converted.get("is_fallback"):
                     self._fx_fallbacks.append(currency)
-        except Exception:
-            for currency in YAHOO_FX_TICKERS:
-                if currency not in rates:
-                    rates[currency] = FALLBACK_FX.get(currency, 0.01)
-                    self._fx_fallbacks.append(currency)
+                    self._fx_reasons[currency] = converted.get("fallback_reason")
+                continue
+            rates[currency] = FALLBACK_FX[currency]
+            self._fx_fallbacks.append(currency)
+            self._fx_reasons[currency] = converted.get("fallback_reason") or (
+                "no licensed quote available"
+            )
 
         return rates
 
@@ -445,7 +434,7 @@ class CompetitivenessEngine:
         from core.market.data_provenance import DataProvenance
 
         source = (
-            "Yahoo Finance FX + macro intelligence (FRED/SSB) + feed-cost engine "
+            "Norges Bank official FX + macro intelligence (FRED/SSB) + feed-cost engine "
             "+ US salmon tariff register (core/regulatory_facts.py)"
         )
         provenance = (

@@ -131,6 +131,116 @@ async def usd_nok() -> dict:
     return await nok_rate("USD")
 
 
+#: Norges Bank quotes these per **100** units, not per one (verified 2026-10-18:
+#: DKK 142.13, SEK 95.33, ISK 7.80 for 100 units). Getting this wrong understates a
+#: Danish or Icelandic cost by 100x, so the divisor lives in one place.
+PER_100_UNITS: frozenset[str] = frozenset({"DKK", "SEK", "ISK"})
+
+#: Currencies Norges Bank quotes that this platform converts.
+NORGES_BANK_CURRENCIES: frozenset[str] = frozenset(
+    {"USD", "EUR", "GBP", "DKK", "SEK", "ISK", "CAD", "PLN"}
+)
+
+#: Documented USD constants for currencies with **no licensed daily source** on this
+#: deployment. Used only when the conversion is unavoidable, and always reported as a
+#: fallback (never silently): the Chilean peso has no Norges Bank quote and FRED's
+#: H.10 table does not carry it.
+DOCUMENTED_USD_FALLBACK: dict[str, float] = {
+    "CLP": 0.00105,  # 1 CLP ≈ USD 0.00105 (documented in the competitiveness engine)
+    "ISK": 0.0072,
+    "CAD": 0.74,
+    "GBP": 1.27,
+    "DKK": 0.145,
+    "NOK": 0.093,
+}
+
+
+async def rate_to_usd(currency: str = "USD", *, timeout: float = 8.0) -> dict:
+    """USD per one unit of ``currency``, from a licensed source where one exists.
+
+    Returns ``{"currency", "usd_per_unit", "observed_at", "source", "is_fallback",
+    "fallback_reason"}``. Sources, in order:
+
+    * ``USD`` — 1.0;
+    * a Norges Bank quote when the currency is in :data:`NORGES_BANK_CURRENCIES`
+      (divided by 100 for :data:`PER_100_UNITS`), converted through the official
+      USD/NOK rate on the same observation date;
+    * otherwise the documented constant in :data:`DOCUMENTED_USD_FALLBACK`, flagged
+      ``is_fallback`` with the reason — never a silent number.
+
+    The cross-currency quotes that used to come from Yahoo Finance's chart API are
+    gone (WS-31b): Yahoo's terms forbid deriving income from its data.
+    """
+    code = (currency or "USD").strip().upper()
+    result: dict = {
+        "currency": code,
+        "usd_per_unit": None,
+        "observed_at": None,
+        "source": SOURCE_NAME,
+        "is_fallback": False,
+        "fallback_reason": None,
+    }
+    if code == "USD":
+        result["usd_per_unit"] = 1.0
+        return result
+
+    if code == "NOK":
+        # NOK is the base of every Norges Bank quote: USD per NOK = 1 / (NOK per USD).
+        usd = await nok_rate("USD", timeout=timeout)
+        nok_per_usd = usd.get("nok_per_unit")
+        if nok_per_usd and not usd.get("is_fallback"):
+            result.update(
+                {
+                    "usd_per_unit": round(1.0 / float(nok_per_usd), 8),
+                    "observed_at": usd.get("observed_at"),
+                    "source": f"{SOURCE_NAME} (NOK via USD/NOK)",
+                }
+            )
+            return result
+        reason = usd.get("fallback_reason") or "the official USD/NOK rate was unavailable"
+    elif code in NORGES_BANK_CURRENCIES:
+        usd = await nok_rate("USD", timeout=timeout)
+        nok_per_usd = usd.get("nok_per_unit")
+        quote = await nok_rate(code, timeout=timeout)
+        nok_per_unit = quote.get("nok_per_unit")
+        if nok_per_usd and nok_per_unit and not usd.get("is_fallback"):
+            per_unit = float(nok_per_unit) / 100.0 if code in PER_100_UNITS else float(nok_per_unit)
+            result.update(
+                {
+                    "usd_per_unit": round(per_unit / float(nok_per_usd), 8),
+                    "observed_at": quote.get("observed_at") or usd.get("observed_at"),
+                    "source": f"{SOURCE_NAME} ({code}/NOK via USD/NOK)",
+                    "is_fallback": bool(quote.get("is_fallback")),
+                    "fallback_reason": quote.get("fallback_reason"),
+                }
+            )
+            return result
+        reason = (
+            usd.get("fallback_reason")
+            or quote.get("fallback_reason")
+            or "the official USD/NOK or cross rate was unavailable"
+        )
+    else:
+        reason = f"no licensed daily source for {code} on this deployment"
+
+    constant = DOCUMENTED_USD_FALLBACK.get(code)
+    result.update(
+        {
+            "usd_per_unit": constant,
+            "is_fallback": True,
+            # The source names what was actually used, not the feed that was missing.
+            "source": f"documented constant ({code} to USD)",
+            "fallback_reason": (
+                reason
+                + (f"; fell back to the documented constant {constant} USD per {code}"
+                   if constant else "; no documented constant exists for this currency")
+            ),
+        }
+    )
+    log.warning("fx.rate_to_usd_fallback", currency=code, reason=reason)
+    return result
+
+
 def clear_cache() -> None:
     """Drop the memo (tests and an operator-triggered refresh)."""
     _cache.clear()

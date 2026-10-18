@@ -95,6 +95,10 @@ class MorningBriefEngine:
 
         # ── 2. Equity Movers ─────────────────────────────────────────
         try:
+            # WS-31b: no licensed equity feed, so the brief says that rather than
+            # showing Yahoo quotes (or share prices derived from the salmon spot —
+            # which is what the old fallback did). The section is omitted only when a
+            # licensed feed supplies real quotes.
             from core.market.salmon_price import get_latest_prices
             prices = await get_latest_prices()
             equities = {k: v for k, v in prices.items() if k.endswith(".OL") and v}

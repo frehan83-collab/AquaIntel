@@ -8220,7 +8220,7 @@
     },
     "/api/market/equity-prices": {
       "get": {
-        "description": "Latest prices for Oslo-listed salmon equities + Fish Pool Index.\nUsed by the PairsEngine for daily spread calculation.\nOslo B\u00f8rs tickers: MOWI.OL, SALM.OL, LSG.OL, GSF.OL, BAKKA.OL",
+        "description": "Licensed salmon price benchmark. **No equity quotes** (WS-31b).\n\nOslo-listed equity quotes need a licensed display feed. Until one exists this\nendpoint serves only the SSB weekly export price (CC BY 4.0) and says so; it used\nto serve Yahoo quotes and, failing those, share prices *derived* from the salmon\nspot by fixed multiples, which was fabrication.",
         "operationId": "equity_prices_api_market_equity_prices_get",
         "responses": {
           "200": {

@@ -1,9 +1,26 @@
-CURRENT: WS-28a + WS-30–34 shipped (2026-10-18) — see docs/HANDOVER.md §5
+CURRENT: WS-28a + WS-30–35 shipped (2026-10-18) — see docs/HANDOVER.md §5
 LAST_UPDATED: 2026-10-18
-SESSIONS: 38+ (15 commits pushed; WS-29 and the WS-28a/30–34 round pending commit)
+SESSIONS: 38+ (15 commits pushed; WS-29 and the WS-28a/30–35 round pending commit)
 REPOSITORY: https://github.com/frehan83-collab/AquaIntel (public)
-HANDOVER: docs/HANDOVER.md — verified state, gate commands, workstream backlog WS-1..WS-34b, trap list (23 traps)
-VERSION: 2.6.0 · 348 paths · 1334 tests collected · 21 migrations (head 021)
+HANDOVER: docs/HANDOVER.md — verified state, gate commands, workstream backlog WS-1..WS-35, trap list (23 traps)
+VERSION: 2.6.0 · 348 paths · 1355 tests collected · 21 migrations (head 021)
+
+## WS-31b + WS-35 (2026-10-18, later the same day) — licensed sources, reported volumes
+
+- **WS-31b:** Yahoo Finance removed from every data path. `fx_rates.rate_to_usd()`
+  resolves USD/EUR/GBP/DKK/SEK/ISK/CAD/PLN from Norges Bank (per-100 handled once)
+  through the official USD/NOK rate, with a documented constant only for CLP — always
+  flagged. Wired through competitiveness (per-currency observation dates and reasons),
+  euronext futures (EUR/NOK), macro (NOK/EUR, USD/CNY via FRED DEXCHUS) and feed cost.
+  `salmon_price` now serves only the SSB spot; the Oslo equity quotes and the fallback
+  that derived share prices from the salmon spot are deleted; the pairs agent skips
+  explicitly; `/api/market/equity-prices` reports `equity_quotes: unavailable`.
+  11 tests (`tests/test_licensed_sources.py`).
+- **WS-35:** company volumes are reported facts. `core/market/company_facts.py` replaces
+  `n_localities * 800` (Mowi read 113 600 t vs ~332 000 t harvested in Norway 2025) with
+  one sourced row per reporting entity; unknown volumes are `null` with a `volume_basis`
+  block, sub-entities do not repeat the group figure. 11 tests
+  (`tests/test_company_volumes.py`).
 
 ## WS-28a + WS-30–34 (2026-10-18) — fix before add
 

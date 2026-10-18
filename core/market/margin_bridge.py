@@ -1031,7 +1031,7 @@ class MarginBridgeEngine:
                 "value": _round(_finite(getattr(snapshot, "usd_nok", None))),
                 "unit": "NOK/USD",
                 "source": (
-                    "live Yahoo Finance USDNOK; when the fetch fails the constant "
+                    "official Norges Bank USD/NOK; when the fetch fails the constant "
                     f"{_DEFAULT_USDNOK} is used and the feed leg's provenance degrades naming it"
                 ),
             },

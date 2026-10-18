@@ -658,22 +658,40 @@ async def export_destinations(months: int = 12):
 @router.get("/equity-prices")
 async def equity_prices():
     """
-    Latest prices for Oslo-listed salmon equities + Fish Pool Index.
-    Used by the PairsEngine for daily spread calculation.
-    Oslo Børs tickers: MOWI.OL, SALM.OL, LSG.OL, GSF.OL, BAKKA.OL
+    Licensed salmon price benchmark. **No equity quotes** (WS-31b).
+
+    Oslo-listed equity quotes need a licensed display feed. Until one exists this
+    endpoint serves only the SSB weekly export price (CC BY 4.0) and says so; it used
+    to serve Yahoo quotes and, failing those, share prices *derived* from the salmon
+    spot by fixed multiples, which was fabrication.
     """
+    from core.market.data_provenance import DataProvenance
     from core.market.salmon_price import get_latest_prices
+
     prices = await get_latest_prices()
+    equities = {k: v for k, v in prices.items() if k not in ("FPI_EUR", "SSB_NOK")}
+    reason = (
+        "Oslo-listed equity quotes require a licensed display feed; none is held, so no "
+        "share price is served. Yahoo Finance is not usable for resale and the old "
+        "spot-derived proxies were removed (WS-31b)."
+    )
     return {
         "generated_at": dt.datetime.now(dt.UTC).isoformat(),
-        "source": "Yahoo Finance (unofficial, ~15min delay) + SSB fallback",
-        "exchange": "Oslo Børs (OSE) — .OL suffix",
-        "prices_nok": {k: v for k, v in prices.items() if k not in ("FPI_EUR", "SSB_NOK")},
+        "source": "SSB table 03024 (CC BY 4.0) — salmon export price only",
+        "exchange": "Oslo Børs (OSE) — no licensed equity feed",
+        "equity_quotes": "unavailable",
+        "equity_quotes_reason": reason,
+        "prices_nok": equities,
         "benchmarks": {
             "fpi_eur_per_kg": prices.get("FPI_EUR"),
             "ssb_nok_per_kg": prices.get("SSB_NOK"),
         },
         "all_prices": prices,
+        "data_provenance": DataProvenance.degraded(
+            "SSB table 03024 weekly export price (no equity feed)",
+            reason=reason,
+            confidence=0.9,
+        ).to_dict(),
     }
 
 

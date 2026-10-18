@@ -64,8 +64,11 @@ operational species-level HAB forecast for the fish-killing taxa) and validation
 
 * **Yahoo Finance** — terms forbid selling, sharing or **deriving income from** the APIs
   without written permission ([terms](https://legal.yahoo.com/us/en/yahoo/terms/product-atos/apiforydn/index.html)).
-  The platform used it for USD/NOK; WS-31 moved currency conversion to Norges Bank.
-  Remaining Yahoo equity/commodity quotes are a known open item (HANDOVER WS-31).
+  **Removed from the platform entirely (WS-31/WS-31b):** currency conversion now comes
+  from Norges Bank, commodity prices from FRED and the World Bank, and the Oslo equity
+  quotes — including the fallback that *derived* share prices from the salmon spot — are
+  deleted. `/api/market/equity-prices` reports `equity_quotes: "unavailable"` until a
+  licensed display feed exists.
 * **FAO FishStat** — CC BY 4.0 **plus** a prohibition on use in connection with the
   promotion of a commercial product or service.
 * Undercurrent/IntraFish content beyond subscriber reading.

@@ -110,6 +110,17 @@ added `tests/test_migrations.py`.
   migration test) and **WS-34** (`/api/bloom/context`: dated IMR Algestatus link, sourced
   event history, stated limits). New docs: `docs/DATA_SOURCES_COST.md`, new tests
   `test_directional_writes_gate`, `test_satellite_honesty`, `test_bloom_honesty`.
+- 2026-10-18 · **Same-day follow-ups (WS-31b, WS-35).** Yahoo Finance removed from every
+  data path: `fx_rates.rate_to_usd()` resolves eight currencies from Norges Bank (per-100
+  handled once) with a flagged constant only for CLP, wired through competitiveness,
+  futures, macro and feed-cost; `salmon_price` serves only the SSB spot — the Oslo equity
+  quotes and the fallback that *derived* share prices from the salmon spot are deleted,
+  the pairs agent skips explicitly and `/api/market/equity-prices` reports
+  `equity_quotes: unavailable` (11 tests, `test_licensed_sources`). Company volumes are
+  now reported facts (`core/market/company_facts.py`): `n_localities * 800` retired
+  (Mowi read 113 600 t vs ~332 000 t harvested in Norway 2025), unknown volumes are
+  `null` with a `volume_basis` block, sub-entities do not repeat the group figure
+  (11 tests, `test_company_volumes`).
 - 2026-10-18 · **WS-29 weekly margin bridge** (commercial hardening, not a RUN-1
   workstream). `core/market/margin_bridge.py` (method `1.0.0`), `GET /api/margin/bridge`
   + `/api/margin/bridge/{locality_no}`, `MarginBridgePanel` on `/feed-cost` replacing

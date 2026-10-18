@@ -28,6 +28,8 @@ from sqlalchemy import select, func, distinct
 
 from core.models import Locality, LiceRecord
 
+from core.market.company_facts import volume_basis, volume_or_none
+
 log = structlog.get_logger(__name__)
 
 # ── Known parent groups (for subsidiary badges) ──────────────────
@@ -69,11 +71,14 @@ class CompanyProfile:
     is_public: bool = False
     parent_group: str = ""
 
-    # Production (from locality count × avg capacity)
+    # Production. `production_volume_tonnes` is a *reported* harvest (WS-35): it is
+    # None when no figure is registered for the company, because a locality count is not
+    # a volume. `volume_basis` says which year, scope and source the number comes from.
     n_localities: int = 0
     production_areas: list[int] = field(default_factory=list)
     capacity_tonnes: float = 0.0
-    production_volume_tonnes: float = 0.0
+    production_volume_tonnes: float | None = None
+    volume_basis: dict = field(default_factory=dict)
 
     # Composite Performance Score (0-100) — ALL from real data
     performance_score: float = 0.0
@@ -150,7 +155,14 @@ class Top50Engine:
         await self._compute_all_metrics(companies, latest[0], latest[1])
 
         # 4. Sort by production volume, take top 100
-        companies.sort(key=lambda c: c.production_volume_tonnes, reverse=True)
+        # Unknown volumes sort last rather than tying with a real zero.
+        companies.sort(
+            key=lambda c: (
+                c.production_volume_tonnes is not None,
+                c.production_volume_tonnes or 0.0,
+            ),
+            reverse=True,
+        )
         companies = companies[:100]
 
         # 5. Assign ranks and peer percentiles
@@ -246,8 +258,11 @@ class Top50Engine:
                 parent_group=parent,
                 n_localities=n_locs,
                 n_lice_records=n_records,
-                # Estimate production: ~800t/year per locality (industry avg)
-                production_volume_tonnes=n_locs * 800,
+                # WS-35: a reported harvest, not `n_locs * 800`. The multiplier
+                # understated the largest producers several-fold (Mowi read 113 600 t
+                # against ~332 000 t harvested in Norway in 2025) and is retired.
+                production_volume_tonnes=volume_or_none(name),
+                volume_basis=volume_basis(name),
             ))
 
         return profiles
@@ -490,7 +505,12 @@ class Top50Engine:
                 "parent_group": co.parent_group,
                 "n_localities": co.n_localities,
                 "production_areas": co.production_areas,
-                "production_volume_tonnes": round(co.production_volume_tonnes),
+                "production_volume_tonnes": (
+                    round(co.production_volume_tonnes)
+                    if co.production_volume_tonnes is not None
+                    else None
+                ),
+                "volume_basis": co.volume_basis,
                 "performance_score": co.performance_score,
                 "score_components": co.score_components,
                 "outlook_index": co.outlook_index,

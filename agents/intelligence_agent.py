@@ -217,15 +217,28 @@ class IntelligenceAgent(BaseAgent):
         try:
             from core.market.salmon_price import get_latest_prices
             prices = await get_latest_prices()
-            if prices:
+            # WS-31b: only licensed prices exist now (the SSB spot). The pairs engine
+            # trades listed shares, so without a licensed equity feed there is nothing
+            # to update — and updating it with the salmon spot would compare a fish
+            # price with a share price. Skip explicitly instead of feeding it proxies.
+            equity_prices = {k: v for k, v in prices.items() if k.endswith(".OL") and v}
+            if equity_prices:
                 # Inject causal lag before computing signals so rationale is fresh
                 self._propagate_causal_lag()
-                await self._pairs.update_prices(prices)
+                await self._pairs.update_prices(equity_prices)
                 self._last["pairs"] = dt.datetime.now(dt.UTC)
                 self.log.info(
                     "intelligence.pairs_updated",
-                    tickers=list(prices.keys()),
+                    tickers=list(equity_prices.keys()),
                     causal_lag=self._pairs._causal_lag_weeks,
+                )
+            else:
+                self.log.info(
+                    "intelligence.pairs_skipped",
+                    reason=(
+                        "no licensed equity quotes; the pairs engine needs share prices, "
+                        "and the salmon spot is not a substitute (WS-31b)"
+                    ),
                 )
         except Exception as exc:
             self.log.warning("intelligence.pairs_failed", error=str(exc)[:120])

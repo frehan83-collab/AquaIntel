@@ -9,7 +9,7 @@ in real-time is critical for farmers, buyers, and investors.
 
 Data sources:
   - World Bank Commodity API (fishmeal, soybean, rapeseed, wheat) — free
-  - Yahoo Finance (soybean futures ZS=F, wheat ZW=F, rapeseed RSX=F)
+  - World Bank Pink Sheet (fishmeal; monthly)
   - SSB salmon price (for margin calculation)
   - Fallback: IMF Primary Commodity Prices (monthly)
 
@@ -62,7 +62,7 @@ DEFAULT_INGREDIENT_PRICES_USD = {
 STRUCTURAL_DEFAULT_INGREDIENTS = {"other"}
 
 # Sources that represent genuinely live market data
-LIVE_SOURCES = {"fred", "yahoo_finance", "world_bank"}
+LIVE_SOURCES = {"fred", "world_bank"}  # WS-31b: Yahoo removed from every pricing path
 
 #: FRED's monthly commodity series publish with a lag. A basket older than this is
 #: dated, not current, and every consumer (the margin bridge, `/api/feed-cost/latest`)
@@ -201,7 +201,7 @@ class FeedCostSnapshot:
     #: the oldest as ``feed_prices_as_of`` (the conservative one).
     feed_prices_as_of: dt.date | None = None
     feed_prices_as_of_latest: dt.date | None = None
-    #: Live-sourced ingredients with no observation date (Yahoo/World Bank): their
+    #: Live-sourced ingredients with no observation date (World Bank Pink Sheet): their
     #: presence means the basket's currency cannot be shown even if FRED is dated.
     undated_live_ingredients: list[str] = field(default_factory=list)
     #: True when USD/NOK fell back to ``DEFAULT_USDNOK``; invalidates the NOK level.
@@ -322,11 +322,10 @@ class FeedCostEngine:
         fred_prices = await self._fetch_fred()
         ingredients.update(fred_prices)
 
-        # 2. Try Yahoo Finance commodity futures (fills gaps)
-        yf_prices = await self._fetch_yahoo_commodities()
-        for k, v in yf_prices.items():
-            if k not in ingredients:
-                ingredients[k] = v
+        # 2. (removed in WS-31b) the Yahoo commodity-futures gap fill. FRED covers all
+        # five ingredients; a missing series now falls back to a documented default,
+        # which `using_defaults` reports and the provenance degrades. Yahoo's API terms
+        # forbid deriving income from its data, so no pricing path may use it.
 
         # 3. Try World Bank commodity API (monthly, slower updates)
         wb_prices = await self._fetch_world_bank()
@@ -432,7 +431,7 @@ class FeedCostEngine:
         # Data quality: flag if any ingredients used default prices
         snapshot.using_defaults = bool(self._using_defaults)
         snapshot.default_ingredients = list(getattr(self, "_using_defaults", []))
-        # A live-but-undated ingredient (Yahoo/World Bank) cannot prove the basket's
+        # A live-but-undated ingredient (World Bank Pink Sheet) cannot prove the basket's
         # currency, so an otherwise dated basket must still say so.
         snapshot.undated_live_ingredients = [
             name for name, ing in ingredients.items()
@@ -523,53 +522,19 @@ class FeedCostEngine:
             log.info("feed_cost.fred_fetched", ingredients=list(result.keys()), n=len(result))
         return result
 
-    async def _fetch_yahoo_commodities(self) -> dict[str, IngredientPrice]:
-        """Fetch commodity futures from Yahoo Finance."""
-        result = {}
-        # Yahoo Finance commodity tickers
-        tickers = {
-            "soy":     "ZS=F",    # Soybean futures (CBOT)
-            "wheat":   "ZW=F",    # Wheat futures (CBOT)
-            "rapeseed": "RSX=F",  # Rapeseed futures (optional, may not exist)
-        }
-        # Conversion: CBOT soybean is cents/bushel → USD/tonne
-        # 1 bushel soybean = 27.216 kg → 36.744 bushels/tonne
-        conversions = {
-            "soy":     lambda cents: (cents / 100) * 36.744 / 1000,  # cents/bu → USD/kg
-            "wheat":   lambda cents: (cents / 100) * 36.744 / 1000,
-            "rapeseed": lambda eur: eur / 1000,  # EUR/tonne → EUR/kg (≈USD)
-        }
+    def _removed_yahoo_commodities(self) -> None:
+        """Removed in WS-31b. Kept as a named tombstone so nobody re-adds it blind.
 
-        try:
-            async with httpx.AsyncClient(timeout=15) as client:
-                for name, ticker in tickers.items():
-                    try:
-                        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range=5d"
-                        resp = await client.get(url, headers={
-                            "User-Agent": "AquaIntel/1.0 Research",
-                        })
-                        if resp.status_code == 200:
-                            data = resp.json()
-                            closes = data.get("chart", {}).get("result", [{}])[0]\
-                                .get("indicators", {}).get("quote", [{}])[0]\
-                                .get("close", [])
-                            valid = [c for c in closes if c is not None]
-                            if valid:
-                                raw_price = valid[-1]
-                                conv = conversions.get(name, lambda x: x / 1000)
-                                usd_per_kg = conv(raw_price)
-                                result[name] = IngredientPrice(
-                                    name=name,
-                                    price_usd_per_tonne=usd_per_kg * 1000,
-                                    price_usd_per_kg=round(usd_per_kg, 4),
-                                    source="yahoo_finance",
-                                )
-                    except Exception:
-                        continue
-        except Exception as exc:
-            log.debug("feed_cost.yahoo_error", error=str(exc)[:80])
-
-        return result
+        Yahoo Finance's API terms forbid deriving income from its data, so a paid
+        product may not price feed from its chart endpoint. FRED carries all five
+        ingredients; the World Bank Pink Sheet fills fishmeal; anything still missing
+        becomes a documented default that `using_defaults` reports.
+        """
+        raise RuntimeError(
+            "Yahoo Finance pricing was removed in WS-31b: its API terms forbid deriving "
+            "income from the data. Use FRED and the World Bank Pink Sheet, and let a "
+            "missing series fall back to a documented default."
+        )
 
     async def _fetch_world_bank(self) -> dict[str, IngredientPrice]:
         """Fetch fishmeal + fish oil from World Bank Commodity API (monthly)."""

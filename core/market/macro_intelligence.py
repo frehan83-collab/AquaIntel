@@ -120,41 +120,41 @@ class MacroIntelligenceEngine:
                 except Exception:
                     continue
 
-        # ── Additional FX rates from Yahoo Finance ─────────────────────
-        # NOK/EUR and NOK/CNY (not available on FRED)
+        # ── Additional FX rates from licensed sources (WS-31b) ─────────────
+        # NOK/EUR from the official Norges Bank rate; USD/CNY from FRED's H.10 table
+        # (DEXCHUS). The Yahoo chart calls are gone: its terms forbid deriving income
+        # from the data, and a paid product may not rest on them.
+        try:
+            from core.market.fx_rates import nok_rate
+
+            eur = await nok_rate("EUR")
+            eur_nok = eur.get("nok_per_unit")
+            if eur_nok and float(eur_nok) > 0 and not eur.get("is_fallback"):
+                latest["eur_nok"] = float(eur_nok)
+                latest["nok_eur"] = round(1.0 / float(eur_nok), 4)
+        except Exception as exc:  # noqa: BLE001 — reported as a missing series
+            log.debug("macro.eur_nok_failed", error=str(exc)[:80])
+
         try:
             async with httpx.AsyncClient(timeout=10) as client:
-                for ticker, name in [("NOKEUR=X", "nok_eur"), ("EURNOK=X", "eur_nok"), ("USDCNY=X", "usd_cny")]:
-                    try:
-                        resp = await client.get(
-                            f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range=5d",
-                            headers={"User-Agent": "FishIntel/1.0"},
-                        )
-                        if resp.status_code == 200:
-                            data = resp.json()
-                            closes = data.get("chart", {}).get("result", [{}])[0] \
-                                .get("indicators", {}).get("quote", [{}])[0].get("close", [])
-                            valid = [c for c in closes if c is not None]
-                            if valid:
-                                latest[name] = valid[-1]
-                    except Exception:
-                        continue
+                resp = await client.get(
+                    "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DEXCHUS"
+                )
+                if resp.status_code == 200:
+                    rows = [
+                        row for row in resp.text.strip().splitlines()[1:]
+                        if not row.endswith(",") and not row.endswith(".")
+                    ]
+                    if rows:
+                        latest["usd_cny"] = float(rows[-1].split(",")[1])
+        except Exception as exc:  # noqa: BLE001 — optional series
+            log.debug("macro.usd_cny_failed", error=str(exc)[:80])
 
-                # Compute NOK/CNY = NOK/USD × USD/CNY
-                if "nok_usd" in latest and "usd_cny" in latest:
-                    nok_per_usd = latest["nok_usd"]  # e.g. 9.58
-                    usd_per_cny = 1 / latest["usd_cny"]  # e.g. 1/6.91 = 0.145
-                    latest["nok_cny"] = round(nok_per_usd * usd_per_cny, 4)  # NOK per 1 CNY
-
-                # NOK/EUR from EURNOK (invert) or NOKEUR directly
-                if "eur_nok" in latest and latest["eur_nok"] > 0:
-                    latest["nok_eur"] = round(1 / latest["eur_nok"], 4)
-                elif "nok_eur" not in latest and "nok_usd" in latest and "usd_eur" in latest:
-                    # Derive: NOK/EUR = NOK/USD ÷ EUR/USD
-                    latest["nok_eur"] = round(latest["nok_usd"] / latest["usd_eur"], 4) if latest["usd_eur"] > 0 else 0
-
-        except Exception as exc:
-            log.debug("macro.yahoo_fx_error", error=str(exc)[:80])
+        # Compute NOK/CNY = NOK/USD × USD/CNY
+        if "nok_usd" in latest and "usd_cny" in latest and latest["usd_cny"]:
+            nok_per_usd = latest["nok_usd"]  # e.g. 9.58
+            usd_per_cny = 1 / latest["usd_cny"]  # e.g. 1/6.91 = 0.145
+            latest["nok_cny"] = round(nok_per_usd * usd_per_cny, 4)  # NOK per 1 CNY
 
         n_fetched = len(latest)
         if n_fetched == 0:
