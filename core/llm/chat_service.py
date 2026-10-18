@@ -226,6 +226,7 @@ class ChatService:
         user_id: str = "anonymous",
         history: list[dict] | None = None,
         site: dict | None = None,
+        allow_model: bool = True,
     ) -> ChatAnswer:
         started = dt.datetime.now(dt.UTC)
         question = _truncate(question)
@@ -259,6 +260,10 @@ class ChatService:
 
         model_is_free = False
         try:
+            if not allow_model:
+                # WS-50: the plan's model allowance is spent (or the plan has none). The
+                # deterministic path still answers from the verified facts and costs nothing.
+                raise RuntimeError("model not allowed for this plan state")
             response = await self._run_model(prompt, SYSTEM_PROMPT, user_id)
             provider_error = getattr(response, "error", None)
             if provider_error:

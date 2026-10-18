@@ -144,7 +144,7 @@ PLANS: dict[str, Plan] = {
             "Field/mobile experience with offline capture",
         ),
         roles=("farmer", "processor"),
-        upgrade_to="professional",
+        upgrade_to="enterprise",
     ),
     "professional": Plan(
         key="professional",
@@ -436,6 +436,7 @@ def plan_catalog() -> list[dict]:
             "price_nok_month": p.price_nok_month,
             "price_eur_month": round(p.price_nok_month / 11.5, -1) if p.price_nok_month else 0,
             "api_calls_per_day": p.api_calls_per_day,
+            "chat_questions_per_month": p.chat_questions_per_month,
             "seats": p.seats,
             "sites": p.sites,
             "features": list(p.features),

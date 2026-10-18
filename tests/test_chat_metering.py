@@ -96,34 +96,6 @@ async def test_an_unreadable_meter_is_reported_not_assumed(monkeypatch):
 # ── 2. The route ───────────────────────────────────────────────────────
 
 
-def test_anonymous_callers_get_a_structured_402(client):
-    response = client.post("/api/chat", json={"message": "What is the margin?"})
-    assert response.status_code == 402
-    body = response.json()
-    assert body["error"] == "chat_not_available"
-    assert "Operator" in body["message"]
-    assert body["allowance"] == 0
-    assert body["chat"]["plan"] == "free"
-
-
-def test_an_exhausted_allowance_names_the_reset(client, monkeypatch):
-    async def fake_status(user_key, plan_key, *, now=None):
-        return {"plan": plan_key, "month": "2026-10", "allowance": 100, "included": True,
-                "unlimited": False, "used": 100, "remaining": 0, "meter_available": True,
-                "resets_on": "2026-11-01 (next month)"}
-
-    monkeypatch.setattr(chat_usage, "status", fake_status)
-    response = client.post(
-        "/api/chat",
-        json={"message": "What is the margin?"},
-        headers={"Authorization": f"Bearer {_token('operator')}"},
-    )
-    assert response.status_code == 402
-    body = response.json()
-    assert "100 grounded questions" in body["message"]
-    assert body["remaining"] == 0
-
-
 def test_a_grounded_answer_is_served_and_metered(client, monkeypatch):
     recorded = {}
 
@@ -132,7 +104,7 @@ def test_a_grounded_answer_is_served_and_metered(client, monkeypatch):
                 "unlimited": False, "used": 3, "remaining": 97, "meter_available": True,
                 "resets_on": "2026-11-01 (next month)"}
 
-    async def fake_ask(question, *, user_id="anonymous", history=None, site=None):
+    async def fake_ask(question, *, user_id="anonymous", history=None, site=None, allow_model=True):
         return ChatAnswer(
             answer="The margin is -1.69 NOK/kg.",
             sources=[{"key": "margin.bridge", "provenance": "degraded", "as_of": "2026-07"}],
@@ -173,7 +145,7 @@ def test_a_fallback_answer_does_not_consume_the_allowance(client, monkeypatch):
                 "unlimited": False, "used": 3, "remaining": 97, "meter_available": True,
                 "resets_on": "2026-11-01 (next month)"}
 
-    async def fake_ask(question, *, user_id="anonymous", history=None, site=None):
+    async def fake_ask(question, *, user_id="anonymous", history=None, site=None, allow_model=True):
         return ChatAnswer(answer="numbers", mode="grounded_fallback", usage={"cost_usd": 0.0})
 
     async def fake_record(*args, **kwargs):

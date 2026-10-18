@@ -22,7 +22,6 @@ import re
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
@@ -130,44 +129,37 @@ async def chat(
     status_payload = await chat_usage.status(key, plan_key)
     plan_name = get_plan(plan_key).name
 
-    if chat_usage.not_included(status_payload):
-        log.info("chat.blocked_not_included", plan=plan_key)
-        return JSONResponse(
-            status_code=402,
-            content=_payment_required(
-                plan_key=plan_key,
-                path="/api/chat",
-                reason=(
-                    f"grounded chat is not part of the {plan_name} plan; it is included "
-                    "from Operator (100 questions a month) and Desk (300) upwards"
-                ),
-                status_payload=status_payload,
-            ),
-        )
-
-    if chat_usage.exhausted(status_payload):
-        log.info("chat.blocked_allowance", plan=plan_key, used=status_payload.get("used"))
-        return JSONResponse(
-            status_code=402,
-            content=_payment_required(
-                plan_key=plan_key,
-                path="/api/chat",
-                reason=(
-                    f"the {plan_name} plan includes {status_payload['allowance']} grounded "
-                    f"questions a month and all of them are used; the allowance resets "
-                    f"{status_payload['resets_on']}"
-                ),
-                status_payload=status_payload,
-            ),
-        )
+    # WS-50: the allowance bounds model spend; it does not gate the product. When it is spent
+    # (or the plan has none) the answer is assembled deterministically from the verified facts,
+    # costs nothing and says so — a 402 that upsold a 4,900 customer to a 2,990 plan was the
+    # wrong instrument.
+    included = bool(status_payload.get("included"))
+    model_allowed = included and not chat_usage.exhausted(status_payload)
+    allowance_note = None
+    if not model_allowed:
+        if included:
+            allowance_note = (
+                f"the {plan_name} plan's model allowance is used up "
+                f"({status_payload.get('used')}/{status_payload.get('allowance')}); this "
+                "answer was assembled directly from the verified facts at no model cost"
+            )
+        else:
+            allowance_note = (
+                f"the {plan_name} plan does not include model-written answers; this "
+                "answer was assembled directly from the verified facts at no model cost. "
+                "Operator includes 100 a month and Desk 300"
+            )
 
     site = await _resolve_site(req.locality_no) if req.locality_no else None
     answer = await chat_service.ask(
-        req.message, user_id=key, history=req.history, site=site
+        req.message,
+        user_id=key,
+        history=req.history,
+        site=site,
+        allow_model=bool(model_allowed),
     )
-
-    # Only a model-backed answer consumes the allowance: a refusal or an unavailable
-    # answer costs nothing, so it is not counted against a paying customer.
+    # Only a model-backed answer consumes the allowance: a refusal, a fallback or an
+    # unavailable answer costs nothing, so it is not counted against a paying customer.
     if answer.mode == "grounded":
         await chat_usage.record(key, answer.usage)
 
@@ -177,6 +169,7 @@ async def chat(
     refreshed = await chat_usage.status(key, plan_key)
     refreshed["plan_name"] = plan_name
     payload["chat"] = refreshed
+    payload["allowance_note"] = allowance_note
     payload["request_id"] = getattr(request.state, "request_id", None)
     return payload
 
