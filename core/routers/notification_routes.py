@@ -548,8 +548,16 @@ async def evaluate_custom_rules() -> dict:
         )
         rules = result.scalars().all()
 
+        from core.market.verified_metrics import verified_current
+
         for rule in rules:
-            current_value = await _fetch_current_metric(rule.metric, rule.production_area)
+            # WS-48: one definition of "current" — verified source filter, an age limit and
+            # `None` rather than a fabricated zero. A rule is not evaluated against a stale
+            # or absent value; it reports why, because "watched" must mean watched.
+            metric_state = await verified_current(
+                rule.metric, production_area=rule.production_area
+            )
+            current_value = metric_state.value if metric_state.current else None
             triggered = False
             message = None
 
@@ -572,7 +580,12 @@ async def evaluate_custom_rules() -> dict:
                         f"{rule.operator} {rule.threshold} (OK)"
                     )
             else:
-                message = f"{rule.name}: could not fetch current value for {rule.metric}"
+                message = (
+                    f"{rule.name}: not evaluated — {rule.metric} is "
+                    f"{metric_state.provenance}"
+                    + (f" ({metric_state.age_days}d old)" if metric_state.age_days is not None else "")
+                    + (f": {metric_state.note}" if metric_state.note else "")
+                )
 
             results.append({
                 "rule_id": rule.id,

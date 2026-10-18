@@ -251,7 +251,7 @@ def test_a_question_with_an_explicit_threshold_becomes_a_running_rule(client, mo
 
     response = client.post(
         "/api/chat/save-alert",
-        json={"question": "Tell me when lice in PA 3 goes above 0.4"},
+        json={"question": "Tell me when lice in PA 3 goes above 0.6"},
         headers={"Authorization": f"Bearer {_token('operator')}"},
     )
     assert response.status_code == 200
@@ -260,7 +260,7 @@ def test_a_question_with_an_explicit_threshold_becomes_a_running_rule(client, mo
     assert body["alert_id"] == 42
     assert body["metric"] == "lice_avg"
     assert body["operator"] == ">"
-    assert body["threshold"] == pytest.approx(0.4)
+    assert body["threshold"] == pytest.approx(0.6)
     assert body["production_area"] == 3
     assert body["is_active"] is True
     rule = created["obj"]
@@ -272,10 +272,10 @@ def test_a_question_with_an_explicit_threshold_becomes_a_running_rule(client, mo
 def test_a_duplicate_watch_is_not_created_twice(client, monkeypatch):
     class _Existing:
         id = 11
-        name = "Tell me when lice in PA 3 goes above 0.4"
+        name = "Tell me when lice in PA 3 goes above 0.6"
         metric = "lice_avg"
         operator = ">"
-        threshold = 0.4
+        threshold = 0.6
         production_area = 3
 
     class _Session:
@@ -298,7 +298,7 @@ def test_a_duplicate_watch_is_not_created_twice(client, monkeypatch):
     monkeypatch.setattr("core.routers.chat_routes.get_async_session", lambda: _Session())
     response = client.post(
         "/api/chat/save-alert",
-        json={"question": "Tell me when lice in PA 3 goes above 0.4"},
+        json={"question": "Tell me when lice in PA 3 goes above 0.6"},
         headers={"Authorization": f"Bearer {_token('operator')}"},
     )
     assert response.status_code == 200

@@ -17,6 +17,7 @@ can be inferred the route refuses to invent one and says which metrics exist.
 """
 from __future__ import annotations
 
+import datetime as dt
 import re
 
 import structlog
@@ -30,7 +31,6 @@ from core.auth import TokenPayload, get_current_user
 from core.entitlements import get_plan, upgrade_hint
 from core.llm import usage as chat_usage
 from core.llm.chat_service import MAX_QUESTION_CHARS, chat_service
-from core.llm.grounding import build_context
 
 log = structlog.get_logger(__name__)
 
@@ -211,21 +211,33 @@ def _explicit_threshold(question: str) -> float | None:
         return None
 
 
-async def _current_value(metric: str, question: str) -> float | None:
-    """The platform's current value for the metric, used as the default threshold."""
-    context = await build_context()
-    if metric == "lice_avg":
-        fact = context.get("lice.national")
-        if fact and fact.usable and isinstance(fact.value, dict):
-            return fact.value.get("average_per_fish")
-    if metric == "spot_price":
-        fact = context.get("margin.bridge")
-        if fact and fact.usable and isinstance(fact.value, dict):
-            return fact.value.get("spot_nok_per_kg")
-    if metric == "bloom_risk":
-        fact = context.get("bloom.chlorophyll")
-        if fact and fact.usable and isinstance(fact.value, dict):
-            return fact.value.get("mean_mg_m3")
+async def _current_value(metric: str, question: str, area: int | None) -> dict:
+    """The verified current value of the metric, or a dated reason there is none."""
+    from core.market.verified_metrics import verified_current
+
+    state = await verified_current(metric, production_area=area)
+    return state.to_dict()
+
+
+async def _lice_limit_check(area: int | None, threshold: float) -> str | None:
+    """Refuse a lice threshold below the legal limit for that site's week.
+
+    A rule that fires only after a breach is a compliance alarm, not a watch; a rule *below*
+    the limit fires constantly and teaches the customer to ignore it. The chat's own example —
+    "lice in PA 3 above 0.4" — is twice the limit in the southern spring window.
+    """
+    from core.regulatory_facts import lice_limit
+
+    decision = lice_limit(pa=area, iso_week=dt.datetime.now(dt.UTC).isocalendar().week)
+    if not decision.established or decision.limit is None:
+        return None
+    if threshold < decision.limit:
+        return (
+            f"{threshold:g} is below the § 8 limit for this site in this week "
+            f"({decision.limit} per fish, {decision.region or 'region unknown'}"
+            f"{', inside' if decision.in_spring_window else ', outside'} the spring window), "
+            "so the watch would fire on a legal level. Set it at or above the limit."
+        )
     return None
 
 
@@ -254,23 +266,46 @@ async def save_alert(
             ),
         }
 
+    area = _infer_area(question)
     threshold = _explicit_threshold(question)
+    state = await _current_value(metric, question, area)
     if threshold is None:
-        threshold = await _current_value(metric, question)
+        if not state.get("current"):
+            return {
+                "saved": False,
+                "reason": "no verified current value to seed the threshold",
+                "metric": metric,
+                "metric_state": state,
+                "message": (
+                    "There is no verified current value for that metric on this deployment "
+                    + (f"({state.get('note')})" if state.get("note") else "")
+                    + ", so a threshold cannot be seeded honestly. Name one explicitly — "
+                    "'above 0.4' — and the watch is created."
+                ),
+            }
+        threshold = state.get("value")
     if threshold is None:
         return {
             "saved": False,
-            "reason": "no current value to seed the threshold",
+            "reason": "no threshold",
             "metric": metric,
-            "message": (
-                "There is no verified current value for that metric on this deployment, so "
-                "a useful threshold cannot be set. Name one explicitly — 'above 0.4' — and "
-                "the watch is created."
-            ),
+            "message": "Name a threshold explicitly, for example 'above 0.5'.",
         }
 
+    from core.market.verified_metrics import plausibility
+
+    plausible, why = plausibility(metric, float(threshold))
+    if not plausible:
+        return {"saved": False, "reason": "implausible_threshold", "metric": metric,
+                "message": why}
+
+    if metric == "lice_avg":
+        legal = await _lice_limit_check(area, float(threshold))
+        if legal:
+            return {"saved": False, "reason": "below_legal_limit", "metric": metric,
+                    "message": legal}
+
     operator = _infer_operator(question)
-    area = _infer_area(question)
     name = (req.name or question)[:100]
 
     async with get_async_session() as session:
@@ -318,6 +353,7 @@ async def save_alert(
         "production_area": area,
         "is_active": True,
         "seeded_from": "explicit number in the question" if _explicit_threshold(question) else "the current verified value",
+        "metric_state": state,
         "message": (
             f"watching {metric} {operator} {threshold:g}"
             + (f" in production area {area}" if area else " nationally")
