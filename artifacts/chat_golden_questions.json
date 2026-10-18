@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "note": "Golden questions for the grounded chat (WS-41). Run offline with `python scripts/eval_chat.py`; every case is answered by the deterministic fallback, so the pass/fail is about grounding, refusal and number extraction — not about a model's prose. `must_mention` phrases are checked case-insensitively.",
+  "note": "Golden questions for the grounded chat (WS-41). Run offline with `python scripts/eval_chat.py`. No case expects a gap while every feed is available (WS-53); reintroduce one when a feed dies.",
   "cases": [
     {
       "id": "margin-now",
@@ -45,7 +45,11 @@
     {
       "id": "lice-gap",
       "question": "What is the average lice level by production area?",
-      "expect": "gap"
+      "expect": "answer",
+      "must_mention": [
+        "2026-W41"
+      ],
+      "note": "WS-53: lice is live again (2026-W41, 585 sites), so a gap is no longer the honest answer — the case now requires the restored week to be named."
     },
     {
       "id": "lice-limit",
@@ -54,7 +58,7 @@
       "must_mention": [
         "depends"
       ],
-      "note": "WS-45: unbound questions must not quote a single limit — the answer has to say it depends on the site's production area and spring window. The matrix lives in tests/test_lice_limit_binding.py."
+      "note": "WS-45: unbound questions must not quote a single limit — the answer has to say it depends on the site's production area and spring window. The matrix lives in tests/test_lice_limit_binding.py. The lice feed itself is live again as of WS-53."
     },
     {
       "id": "traffic-light",
@@ -118,7 +122,11 @@
     {
       "id": "broadcast-gap",
       "question": "What did the lice reports say last week?",
-      "expect": "gap"
+      "expect": "answer",
+      "must_mention": [
+        "2026-W41"
+      ],
+      "note": "WS-53: lice is live again (2026-W41, 585 sites), so a gap is no longer the honest answer — the case now requires the restored week to be named."
     }
   ]
 }
