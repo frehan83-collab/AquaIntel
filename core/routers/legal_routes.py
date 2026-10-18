@@ -76,6 +76,24 @@ AI_ACT_NOTES = {
             "limitation_disclosure": "/api/accuracy/method",
         },
         {
+            "system": "Grounded assistant (chat) and deep-analysis documents",
+            "purpose": (
+                "Answering questions and writing short documents from the platform's verified "
+                "feeds for professional users."
+            ),
+            "transparency": (
+                "Every answer carries its sources with observation dates and a provenance verdict; "
+                "numbers the data cannot support are withheld and the answer says how many; a "
+                "free-model answer is labelled. Article 50(1): the user is told an AI system is "
+                "answering (see the notice at /chat)."
+            ),
+            "human_oversight": (
+                "Advisory only: no automated decision with legal effect, and directional equity "
+                "output is withdrawn (see /api/legal/advice-boundary)."
+            ),
+            "limitation_disclosure": "/api/accuracy/method and /api/chat/receipts",
+        },
+        {
             "system": "Anomaly and risk scoring",
             "purpose": "Flagging unusual lice/production/market patterns for review.",
             "transparency": "Scores carry provenance and are advisory signals.",
@@ -98,8 +116,11 @@ AI_ACT_NOTES = {
         "including whether AI training is permitted at all."
     ),
     "personal_data": (
-        "Personal data is limited to account and contact data. The DPA template in "
-        "docs/ADVICE_BOUNDARY.md lists the fields requiring legal review."
+        "Account and contact data, plus the text of a question asked in the assistant and the "
+        "market facts assembled to answer it, which are sent to the inference sub-processor "
+        "listed in /api/legal/sub-processors. That register states which transfers have a "
+        "signed instrument and which do not; retention of a question is a hash, not the text "
+        "(see /api/chat/receipts)."
     ),
     "statement": (
         "Transparency notes provided for customer due diligence. This is an "
@@ -175,6 +196,16 @@ async def use_check(source: str, use: str):
 async def advice_boundary():
     """The signals-vs-advice boundary and the mandatory discloser string."""
     return ADVICE_BOUNDARY
+
+
+@router.get("/sub-processors")
+async def sub_processors():
+    """Which processors can receive customer content, and what is actually in place."""
+    from config.settings import settings
+
+    from core.legal.subprocessors import disclosure
+
+    return disclosure(getattr(settings, "llm_provider", None))
 
 
 @router.get("/ai-act")

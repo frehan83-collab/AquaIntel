@@ -7965,6 +7965,26 @@
         ]
       }
     },
+    "/api/legal/sub-processors": {
+      "get": {
+        "description": "Which processors can receive customer content, and what is actually in place.",
+        "operationId": "sub_processors_api_legal_sub_processors_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sub Processors",
+        "tags": [
+          "legal"
+        ]
+      }
+    },
     "/api/legal/use-check": {
       "get": {
         "description": "May we use `source` for `use`? (uncleared uses are refused)",

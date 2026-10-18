@@ -133,6 +133,11 @@ class Settings(BaseSettings):
     )
     llm_free_fallback: bool = True
     llm_prefer_free: bool = False
+    # WS-51: when True, an inference provider that is not listed as contracted in
+    # core/legal/subprocessors.py is refused rather than used. Off by default so a development
+    # deployment keeps working; a production deployment should turn it on once the DPAs are
+    # signed, because until then every chat prompt is a transfer without a contract.
+    llm_contracted_provider_only: bool = False
 
 
     # Environment (set FISHINTEL_ENV=production for production checks)

@@ -152,6 +152,21 @@ class LLMClient:
             )
         return self._gemini
 
+    def _provider_blocked(self) -> str | None:
+        """WS-51: refuse a provider with no contracted transfer instrument, when asked to."""
+        if not bool(getattr(settings, "llm_contracted_provider_only", False)):
+            return None
+        from core.legal.subprocessors import is_contracted
+
+        if self.provider == "openrouter" and not (
+            is_contracted("openrouter") or is_contracted("openrouter_free")
+        ):
+            return (
+                "LLM_CONTRACTED_PROVIDER_ONLY is set and no signed instrument is on file for the "
+                "inference provider; see /api/legal/sub-processors"
+            )
+        return None
+
     async def complete(
         self,
         prompt: str,
@@ -163,6 +178,10 @@ class LLMClient:
     ) -> LLMResponse:
         """Send a completion request to the configured LLM provider."""
         model = model or self.model
+        blocked = self._provider_blocked()
+        if blocked:
+            log.error("llm.provider_blocked", provider=self.provider, reason=blocked)
+            return LLMResponse(content="", model=model, error=blocked)
         max_tokens = max_tokens or settings.llm_max_tokens
         temperature = temperature if temperature is not None else settings.llm_temperature
 
