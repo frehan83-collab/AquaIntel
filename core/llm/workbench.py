@@ -48,17 +48,17 @@ RUN_KINDS: dict[str, dict] = {
     "lice_pressure_review": {
         "key": "lice_pressure_review",
         "name": "Lice pressure review",
-        "blurb": "Withdrawn until a verified lice source returns — see the notice",
+        "blurb": "Verified weekly lice coverage against the section 8 limit",
         "reads": "Verified lice rows, § 8 limit, traffic-light decision, 2019/2025 event history",
         "credits": 1,
-        # WS-43: the last verified lice row on this deployment is 2026-W15. Selling a document
-        # whose subject feed is seven months dead is the cardinal sin with an invoice, so the
-        # run stays in the catalogue with its reason and does not take credits.
-        "sellable": False,
-        "withdrawn_reason": (
-            "no verified lice report exists on this deployment since 2026-W15, so the review "
-            "would describe dead data; credits already bought are redeemable against the "
-            "margin dossier or the origin landed-cost run"
+        # WS-43 withdrew this run because the feed was dead (last verified week 2026-W15).
+        # WS-53 restored it: 2026-W16-41 backfilled through the agent's own parser (585 sites
+        # reporting in W41, average 0.18), so the withdrawal reason no longer holds and the run
+        # is sold again. The field stays so the history is legible.
+        "sellable": True,
+        "reinstated_reason": (
+            "reinstated 2026-10-18 after the lice feed was restored and backfilled through "
+            "2026-W41; the document now describes verified weekly data with its lineage"
         ),
     },
 }

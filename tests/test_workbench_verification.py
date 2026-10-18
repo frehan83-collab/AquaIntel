@@ -84,6 +84,15 @@ async def test_the_budget_sentinel_is_an_error_not_a_document(monkeypatch):
 
 
 def test_a_withdrawn_run_is_refused_without_taking_a_credit(client, monkeypatch):
+    """The 409 path: a run the catalogue has switched off takes no credit."""
+    from core.llm.workbench import RUN_KINDS
+
+    monkeypatch.setitem(
+        RUN_KINDS,
+        "margin_dossier",
+        {**RUN_KINDS["margin_dossier"], "sellable": False,
+         "withdrawn_reason": "test: withdrawn for this case"},
+    )
     spent = {"called": False}
 
     async def five(user_key):
@@ -98,20 +107,20 @@ def test_a_withdrawn_run_is_refused_without_taking_a_credit(client, monkeypatch)
 
     response = client.post(
         "/api/workbench/run",
-        json={"kind": "lice_pressure_review"},
+        json={"kind": "margin_dossier"},
         headers={"Authorization": f"Bearer {create_token(7, 'a@b.no', 'operator')}"},
     )
     assert response.status_code == 409
-    body = response.json()
-    assert body["error"] == "run_withdrawn"
-    assert "2026-W15" in body["message"]
+    assert response.json()["error"] == "run_withdrawn"
     assert spent["called"] is False
 
 
-def test_the_withdrawn_run_states_a_redemption_path():
-    reason = RUN_KINDS["lice_pressure_review"]["withdrawn_reason"]
-    assert RUN_KINDS["lice_pressure_review"]["sellable"] is False
-    assert "redeemable" in reason
+def test_the_lice_review_is_sellable_again_after_the_feed_was_restored():
+    """WS-56: it was withdrawn for a dead feed; WS-53 restored the feed, so it is sold again."""
+    kind = RUN_KINDS["lice_pressure_review"]
+    assert kind["sellable"] is True
+    assert "backfilled" in kind["reinstated_reason"]
+    assert "Withdrawn" not in kind["blurb"]
 
 
 def test_the_origin_payload_carries_the_engine_provenance():

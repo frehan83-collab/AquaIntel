@@ -178,6 +178,16 @@ satellite page **fabricated per-farm readings with a seeded RNG** and rendered
   `gh auth token`, with the helper disabled — and never writes or prints the token. Verified:
   `origin/master` now equals the local HEAD and `git status -sb` shows no ahead/behind.
 
+- **WS-56 — the lice review is sellable again, and the software runs.** WS-43 withdrew the paid
+  lice-pressure document because the feed was dead; WS-53 restored the feed (2026-W16-41, 585 sites
+  reporting in W41), so the withdrawal notice had itself become the stale thing. The run is back in
+  the catalogue (`sellable: true`, with `reinstated_reason` recording why), its blurb no longer says
+  "withdrawn", and the 409 path is still covered by a test that withdraws a run explicitly. Also
+  verified end to end on the running stack: `uvicorn core.api:app` on 127.0.0.1:8000 (369 routes,
+  health ok) and the built frontend on 127.0.0.1:3000 (`/`, `/chat`, `/feed-cost`, `/lice-quota`
+  all 200; CORS allows `http://localhost:3000`), and a live `POST /api/chat` on the free plan
+  returns the deterministic grounded answer with the restored W41 numbers.
+
 - **WS-53 — the lice feed was never dead.** BarentsWatch Fishhealth v2 still returns 1 779
   localities per week and 585 of them report lice for 2026-W41, with the values exactly where
   `_upsert_lice_v2` reads them (`liceReport.adultFemaleLice.average`). Two things had gone wrong:
