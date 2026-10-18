@@ -141,9 +141,13 @@ class DataIngestAgent(BaseAgent):
                 if not locality_no:
                     continue
 
-                # Skip if no lice report
+                # Skip if no lice report. A fallow site reports nothing that counts: storing its
+                # zeros as a lice observation would drag the national average down with cages
+                # that hold no fish (WS-53).
                 lice = rec.get("liceReport", {})
                 if not lice.get("hasReported", False):
+                    continue
+                if lice.get("isFallow", False):
                     continue
 
                 # Extract lice values from nested structure

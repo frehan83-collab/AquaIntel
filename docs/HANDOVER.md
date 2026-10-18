@@ -1806,6 +1806,25 @@ costs NOK 7–74/user/month by plan.
 **Open:** a 150-question live-model golden set; prompt caching; overage billing and annual
 answer packs (both need a stored payment method).
 
+### WS-53 · The lice feed restored — **DONE 2026-10-18**
+**Diagnosis, not assumption.** BarentsWatch v2 returns 1 779 localities for the current week;
+585 carry `liceReport.hasReported = true` for 2026-W41 and the counts sit at
+`liceReport.adultFemaleLice.average`, which is exactly the path `_upsert_lice_v2` reads. The
+parser was never broken. What was broken: the archive contained **no** `barentswatch`-labelled
+rows (185 099 `unverified` from a pre-lineage import, 1 040 `demo_seed`) and the ingest had not run
+since 2026-W15.
+**Fix:** `scripts/backfill_lice.py` — re-ingests a week range through the agent's own parser, so a
+backfilled row is indistinguishable from a live one. 2026 W16-41 produced **15 055 verified rows**;
+newest week **2026-W41** with 585 sites, average **0.18**, worst **3.15**, 14 sites above 0.5.
+**Cross-check:** oppdrett.info (citing BarentsWatch) publishes 585 / 0,18 / 3,15 for the same
+week; the over-limit count differs (14 vs 16) and is left as computed.
+**Consequence:** the lice surfaces are live again — `/api/lice/summary` returns W41, the grounding
+fact is `live` (no longer `unavailable`), `verified_current("lice_avg")` is `live`, and the alert
+evaluator can fire.
+**Operational note:** the agent service is not running on this box, which is why nothing ingested
+since W15. Restarting it (or scheduling `scripts/backfill_lice.py` weekly) is what keeps this
+current.
+
 ### WS-52 · Pushing from this sandbox — **DONE 2026-10-18**
 `git push` fails here for two unrelated reasons, and both had to be fixed to get the branch up:
 

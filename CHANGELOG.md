@@ -178,6 +178,19 @@ satellite page **fabricated per-farm readings with a seeded RNG** and rendered
   `gh auth token`, with the helper disabled — and never writes or prints the token. Verified:
   `origin/master` now equals the local HEAD and `git status -sb` shows no ahead/behind.
 
+- **WS-53 — the lice feed was never dead.** BarentsWatch Fishhealth v2 still returns 1 779
+  localities per week and 585 of them report lice for 2026-W41, with the values exactly where
+  `_upsert_lice_v2` reads them (`liceReport.adultFemaleLice.average`). Two things had gone wrong:
+  the archive held **no** `barentswatch`-labelled rows (185 099 were `unverified`, imported before
+  the lineage column existed, and 1 040 `demo_seed`), and nothing had been ingested since W15.
+  `scripts/backfill_lice.py` re-ingests a week range through the agent's own parser; running it for
+  2026 W16-41 restored **15 055 verified rows** with the newest week at **2026-W41**: 585 sites,
+  average **0.18**, worst **3.15** — matching the independently published figures (oppdrett.info,
+  which cites BarentsWatch) for the same week. Over-limit counts differ (14 here, 16 there) and are
+  reported as-is. Lice is live again in the decision card, the chat grounding, the metrics and the
+  alert evaluator; `tests/test_lice_ingest_shape.py` pins the payload shape, the `hasReported` and
+  fallow skips, and the cross-checked week.
+
 - **WS-48–51 — the rest of the council's list.** Four packages, each closing an item the council
   ranked or that my own report named as next.
   **WS-48 (alerts).** `core/market/verified_metrics.py` is now the single answer to "what is the
