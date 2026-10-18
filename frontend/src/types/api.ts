@@ -22,6 +22,157 @@ export interface ProvenanceWrapped<T> {
   data_provenance: DataProvenance;
 }
 
+/** /api/margin/bridge — one line of the margin bridge, in NOK per kg round weight.
+ *  `status` is measured | caller_supplied | modelled | structural | unpriced; only
+ *  the first two are observations of the caller's own numbers. */
+export interface MarginBridgeLeg {
+  key: string;
+  label: string;
+  nok_per_kg: number | null;
+  kind: "revenue" | "cost" | "margin";
+  status: string;
+  period: string | null;
+  source: string | null;
+  detail: string | null;
+  members: Record<string, number>;
+  meta: {
+    fcr?: number | null;
+    delivered_feed_nok_per_kg?: number | null;
+    caller_supplied?: boolean;
+    observed_at?: string | null;
+    age_days?: number | null;
+    month_on_month_change_pct?: number | null;
+    week_on_week_nok_per_kg?: number | null;
+    previous_week?: string | null;
+    reported_volume_tonnes?: number | null;
+    weeks_behind?: number | null;
+  };
+  data_provenance?: DataProvenance | null;
+}
+
+/** One lever: how much NOK/kg (and per year, when a volume was supplied) it moves. */
+export interface MarginBridgeLever {
+  key: string;
+  label: string;
+  nok_per_kg: number;
+  formula: string;
+  basis: string;
+  nok_per_year?: number;
+}
+
+/** /api/margin/bridge and /api/margin/bridge/{locality_no} */
+export interface MarginBridge {
+  method_version: string;
+  generated_at: string;
+  week: string | null;
+  locality_no: number | null;
+  currency: string;
+  unit: string;
+  legs: MarginBridgeLeg[];
+  margin: {
+    nok_per_kg: number | null;
+    pct: number | null;
+    modelled_cost_nok_per_kg: number | null;
+    spot_nok_per_kg: number | null;
+    quality: "measured" | "modelled" | "unpriced";
+    quality_basis: string;
+  };
+  changes: {
+    price_wow_nok_per_kg: number | null;
+    price_previous_week: string | null;
+    feed_mom_nok_per_kg: number | null;
+    feed_mom_pct: number | null;
+    feed_period: string | null;
+    /** price delta MINUS the feed cost delta: the move in the margin itself. */
+    margin_change_nok_per_kg: number | null;
+    feed_weight_coverage_pct?: number | null;
+    feed_excluded_ingredients?: string[];
+    structural_legs: string;
+    note: string;
+  };
+  break_even: {
+    /** the break-even cost per kg (named a cost, not a price). */
+    cost_nok_per_kg: number | null;
+    spot_nok_per_kg: number | null;
+    distance_nok_per_kg: number | null;
+    above_break_even: boolean | null;
+    feed_leg_reduction_needed_pct: number | null;
+    fcr_at_break_even: number | null;
+    note: string;
+  };
+  levers: MarginBridgeLever[];
+  validation: {
+    available: boolean;
+    /** "model" = the modelled feed leg vs the audited anchor; "caller_inputs" = yours. */
+    compared?: "model" | "caller_inputs";
+    anchor_year?: number;
+    official_feed_nok_per_kg_salmon?: number | null;
+    official_total_nok_per_kg_salmon?: number | null;
+    modelled_feed_nok_per_kg_salmon?: number | null;
+    caller_feed_nok_per_kg_salmon?: number | null;
+    gap_pct?: number | null;
+    within_tolerance?: boolean | null;
+    tolerance_pct?: number;
+    observed_at?: string | null;
+    source?: string;
+    note?: string;
+    reason?: string;
+  };
+  volume: {
+    annual_tonnes: number | null;
+    standing_tonnes: number | null;
+    annual_margin_nok: number | null;
+    standing_cost_nok: number | null;
+    basis: string;
+  };
+  method: string;
+  assumptions: Array<{ key: string; value: unknown; unit: string; source: string }>;
+  reconciliation: {
+    modelled_cost_nok_per_kg: number | null;
+    engine_total_nok_per_kg: number | null;
+    difference_nok_per_kg: number | null;
+    /** null when the feed leg is caller-supplied: the check does not apply. */
+    ok: boolean | null;
+    applicable?: boolean;
+    note: string;
+  };
+  scope: {
+    biological_drag_priced: boolean;
+    reason: string;
+    notes: string[];
+  };
+  farm?: {
+    locality_no: number;
+    name?: string;
+    production_area?: number | null;
+    municipality?: string | null;
+    county?: string | null;
+    owner_company?: string | null;
+    error?: string;
+    lice_limit?: {
+      limit: number;
+      established: boolean;
+      trigger: number;
+      rule: string;
+      region: string | null;
+      in_spring_window: boolean;
+      evaluated_for: string;
+      source_url?: string;
+    };
+    lice_position?: {
+      status: "measured" | "unknown";
+      reason?: string;
+      current_adult_female?: number;
+      distance_to_limit?: number;
+      at_or_above_limit?: boolean;
+      week?: string;
+      sea_temp_c?: number | null;
+    };
+    lice_lineage?: Record<string, unknown>;
+  };
+  data_provenance: DataProvenance;
+}
+
 /** /api/health */
 export interface HealthResponse {
   status: string;
@@ -513,12 +664,21 @@ export interface FeedCostLatest {
   fcr: number;
   cost_breakdown?: Record<string, number>;
   calculation_method?: string;
-  data_freshness?: Record<string, string>;
+  data_freshness?: Record<string, string | number | null>;
+  /** The month the ingredient basket describes (not the fetch time) — WS-29.
+   *  The FRED "global price" series publish monthly and lag, so the old
+   *  fetch-time-only stamp made a three-month-old observation look current. */
+  feed_prices_as_of?: string | null;
+  feed_prices_as_of_latest?: string | null;
+  feed_prices_age_days?: number | null;
+  fetched_at?: string;
   ingredients?: Record<string, {
-    price_usd: number;
-    weight: number;
+    price_usd_per_kg?: number;
+    price_usd_per_tonne?: number;
+    weight_pct?: number;
+    cost_contribution_pct?: number;
     source: string;
-    updated_at?: string;
+    observed_at?: string | null;
   }>;
   data_provenance?: DataProvenance;
 }

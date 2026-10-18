@@ -526,6 +526,63 @@ const translations: Record<string, Record<Locale, string>> = {
   "feed_cost.rapeseed": { en: "Rapeseed", no: "Raps" },
   "feed_cost.wheat": { en: "Wheat", no: "Hvete" },
 
+  // ── Margin bridge (WS-29) ──
+  // The money view over the price and cost feeds. "modelled" vs "measured" is the
+  // honesty boundary: the bridge is only *your* margin once both sides are yours.
+  "margin_bridge.title": { en: "Weekly margin bridge", no: "Ukentlig marginbro" },
+  "margin_bridge.over_modelled_cost": { en: "over modelled cost", no: "over modellert kostnad" },
+  "margin_bridge.annual_result": { en: "Annual result", no: "Årsresultat" },
+  "margin_bridge.spot": { en: "Spot", no: "Spot" },
+  "margin_bridge.modelled_cost": { en: "Modelled cost", no: "Modellert kostnad" },
+  "margin_bridge.what_moved": { en: "What moved", no: "Hva som beveget seg" },
+  "margin_bridge.margin_change": { en: "margin change", no: "marginendring" },
+  "margin_bridge.feed_coverage": {
+    en: "feed change covers",
+    no: "fôrendringen dekker",
+  },
+  "margin_bridge.feed_excluded": { en: "excluded", no: "utelatt" },
+  "margin_bridge.price": { en: "Price", no: "Pris" },
+  "margin_bridge.feed": { en: "Feed", no: "Fôr" },
+  "margin_bridge.break_even": { en: "Break-even", no: "Break-even" },
+  "margin_bridge.feed_fall_to_break_even": {
+    en: "lower feed cost needed to break even",
+    no: "lavere fôrkostnad trengs for break-even",
+  },
+  "margin_bridge.fcr_at_break_even": { en: "FCR at break-even", no: "FCR ved break-even" },
+  "margin_bridge.levers": { en: "Levers, NOK/kg", no: "Virkemidler, NOK/kg" },
+  "margin_bridge.your_numbers": { en: "Your numbers", no: "Dine tall" },
+  "margin_bridge.fcr": { en: "FCR", no: "Fôrfaktor" },
+  "margin_bridge.feed_price": { en: "Delivered feed, NOK/kg", no: "Levert fôr, NOK/kg" },
+  "margin_bridge.your_price": { en: "Your price, NOK/kg", no: "Din pris, NOK/kg" },
+  "margin_bridge.tonnes": { en: "Tonnes per year", no: "Tonn per år" },
+  "margin_bridge.apply": { en: "Apply", no: "Bruk" },
+  "margin_bridge.reset": { en: "Industry numbers", no: "Bransjetall" },
+  "margin_bridge.measured_hint": {
+    en: "Supply price and feed to make this your own margin.",
+    no: "Oppgi pris og fôr for å gjøre dette til din egen margin.",
+  },
+  "margin_bridge.show_basis": {
+    en: "Show basis and assumptions",
+    no: "Vis grunnlag og forutsetninger",
+  },
+  "margin_bridge.hide_basis": {
+    en: "Hide basis and assumptions",
+    no: "Skjul grunnlag og forutsetninger",
+  },
+  "margin_bridge.validation": {
+    en: "Level check vs audited feed cost",
+    no: "Nivåkontroll mot revidert fôrkostnad",
+  },
+  "margin_bridge.quality_measured": { en: "measured", no: "målt" },
+  "margin_bridge.quality_modelled": { en: "modelled", no: "modellert" },
+  "margin_bridge.quality_unpriced": { en: "unpriced", no: "uten pris" },
+  "margin_bridge.status_measured": { en: "measured", no: "målt" },
+  "margin_bridge.status_caller_supplied": { en: "yours", no: "dine tall" },
+  "margin_bridge.status_modelled": { en: "modelled", no: "modellert" },
+  "margin_bridge.status_structural": { en: "structural", no: "struktur" },
+  "margin_bridge.status_unpriced": { en: "unpriced", no: "uten pris" },
+
+
   // ── Page: Feed Supply Chain ──
   "feed_chain.title": { en: "Feed Supply Chain", no: "Fôrforsyningskjede" },
   "feed_chain.subtitle": { en: "Ingredient sourcing, EUDR compliance & cost scenarios", no: "Ingrediensinnkjøp, EUDR-samsvar og kostnadsscenarier" },

@@ -1,9 +1,21 @@
-CURRENT: Sessions 38+ COMPLETE — commercial hardening (10 steps) shipped
-LAST_UPDATED: 2026-10-16
-SESSIONS: 38+ (15 commits, pushed)
+CURRENT: WS-29 weekly margin bridge shipped (2026-10-18) — see docs/HANDOVER.md §5
+LAST_UPDATED: 2026-10-18
+SESSIONS: 38+ (15 commits pushed; WS-29 pending commit)
 REPOSITORY: https://github.com/frehan83-collab/AquaIntel (public)
-HANDOVER: docs/HANDOVER.md — verified state, gate commands, workstream backlog WS-1..WS-13, trap list
-VERSION: 2.6.0 · 345 paths / 353 ops · 1004 tests collected · 18 migrations (head 018)
+HANDOVER: docs/HANDOVER.md — verified state, gate commands, workstream backlog WS-1..WS-29b, trap list (21 traps)
+VERSION: 2.6.0 · 347 paths · 1276 tests collected · 20 migrations (head 020)
+
+## WS-29 (2026-10-18) — the weekly margin bridge
+`core/market/margin_bridge.py` (method 1.0.0) + `GET /api/margin/bridge[/{locality_no}]`
++ `MarginBridgePanel` on `/feed-cost`: price leg minus four grouped cost legs per kg,
+what moved (price week on week, feed month on month), break-even with the feed cut or
+FCR that closes it, five levers with formulas, an assumption register, reconciliation
+against the feed engine's total, and a validation check against the audited 2024 feed
+cost. Honest state: `margin.quality` is `modelled` by default; the FRED feed basket's
+newest point is 2026-07 (degraded, month named) and the level calibration is open as
+WS-29b. Also fixed: `/feed-cost` stamped the *fetch* time as the price date, the
+decision card valued lost biomass at a hardcoded 95.0 NOK/kg instead of the live SSB
+spot, and live FRED ingredient rows were labelled "EST". Read `docs/MARGIN.md`.
 
 ## SESSIONS 38+ — COMMERCIAL HARDENING (see docs/HANDOVER.md §3 for the per-area docs)
 

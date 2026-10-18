@@ -20,6 +20,7 @@ from sqlalchemy import select, desc
 
 from core.models import LiceRecord, Locality, CompanyExposure
 from core.async_db import get_async_session
+from core.market.ssb_price_client import PRICE_MAX_WEEKS_BEHIND
 from core.regulatory_facts import LiceLimit, breaches_limit, lice_limit as _lice_limit
 from core.source_lineage import (
     merge_lineages,
@@ -27,6 +28,11 @@ from core.source_lineage import (
     provenance_for,
     summarise_rows,
 )
+
+# WS-29: the price a card's NOK figures are valued at is the SSB week; the one
+# definition of "too far behind to call current" lives with the SSB client, and a
+# card's value is memoised briefly because a portfolio asks for it once per farm.
+SALMON_VALUE_TTL_S = 600
 
 # WS-22: a card is only issued on a lice count somebody still refreshes. BarentsWatch
 # reports weekly, so a count older than two reporting periods cannot describe the
@@ -79,7 +85,13 @@ if "medicinal_h2o2" in TREATMENT_PROFILES:
 
 # Economics (structural constants)
 AVG_FISH_PER_LOCALITY = 200_000
-SALMON_VALUE_NOK_PER_KG = 95.0  # approximate market value
+#: Fallback value of a kilo of fish, used only when the live SSB spot cannot be
+#: fetched. The card values lost biomass at the *live* price (WS-29): a NOK 95
+#: constant against a NOK 72.55 week overstated every cost-of-inaction by a third,
+#: and disagreed with the margin bridge on the same screen.
+SALMON_VALUE_NOK_PER_KG = 95.0
+SALMON_VALUE_LIVE_SOURCE = "SSB table 03024 weekly export price"
+SALMON_VALUE_FALLBACK_SOURCE = "constant 95.0 NOK/kg (SSB spot unavailable)"
 AVG_FISH_WEIGHT_KG = 4.5
 GROWTH_REDUCTION_PCT_PER_LICE = 0.03  # 3% growth penalty per adult female lice
 MORTALITY_PCT_PER_LICE_WEEK = 0.005  # 0.5% weekly mortality per lice above threshold
@@ -200,9 +212,10 @@ class DecisionEngine:
                 pa=locality_pa,
             )
 
-            # Compute ROI
+            # Compute ROI — valued at the live SSB spot, not a constant (WS-29).
+            fish_value, fish_value_source, fish_value_live = await self._salmon_value()
             cost_treat, cost_inaction, roi = self._compute_roi(
-                current_lice, method, action, trigger=limit.trigger
+                current_lice, method, action, trigger=limit.trigger, fish_value=fish_value
             )
 
             # Build provenance — lice data from BarentsWatch, GNN + ocean optional.
@@ -219,7 +232,15 @@ class DecisionEngine:
             if ocean_forecast:
                 _sources.append("MET.no OceanForecast")
                 _confidence = min(_confidence + 0.05, 0.95)  # Better temp = more trust
+            _sources.append(fish_value_source)
             prov = provenance_for(lineage, " + ".join(_sources), _confidence)
+            if not fish_value_live:
+                # A card priced at the constant (or a stale week) must not ride a live
+                # label just because the lice lineage was clean.
+                prov = self._degrade_provenance(
+                    prov,
+                    f"biomass valued at {fish_value_source}",
+                )
 
             return {
                 "locality_no": locality_no,
@@ -245,6 +266,11 @@ class DecisionEngine:
                 "regulatory_limit": limit_info,
                 "cost_of_treatment_nok": round(cost_treat),
                 "cost_of_inaction_nok": round(cost_inaction),
+                # WS-29: the per-kilo value the two costs were computed with, and
+                # where it came from — a fallback is visible, not silent.
+                "fish_value_nok_per_kg": round(fish_value, 2),
+                "fish_value_source": fish_value_source,
+                "fish_value_is_live": fish_value_live,
                 "lice_history": history,
                 "ocean_forecast": ocean_forecast,
                 "lineage": lineage,
@@ -398,6 +424,24 @@ class DecisionEngine:
             return {"methods": [], "note": "No outcome data yet or table not created", "error": str(e)}
 
     # ── Private helpers ──────────────────────────────────────────────
+
+    @staticmethod
+    def _degrade_provenance(provenance: dict, reason: str) -> dict:
+        """Degrade an already-built provenance dict with one more reason (WS-29).
+
+        ``provenance_for`` only knows the lice lineage; a card whose NOK figures were
+        valued at the constant, or at a week that is too far behind to call current,
+        must not keep a live label. The existing note is preserved, not replaced.
+        """
+        from core.market.data_provenance import DataProvenance
+
+        merged = provenance.get("fallback_reason")
+        return DataProvenance.degraded(
+            str(provenance.get("source") or "decision card"),
+            reason=f"{merged}; {reason}" if merged else reason,
+            confidence=min(float(provenance.get("confidence") or 0.5), 0.4),
+            observed_at=provenance.get("freshness"),
+        ).to_dict()
 
     async def _locality_info(self, locality_no: int) -> tuple:
         """(production_area, municipality, county) for a locality, or Nones."""
@@ -801,13 +845,94 @@ class DecisionEngine:
 
         return best, success, source
 
+    async def _salmon_value(self) -> tuple[float, str, bool]:
+        """The value of a kilo of fish, memoised for a few minutes.
+
+        A portfolio builds one card per farm and every card needs the same price, so
+        without this 30 cards would repeat the fetch (and each pay SSB's retries during
+        an outage). The memo is per instance and short: the price is weekly.
+        """
+        cached = getattr(self, "_salmon_value_cache", None)
+        if cached is not None:
+            cached_at, value, source, is_live = cached
+            if (dt.datetime.now(dt.UTC) - cached_at).total_seconds() < SALMON_VALUE_TTL_S:
+                return value, source, is_live
+        result = await self._fetch_salmon_value()
+        self._salmon_value_cache = (dt.datetime.now(dt.UTC),) + result
+        return result
+
+    async def _fetch_salmon_value(self) -> tuple[float, str, bool]:
+        """The live SSB week price, else the constant (see :meth:`_salmon_value`).
+
+        Returns ``(nok_per_kg, source_label, is_live)``. The label carries the **week**
+        it prices (SSB publishes weekly), and ``is_live`` is False when the week is
+        more than two behind — a cached price that keeps answering after the feed has
+        stopped must not be served as this week's, and the constant is a documented
+        fallback rather than a measurement (HANDOVER trap 19: a swallowed live path is
+        indistinguishable from a working one).
+        """
+        try:
+            from core.market.ssb_price_client import ssb_price_client
+
+            history = await ssb_price_client.get_price_history(2) or []
+        except Exception as exc:  # noqa: BLE001 — the constant below is the documented fallback
+            log.debug("decision.salmon_value_fallback", error=str(exc)[:80])
+            return SALMON_VALUE_NOK_PER_KG, SALMON_VALUE_FALLBACK_SOURCE, False
+
+        newest = history[-1] if history else None
+        price = None
+        if newest:
+            try:
+                price = float(newest.get("price_nok"))
+            except (TypeError, ValueError):
+                price = None
+        if not price or price <= 0:
+            return SALMON_VALUE_NOK_PER_KG, SALMON_VALUE_FALLBACK_SOURCE, False
+
+        week = None
+        weeks_behind = None
+        try:
+            year = int(newest.get("year"))
+            week_no = int(str(newest.get("week")).lstrip("W"))
+            monday = dt.date.fromisocalendar(year, week_no, 1)
+            week = f"{year}-W{week_no:02d}"
+            this_monday = dt.date.fromisocalendar(
+                *dt.datetime.now(dt.UTC).isocalendar()[:2], 1
+            )
+            weeks_behind = max(0, (this_monday - monday).days // 7)
+        except (TypeError, ValueError):
+            week = None
+
+        if week is None:
+            # Undated: the value may be fine but its currency cannot be shown.
+            return price, f"{SALMON_VALUE_LIVE_SOURCE} (week unknown)", False
+        if weeks_behind is not None and weeks_behind > PRICE_MAX_WEEKS_BEHIND:
+            return (
+                price,
+                f"{SALMON_VALUE_LIVE_SOURCE} {week} (stale: {weeks_behind} weeks behind)",
+                False,
+            )
+        return price, f"{SALMON_VALUE_LIVE_SOURCE} {week}", True
+
     def _compute_roi(
-        self, lice: float, method: str, action: str, trigger: float = TREATMENT_TRIGGER
+        self,
+        lice: float,
+        method: str,
+        action: str,
+        trigger: float = TREATMENT_TRIGGER,
+        *,
+        fish_value: float | None = None,
     ) -> tuple[float, float, float]:
-        """Estimate treatment cost vs cost of inaction."""
+        """Estimate treatment cost vs cost of inaction.
+
+        ``fish_value`` is NOK per kg of fish; when omitted the structural constant is
+        used (the tests and any non-async caller keep working, and the card passes
+        the live SSB spot).
+        """
         if action in ("NO_ACTION", "MONITOR") or method in ("none", "monitoring"):
             return 0.0, 0.0, 0.0
 
+        value_per_kg = float(fish_value) if fish_value else SALMON_VALUE_NOK_PER_KG
         profile = TREATMENT_PROFILES.get(method, TREATMENT_PROFILES["mechanical"])
 
         # Cost of treatment
@@ -817,7 +942,7 @@ class DecisionEngine:
             / 100
             * AVG_FISH_PER_LOCALITY
             * AVG_FISH_WEIGHT_KG
-            * SALMON_VALUE_NOK_PER_KG
+            * value_per_kg
         )
         total_treatment_cost = cost_treatment + mortality_cost
 
@@ -828,14 +953,14 @@ class DecisionEngine:
             * lice
             * AVG_FISH_PER_LOCALITY
             * AVG_FISH_WEIGHT_KG
-            * SALMON_VALUE_NOK_PER_KG
+            * value_per_kg
         )
         mortality_loss_per_week = (
             MORTALITY_PCT_PER_LICE_WEEK
             * max(0, lice - trigger)
             * AVG_FISH_PER_LOCALITY
             * AVG_FISH_WEIGHT_KG
-            * SALMON_VALUE_NOK_PER_KG
+            * value_per_kg
         )
         total_inaction_cost = (growth_loss_per_week + mortality_loss_per_week) * weeks_inaction
 

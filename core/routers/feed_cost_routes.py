@@ -5,7 +5,7 @@ Extracted from misc_routes.py (Session 39 decomposition).
 from __future__ import annotations
 
 import datetime as dt
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 router = APIRouter(tags=["feed-cost"])
 
@@ -15,6 +15,14 @@ router = APIRouter(tags=["feed-cost"])
 # ══════════════════════════════════════════════════════════════════════
 @router.get("/api/feed-cost/latest")
 async def feed_cost_latest():
+    """Latest feed cost snapshot — with provenance (WS-29).
+
+    The KPI row on `/feed-cost` used to show a production cost and a margin with no
+    provenance at all, while the feed legs behind them are a model on a monthly series
+    that lags. The snapshot now carries the same verdict the margin bridge uses
+    (``FeedCostSnapshot.price_provenance``): dated, defaulted or undated baskets are
+    degraded with the reason, never silently current.
+    """
     from core.market.feed_cost_engine import feed_cost_engine
     await feed_cost_engine.fetch_prices()
     latest = feed_cost_engine.get_latest()
@@ -96,3 +104,64 @@ async def feed_cost_official_history():
             reason="official feed-cost series not loaded",
         ).to_dict(),
     }
+
+
+# ══════════════════════════════════════════════════════════════════════
+# MARGIN BRIDGE — the money view over the price and cost feeds
+#
+# The one surface that turns "feed cost" and "export price" into a margin per kg
+# with every leg dated and sourced, the change decomposed, break-even stated and
+# the levers ranked. See core/market/margin_bridge.py for the honesty rules.
+# ══════════════════════════════════════════════════════════════════════
+
+@router.get("/api/margin/bridge")
+async def margin_bridge_industry(
+    fcr: float | None = Query(None, gt=0.5, le=3.0),
+    delivered_feed_nok_per_kg: float | None = Query(None, gt=0.0, le=100.0),
+    spot_nok_per_kg: float | None = Query(None, gt=0.0, le=500.0),
+    annual_tonnes: float | None = Query(None, gt=0.0, le=1_000_000.0),
+    standing_tonnes: float | None = Query(None, gt=0.0, le=1_000_000.0),
+):
+    """Margin per kg on the modelled industry cost base, with what moved and the levers.
+
+    Overrides (``fcr``, ``delivered_feed_nok_per_kg``, ``spot_nok_per_kg``) let a
+    producer see their own numbers; only the feed leg moves with them and the
+    payload says so. No volume is assumed — NOK totals appear only when
+    ``annual_tonnes`` or ``standing_tonnes`` is supplied.
+    """
+    from core.market.margin_bridge import margin_bridge
+
+    return await margin_bridge.build(
+        fcr=fcr,
+        delivered_feed_nok_per_kg=delivered_feed_nok_per_kg,
+        spot_nok_per_kg=spot_nok_per_kg,
+        annual_tonnes=annual_tonnes,
+        standing_tonnes=standing_tonnes,
+    )
+
+
+@router.get("/api/margin/bridge/{locality_no}")
+async def margin_bridge_farm(
+    locality_no: int,
+    fcr: float | None = Query(None, gt=0.5, le=3.0),
+    delivered_feed_nok_per_kg: float | None = Query(None, gt=0.0, le=100.0),
+    spot_nok_per_kg: float | None = Query(None, gt=0.0, le=500.0),
+    annual_tonnes: float | None = Query(None, gt=0.0, le=1_000_000.0),
+    standing_tonnes: float | None = Query(None, gt=0.0, le=1_000_000.0),
+):
+    """The industry bridge plus this farm's lice limit for the week and its position.
+
+    The position is ``measured`` only from verified, current lice rows; otherwise it
+    is ``unknown`` with the lineage reason. The limit itself is a dated official fact
+    (``core.regulatory_facts``), so it is always available.
+    """
+    from core.market.margin_bridge import margin_bridge
+
+    return await margin_bridge.for_farm(
+        locality_no,
+        fcr=fcr,
+        delivered_feed_nok_per_kg=delivered_feed_nok_per_kg,
+        spot_nok_per_kg=spot_nok_per_kg,
+        annual_tonnes=annual_tonnes,
+        standing_tonnes=standing_tonnes,
+    )

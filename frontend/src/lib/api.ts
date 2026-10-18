@@ -33,6 +33,7 @@ import type {
   RegimeState, EquityPriceResponse, EsgCompanyScores,
   CompetitivenessScenarioResponse,
   MarketSpotPrice, MarketForwardCurve, FeedCostCompositeIndex,
+  MarginBridge,
   EventImpactResult, SavedScenario, SignalsWithdrawn,
 } from "@/types/api";
 
@@ -257,6 +258,32 @@ export const api = {
   feedCostLatest: () => fetchAPI<FeedCostLatest>("/api/feed-cost/latest"),
   feedCostHistory: (n?: number) => fetchAPI(`/api/feed-cost/history?n=${n || 50}`),
   feedCostHistorical: (years?: number) => fetchAPI(`/api/feed-cost/historical-prices?years=${years || 5}`),
+  /**
+   * The margin bridge: price and cost as one margin per kg, with what moved, the
+   * break-even and the levers. Every override is optional; without them the bridge
+   * is the modelled industry cost base (flagged `modelled`, never `measured`).
+   * Passing both `fcr`/`feed` and `spot` is what makes it your own margin.
+   */
+  marginBridge: (params?: {
+    fcr?: number;
+    feed?: number;
+    spot?: number;
+    annualTonnes?: number;
+    standingTonnes?: number;
+    localityNo?: number;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.fcr) query.set("fcr", String(params.fcr));
+    if (params?.feed) query.set("delivered_feed_nok_per_kg", String(params.feed));
+    if (params?.spot) query.set("spot_nok_per_kg", String(params.spot));
+    if (params?.annualTonnes) query.set("annual_tonnes", String(params.annualTonnes));
+    if (params?.standingTonnes) query.set("standing_tonnes", String(params.standingTonnes));
+    const path = params?.localityNo
+      ? `/api/margin/bridge/${params.localityNo}`
+      : "/api/margin/bridge";
+    const suffix = query.toString();
+    return fetchAPI<MarginBridge>(suffix ? `${path}?${suffix}` : path);
+  },
   // Anomaly Detection
   anomalyScores: () => fetchAPI<AnomalyScores>("/api/anomaly/scores"),
   anomalyAlerts: () => fetchAPI("/api/anomaly/alerts"),

@@ -6020,6 +6020,7 @@
     },
     "/api/feed-cost/latest": {
       "get": {
+        "description": "Latest feed cost snapshot \u2014 with provenance (WS-29).\n\nThe KPI row on `/feed-cost` used to show a production cost and a margin with no\nprovenance at all, while the feed legs behind them are a model on a monthly series\nthat lags. The snapshot now carries the same verdict the margin bridge uses\n(``FeedCostSnapshot.price_provenance``): dated, defaulted or undated baskets are\ndegraded with the reason, never silently current.",
         "operationId": "feed_cost_latest_api_feed_cost_latest_get",
         "responses": {
           "200": {
@@ -7921,6 +7922,259 @@
         "summary": "Macro Snapshot",
         "tags": [
           "macro"
+        ]
+      }
+    },
+    "/api/margin/bridge": {
+      "get": {
+        "description": "Margin per kg on the modelled industry cost base, with what moved and the levers.\n\nOverrides (``fcr``, ``delivered_feed_nok_per_kg``, ``spot_nok_per_kg``) let a\nproducer see their own numbers; only the feed leg moves with them and the\npayload says so. No volume is assumed \u2014 NOK totals appear only when\n``annual_tonnes`` or ``standing_tonnes`` is supplied.",
+        "operationId": "margin_bridge_industry_api_margin_bridge_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "fcr",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0.5,
+                  "maximum": 3.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fcr"
+            }
+          },
+          {
+            "in": "query",
+            "name": "delivered_feed_nok_per_kg",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0.0,
+                  "maximum": 100.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Delivered Feed Nok Per Kg"
+            }
+          },
+          {
+            "in": "query",
+            "name": "spot_nok_per_kg",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0.0,
+                  "maximum": 500.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Spot Nok Per Kg"
+            }
+          },
+          {
+            "in": "query",
+            "name": "annual_tonnes",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0.0,
+                  "maximum": 1000000.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Annual Tonnes"
+            }
+          },
+          {
+            "in": "query",
+            "name": "standing_tonnes",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0.0,
+                  "maximum": 1000000.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Standing Tonnes"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Margin Bridge Industry",
+        "tags": [
+          "feed-cost"
+        ]
+      }
+    },
+    "/api/margin/bridge/{locality_no}": {
+      "get": {
+        "description": "The industry bridge plus this farm's lice limit for the week and its position.\n\nThe position is ``measured`` only from verified, current lice rows; otherwise it\nis ``unknown`` with the lineage reason. The limit itself is a dated official fact\n(``core.regulatory_facts``), so it is always available.",
+        "operationId": "margin_bridge_farm_api_margin_bridge__locality_no__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "locality_no",
+            "required": true,
+            "schema": {
+              "title": "Locality No",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fcr",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0.5,
+                  "maximum": 3.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fcr"
+            }
+          },
+          {
+            "in": "query",
+            "name": "delivered_feed_nok_per_kg",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0.0,
+                  "maximum": 100.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Delivered Feed Nok Per Kg"
+            }
+          },
+          {
+            "in": "query",
+            "name": "spot_nok_per_kg",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0.0,
+                  "maximum": 500.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Spot Nok Per Kg"
+            }
+          },
+          {
+            "in": "query",
+            "name": "annual_tonnes",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0.0,
+                  "maximum": 1000000.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Annual Tonnes"
+            }
+          },
+          {
+            "in": "query",
+            "name": "standing_tonnes",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0.0,
+                  "maximum": 1000000.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Standing Tonnes"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Margin Bridge Farm",
+        "tags": [
+          "feed-cost"
         ]
       }
     },

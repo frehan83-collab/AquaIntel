@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
+import MarginBridgePanel from "@/components/MarginBridge";
 import DataQualityBadge from "@/components/DataQualityBadge";
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
@@ -667,6 +668,11 @@ export default function FarmerDailyPage() {
               )}
             </GlassCard>
           )}
+
+          {/* Weekly margin bridge (WS-29) — this farm's margin per kg, what moved it,
+              its § 8 lice limit for the week, and the levers. The farm block reports a
+              lice position only from verified, current rows. */}
+          <MarginBridgePanel localityNo={localityNo} />
 
           {/* Marine Heatwave Alert */}
           {heatwave && !heatwave.error && (heatwave.warning_count > 0 || heatwave.critical_count > 0) && (

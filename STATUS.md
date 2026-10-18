@@ -96,6 +96,16 @@ added `tests/test_migrations.py`.
 
 ## Session log
 
+- 2026-10-18 · **WS-29 weekly margin bridge** (commercial hardening, not a RUN-1
+  workstream). `core/market/margin_bridge.py` (method `1.0.0`), `GET /api/margin/bridge`
+  + `/api/margin/bridge/{locality_no}`, `MarginBridgePanel` on `/feed-cost` replacing
+  the old unit-inconsistent margin bar. Found and fixed on the way: `/feed-cost`
+  stamped the *fetch* time as the feed-price date while the FRED series end
+  **2026-07**; the decision card valued lost biomass at a hardcoded `95.0` NOK/kg
+  instead of the live SSB spot; the ingredient badge labelled live FRED rows "EST".
+  Honest state: margin is `modelled` by default (only the feed leg is the model's),
+  the feed leg degrades with the month named, and the level calibration is open as
+  WS-29b in `docs/HANDOVER.md`. Gates: fast 463 passed + 1 skip; see HANDOVER §2.
 - 2026-10-12/13 · P0-1: complete locally (see P0-1 detail above). Pushed 8fca76b.
   CI: Backend Tests ✅ (incl. new migration + cache-window tests), Docker Build ✅;
   Frontend Build still running at handoff (build job's tolerant e2e step is slow —

@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import datetime as dt
 from dataclasses import dataclass, field
+from typing import Any
 
 import httpx
 import structlog
@@ -62,6 +63,43 @@ STRUCTURAL_DEFAULT_INGREDIENTS = {"other"}
 
 # Sources that represent genuinely live market data
 LIVE_SOURCES = {"fred", "yahoo_finance", "world_bank"}
+
+#: FRED's monthly commodity series publish with a lag. A basket older than this is
+#: dated, not current, and every consumer (the margin bridge, `/api/feed-cost/latest`)
+#: says so: on the dev box the newest point is 2026-07 while the request is 2026-10,
+#: which the old fetch-time stamp used to hide. Chosen at 45 days so a normal
+#: two-month publication lag still counts as current and a stalled series does not.
+FEED_PRICE_MAX_AGE_DAYS = 45
+
+
+def _as_datetime(value: Any) -> dt.datetime | None:
+    """Widen a date/ISO string to an aware UTC datetime for ``freshness``."""
+    if value is None:
+        return None
+    if isinstance(value, dt.datetime):
+        return value if value.tzinfo else value.replace(tzinfo=dt.UTC)
+    if isinstance(value, dt.date):
+        return dt.datetime.combine(value, dt.time.min, tzinfo=dt.UTC)
+    try:
+        parsed = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=dt.UTC)
+
+
+def _parse_fred_date(value: str) -> dt.date | None:
+    """The observation date of a FRED CSV row (``YYYY-MM-DD`` or ``YYYY-MM-01``)."""
+    try:
+        return dt.date.fromisoformat(value[:10])
+    except (TypeError, ValueError):
+        return None
+
+
+def _age_days(value: dt.date | None, today: dt.date | None = None) -> int | None:
+    """Calendar days between an observation date and today (None-safe)."""
+    if value is None:
+        return None
+    return max(0, ((today or dt.datetime.now(dt.UTC).date()) - value).days)
 
 # ── LEARNED PRINCIPLES from PhD-level analysis of 2008-2024 official data ─────
 # These are STRUCTURAL RELATIONSHIPS, not hardcoded values.
@@ -133,6 +171,11 @@ class IngredientPrice:
     source: str
     fetched_at: dt.datetime = field(default_factory=lambda: dt.datetime.now(dt.UTC))
     change_pct_30d: float = 0.0
+    #: The month the price *describes*, not when we fetched it. The FRED "global
+    #: price" series are monthly and publish with a lag (on the dev box the newest
+    #: point is 2026-07 while the request is 2026-10), so a fetch time would make a
+    #: three-month-old observation look current. None when the source has no date.
+    observed_at: dt.date | None = None
 
 
 @dataclass
@@ -153,6 +196,97 @@ class FeedCostSnapshot:
     fcr: float = LEARNED_FCR_LATEST
     cost_breakdown: dict = field(default_factory=dict)
     source: str = "composite"
+    #: Oldest and newest observation months among the dated ingredients used. The
+    #: basket is only as current as its stalest component, so the snapshot reports
+    #: the oldest as ``feed_prices_as_of`` (the conservative one).
+    feed_prices_as_of: dt.date | None = None
+    feed_prices_as_of_latest: dt.date | None = None
+    #: Live-sourced ingredients with no observation date (Yahoo/World Bank): their
+    #: presence means the basket's currency cannot be shown even if FRED is dated.
+    undated_live_ingredients: list[str] = field(default_factory=list)
+    #: True when USD/NOK fell back to ``DEFAULT_USDNOK``; invalidates the NOK level.
+    usd_nok_is_fallback: bool = False
+
+    def price_provenance(self) -> dict:
+        """Honest provenance for the ingredient basket — dated, never assumed current.
+
+        The one definition of "is this basket current?", shared by `/api/feed-cost/latest`
+        and the margin bridge so the two cannot disagree. Ways it is not live, each
+        named: an ingredient fell back to a default estimate; a live ingredient
+        carries no observation date; the USD/NOK conversion fell back to a constant
+        (which invalidates the NOK level even when every price is live); or the
+        oldest dated ingredient is older than ``FEED_PRICE_MAX_AGE_DAYS``.
+        """
+        from core.market.data_provenance import DataProvenance
+
+        label = "FRED commodity series (fishmeal, fish oil, soy, rapeseed, wheat)"
+        age_days = _age_days(self.feed_prices_as_of)
+        observed_at = _as_datetime(self.feed_prices_as_of)
+        if getattr(self, "using_defaults", False):
+            defaults = list(getattr(self, "default_ingredients", []) or [])
+            return DataProvenance.degraded(
+                label,
+                reason=(
+                    "the ingredient price fell back to a default estimate for "
+                    + ", ".join(defaults or ["an unnamed ingredient"])
+                ),
+                confidence=0.4,
+                observed_at=observed_at,
+            ).to_dict()
+        if self.feed_prices_as_of is None or age_days is None:
+            return DataProvenance.degraded(
+                label,
+                reason=(
+                    "the feed basket carries no observation date, so its currency cannot be "
+                    "shown (the source returned no date)"
+                ),
+                confidence=0.45,
+            ).to_dict()
+        undated = list(getattr(self, "undated_live_ingredients", []) or [])
+        if undated:
+            return DataProvenance.degraded(
+                label,
+                reason=(
+                    "a live ingredient carries no observation date ("
+                    + ", ".join(undated)
+                    + "), so the basket's currency cannot be shown"
+                ),
+                confidence=0.5,
+                observed_at=observed_at,
+            ).to_dict()
+        if getattr(self, "usd_nok_is_fallback", False):
+            return DataProvenance.degraded(
+                label,
+                reason=(
+                    "USD/NOK fell back to the constant "
+                    f"{DEFAULT_USDNOK} (the live rate was unavailable), so the NOK level is "
+                    "converted at a stale rate"
+                ),
+                confidence=0.5,
+                observed_at=observed_at,
+            ).to_dict()
+        if age_days > FEED_PRICE_MAX_AGE_DAYS:
+            latest = (
+                f"; the newest dated ingredient is {self.feed_prices_as_of_latest.isoformat()}"
+                if self.feed_prices_as_of_latest
+                and self.feed_prices_as_of
+                and self.feed_prices_as_of_latest != self.feed_prices_as_of
+                else ""
+            )
+            return DataProvenance.degraded(
+                label,
+                reason=(
+                    # `feed_prices_as_of` is the OLDEST dated ingredient (the basket is only
+                    # as current as its stalest leg), so the wording must not say "newest".
+                    f"the oldest dated ingredient in the basket is "
+                    f"{self.feed_prices_as_of.isoformat()} ({age_days} days old){latest}; the "
+                    "series is monthly and publishes with a lag, so the feed leg is dated "
+                    "rather than current"
+                ),
+                confidence=0.55,
+                observed_at=observed_at,
+            ).to_dict()
+        return DataProvenance.live(label, confidence=0.85, observed_at=observed_at).to_dict()
 
 
 class FeedCostEngine:
@@ -292,6 +426,26 @@ class FeedCostEngine:
         # Data quality: flag if any ingredients used default prices
         snapshot.using_defaults = bool(self._using_defaults)
         snapshot.default_ingredients = list(getattr(self, "_using_defaults", []))
+        # A live-but-undated ingredient (Yahoo/World Bank) cannot prove the basket's
+        # currency, so an otherwise dated basket must still say so.
+        snapshot.undated_live_ingredients = [
+            name for name, ing in ingredients.items()
+            if ing.source in LIVE_SOURCES
+            and ing.observed_at is None
+            and name not in STRUCTURAL_DEFAULT_INGREDIENTS
+        ]
+        # The whole basket is converted at this rate; a constant fallback invalidates
+        # the NOK level even when every ingredient price is live (WS-22 class).
+        snapshot.usd_nok_is_fallback = bool(getattr(self, "_usd_nok_is_fallback", False))
+        # The month the basket describes, not the fetch time: the FRED "global
+        # price" series are monthly and publish with a lag, so a fetch-time stamp
+        # would report a three-month-old observation as current.
+        dated = sorted(
+            ing.observed_at for ing in ingredients.values() if ing.observed_at is not None
+        )
+        if dated:
+            snapshot.feed_prices_as_of = dated[0]
+            snapshot.feed_prices_as_of_latest = dated[-1]
 
         self._latest = snapshot
         self._last_fetch = now
@@ -347,6 +501,7 @@ class FeedCostEngine:
                                             price_usd_per_tonne=round(usd_per_tonne, 1),
                                             price_usd_per_kg=round(usd_per_tonne / 1000, 4),
                                             source="fred",
+                                            observed_at=_parse_fred_date(parts[0].strip()),
                                         )
                                         break
                                 except ValueError:
@@ -447,7 +602,14 @@ class FeedCostEngine:
         return result
 
     async def _fetch_usdnok(self) -> float:
-        """Get USD/NOK exchange rate."""
+        """Get USD/NOK exchange rate.
+
+        Records ``usd_nok_is_fallback`` when the live rate is unavailable: the whole
+        NOK cost base is converted at this rate, so a constant silently substituted
+        here would misstate every NOK figure while the prices themselves stayed live
+        (the same defect class as the competitiveness engine's NOK/USD 0.093).
+        """
+        self._usd_nok_is_fallback = False
         try:
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.get(
@@ -464,6 +626,8 @@ class FeedCostEngine:
                         return float(valid[-1])
         except Exception:
             pass
+        self._usd_nok_is_fallback = True
+        log.debug("feed_cost.usd_nok_fallback", value=DEFAULT_USDNOK)
         return DEFAULT_USDNOK
 
     async def _get_salmon_spot(self) -> float:
@@ -495,7 +659,16 @@ class FeedCostEngine:
             "cost_breakdown": s.cost_breakdown,
             "calculation_method": "Learned structural ratios from 17 years (2008-2024) Fiskeridirektoratet data applied to live FRED feed ingredient prices",
             "data_freshness": {
-                "feed_prices": s.timestamp.isoformat(),
+                "feed_prices": (
+                    s.feed_prices_as_of.isoformat() if s.feed_prices_as_of
+                    else s.timestamp.isoformat()
+                ),
+                "feed_prices_basis": (
+                    "observation date of the oldest ingredient in the basket"
+                    if s.feed_prices_as_of
+                    else "fetch time (the source returned no observation date)"
+                ),
+                "feed_prices_age_days": _age_days(s.feed_prices_as_of),
                 "structural_ratios": "Learned from 2008-2024 official data (stable cost structure)",
                 "fcr": f"{LEARNED_FCR_LATEST} (latest official, valid range {LEARNED_FCR_RANGE})",
             },
@@ -509,9 +682,26 @@ class FeedCostEngine:
                         / max(s.feed_cost_usd_per_kg, 0.01) * 100, 1
                     ),
                     "source": ing.source,
+                    "observed_at": ing.observed_at.isoformat() if ing.observed_at else None,
                 }
                 for name, ing in s.ingredients.items()
             },
+            # The month the basket describes. `feed_prices` used to be the *fetch*
+            # time, which made a three-month-old FRED observation look current; the
+            # fetch time is kept separately so both are visible.
+            "feed_prices_as_of": s.feed_prices_as_of.isoformat() if s.feed_prices_as_of else None,
+            "feed_prices_as_of_latest": (
+                s.feed_prices_as_of_latest.isoformat() if s.feed_prices_as_of_latest else None
+            ),
+            "feed_prices_age_days": _age_days(s.feed_prices_as_of),
+            "fetched_at": s.timestamp.isoformat(),
+            # WS-29: the KPI row on /feed-cost had no provenance while its feed legs
+            # rest on a monthly series that lags. One verdict, shared with the bridge.
+            "using_defaults": bool(getattr(s, "using_defaults", False)),
+            "default_ingredients": list(getattr(s, "default_ingredients", []) or []),
+            "undated_live_ingredients": list(getattr(s, "undated_live_ingredients", []) or []),
+            "usd_nok_is_fallback": bool(getattr(s, "usd_nok_is_fallback", False)),
+            "data_provenance": s.price_provenance(),
         }
 
     @staticmethod
@@ -635,6 +825,128 @@ class FeedCostEngine:
             },
         }
 
+
+    # ── Month-on-month feed basket change ────────────────────────────
+    # The feed leg moves monthly, not weekly, and nothing exposed that move:
+    # /feed-cost printed a level and a 30-day placeholder that was never filled
+    # (IngredientPrice.change_pct_30d). This computes the weighted change from the
+    # same FRED monthly series and the same FEED_COMPOSITION weights the level is
+    # built from, so the level and its change cannot disagree.
+    _MONTHLY_CHANGE_TTL = dt.timedelta(hours=6)
+    #: A failed history fetch is cached briefly so repeated callers do not each pay the
+    #: retry cost against a cold or rate-limited FRED window.
+    _MONTHLY_CHANGE_ERROR_TTL = dt.timedelta(minutes=15)
+
+    async def feed_index_change(self) -> dict:
+        """Weighted month-on-month change of the feed ingredient basket.
+
+        Each ingredient is compared over its own two latest FRED months (the series
+        publish on slightly different days), then weighted exactly like
+        ``FEED_COMPOSITION`` — so the percentage describes the same basket the feed
+        cost level is built from. A single ingredient without two points is left
+        out and named rather than treated as unchanged.
+
+        Returns ``{"change_pct": float, "period": str, "months": [...],
+        "by_ingredient": {...}, "excluded": [...], "source": str}`` or
+        ``{"error": reason}`` — never a zero that could be read as "no change".
+        """
+        now = dt.datetime.now(dt.UTC)
+        cached = getattr(self, "_monthly_change_cache", None)
+        cached_at = getattr(self, "_monthly_change_at", None)
+        if cached is not None and cached_at:
+            # A failure is cached for a short while too: without this, a cold or
+            # rate-limited FRED window makes every caller pay the full retry cost on
+            # every request (the bridge caps the wait, but the next request repeats it).
+            ttl = (
+                self._MONTHLY_CHANGE_ERROR_TTL
+                if cached.get("error")
+                else self._MONTHLY_CHANGE_TTL
+            )
+            if (now - cached_at) < ttl:
+                return cached
+
+        try:
+            history = await self.fetch_historical_prices(years=1)
+        except Exception as exc:  # noqa: BLE001 — a history outage is reported, not raised
+            result = {"error": f"FRED history fetch failed ({str(exc)[:80]})"}
+            self._monthly_change_cache = result
+            self._monthly_change_at = now
+            return result
+
+        ingredients = (history or {}).get("ingredients") or {}
+        by_ingredient: dict[str, dict] = {}
+        excluded: list[str] = []
+        weighted_now = 0.0
+        weighted_prev = 0.0
+        months: set[str] = set()
+        for name, weight in FEED_COMPOSITION.items():
+            if weight <= 0:
+                continue
+            series = (ingredients.get(name) or {}).get("data") or []
+            # Drop points without a usable price and keep the two newest months.
+            points = [p for p in series if p.get("price_usd_tonne")]
+            if len(points) < 2:
+                if name in ingredients or name in DEFAULT_INGREDIENT_PRICES_USD:
+                    excluded.append(name)
+                continue
+            current, previous = points[-1], points[-2]
+            try:
+                cur_price = float(current["price_usd_tonne"])
+                prev_price = float(previous["price_usd_tonne"])
+            except (TypeError, ValueError, KeyError):
+                excluded.append(name)
+                continue
+            if prev_price <= 0:
+                excluded.append(name)
+                continue
+            by_ingredient[name] = {
+                "current_month": current.get("date"),
+                "previous_month": previous.get("date"),
+                "price_usd_tonne": round(cur_price, 1),
+                "change_pct": round((cur_price - prev_price) / prev_price * 100, 1),
+                "weight_pct": round(weight * 100, 1),
+            }
+            weighted_now += cur_price * weight
+            weighted_prev += prev_price * weight
+            if current.get("date"):
+                months.add(str(current["date"]))
+
+        if len(by_ingredient) < 3 or weighted_prev <= 0:
+            result = {
+                "error": (
+                    "fewer than three feed ingredients have two comparable FRED months"
+                    + (f" (missing: {', '.join(excluded)})" if excluded else "")
+                )
+            }
+            self._monthly_change_cache = result
+            self._monthly_change_at = now
+            return result
+
+        change_pct = (weighted_now - weighted_prev) / weighted_prev * 100
+        distinct_months = sorted(months)
+        period = (
+            distinct_months[-1] if len(distinct_months) == 1
+            else f"{distinct_months[0]}..{distinct_months[-1]}" if distinct_months else None
+        )
+        result = {
+            "change_pct": round(change_pct, 2),
+            "period": period,
+            "months": distinct_months,
+            "by_ingredient": by_ingredient,
+            "excluded": excluded,
+            "weight_coverage_pct": round(
+                sum(v["weight_pct"] for v in by_ingredient.values()), 1
+            ),
+            "source": "FRED monthly commodity series (same basket and weights as the feed cost level)",
+            "note": (
+                "each ingredient is compared over its own two latest months; the change is in "
+                "USD and excludes FX, which is applied separately at today's rate"
+            ),
+            "computed_at": now.isoformat(),
+        }
+        self._monthly_change_cache = result
+        self._monthly_change_at = now
+        return result
 
     # ── Composite Feed Cost Index ────────────────────────────────────
     # Research-validated weights from salmon feed composition analysis

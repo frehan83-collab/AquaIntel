@@ -5,6 +5,100 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
+### WS-29 — the weekly margin bridge (2026-10-18)
+- **Why:** the platform held the two inputs that decide a salmon producer's week —
+  the live SSB export price and the live feed ingredient basket — and never turned
+  them into money with the assumptions named. `/feed-cost` showed a margin bar and
+  three rows whose units disagreed (feed ingredient cost per kg of **feed** next to
+  the price per kg of **salmon**), nothing said what had moved, and the feed legs
+  carried no provenance at all. A farmer could not tell whether the number was a
+  measurement or a model, or whether the feed price was this month's or July's.
+- **NEW `core/market/margin_bridge.py`** — the bridge, method version `1.0.0`: the
+  price leg minus four grouped cost legs per kg of harvested round weight, the
+  week-on-week price move, the month-on-month feed move, the break-even and the feed
+  or FCR improvement that would close it, and five levers (price, delivered feed
+  price, FCR, one avoided lice treatment, one point of survival) each with its
+  formula. It composes the existing engines rather than adding data:
+  `feed_cost_engine`, `ssb_price_client`, `biomass_predictor.HARVEST_WEIGHT_KG`,
+  `treatment_constants`, and `regulatory_facts` for the farm's § 8 limit. The grouped
+  legs reconcile against the feed engine's total in the payload and in a test.
+- **Honesty rules, all pinned by tests:** `margin.quality` is `modelled` until the
+  caller supplies both the price and the feed numbers (then `measured`); the feed leg
+  degrades with the month named when the FRED observation is older than 45 days, when
+  the basket carries no date, or when an ingredient fell back to a default; a
+  caller-supplied price is `caller_supplied` and degrades on purpose; no NOK total is
+  produced without a caller-supplied volume; the modelled feed level is checked
+  against the last audited realised cost and the gap is printed. The per-farm
+  endpoint adds the week's lice limit (a dated official fact) and a lice position that
+  is `measured` only from verified, current rows.
+- **NEW `GET /api/margin/bridge` and `GET /api/margin/bridge/{locality_no}`** in
+  `core/routers/feed_cost_routes.py`; `docs/openapi.frozen.json` re-frozen (two paths
+  added) and the provenance baseline updated deliberately (205 baselined).
+- **NEW `/feed-cost` margin bridge panel** (`MarginBridgePanel`): headline margin with
+  a `measured`/`modelled` badge, the leg table with per-leg status and period,
+  spot-vs-cost bars, "what moved", break-even, the lever grid, a "your numbers" row
+  (FCR, delivered feed, price, tonnes) that flips the badge to `measured`, and a
+  collapsible basis panel with the assumption register and the level check. It
+  replaces the old one-bar "Margin Analysis" card. The ingredient rows now show the
+  FRED **observation month** instead of an "EST" chip that mislabelled a live monthly
+  series as an estimate.
+- **CHANGED `core/market/feed_cost_engine.py`** — `IngredientPrice.observed_at` parses
+  the FRED CSV date and `FeedCostSnapshot` carries `feed_prices_as_of` /
+  `feed_prices_as_of_latest`; `get_latest()` exposes `feed_prices_as_of`,
+  `feed_prices_age_days` and per-ingredient `observed_at`, and
+  `data_freshness.feed_prices` is now the **observation** date rather than the fetch
+  time. **Found on the way:** the newest FRED "global price" point is **2026-07**
+  while `/feed-cost` reported the request time as the price date — a three-month-old
+  observation presented as current. `feed_index_change()` is new: the weighted
+  month-on-month move of the same basket with the same weights, each ingredient over
+  its own two latest months, refusing to report a zero (and naming what it excluded)
+  when fewer than three ingredients have two comparable points.
+- **CHANGED `core/market/decision_engine.py`** — the treatment ROI values lost
+  biomass at the **live SSB spot** instead of the hardcoded `95.0 NOK/kg`: against
+  W41's 72.55 the constant overstated every cost of inaction by a third and
+  contradicted the margin bridge on the same screen. The card now carries
+  `fish_value_nok_per_kg` and `fish_value_source` (the constant's fallback is visible
+  in the provenance label), and `_compute_roi` takes the value as a keyword argument
+  so the property tests keep their signature.
+- **Review round (same day, independent reviewer).** Seven defects the first draft
+  shipped, all fixed with tests: the change total **added** the price delta (revenue)
+  to the feed delta (a cost) and reported −0.79 where the margin moved −1.71 — now
+  `margin_change_nok_per_kg = price_wow − feed_mom`; the margin leg was stamped
+  `measured` beside a `modelled` headline; reconciliation compared the caller's feed
+  leg to the engine total and cried "a cost line was renamed" (`ok` is now `null` with
+  `applicable: false`); the validation block called a caller's feed leg "the modelled
+  feed leg" (it now names `compared: model|caller_inputs`); a card valued at the
+  constant 95.0 still served `is_live: true` (the fallback now degrades the card);
+  a cache answering for a stale SSB week was labelled live (both consumers degrade
+  past `PRICE_MAX_WEEKS_BEHIND = 2` and name the week); and the USD/NOK constant
+  fallback was silent, so the whole NOK basket could be converted at 10.5 while the
+  payload said live (recorded as `usd_nok_is_fallback` and degraded). Also: the feed
+  provenance now says "oldest dated ingredient" (it stores the *oldest*, not the
+  newest), an undated live ingredient blocks a live verdict, the reconciliation
+  tolerance is the rounding budget rather than 1 % of the total, the feed change
+  publishes its weight coverage, and the frontend no longer seeds the "your numbers"
+  form with the model (one click on Apply used to flip the badge to `measured`).
+- **Second review round.** Three follow-ups on the fixes: the margin change is now
+  `null` unless *both* deltas are known (with only the price delta it silently
+  reported the price move as the margin move); the feed change's FRED history is
+  bounded (`FEED_CHANGE_TIMEOUT_S = 6` in the bridge) and `feed_index_change` caches a
+  failure for 15 minutes, so a cold or rate-limited FRED window cannot make every
+  request pay the retry cost; and the validation panel prints the number the gap was
+  actually computed from (`model` vs `yours`) plus the note. The decision card also
+  memoises the salmon value for 10 minutes (`SALMON_VALUE_TTL_S`), because a portfolio
+  builds one card per farm and would otherwise repeat the fetch — and SSB's retries —
+  up to 30 times.
+- Tests: `tests/test_margin_bridge.py` (45) — arithmetic and reconciliation, the
+  margin-change sign and its null-when-unknown rule, the break-even and lever
+  formulas, every degradation path (stale/undated/defaulted basket, USD fallback,
+  stale SSB week, slow feed history), the farm block's verified-only rule, the
+  decision card's price leg, the feed engine's weighted month-on-month method, and the
+  frozen contract. `docs/MARGIN.md` documents the method and the open calibration
+  question (WS-29b: the FRED proxy basket's level versus realised contract prices).
+- **Deliberately not done:** the modelled cost base stays a model — the bridge says
+  so on every payload, and the level is not silently recalibrated. No new premium
+  gate was added to `PREMIUM_PREFIXES` (the paywall ladder is an owner decision).
+
 ### WS-22 (part 2) — claims that outran the data (2026-10-18)
 - **Why:** four payloads stated more than their inputs supported. Competitiveness
   reported `data_quality: "live"` while NOK/USD had fallen back to the hardcoded

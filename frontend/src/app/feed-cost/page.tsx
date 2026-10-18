@@ -9,6 +9,7 @@ import { exportToCSV } from "@/lib/export";
 import dynamic from "next/dynamic";
 import KPICard from "@/components/KPICard";
 import GlassCard from "@/components/GlassCard";
+import MarginBridgePanel from "@/components/MarginBridge";
 const TrendComparison = dynamic(() => import("@/components/TrendComparison"), { ssr: false, loading: () => <div className="h-48 bg-white/[0.04] rounded-lg animate-pulse" /> });
 import { OcButton } from "@/components/ui/Button";
 import { api } from "@/lib/api";
@@ -86,11 +87,16 @@ export default function FeedCostPage() {
             <Wheat className="w-6 h-6 text-amber-400" />
             {t("feed_cost.title")}
           </h1>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
             <p className="text-sm text-[var(--text-secondary)]">
               Official Fiskeridirektoratet cost data + live FRED feed prices &middot; Full cost stack
             </p>
-            <DataQualityBadge source="FRED + Fiskeridirektoratet" quality="live" />
+            {/* The badge renders the SERVED provenance: the badge used to be hardcoded
+                "live" while the FRED basket behind it can be months old (WS-29). */}
+            <DataQualityBadge
+              provenance={data?.data_provenance}
+              source="FRED + Fiskeridirektoratet"
+            />
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -133,7 +139,8 @@ export default function FeedCostPage() {
           icon={marginTrend === "improving" ? TrendingUp : marginTrend === "squeezing" ? TrendingDown : Minus}
           delay={0.16} />
         <KPICard label="FX Rates" value={data?.usd_nok != null ? `${formatNumber(data.usd_nok, locale, 2)} NOK/$` : "\u2014"}
-          delta="Live exchange rates"
+          delta={data?.usd_nok_is_fallback ? "Constant fallback — live rate unavailable" : "USD/NOK, Yahoo Finance"}
+          deltaType={data?.usd_nok_is_fallback ? "negative" : undefined}
           icon={DollarSign} delay={0.2} />
       </div>
 
@@ -152,9 +159,14 @@ export default function FeedCostPage() {
         </div>
       )}
 
+      {/* Margin bridge (WS-29) — the money view: where the margin is, what moved,
+          how far break-even is and which levers pay. Replaces the old one-bar
+          "Margin Analysis" panel whose rows mixed NOK/kg of feed with NOK/kg of
+          salmon and said nothing about the change. */}
+      <MarginBridgePanel />
+
       {/* Ingredient Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <GlassCard delay={0.15} accent="amber">
+      <GlassCard delay={0.15} accent="amber">
           <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
             <Wheat className="w-4 h-4 text-amber-400" />
             Ingredient Cost Breakdown
@@ -174,13 +186,19 @@ export default function FeedCostPage() {
                       <span className="font-mono text-[var(--text-primary)]">
                         {ing.cost_contribution_pct}%
                       </span>
+                      {/* The source badge used to read "EST" for FRED, which is a
+                          live monthly series, not an estimate. Show the observation
+                          month instead so a three-month lag is visible (WS-29). */}
                       <span className={`text-[9px] px-1.5 py-0.5 rounded ${
-                        ing.source === "yahoo_finance" ? "bg-emerald-500/10 text-emerald-400" :
+                        ing.source === "structural_default" ? "bg-white/[0.05] text-[var(--text-secondary)]" :
+                        ing.observed_at ? "bg-emerald-500/10 text-emerald-400" :
                         ing.source === "world_bank" ? "bg-ocean-500/10 text-ocean-400" :
-                        "bg-white/[0.05] text-[var(--text-secondary)]"
+                        "bg-amber-500/10 text-amber-400"
                       }`}>
-                        {ing.source === "yahoo_finance" ? "LIVE" :
-                         ing.source === "world_bank" ? "WB" : "EST"}
+                        {ing.source === "structural_default" ? "FIXED" :
+                         ing.observed_at ? String(ing.observed_at).slice(0, 7) :
+                         ing.source === "world_bank" ? "WB" :
+                         ing.source === "fred" ? "FRED" : "EST"}
                       </span>
                     </div>
                   </div>
@@ -201,78 +219,6 @@ export default function FeedCostPage() {
             </div>
           )}
         </GlassCard>
-
-        {/* Margin Analysis */}
-        <GlassCard delay={0.2} accent="ocean">
-          <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-ocean-400" />
-            Margin Analysis
-          </h3>
-          {data ? (
-            <div className="space-y-4">
-              {/* Visual margin bar */}
-              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                <div className="flex items-center justify-between mb-2 text-[11px]">
-                  <span className="text-[var(--text-secondary)]">Production Cost</span>
-                  <span className="text-[var(--text-secondary)]">Salmon Spot Price</span>
-                </div>
-                <div className="relative h-6 bg-white/[0.06] rounded-full overflow-hidden">
-                  {/* Cost portion */}
-                  <div
-                    className="absolute left-0 h-full rounded-l-full bg-rose-500/40"
-                    style={{ width: `${Math.min(95, (data.production_cost_nok_per_kg_salmon / Math.max(data.salmon_spot_nok, 1)) * 100)}%` }}
-                  />
-                  {/* Margin portion */}
-                  <div
-                    className="absolute right-0 h-full rounded-r-full bg-emerald-500/40"
-                    style={{ width: `${Math.max(5, data.margin_pct)}%` }}
-                  />
-                </div>
-                <div className="flex items-center justify-between mt-2 text-[10px]">
-                  <span className="text-rose-400">{formatCurrency(data.production_cost_nok_per_kg_salmon, locale)}/kg cost</span>
-                  <span className={`font-bold ${margin > 15 ? "text-emerald-400" : margin > 5 ? "text-amber-400" : "text-rose-400"}`}>
-                    {formatNumber(data.margin_pct, locale, 1)}% margin
-                  </span>
-                  <span className="text-emerald-400">{formatCurrency(data.salmon_spot_nok, locale)}/kg spot</span>
-                </div>
-              </div>
-
-              {/* Margin alert */}
-              {data.margin_pct < 15 && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/[0.06] border border-amber-500/20">
-                  <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                  <p className="text-[11px] text-amber-300">
-                    Margin below 15% &mdash; feed cost pressure elevated.
-                    Consider hedging or reviewing feed contracts.
-                  </p>
-                </div>
-              )}
-
-              {/* Cost stack */}
-              <div className="space-y-2">
-                {[
-                  { label: "Feed ingredient cost", value: data.feed_cost_nok_per_kg, pct: formatNumber((data.feed_cost_nok_per_kg / data.salmon_spot_nok) * 100, locale, 0) },
-                  { label: "Feed conversion (FCR " + formatNumber(data.fcr, locale, 2) + ")", value: data.production_cost_nok_per_kg_salmon, pct: formatNumber((data.production_cost_nok_per_kg_salmon / data.salmon_spot_nok) * 100, locale, 0) },
-                  { label: "Farmer margin", value: data.margin_nok_per_kg, pct: formatNumber(data.margin_pct, locale, 0) },
-                ].map(item => (
-                  <div key={item.label} className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-                    <span className="text-[11px] text-[var(--text-secondary)]">{item.label}</span>
-                    <span className="text-[11px] font-mono font-semibold text-[var(--text-primary)]">
-                      {item.value != null ? formatCurrency(item.value, locale) : "\u2014"}/kg ({item.pct}%)
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2 animate-pulse">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-12 rounded bg-white/[0.04]" />
-              ))}
-            </div>
-          )}
-        </GlassCard>
-      </div>
 
       {/* Official Cost Waterfall + 17-Year Trend */}
       <OfficialCostSection data={data} />

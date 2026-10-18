@@ -34,6 +34,14 @@ class SalmonPriceWeek:
     source: str = "ssb_03024"
 
 
+#: SSB publishes the weekly export price on the Wednesday after the week it
+#: describes, so a newest observation more than two ISO weeks behind means the
+#: client is answering from a stale cache rather than the current week. The margin
+#: bridge and the decision card both degrade when a price is further behind than
+#: this, naming the week (WS-29) — one definition, two consumers.
+PRICE_MAX_WEEKS_BEHIND = 2
+
+
 @dataclass
 class SSBPriceData:
     """Collection of SSB price data with metadata."""

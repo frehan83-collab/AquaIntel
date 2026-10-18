@@ -10,10 +10,10 @@
 ## What this is
 
 Production-grade salmon aquaculture intelligence platform ("Bloomberg Terminal
-for Salmon"): FastAPI backend (353 operations across 345 paths, ~77 engines),
+for Salmon"): FastAPI backend (353 operations across 347 paths, ~78 engines),
 Next.js 16 frontend (68 pages), 45+ live data-source clients, 3 foundation-model
 forecasting engines (with honest seasonal-naive fallbacks), 1,000+ tests
-(1042 collected on 2026-10-16).
+(1276 collected on 2026-10-18).
 
 - Repository: `github.com/frehan83-collab/AquaIntel` (public). `origin` points
   here directly; the legacy `openclaw-legacy` remote points at the old
