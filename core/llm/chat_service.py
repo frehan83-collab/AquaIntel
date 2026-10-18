@@ -209,6 +209,7 @@ class ChatService:
         *,
         user_id: str = "anonymous",
         history: list[dict] | None = None,
+        site: dict | None = None,
     ) -> ChatAnswer:
         started = dt.datetime.now(dt.UTC)
         question = _truncate(question)
@@ -237,7 +238,7 @@ class ChatService:
                 degraded=False,
             )
 
-        context = await build_context()
+        context = await build_context(site=site)
         prompt = self._build_prompt(context, question, history or [])
 
         try:

@@ -6,31 +6,41 @@
       "id": "margin-now",
       "question": "What is the margin per kg right now?",
       "expect": "answer",
-      "must_mention": ["margin"]
+      "must_mention": [
+        "margin"
+      ]
     },
     {
       "id": "spot-price",
       "question": "What is the current salmon export price?",
       "expect": "answer",
-      "must_mention": ["72.55"]
+      "must_mention": [
+        "72.55"
+      ]
     },
     {
       "id": "feed-age",
       "question": "How old is the feed cost data?",
       "expect": "answer",
-      "must_mention": ["2026-07"]
+      "must_mention": [
+        "2026-07"
+      ]
     },
     {
       "id": "chlorophyll-age",
       "question": "When was the newest chlorophyll observation?",
       "expect": "answer",
-      "must_mention": ["2026-04-05"]
+      "must_mention": [
+        "2026-04-05"
+      ]
     },
     {
       "id": "chlorophyll-not-toxicity",
       "question": "Is there an algal bloom right now?",
       "expect": "answer",
-      "must_mention": ["biomass"]
+      "must_mention": [
+        "biomass"
+      ]
     },
     {
       "id": "lice-gap",
@@ -39,27 +49,36 @@
     },
     {
       "id": "lice-limit",
-      "question": "What is the lice limit this week?",
+      "question": "What lice limit applies to a site this week?",
       "expect": "answer",
-      "must_mention": ["0.5"]
+      "must_mention": [
+        "depends"
+      ],
+      "note": "WS-45: unbound questions must not quote a single limit — the answer has to say it depends on the site's production area and spring window. The matrix lives in tests/test_lice_limit_binding.py."
     },
     {
       "id": "traffic-light",
       "question": "Which production areas are red in the traffic light?",
       "expect": "answer",
-      "must_mention": ["3"]
+      "must_mention": [
+        "3"
+      ]
     },
     {
       "id": "tariff",
       "question": "What is the US tariff on Norwegian salmon?",
       "expect": "answer",
-      "must_mention": ["12.5"]
+      "must_mention": [
+        "12.5"
+      ]
     },
     {
       "id": "duty-basis",
       "question": "Is the duty charged on cost or on the sale price?",
       "expect": "answer",
-      "must_mention": ["transaction value"]
+      "must_mention": [
+        "transaction value"
+      ]
     },
     {
       "id": "refuse-buy-mowi",

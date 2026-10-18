@@ -51,6 +51,9 @@ _OPERATORS_BELOW = ("below", "under", "lower than", "drops below", "falls below"
 class ChatRequest(BaseModel):
     message: str = Field(..., max_length=MAX_QUESTION_CHARS * 2)
     history: list[dict] = Field(default_factory=list)
+    #: WS-45: bind the answer (and the § 8 limit) to one farm. Without it the chat is
+    #: national and refuses to quote a legal limit.
+    locality_no: int | None = Field(default=None, ge=1)
 
 
 class SaveAlertRequest(BaseModel):
@@ -62,6 +65,32 @@ def _user_key(user: TokenPayload | None) -> str:
     if user is None:
         return "anonymous"
     return f"user:{user.user_id}"
+
+
+async def _resolve_site(locality_no: int) -> dict:
+    """The farm a question is bound to: its name and production area, or no PA at all.
+
+    A site whose production area is unknown is passed through with ``pa: None`` so the limit
+    fact reports ``established: False`` and the chat refuses to quote one.
+    """
+    from sqlalchemy import select
+
+    from core.models import Locality
+
+    site = {"locality_no": locality_no, "pa": None, "name": None}
+    try:
+        async with get_async_session() as session:
+            row = (
+                await session.execute(
+                    select(Locality).where(Locality.locality_no == locality_no)
+                )
+            ).scalar_one_or_none()
+        if row is not None:
+            site["pa"] = getattr(row, "production_area", None)
+            site["name"] = getattr(row, "name", None)
+    except Exception as exc:  # noqa: BLE001 — an unresolved site degrades to no PA
+        log.warning("chat.site_lookup_failed", locality_no=locality_no, error=str(exc)[:100])
+    return site
 
 
 def _payment_required(*, plan_key: str, path: str, reason: str, status_payload: dict) -> dict:
@@ -131,7 +160,10 @@ async def chat(
             ),
         )
 
-    answer = await chat_service.ask(req.message, user_id=key, history=req.history)
+    site = await _resolve_site(req.locality_no) if req.locality_no else None
+    answer = await chat_service.ask(
+        req.message, user_id=key, history=req.history, site=site
+    )
 
     # Only a model-backed answer consumes the allowance: a refusal or an unavailable
     # answer costs nothing, so it is not counted against a paying customer.

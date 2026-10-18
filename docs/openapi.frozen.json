@@ -375,6 +375,18 @@
             "title": "History",
             "type": "array"
           },
+          "locality_no": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locality No"
+          },
           "message": {
             "maxLength": 4000,
             "title": "Message",

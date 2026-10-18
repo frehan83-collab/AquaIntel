@@ -286,32 +286,70 @@ async def _lice_fact(now: dt.datetime) -> Fact:
     )
 
 
-async def _lice_limit_fact(now: dt.datetime) -> Fact:
-    """The § 8 limit that applies to the current week (both windows differ)."""
+async def _lice_limit_fact(now: dt.datetime, site: dict | None = None) -> Fact:
+    """The § 8 limit for one site and ISO week — or a refusal to state one.
+
+    ``site`` is ``{"locality_no": int, "pa": int | None, "name": str | None}`` when the caller
+    bound the question to a farm. Without it the fact says the limit depends on the site and
+    asks for one, instead of printing both windows as if either might apply.
+    """
     from core.regulatory_facts import LICE_LIMIT_DEFAULT, LICE_LIMIT_SPRING, lice_limit
 
     week = now.isocalendar().week
-    default = lice_limit(iso_week=week)
-    spring = lice_limit(pa=3, iso_week=week)  # PA 3 belongs to the southern spring window
-    value = {
-        "current_week": week,
-        "default_limit": LICE_LIMIT_DEFAULT,
-        "spring_window_limit": LICE_LIMIT_SPRING,
-        "this_week_default": default.limit,
-        "this_week_in_spring_window": bool(default.in_spring_window),
-        "pa3_this_week": spring.limit,
-    }
+    if not site:
+        return Fact(
+            key="lice.limit",
+            label="Lakselusforskriften section 8 limit",
+            value={
+                "current_week": week,
+                "depends_on": "the site's production area and the county's spring window",
+                "known_values": {"outside_spring_window": LICE_LIMIT_DEFAULT,
+                                 "inside_spring_window": LICE_LIMIT_SPRING},
+            },
+            as_of=f"ISO week {week}",
+            source="lakselusforskriften § 8 via core/regulatory_facts.py",
+            provenance=PROVENANCE_LIVE,
+            note=(
+                "the limit is 0.5 normally and 0.2 inside the spring window, and the window "
+                "differs by region — no single limit can be stated without a site, so ask for "
+                "the farm (or refuse to quote one)"
+            ),
+        )
+
+    decision = lice_limit(pa=site.get("pa"), iso_week=week)
+    label = site.get("name") or f"locality {site.get('locality_no')}"
+    if not decision.established or decision.region is None:
+        return Fact(
+            key="lice.limit",
+            label=f"§ 8 limit for {label}",
+            value=None,
+            as_of=f"ISO week {week}",
+            source="lakselusforskriften § 8 via core/regulatory_facts.py",
+            provenance=PROVENANCE_UNAVAILABLE,
+            note=(
+                "the production area (and therefore the county's spring window) could not be "
+                "resolved for this site, so the legal limit is unknown — do not quote one; the "
+                "precautionary 0.2 is not an answer for a compliance question"
+            ),
+        )
     return Fact(
         key="lice.limit",
-        label="Lakselusforskriften § 8 limit",
-        value=value,
+        label=f"§ 8 limit for {label}",
+        value={
+            "limit": decision.limit,
+            "region": decision.region,
+            "in_spring_window": bool(decision.in_spring_window),
+            "week": week,
+            "trigger_level": round(decision.limit * 0.6, 3),
+        },
         unit="adult female lice per fish (weekly average)",
         as_of=f"ISO week {week}",
         source="lakselusforskriften § 8 via core/regulatory_facts.py",
         provenance=PROVENANCE_LIVE,
         note=(
-            "the limit is 0.2 in the spring window and 0.5 outside it; the window differs "
-            "by region, so a breach can only be assessed per site"
+            f"this is the limit for {label} in week {week}: {decision.limit} "
+            f"({decision.region}, {'inside' if decision.in_spring_window else 'outside'} the "
+            "spring window); the trigger is 0.6 of the applicable limit"
         ),
     )
 
@@ -491,7 +529,7 @@ _FACT_LABELS: dict[str, str] = {
     "tariff.us_norway": "US tariff on Norwegian salmon",
 }
 
-_FACT_BUILDERS: tuple[tuple[str, Callable[[dt.datetime], Awaitable[Fact]]], ...] = (
+_FACT_BUILDERS: tuple[tuple[str, Callable[..., Awaitable[Fact]]], ...] = (
     ("lice.national", _lice_fact),
     ("lice.limit", _lice_limit_fact),
     ("price.spot", _price_fact),
@@ -503,9 +541,14 @@ _FACT_BUILDERS: tuple[tuple[str, Callable[[dt.datetime], Awaitable[Fact]]], ...]
 
 
 async def _safe_build(
-    key: str, builder: Callable[[dt.datetime], Awaitable[Fact]], now: dt.datetime
+    key: str,
+    builder: Callable[..., Awaitable[Fact]],
+    now: dt.datetime,
+    site: dict | None,
 ) -> Fact:
     try:
+        if key == "lice.limit":
+            return await builder(now, site)
         return await builder(now)
     except Exception as exc:  # noqa: BLE001 — one dead engine must not kill the answer
         log.warning("chat.grounding_failed", fact=key, error=str(exc)[:160])
@@ -517,11 +560,18 @@ async def _safe_build(
         )
 
 
-async def build_context(*, now: dt.datetime | None = None) -> PlatformContext:
-    """Assemble every fact concurrently; a failure degrades only its own fact."""
+async def build_context(
+    *, now: dt.datetime | None = None, site: dict | None = None
+) -> PlatformContext:
+    """Assemble every fact concurrently; a failure degrades only its own fact.
+
+    ``site`` binds the lice limit (and any future site-scoped fact) to one farm: pass
+    ``{"locality_no": int, "pa": int | None, "name": str | None}``. Without it the limit fact
+    says no single limit can be quoted.
+    """
     moment = now or dt.datetime.now(dt.UTC)
     results = await asyncio.gather(
-        *(_safe_build(key, builder, moment) for key, builder in _FACT_BUILDERS)
+        *(_safe_build(key, builder, moment, site) for key, builder in _FACT_BUILDERS)
     )
     context = PlatformContext(
         facts=list(results),
