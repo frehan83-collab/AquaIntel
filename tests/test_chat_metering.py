@@ -132,7 +132,7 @@ def test_a_grounded_answer_is_served_and_metered(client, monkeypatch):
                 "unlimited": False, "used": 3, "remaining": 97, "meter_available": True,
                 "resets_on": "2026-11-01 (next month)"}
 
-    async def fake_ask(question, *, user_id="anonymous", history=None):
+    async def fake_ask(question, *, user_id="anonymous", history=None, site=None):
         return ChatAnswer(
             answer="The margin is -1.69 NOK/kg.",
             sources=[{"key": "margin.bridge", "provenance": "degraded", "as_of": "2026-07"}],
@@ -173,7 +173,7 @@ def test_a_fallback_answer_does_not_consume_the_allowance(client, monkeypatch):
                 "unlimited": False, "used": 3, "remaining": 97, "meter_available": True,
                 "resets_on": "2026-11-01 (next month)"}
 
-    async def fake_ask(question, *, user_id="anonymous", history=None):
+    async def fake_ask(question, *, user_id="anonymous", history=None, site=None):
         return ChatAnswer(answer="numbers", mode="grounded_fallback", usage={"cost_usd": 0.0})
 
     async def fake_record(*args, **kwargs):
