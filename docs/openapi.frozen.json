@@ -387,6 +387,20 @@
         "title": "ChatRequest",
         "type": "object"
       },
+      "CheckoutRequest": {
+        "properties": {
+          "pack": {
+            "maxLength": 32,
+            "title": "Pack",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pack"
+        ],
+        "title": "CheckoutRequest",
+        "type": "object"
+      },
       "CreateKeyRequest": {
         "properties": {
           "expires_days": {
@@ -1181,6 +1195,20 @@
           "password"
         ],
         "title": "RegisterRequest",
+        "type": "object"
+      },
+      "RunRequest": {
+        "properties": {
+          "kind": {
+            "maxLength": 40,
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "RunRequest",
         "type": "object"
       },
       "SaveAlertRequest": {
@@ -3114,6 +3142,76 @@
         "summary": "Billing Create Checkout",
         "tags": [
           "billing"
+        ]
+      }
+    },
+    "/api/billing/credits": {
+      "get": {
+        "description": "Balance, history and packs for the caller.",
+        "operationId": "credits_status_api_billing_credits_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Credits Status",
+        "tags": [
+          "workbench"
+        ]
+      }
+    },
+    "/api/billing/credits/checkout": {
+      "post": {
+        "description": "Start a one-off purchase of a credit pack.\n\nWith Stripe unconfigured this returns a deterministic mock URL, exactly like the plan\ncheckout does, so the money path stays exercisable in dev and CI.",
+        "operationId": "credits_checkout_api_billing_credits_checkout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Credits Checkout",
+        "tags": [
+          "workbench"
         ]
       }
     },
@@ -13006,6 +13104,76 @@
         "summary": "Welfare Score",
         "tags": [
           "farm"
+        ]
+      }
+    },
+    "/api/workbench/catalog": {
+      "get": {
+        "description": "What can be run, what it reads, and how many credits are left.",
+        "operationId": "workbench_catalog_api_workbench_catalog_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Workbench Catalog",
+        "tags": [
+          "workbench"
+        ]
+      }
+    },
+    "/api/workbench/run": {
+      "post": {
+        "description": "Render one deep-analysis document. One credit per model-written run.",
+        "operationId": "workbench_run_api_workbench_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Workbench Run",
+        "tags": [
+          "workbench"
         ]
       }
     }

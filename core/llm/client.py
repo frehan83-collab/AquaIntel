@@ -40,6 +40,13 @@ class LLMResponse:
     cost_usd: float = 0.0
     latency_ms: float = 0.0
     cached: bool = False
+    #: Set when the provider call failed. `content` is empty in that case — an error
+    #: message is never returned as an answer (WS-38b).
+    error: str | None = None
+
+    @property
+    def ok(self) -> bool:
+        return self.error is None and bool(self.content)
 
 
 @dataclass
@@ -166,7 +173,7 @@ class LLMClient:
                 raise ValueError(f"Unknown LLM provider: {self.provider}")
         except Exception as exc:
             log.error("llm.call_failed", provider=self.provider, error=str(exc))
-            return LLMResponse(content=f"[LLM error: {exc}]", model=model)
+            return LLMResponse(content="", model=model, error=str(exc)[:400])
 
         elapsed = (dt.datetime.now(dt.UTC) - start).total_seconds() * 1000
         resp.latency_ms = elapsed

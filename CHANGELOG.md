@@ -155,6 +155,33 @@ satellite page **fabricated per-farm readings with a seeded RNG** and rendered
   the snapshot carries `tariff_basis`. `/competitiveness` marks export-price rows with
   `*` and prints the basis under the table. `tests/test_tariff_basis.py` (6).
 
+- **WS-39 — documents are sold, tokens are not.** `core/billing/credits_catalog.py` prices
+  three packs of deep-analysis runs (10 for NOK 1,490, 30 for NOK 3,900, 100 for NOK 11,900 —
+  NOK 149→119 per document, 91–97 % gross margin against the measured USD 0.35 model cost);
+  `core/llm/credits.py` is an append-only ledger (`grant`/`spend`/`balance`/`history`, Alembic
+  **023** `credit_ledger`) so every balance has a history and a refund is a new row;
+  `core/llm/workbench.py` renders three documents — margin dossier, origin landed cost, lice
+  pressure review — each grounded on the same fact block as the chat plus its engine detail;
+  `POST /api/workbench/run` spends exactly one credit for a model-written document and
+  **nothing** for a digest, `GET /api/workbench/catalog` lists runs/packs/balance, and
+  `POST /api/billing/credits/checkout` starts a one-off purchase (documented mock without
+  Stripe keys). `tests/test_workbench_credits.py` (19).
+- **WS-40 — the numbers are checked, not the citations.** `core/llm/claim_check.py` extracts
+  every numeric claim from an answer and matches it against the verified facts (rounding
+  tolerated to 1 %, a rate matched as its percentage, Norwegian decimal commas parsed); an
+  unmatched number is kept but named in the payload, badged in the UI and followed by one
+  honest caveat sentence. The reasoning is the research: up to 57 % of model-generated
+  citations are post-rationalised (arXiv 2412.18004) and citations do not enforce
+  faithfulness (arXiv 2509.06902). Wired into both the chat and the workbench.
+- **`docs/AI_PRICING.md`** records the pricing research (13 products with published prices),
+  the measured cost side, and the deliberate deviations — including why chat is bundled and
+  documents are metered, and why overage and annual answer packs are not built yet.
+- **WS-38b — a provider failure is an error, not an answer.** `llm_client.complete()` used to
+  return `LLMResponse(content="[LLM error: ...]")` with no flag, so a caller rendered the
+  error as the answer (the workbench did exactly that when the box's OpenRouter balance ran
+  out on 2026-10-18). `LLMResponse.error` now carries the failure with empty content, and the
+  chat and workbench treat it as a failure — fallback or digest, no credit spent.
+
 - **WS-38 — the chat became a product: grounded, metered, and convertible into an alert.**
   The chat was the one surface that bypassed the honesty layer: `/api/chat` in
   `core/api.py` string-interpolated a national lice average over **every** row (demo seeds

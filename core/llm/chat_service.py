@@ -26,6 +26,7 @@ from dataclasses import dataclass, field
 import structlog
 
 from config.settings import settings
+from core.llm.claim_check import caveat, verify
 from core.llm.grounding import (
     MAX_QUESTION_CHARS,
     PlatformContext,
@@ -88,6 +89,8 @@ class ChatAnswer:
     mode: str = "grounded"  # grounded | grounded_fallback | refusal | unavailable
     degraded: bool = False
     refusal: str | None = None
+    #: Which numbers in the answer the verified data can support (WS-40).
+    verification: dict = field(default_factory=dict)
     latency_ms: float = 0.0
     question: str = ""
 
@@ -101,6 +104,7 @@ class ChatAnswer:
             "model": self.model,
             "mode": self.mode,
             "degraded": self.degraded,
+            "verification": self.verification,
             "refusal": self.refusal,
             "latency_ms": self.latency_ms,
             "question": self.question,
@@ -238,6 +242,9 @@ class ChatService:
 
         try:
             response = await self._run_model(prompt, SYSTEM_PROMPT, user_id)
+            provider_error = getattr(response, "error", None)
+            if provider_error:
+                raise RuntimeError(f"provider error: {provider_error}"[:200])
             text = (getattr(response, "content", "") or "").strip()
             if not text:
                 raise RuntimeError("empty completion")
@@ -255,16 +262,30 @@ class ChatService:
             model = ""
             usage = {"input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
 
+        # WS-40: check the digits, not the citations. A number that appears in no fact is
+        # kept (a model may legitimately derive a percentage) but named in the payload and
+        # badged in the UI, and the answer carries one honest caveat sentence.
+        verification = verify(text, [fact.to_dict() for fact in context.facts])
+        note = caveat(verification)
+        if note:
+            text = text + "\n\n" + note
+            log.info(
+                "chat.unverified_numbers",
+                count=len(verification.unverified),
+                checked=verification.checked,
+            )
+
         elapsed = (dt.datetime.now(dt.UTC) - started).total_seconds() * 1000
         return ChatAnswer(
             answer=text,
             sources=context.sources(),
-            facts=[f.to_dict() for f in context.facts],
+            facts=[fact.to_dict() for fact in context.facts],
             followups=_followups(context),
             usage=usage,
             model=model,
             mode=mode,
-            degraded=context.degraded,
+            degraded=context.degraded or not verification.clean,
+            verification=verification.to_dict(),
             latency_ms=round(elapsed, 1),
             question=question,
         )

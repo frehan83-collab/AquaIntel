@@ -96,6 +96,19 @@ added `tests/test_migrations.py`.
 
 ## Session log
 
+- 2026-10-18 · **Chat became a product (WS-38/39/40).** The chat was the only surface outside
+  the honesty layer: it interpolated a national lice average over every row (demo seeds
+  included), a latest week with no age and a wrong traffic-light sentence, counted no tokens,
+  and was in Desk (NOK 2,990) but not Operator (NOK 4,900). Now: `core/llm/grounding.py`
+  assembles seven verified facts with `as_of`/`source`/provenance; `core/llm/chat_service.py`
+  is the single answer path (grounded / numbers-only fallback / policy refusal / unavailable);
+  Alembic **022** meters questions and tokens per user per month against plan allowances
+  (0/100/300/1000/unlimited); a question can become a **running** alert; documents are sold
+  as credit packs (10/30/100 runs, NOK 1,490/3,900/11,900) through an append-only ledger
+  (Alembic **023**); and every digit in an answer is checked against the verified facts
+  (`claim_check.py`) because citations do not enforce faithfulness. Measured: USD 0.0082 per
+  grounded answer, ~USD 0.35 per document. Pricing research in `docs/AI_PRICING.md`.
+  Tests: 56 new (`test_chat_grounding`, `test_chat_metering`, `test_workbench_credits`).
 - 2026-10-18 · **Autonomous hardening round 2** (research → council → execution).
   Research: satellite/HAB data prices and licences, a data-API price catalogue, and a
   decision-grade review of HAB science; a three-lens council rejected a new

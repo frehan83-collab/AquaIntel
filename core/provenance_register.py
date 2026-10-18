@@ -38,6 +38,14 @@ EXEMPT: dict[str, dict[str, str]] = {
     },
     "/api/tiers": {"category": "catalogue_and_meta", "reason": "plan catalogue"},
     "/api/disclaimer": {"category": "catalogue_and_meta", "reason": "static legal text"},
+    "/api/workbench/catalog": {
+        "category": "catalogue_and_meta",
+        "reason": "the run and credit-pack catalogue plus the caller's balance",
+    },
+    "/api/billing/credits": {
+        "category": "auth_and_billing",
+        "reason": "the caller's credit balance and ledger history, not measured data",
+    },
     "/api/chat/usage": {
         "category": "catalogue_and_meta",
         "reason": (

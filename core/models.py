@@ -741,3 +741,23 @@ class ChatUsage(Base):
     output_tokens = Column(Integer, default=0)
     cost_usd = Column(Float, default=0.0)
     updated_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC))
+
+class CreditLedger(Base):
+    """Append-only credit ledger for deep-analysis runs (WS-39).
+
+    One row per grant, purchase, refund or spend, with a signed ``delta`` so a balance is
+    always reconstructable and a support question has an answer. No row is ever updated or
+    deleted; a refund is a new positive row.
+    """
+    __tablename__ = "credit_ledger"
+    __table_args__ = (
+        Index("ix_credit_ledger_user", "user_key"),
+        Index("ix_credit_ledger_created", "created_at"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_key = Column(String(128), nullable=False)
+    delta = Column(Integer, nullable=False)            # + grant/purchase/refund, - spend
+    reason = Column(String(32), nullable=False)        # purchase | grant | refund | run
+    ref = Column(String(128), nullable=True)           # stripe session id, run id, note
+    created_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC))

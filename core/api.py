@@ -344,6 +344,7 @@ from core.routers.macro_routes import router as macro_router
 from core.routers.causal_routes import router as causal_router
 from core.routers.ras_routes import router as ras_router
 from core.routers.chat_routes import router as chat_router
+from core.routers.workbench_routes import router as workbench_router
 from core.routers.entitlements_routes import router as entitlements_router
 from core.routers.indices_routes import router as indices_router
 from core.routers.accuracy_routes import router as accuracy_router
@@ -393,6 +394,7 @@ app.include_router(macro_router)
 app.include_router(causal_router)
 app.include_router(ras_router)
 app.include_router(chat_router)
+app.include_router(workbench_router)
 
 # ── Models ────────────────────────────────────────────────────────────
 

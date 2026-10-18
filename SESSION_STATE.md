@@ -1,10 +1,32 @@
-CURRENT: WS-28a + WS-30–37 shipped (2026-10-18) — see docs/HANDOVER.md §5
+CURRENT: WS-28a + WS-30–40 shipped (2026-10-18) — see docs/HANDOVER.md §5
 LAST_UPDATED: 2026-10-18
 SESSIONS: 38+ (15 commits pushed; WS-29 and the WS-28a/30–35 round pending commit)
 REPOSITORY: https://github.com/frehan83-collab/AquaIntel (public)
 HANDOVER: docs/HANDOVER.md — verified state, gate commands, workstream backlog WS-1..WS-35, trap list (23 traps)
 VERSION: 2.6.0 · 348 paths · 1355 tests collected · 21 migrations (head 021)
 
+## WS-38/39/40 (2026-10-18) — chat as a paid product
+
+- **WS-38:** `core/llm/grounding.py` (seven facts, provenance + as_of, concurrent, per-fact
+  degradation), `core/llm/chat_service.py` (one path; modes grounded / grounded_fallback /
+  refusal / unavailable), `core/llm/usage.py` + Alembic **022** `chat_usage` (per-user month
+  meter), `core/routers/chat_routes.py` (`/api/chat`, `/api/chat/usage`,
+  `/api/chat/save-alert`), plan allowances (0/100/300/1000/-1) and chat opened to Operator.
+  `/chat` rebuilt. Measured: USD 0.0082 per grounded answer.
+- **WS-39:** credits priced per **document**, not token: packs 10/30/100 runs at
+  NOK 1,490/3,900/11,900; `core/llm/credits.py` append-only ledger + Alembic **023**
+  `credit_ledger`; `core/llm/workbench.py` three grounded documents (margin dossier, origin
+  landed cost, lice review) with a `digest` mode that spends nothing; routes
+  `/api/workbench/{catalog,run}` and `/api/billing/credits[/checkout]`.
+- **WS-40:** `core/llm/claim_check.py` — every digit in an answer matched to the facts,
+  unmatched ones named, badged and caveated (research: up to 57 % of model citations are
+  post-rationalised). Wired into chat and workbench.
+- **WS-38b:** `LLMResponse.error` — a provider failure is an error, not an answer.
+- Docs: `docs/AI_PRICING.md` (13 comparable products with published prices, measured cost
+  side, decisions and deviations).
+- Tests: `test_chat_grounding` (22) + `test_chat_metering` (15) + `test_workbench_credits`
+  (19). Open: 150-question golden set with a zero silent-wrong-number gate, prompt caching,
+  overage billing, annual answer packs.
 ## WS-29b/36/37 (2026-10-18, final packages of the round)
 
 - **WS-29b mechanism:** `core/market/feed_anchor.py` reads
