@@ -1,0 +1,184 @@
+{
+  "id": "spot-price",
+  "question": "What is the current salmon export price?",
+  "expect": "answer",
+  "mode": "grounded",
+  "model": "nvidia/nemotron-3-super-120b-a12b:free",
+  "model_is_free": true,
+  "answer": "The current salmon export price is **72.55 NOK per kg** (as of week 2026‑W41, 13 days old)【SSB salmon export price: nok per kg 72.55; week on week pct -1.70 [as of 2026‑W41; 13d old]】.  \n\nSupporting figure: week‑on‑week change ‑1.70 %【same source】.  \n\nCaveat: the price reflects data from 13 days ago; more recent figures are not available in the verified set.",
+  "facts": [
+    {
+      "key": "lice.national",
+      "label": "National adult female lice (verified rows only)",
+      "value": {
+        "week": "2026-W41",
+        "average_per_fish": 0.182,
+        "max_per_fish": 3.15,
+        "sites_reporting": 587,
+        "sites_above_0.5": 16,
+        "rows": 587
+      },
+      "unit": null,
+      "as_of": "2026-W41",
+      "source": "BarentsWatch Fishhealth API v2 (Mattilsynet-reported lice counts)",
+      "provenance": "live",
+      "age_days": 13,
+      "note": null
+    },
+    {
+      "key": "lice.limit",
+      "label": "Lakselusforskriften section 8 limit",
+      "value": {
+        "current_week": 42,
+        "depends_on": "the site's production area and the county's spring window",
+        "known_values": {
+          "outside_spring_window": 0.5,
+          "inside_spring_window": 0.2
+        }
+      },
+      "unit": null,
+      "as_of": "ISO week 42",
+      "source": "lakselusforskriften § 8 via core/regulatory_facts.py",
+      "provenance": "live",
+      "age_days": null,
+      "note": "the limit is 0.5 normally and 0.2 inside the spring window, and the window differs by region — no single limit can be stated without a site, so ask for the farm (or refuse to quote one)"
+    },
+    {
+      "key": "price.spot",
+      "label": "SSB salmon export price",
+      "value": {
+        "nok_per_kg": 72.55,
+        "week_on_week_pct": -1.7
+      },
+      "unit": "NOK/kg",
+      "as_of": "2026-W41",
+      "source": "Statistics Norway table 03024 (CC BY 4.0)",
+      "provenance": "live",
+      "age_days": 13,
+      "note": "week on week -1.7 %"
+    },
+    {
+      "key": "margin.bridge",
+      "label": "Margin bridge (price minus feed, operations and capital)",
+      "value": {
+        "week": "2026-W41",
+        "spot_nok_per_kg": 72.55,
+        "modelled_cost_nok_per_kg": 74.24,
+        "margin_nok_per_kg": -1.69,
+        "margin_pct": -2.3,
+        "quality": "modelled",
+        "feed_cost_nok_per_kg_salmon": 29.47,
+        "feed_period": "2026-07",
+        "price_week_on_week_nok": -1.25,
+        "feed_month_on_month_nok": null
+      },
+      "unit": "NOK/kg",
+      "as_of": "2026-07",
+      "source": "core/market/margin_bridge.py (method 1.0.0)",
+      "provenance": "degraded",
+      "age_days": null,
+      "note": "every leg except the feed leg is a modelled industry value"
+    },
+    {
+      "key": "bloom.chlorophyll",
+      "label": "Satellite chlorophyll-a (Norwegian coast)",
+      "value": {
+        "mean_mg_m3": 1.91,
+        "newest_observation": "2026-04-05"
+      },
+      "unit": "mg/m³",
+      "as_of": "2026-04-05",
+      "source": "Copernicus Marine (CMEMS) gap-free chlorophyll",
+      "provenance": "stale",
+      "age_days": 196,
+      "note": "chlorophyll is biomass, not a toxicity measurement; an algal bloom cannot be confirmed or ruled out from this number alone"
+    },
+    {
+      "key": "regulatory.traffic_light",
+      "label": "Traffic-light colours (official decision)",
+      "value": {
+        "decided_on": "2026-06-19",
+        "red_areas": [
+          3
+        ],
+        "yellow_areas": [
+          2,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ],
+        "green_areas": [
+          1,
+          12,
+          13
+        ]
+      },
+      "unit": null,
+      "as_of": "2026-06-19",
+      "source": "FOR-2026-08-20-1764 (https://www.regjeringen.no/no/aktuelt/ny-fargelegging-i-trafikklyssystemet-for-havbruk/id3167021/)",
+      "provenance": "live",
+      "age_days": 121,
+      "note": "the colours decide production-capacity adjustments after lice-induced mortality — they are not a lice-level scale"
+    },
+    {
+      "key": "tariff.us_norway",
+      "label": "US tariff on Norwegian salmon",
+      "value": {
+        "rate_pct": 12.5,
+        "basis": "MFN free + Section 301 forced-labor duty 12.5% (HTS 9903.05.60)",
+        "effective_from": "2026-07-24",
+        "caveat": "Section 301 forced-labor duties are under challenge at the US Court of International Trade (argued 2026-09-30); a ruling could change the rate."
+      },
+      "unit": "%",
+      "as_of": "2026-07-24",
+      "source": "https://www.federalregister.gov/documents/2026/07/28/2026-15181/notice-of-actions-in-section-301-investigations-of-acts-policies-and-practices-of-various-economies",
+      "provenance": "live",
+      "age_days": null,
+      "note": "duty is assessed on the transaction value, not on production cost"
+    }
+  ],
+  "verification": {
+    "checked": 5,
+    "verified": [
+      {
+        "token": "72.55",
+        "value": 72.55,
+        "role": "spot"
+      },
+      {
+        "token": "72.55",
+        "value": 72.55,
+        "role": "spot"
+      },
+      {
+        "token": "-1.70",
+        "value": -1.7,
+        "role": "spot"
+      },
+      {
+        "token": "1.70",
+        "value": 1.7,
+        "role": "cited"
+      },
+      {
+        "token": "13",
+        "value": 13.0,
+        "role": "age"
+      }
+    ],
+    "unverified": [],
+    "verified_rate": 1.0,
+    "clean": true
+  },
+  "usage": {
+    "input_tokens": 1153,
+    "output_tokens": 298,
+    "cost_usd": 0.0
+  },
+  "recorded_at": "2026-10-18T16:32:42+00:00"
+}

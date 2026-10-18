@@ -17,7 +17,37 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from core.llm.eval_chat import run_eval  # noqa: E402
+from core.llm.eval_chat import load_golden, run_eval  # noqa: E402
+
+
+async def _record() -> None:
+    """Answer each golden question live and store the fixture (no scoring here)."""
+    from core.llm.chat_service import ChatService
+    from core.llm.fixtures import save
+
+    service = ChatService()
+    for case in load_golden():
+        answer = await service.ask(case["question"])
+        payload = answer.to_dict()
+        path = save(
+            {
+                "id": case["id"],
+                "question": case["question"],
+                "expect": case.get("expect", "answer"),
+                "mode": payload["mode"],
+                "model": payload["model"],
+                "model_is_free": payload.get("model_is_free", False),
+                "answer": payload["answer"],
+                "facts": [
+                    fact
+                    for fact in payload.get("facts", [])
+                    if fact.get("value") is not None
+                ],
+                "verification": payload.get("verification", {}),
+                "usage": payload.get("usage", {}),
+            }
+        )
+        print(f"recorded {case['id']} -> {path.name} ({payload['mode']}, {payload['model'] or 'n/a'})")
 
 
 def main() -> int:
@@ -25,11 +55,45 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="print the report as JSON")
     parser.add_argument("--path", default=None, help="alternative golden-set path")
     parser.add_argument(
+        "--record",
+        action="store_true",
+        help="answer the golden set live and write a fixture per case (costs requests)",
+    )
+    parser.add_argument(
+        "--fixtures",
+        action="store_true",
+        help="score the recorded fixtures offline with the current checker (free, CI-able)",
+    )
+    parser.add_argument(
         "--live",
         action="store_true",
         help="answer with the real model (falls back to a free OpenRouter model); reports rather than gates",
     )
     args = parser.parse_args()
+
+    if args.fixtures:
+        from core.llm.fixtures import score_fixtures
+
+        scored = score_fixtures()
+        payload = scored.to_dict()
+        if args.json:
+            print(json.dumps(payload, indent=2))
+        else:
+            print(f"fixtures             {scored.fixtures}")
+            for model in payload["per_model"]:
+                print(
+                    f"  {model['model'][:46]:46s} answers={model['answers']:2d} "
+                    f"numbers={model['numbers_checked']:3d} unmatched={model['numbers_unverified']} "
+                    f"defect_rate={model['answer_defect_rate']:.0%}"
+                )
+            for case in scored.cases:
+                if not case["ok"]:
+                    print(f"  FAIL {case['id']} ({case['model']}): {case['unverified']}")
+        return 0 if scored.ok else 1
+
+    if args.record:
+        asyncio.run(_record())
+        return 0
 
     report = asyncio.run(run_eval(Path(args.path) if args.path else None, live=args.live))
     payload = report.to_dict()
