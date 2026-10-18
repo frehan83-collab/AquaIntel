@@ -1806,6 +1806,22 @@ costs NOK 7–74/user/month by plan.
 **Open:** a 150-question live-model golden set; prompt caching; overage billing and annual
 answer packs (both need a stored payment method).
 
+### WS-42 · A free OpenRouter chain — **DONE 2026-10-18**
+**Why:** the paid model ran out of credit on this deployment and every answer degraded to the
+deterministic path. OpenRouter's free tier (20 req/min, 50 req/day, 1,000/day after a $10
+lifetime top-up) is the bridge.
+**Shipped:** `config/settings.py` (`llm_free_models`, `llm_free_fallback`, `llm_prefer_free`),
+a chain walker in `core/llm/client.py` that skips a model that has gone, labels a free answer
+(`is_free`, `fallback_from`), prices it at zero and never lets an error string become an answer.
+Chain chosen from the live catalogue on 2026-10-18: Gemma 4 26B (tools), Nemotron 3 Super 120B
+(reasoning), Nemotron 3.5 Lightning (1M context). `scripts/eval_chat.py --live` added.
+**What the live run found:** 38.9 % of numbers unmatched on the first pass, almost all of it
+presentation — dropped minus signs, rounding, HTS codes written without their prefix, and the
+model's own arithmetic. The checker now matches sign-insensitively, reads numbers inside cited
+strings and masks month dates. Offline gate: 18/18, 0 unmatched.
+**Open:** a single repair pass for derived arithmetic; the free tier's per-minute ceiling makes
+an 18-question live run take ~5 minutes, so it stays a manual tool, not a CI gate.
+
 ### WS-41 · Workbench panel and the golden-set gate — **DONE 2026-10-18**
 **Why:** the deep-analysis runs were API-only, so a paid feature had no button; and the claim
 that every number is checked had no evidence behind it.

@@ -52,6 +52,8 @@ class EvalReport:
     refusals_correct: int = 0
     numbers_checked: int = 0
     numbers_unverified: int = 0
+    live: bool = False
+    models: list[str] = field(default_factory=list)
     gaps_expected: int = 0
     gaps_disclosed: int = 0
     cases: list[CaseResult] = field(default_factory=list)
@@ -91,6 +93,8 @@ class EvalReport:
             "numbers_checked": self.numbers_checked,
             "numbers_unverified": self.numbers_unverified,
             "silent_wrong_number_rate": self.silent_wrong_number_rate,
+            "live": self.live,
+            "models": self.models,
             "ok": self.ok,
             "cases": [
                 {"id": c.id, "expect": c.expect, "mode": c.mode, "ok": c.ok, "detail": c.detail}
@@ -109,10 +113,14 @@ async def _no_model(**kwargs):
     raise RuntimeError("evaluation runs without a model (see module docstring)")
 
 
-async def run_eval(path: Path | None = None) -> EvalReport:
+async def run_eval(path: Path | None = None, *, live: bool = False) -> EvalReport:
     cases = load_golden(path)
-    service = ChatService(complete=_no_model)
+    # Offline: a provider that always fails, so every answer is deterministic and free.
+    # Live: the real client, which uses the paid model and falls back to a free one (WS-42).
+    service = ChatService() if live else ChatService(complete=_no_model)
     report = EvalReport(total=len(cases))
+    report.live = live
+    report.models = []
 
     for case in cases:
         answer = await service.ask(case["question"], user_id="eval")
@@ -147,6 +155,8 @@ async def run_eval(path: Path | None = None) -> EvalReport:
                 problems.append(
                     "unverified numbers: " + ", ".join(c.token for c in check.unverified[:4])
                 )
+        if answer.model and answer.model not in report.models:
+            report.models.append(answer.model)
         report.cases.append(
             CaseResult(
                 id=case["id"],

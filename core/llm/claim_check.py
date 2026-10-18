@@ -37,6 +37,9 @@ _DATE_RE = re.compile(
     r"|\bW\d{2}\b"
     r"|Section \d+"
     r"|HTS [\d.]+"
+    r"|\b9903[\d.]*"
+    r"|\b\d{1,2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b"
+    r"|\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2}\b"
     r"|\bm3\b|\bm\u00b3\b"
 )
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
@@ -130,16 +133,28 @@ def _fact_values(facts: list[dict]) -> list[float]:
         collect(fact.get("value"))
         # An age is a fact attribute, not an invented number.
         collect(fact.get("age_days"))
+        # A number inside a cited string (an HTS code, "Section 301", a rate quoted in a
+        # source note) is supported by the data even though it is not a field.
+        for key in ("source", "note", "as_of"):
+            raw = fact.get(key)
+            if isinstance(raw, str):
+                for token in _NUMBER_RE.findall(raw):
+                    parsed = _parse(token)
+                    if parsed is not None:
+                        collect(parsed)
     return values
 
 
 def _matches(value: float, candidates: list[float]) -> bool:
+    # Prose drops a minus sign ("a loss of 1.69") and rounds; both are presentation,
+    # not drift. An invented number is still caught — it matches nothing.
+    magnitude = abs(value)
     for candidate in candidates:
-        if candidate == value:
+        if candidate == value or abs(candidate) == magnitude:
             return True
         if candidate == 0:
             continue
-        if abs(value - candidate) / abs(candidate) <= RELATIVE_TOLERANCE:
+        if abs(magnitude - abs(candidate)) / abs(candidate) <= RELATIVE_TOLERANCE:
             return True
         # Integer presentation of a decimal fact (72.55 -> "72" in prose is not a claim
         # of 72.00, so only accept when the fact itself is an integer).

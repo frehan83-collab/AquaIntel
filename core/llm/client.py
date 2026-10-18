@@ -43,6 +43,11 @@ class LLMResponse:
     #: Set when the provider call failed. `content` is empty in that case — an error
     #: message is never returned as an answer (WS-38b).
     error: str | None = None
+    #: True when a free OpenRouter model wrote this, so the cost is zero and the label
+    #: in the UI is honest (WS-42).
+    is_free: bool = False
+    #: The paid model that failed before the free chain answered, for the logs.
+    fallback_from: str | None = None
 
     @property
     def ok(self) -> bool:
@@ -108,6 +113,17 @@ class LLMClient:
             )
         return self._openrouter
 
+    @staticmethod
+    def free_models() -> list[str]:
+        """The configured free chain, in order, without empties or duplicates."""
+        raw = str(getattr(settings, "llm_free_models", "") or "")
+        seen: list[str] = []
+        for part in raw.replace(";", ",").split(","):
+            name = part.strip()
+            if name and name not in seen:
+                seen.append(name)
+        return seen
+
     def _get_gemini_key(self) -> str:
         if getattr(settings, "gemini_api_key", ""):
             return settings.gemini_api_key
@@ -160,40 +176,86 @@ class LLMClient:
 
         start = dt.datetime.now(dt.UTC)
 
-        try:
+        async def _attempt(target: str) -> LLMResponse:
+            """One provider call for a specific model id."""
             if self.provider == "anthropic":
-                resp = await self._call_anthropic(prompt, system, model, max_tokens, temperature)
-            elif self.provider == "openai":
-                resp = await self._call_openai(prompt, system, model, max_tokens, temperature)
-            elif self.provider == "gemini":
-                resp = await self._call_gemini(prompt, system, model, max_tokens, temperature)
-            elif self.provider == "openrouter":
-                resp = await self._call_openrouter(prompt, system, model, max_tokens, temperature)
-            else:
-                raise ValueError(f"Unknown LLM provider: {self.provider}")
+                return await self._call_anthropic(prompt, system, target, max_tokens, temperature)
+            if self.provider == "openai":
+                return await self._call_openai(prompt, system, target, max_tokens, temperature)
+            if self.provider == "gemini":
+                return await self._call_gemini(prompt, system, target, max_tokens, temperature)
+            if self.provider == "openrouter":
+                return await self._call_openrouter(prompt, system, target, max_tokens, temperature)
+            raise ValueError(f"Unknown LLM provider: {self.provider}")
+
+        free_models = self.free_models()
+        prefer_free = bool(getattr(settings, "llm_prefer_free", False)) and self.provider == "openrouter"
+        allow_free = bool(getattr(settings, "llm_free_fallback", True)) and self.provider == "openrouter"
+
+        async def _free_answer(primary_failure: str | None) -> LLMResponse | None:
+            """Walk the free chain; return the first answer, or None if every model failed."""
+            for candidate in free_models:
+                try:
+                    free = await _attempt(candidate)
+                except Exception as exc:  # noqa: BLE001 — a gone model is skipped
+                    log.warning("llm.free_failed", model=candidate, error=str(exc)[:120])
+                    primary_failure = primary_failure or str(exc)[:200]
+                    continue
+                if free.error or not free.content:
+                    log.warning("llm.free_failed", model=candidate, error=(free.error or "empty")[:120])
+                    primary_failure = primary_failure or (free.error or "empty content")
+                    continue
+                free.is_free = True
+                free.fallback_from = primary_failure
+                log.info(
+                    "llm.free_used",
+                    model=candidate,
+                    fallback_from=primary_failure,
+                    tokens_in=free.input_tokens,
+                    tokens_out=free.output_tokens,
+                )
+                return free
+            return None
+
+        resp: LLMResponse | None = None
+        try:
+            if prefer_free:
+                resp = await _free_answer(None)
+            if resp is None:
+                primary = await _attempt(model)
+                if primary.error or not primary.content:
+                    raise RuntimeError(primary.error or "empty completion")
+                resp = primary
         except Exception as exc:
-            log.error("llm.call_failed", provider=self.provider, error=str(exc))
-            return LLMResponse(content="", model=model, error=str(exc)[:400])
+            log.error("llm.call_failed", provider=self.provider, error=str(exc)[:300])
+            if allow_free:
+                resp = await _free_answer(str(exc)[:200])
+            if resp is None:
+                return LLMResponse(content="", model=model, error=str(exc)[:400])
 
         elapsed = (dt.datetime.now(dt.UTC) - start).total_seconds() * 1000
         resp.latency_ms = elapsed
 
-        # Calculate cost
-        costs = COST_TABLE.get(model, {"input": 5.0, "output": 15.0})
-        resp.cost_usd = (
-            resp.input_tokens * costs["input"] / 1_000_000 +
-            resp.output_tokens * costs["output"] / 1_000_000
-        )
+        if resp.is_free:
+            # A free model costs nothing; pricing it from COST_TABLE would invent a charge.
+            resp.cost_usd = 0.0
+        else:
+            costs = COST_TABLE.get(model, {"input": 5.0, "output": 15.0})
+            resp.cost_usd = (
+                resp.input_tokens * costs["input"] / 1_000_000 +
+                resp.output_tokens * costs["output"] / 1_000_000
+            )
 
         # Track usage
         self.usage.add(resp)
 
         # Audit log
-        await self._log_call(user_id, model, resp)
+        await self._log_call(user_id, resp.model or model, resp)
 
         log.info(
             "llm.complete",
-            model=model,
+            model=resp.model or model,
+            free=resp.is_free,
             tokens_in=resp.input_tokens,
             tokens_out=resp.output_tokens,
             cost=f"${resp.cost_usd:.4f}",

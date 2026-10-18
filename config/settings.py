@@ -121,6 +121,18 @@ class Settings(BaseSettings):
     llm_max_tokens: int = 4096
     llm_temperature: float = 0.3
     llm_monthly_budget_usd: float = 100.0
+    # WS-42: free OpenRouter models, tried in order when the paid model cannot answer.
+    # The catalogue rotates, so a model that has gone is skipped, not fatal. Order chosen
+    # 2026-10-18 for instruction-following on numeric, citation-constrained prompts:
+    # Gemma 4 26B (tools + response_format), Nemotron 3 Super 120B (reasoning),
+    # Nemotron 3.5 Lightning (1M context, fast).
+    llm_free_models: str = (
+        "google/gemma-4-26b-a4b-it:free,"
+        "nvidia/nemotron-3-super-120b-a12b:free,"
+        "nvidia/nemotron-3.5-lightning:free"
+    )
+    llm_free_fallback: bool = True
+    llm_prefer_free: bool = False
 
 
     # Environment (set FISHINTEL_ENV=production for production checks)

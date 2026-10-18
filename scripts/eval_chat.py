@@ -24,9 +24,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", action="store_true", help="print the report as JSON")
     parser.add_argument("--path", default=None, help="alternative golden-set path")
+    parser.add_argument(
+        "--live",
+        action="store_true",
+        help="answer with the real model (falls back to a free OpenRouter model); reports rather than gates",
+    )
     args = parser.parse_args()
 
-    report = asyncio.run(run_eval(Path(args.path) if args.path else None))
+    report = asyncio.run(run_eval(Path(args.path) if args.path else None, live=args.live))
     payload = report.to_dict()
     if args.json:
         print(json.dumps(payload, indent=2))
@@ -37,11 +42,15 @@ def main() -> int:
         print(f"gap disclosure       {report.gap_rate:.0%} "
               f"({report.gaps_disclosed}/{report.gaps_expected})")
         print(f"numbers checked      {report.numbers_checked}")
+        print(f"mode                 {"live " + ", ".join(report.models) if report.live else "offline (deterministic)"}")
         print(f"silent-wrong-number  {report.silent_wrong_number_rate:.2%} "
               f"({report.numbers_unverified} unmatched)")
         for case in report.cases:
             if not case.ok:
                 print(f"  FAIL {case.id}: {case.detail} (mode {case.mode})")
+    if args.live:
+        # A live run reports quality; it does not gate. The gate is the offline run.
+        return 0 if report.refusal_accuracy == 1.0 and report.gap_rate == 1.0 else 1
     return 0 if report.ok else 1
 
 

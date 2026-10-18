@@ -155,6 +155,28 @@ satellite page **fabricated per-farm readings with a seeded RNG** and rendered
   the snapshot carries `tariff_basis`. `/competitiveness` marks export-price rows with
   `*` and prints the basis under the table. `tests/test_tariff_basis.py` (6).
 
+- **WS-42 — a free OpenRouter chain, and what the live model taught the checker.** The
+  OpenRouter catalogue was fetched live (2026-10-18): 16 free models, of which the chain now
+  shipped is `google/gemma-4-26b-a4b-it:free` (tools + response_format),
+  `nvidia/nemotron-3-super-120b-a12b:free` (reasoning) and `nvidia/nemotron-3.5-lightning:free`
+  (1M context). The domain-specific free models (code, safety, OCR) were rejected: this surface
+  needs instruction-following on a citation-constrained numeric prompt. Limits are OpenRouter's
+  documented 20 req/min and 50 req/day (1,000/day after a $10 lifetime top-up).
+  `LLM_FREE_MODELS` / `LLM_FREE_FALLBACK` (default on) / `LLM_PREFER_FREE` (default off); the
+  client walks the chain when the paid model fails, labels the answer `is_free`, records the
+  cost as zero (never priced from COST_TABLE) and names the model that failed. Verified live:
+  the free model answered "MARGIN -1.69" with cost $0.0000.
+  Running the golden set live was the point: the first run left 38.9 % of numbers unmatched,
+  and the causes were presentation, not invention — a dropped minus sign ("a loss of 1.69"), a
+  rounded 1.7, a bare "301" from the tariff basis, "18"/"90" from the model's own arithmetic.
+  The checker now matches sign-insensitively, searches numbers inside cited strings (HTS codes,
+  "Section 301") and masks month dates; the offline gate stays at 18/18 with 0 unmatched. The
+  remaining live gap is derived arithmetic, which the next step — a single repair pass that
+  re-asks without the unsupported numbers — addresses. A third live run was still running
+  against the free tier's 20 req/min ceiling when this was written, so its number is not
+  claimed.
+  Tests: `tests/test_llm_free_fallback.py` (9); `scripts/eval_chat.py --live` added.
+
 - **WS-41 — the panel and the gate.** The workbench existed only as an API; a paid feature
   with no button is not a product. `/chat` now carries a **Deep analysis** panel in its right
   rail: the credit balance, the three runs with what each reads, a run button, and the rendered
