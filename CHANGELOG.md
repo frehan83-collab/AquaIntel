@@ -178,6 +178,18 @@ satellite page **fabricated per-farm readings with a seeded RNG** and rendered
   `gh auth token`, with the helper disabled — and never writes or prints the token. Verified:
   `origin/master` now equals the local HEAD and `git status -sb` shows no ahead/behind.
 
+- **WS-57 — the frontend was serving a six-day-old build.** The web app ran `next start` against a
+  `.next` produced on 12 October, while the source (chat page, API client, types) had moved on by
+  18 October — so a client component hit a shape it no longer expected and the `ErrorBoundary`
+  rendered "This section encountered an error". Three separate sandbox constraints had to be
+  worked around to build at all: `next build` spawns a child for its duplicate TypeScript pass
+  (`spawn EPERM`, now deferred to `tsc --noEmit`, which CI runs anyway), its page-data workers spawn
+  processes (now `experimental.workerThreads: true, cpus: 1` merged into the one real `experimental`
+  block — the first attempt added a *second* key, and a later key wins), and `next start` is the
+  wrong server for this config because it is `output: "standalone"`. The app now runs from
+  `.next/standalone/server.js` with `.next/static` and `public` copied in, and `/`, `/chat`,
+  `/feed-cost`, `/lice-quota`, `/billing`, `/accuracy` all return 200 with the new "Ask the data" UI.
+
 - **WS-56 — the lice review is sellable again, and the software runs.** WS-43 withdrew the paid
   lice-pressure document because the feed was dead; WS-53 restored the feed (2026-W16-41, 585 sites
   reporting in W41), so the withdrawal notice had itself become the stale thing. The run is back in
