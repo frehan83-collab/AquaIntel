@@ -40,7 +40,7 @@
 | Engine modules | **80** (`core/market/`, +`margin_bridge.py`, +`fx_rates.py`, +`company_facts.py`) |
 | Frontend routes | **68** page files |
 | Production topology | `docker-compose.prod.yml`: `api` + `agents` + `db` (TimescaleDB) + `web` |
-| Last full-suite run | **1411 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 5m04s (2026-10-18, after WS-29b, WS-31b, WS-35–40) |
+| Last full-suite run | **1418 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 5m15s (2026-10-18, after WS-29b, WS-31b, WS-35–41) |
 
 **What this session delivered** (all pushed): 10 commercial-hardening steps plus 3
 follow-up fixes â€” see Â§3 for the doc to read per area.
