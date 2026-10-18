@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 import structlog
 
 from config.settings import settings
-from core.llm.claim_check import caveat, verify
+from core.llm.claim_check import strip_unsupported, verify
 from core.llm.grounding import (
     MAX_QUESTION_CHARS,
     PlatformContext,
@@ -266,14 +266,26 @@ class ChatService:
         # kept (a model may legitimately derive a percentage) but named in the payload and
         # badged in the UI, and the answer carries one honest caveat sentence.
         verification = verify(text, [fact.to_dict() for fact in context.facts])
-        note = caveat(verification)
-        if note:
-            text = text + "\n\n" + note
+        if not verification.clean:
+            # WS-44: fail closed. The sentence carrying an unsupported number is removed
+            # and the answer says so; a caveat beside an invented figure is not enough.
+            cleaned, removed = strip_unsupported(text, verification)
             log.info(
-                "chat.unverified_numbers",
+                "chat.numbers_withheld",
+                sentences=removed,
                 count=len(verification.unverified),
                 checked=verification.checked,
             )
+            text = cleaned or (
+                "I cannot give a verified answer to that: the numbers produced could "
+                "not be matched to the platform's data, so they were withheld."
+            )
+            if removed:
+                text = (
+                    text
+                    + f"\n\n({len(verification.unverified)} number(s) were withheld "
+                    "because the verified data could not support them.)"
+                )
 
         elapsed = (dt.datetime.now(dt.UTC) - started).total_seconds() * 1000
         return ChatAnswer(
