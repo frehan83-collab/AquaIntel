@@ -40,6 +40,20 @@ MORTALITY_RATE_DAILY = 0.00015  # Base daily mortality
 ANNUAL_SMOLT_RELEASES = 400_000_000
 ANNUAL_PRODUCTION_TONNES = 1_700_000
 
+#: WS-36: the model's forward 12 months are checked against the national production
+#: reference above. Outside this band the payload says the projection is uncalibrated
+#: instead of presenting a model output as a supply forecast — on 2026-10-18 the model
+#: projects roughly a third of the reference per year while SSB's weekly export volumes
+#: imply ~120 000 t/month nationally, so the level is not yet usable as a forecast.
+SMOLT_VALIDATION_TOLERANCE_PCT = 30.0
+
+#: What the reference is, stated where the number lives.
+SMOLT_REFERENCE_SOURCE = (
+    "Norwegian annual production reference in this module (1.7 M t GWT) — see "
+    "Fiskeridirektoratet aquaculture statistics; the 12-month model total is compared "
+    "against it"
+)
+
 # Seasonal smolt release pattern (fraction of annual by month)
 # 70% of releases happen April-June
 SMOLT_RELEASE_PATTERN = {
@@ -276,6 +290,44 @@ class SmoltModel:
             "price_pressure": "bearish" if balance > 20000 else "bullish" if balance < -20000 else "neutral",
         }
 
+    def validation(self) -> dict:
+        """Compare the model's forward 12 months with the national production reference.
+
+        WS-36. The pipeline is a model (smolt releases x survival x yield x growth), not
+        a measurement. On 2026-10-18 it projects roughly a third of the 1.7 M t annual
+        reference, while SSB's weekly export volumes imply about 120 000 t/month
+        nationally — so the level is uncalibrated and a reader must be told before using
+        it as a supply forecast. The ratio is published either way.
+        """
+        pipeline = self.get_supply_pipeline(12)
+        model_12m = sum(p["projected_harvest_tonnes"] for p in pipeline)
+        ratio = (model_12m / ANNUAL_PRODUCTION_TONNES) if ANNUAL_PRODUCTION_TONNES else None
+        deviation_pct = round((ratio - 1.0) * 100, 1) if ratio is not None else None
+        within = (
+            None if deviation_pct is None
+            else abs(deviation_pct) <= SMOLT_VALIDATION_TOLERANCE_PCT
+        )
+        return {
+            "model_12m_tonnes": round(model_12m, 0),
+            "reference_annual_tonnes": ANNUAL_PRODUCTION_TONNES,
+            "reference_source": SMOLT_REFERENCE_SOURCE,
+            "ratio_to_reference": round(ratio, 2) if ratio is not None else None,
+            "deviation_pct": deviation_pct,
+            "within_tolerance": within,
+            "tolerance_pct": SMOLT_VALIDATION_TOLERANCE_PCT,
+            "note": (
+                "the 12-month pipeline is a model output; "
+                + (
+                    "it sits inside the reference band, so it can be read as a forecast "
+                    "with the usual model caveats"
+                    if within else
+                    "it is far from the national production reference, so treat the LEVEL "
+                    "as uncalibrated and use only its direction and seasonality (WS-36)"
+                )
+            ),
+            "measurement": "model projection (smolt releases x survival x yield), not reported supply",
+        }
+
     def get_summary(self) -> dict:
         """Get summary stats for KPIs."""
         pipeline = self.get_supply_pipeline(18)
@@ -298,6 +350,7 @@ class SmoltModel:
             "smolt_releases_ytd_millions": round(smolt_ytd / 1_000_000, 1),
             "supply_growth_yoy_pct": 3.0,  # Approximate, from smolt growth trend
             "mab_utilization_pct": round(_get_typical_utilization() * 100, 1),
+            "validation": self.validation(),
             "price_pressure": balance["price_pressure"],
             "pipeline": pipeline,
             "cohorts": cohorts,

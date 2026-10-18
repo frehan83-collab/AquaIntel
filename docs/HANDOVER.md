@@ -34,13 +34,13 @@
 |---|---|
 | Platform version | `2.6.0` |
 | OpenAPI surface | **348 paths** (`docs/openapi.frozen.json`; WS-29 added two, WS-34 one) |
-| Tests | **1365 collected** (`pytest --collect-only`, 2026-10-18 after WS-28a/30–35) |
+| Tests | **1373 collected** (`pytest --collect-only`, 2026-10-18 after WS-28a/30–36) |
 | Alembic migrations | **21** (head `021`, WS-33) |
 | Router modules | **38** (`core/routers/`) |
 | Engine modules | **80** (`core/market/`, +`margin_bridge.py`, +`fx_rates.py`, +`company_facts.py`) |
 | Frontend routes | **68** page files |
 | Production topology | `docker-compose.prod.yml`: `api` + `agents` + `db` (TimescaleDB) + `web` |
-| Last full-suite run | **1341 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 4m29s (2026-10-18, after WS-29b, WS-31b and WS-35) |
+| Last full-suite run | **1349 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 4m29s (2026-10-18, after WS-29b, WS-31b, WS-35 and WS-36) |
 
 **What this session delivered** (all pushed): 10 commercial-hardening steps plus 3
 follow-up fixes â€” see Â§3 for the doc to read per area.
@@ -356,6 +356,23 @@ the accuracy registry, then bump `MARGIN_METHOD_VERSION`. Until then the level s
 `modelled`, and the validation block keeps printing the gap.
 **Also open:** no premium gate was added for `/api/margin/*` â€” the paywall ladder is the
 owner's WS-20/26 decision; the bridge is ungated like the other cost-desk routes.
+
+### WS-36 · The smolt pipeline is checked before it is used — **DONE 2026-10-18**
+**Why:** `smolt_model` projects harvest from smolt releases x survival x yield, and the
+forecast route served that projection with the label "Smolt model + Fiskeridirektoratet"
+behind a live badge. On 2026-10-18 its 12-month total is **789 987 t against the module's
+own 1.7 M t national production reference (0.46x)**, while SSB's weekly export volumes
+imply about 120 000 t/month nationally — a reader could take a model output as supply.
+**Shipped:** `SmoltModel.validation()` publishes `model_12m_tonnes`,
+`reference_annual_tonnes`, `ratio_to_reference`, `deviation_pct`, `within_tolerance` and a
+`measurement` string ("model projection ..., not reported supply");
+`/api/supply/smolt-forecast` carries the block and **degrades** with the reason when the
+ratio is outside +-30 %, instead of serving a live badge; `get_summary()` carries it too.
+8 tests (`tests/test_smolt_validation.py`), including a calibrated branch so the check is
+about the gap rather than a hard-coded verdict.
+**Open:** calibrate the release/yield constants against Fiskeridirektoratet's reported
+harvest (both the 1.7 M t reference and the 400 M smolt assumption are module constants);
+until then the level stays flagged.
 
 ### WS-1 Â· Make the lice lineage verifiable â€” **DONE 2026-10-16**
 **Shipped:** `core/source_lineage.py` â€” the one vocabulary for `lice_records.source`

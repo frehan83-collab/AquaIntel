@@ -129,6 +129,18 @@ satellite page **fabricated per-farm readings with a seeded RNG** and rendered
   tells the operator how to register one. `tests/test_feed_anchor.py` (10).
   **Still open:** obtain a defensible realised figure, recalibrate the multiplier against
   it, bump `MARGIN_METHOD_VERSION` and republish the validation.
+- **WS-36 — the smolt pipeline is checked before it is used.** `smolt_model` projects
+  harvest from smolt releases × survival × yield; on 2026-10-18 its 12-month total is
+  **789 987 t against the module's own 1.7 M t national reference (0.46×)**, while SSB's
+  weekly export volumes imply ~120 000 t/month nationally. New `SmoltModel.validation()`
+  publishes the ratio and the deviation, and `/api/supply/smolt-forecast` degrades with
+  the reason ("the level is uncalibrated; use direction and seasonality only") instead of
+  serving the projection under a live badge with the label "Smolt model +
+  Fiskeridirektoratet". The `measurement` field states it is a model projection, not
+  reported supply. `tests/test_smolt_validation.py` (8), including the calibrated branch
+  so the check is about the gap, not a hard-coded verdict.
+  **Open:** calibrate the release/yield constants against Fiskeridirektoratet's reported
+  harvest; until then the level stays flagged.
 
 ### WS-29 — the weekly margin bridge (2026-10-18)
 - **Why:** the platform held the two inputs that decide a salmon producer's week —

@@ -84,7 +84,12 @@ class TestSupplyRoutes:
         # Contract corrected post-review (was a bare list, no provenance).
         assert isinstance(body["pipeline"], list)
         assert body["horizon_months"] == 18
-        assert body["data_provenance"]["is_live"] is True
+        # WS-36: the pipeline is a model and its level is uncalibrated against the
+        # national reference, so the route degrades with the reason instead of claiming
+        # live. When the model is calibrated this flips back to True.
+        assert body["validation"]["within_tolerance"] is False
+        assert body["data_provenance"]["is_live"] is False
+        assert "uncalibrated" in body["data_provenance"]["fallback_reason"]
 
     def test_supply_cohort_timeline(self, client):
         r = client.get("/api/supply/cohort-timeline")

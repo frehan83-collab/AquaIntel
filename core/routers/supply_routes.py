@@ -124,15 +124,33 @@ async def supply_smolt_forecast(months: int = 18):
     pipeline = smolt_model.get_supply_pipeline(months)
     if not isinstance(pipeline, list):
         return pipeline
+    # WS-36: the pipeline is a model, and its level is checked against the national
+    # production reference. When it is far off, the payload degrades and says the level
+    # is uncalibrated rather than wearing a live badge on a model output.
+    validation = smolt_model.validation()
+    if validation.get("within_tolerance") is False:
+        provenance = DataProvenance.degraded(
+            f"{SMOLT_LABEL} (model projection, not reported supply)",
+            reason=(
+                f"the 12-month model total is {validation['deviation_pct']:+.0f} % from "
+                f"the {validation['reference_annual_tonnes']:,.0f} t national reference "
+                f"(ratio {validation['ratio_to_reference']}); the level is uncalibrated, "
+                "use direction and seasonality only"
+            ),
+            confidence=0.35,
+        ).to_dict()
+    else:
+        provenance = DataProvenance.live(
+            f"{SMOLT_LABEL} (model projection, not reported supply)", confidence=0.75
+        ).to_dict()
     return {
         "pipeline": pipeline,
         "horizon_months": months,
         "total_harvest_tonnes": round(
             sum(p.get("projected_harvest_tonnes", 0) for p in pipeline), 0
         ),
-        "data_provenance": DataProvenance.live(
-            SMOLT_LABEL, confidence=0.75
-        ).to_dict(),
+        "validation": validation,
+        "data_provenance": provenance,
     }
 
 

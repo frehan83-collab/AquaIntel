@@ -384,7 +384,9 @@ class TestSupplyEndpoints:
         # bare list with an unreachable provenance guard).
         assert isinstance(body["pipeline"], list)
         assert body["horizon_months"] == 18
-        assert body["data_provenance"]["is_live"] is True
+        # WS-36: a model projection whose level is uncalibrated degrades, not lives.
+        assert body["validation"]["within_tolerance"] is False
+        assert body["data_provenance"]["is_live"] is False
         if body["pipeline"]:
             first = body["pipeline"][0]
             for key in ("month_label", "projected_harvest_tonnes", "lo80", "hi80"):
