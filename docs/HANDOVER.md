@@ -1806,6 +1806,23 @@ costs NOK 7–74/user/month by plan.
 **Open:** a 150-question live-model golden set; prompt caching; overage billing and annual
 answer packs (both need a stored payment method).
 
+### WS-48–51 · The rest of the list — **DONE 2026-10-18**
+**WS-48:** `core/market/verified_metrics.py` — one definition of "current" (source filter, age
+limit, provenance, `None` not zero) used by the alert evaluator and by chat-to-alert seeding;
+a stale or unreadable metric is reported, never compared; a lice threshold below the § 8 limit is
+refused with the limit named.
+**WS-49:** Alembic **024** `answer_receipts` + `GET /api/chat/receipts`. The question is hashed,
+the answer text is not stored, the facts keep their `as_of`, retention is 24 months with an
+explicit purge.
+**WS-50:** the allowance is published in `plan_catalog()`, Operator's upgrade is Enterprise, and a
+spent allowance degrades to the deterministic verified answer instead of a 402 — including on the
+free plan, which is the funnel.
+**WS-51:** `/api/legal/sub-processors` states 0 of 3 processors contracted and why; the AI-Act
+notes include the assistant and the EEA transfer; `LLM_CONTRACTED_PROVIDER_ONLY` (default off) can
+refuse an uncontracted provider.
+**Still open, and it is a signature not a commit:** the DPAs/SCCs themselves, plus the Desk
+(2,990) vs Operator (4,900) price inversion, which is a pricing decision.
+
 ### WS-46/47 · Free-model labelling and the withheld caveat — **DONE 2026-10-18**
 **WS-46:** `model_is_free` on the chat answer and the workbench document, carried to the payload
 and shown as a chip on `/chat`; the routing policy is the council's (paid model first, free chain

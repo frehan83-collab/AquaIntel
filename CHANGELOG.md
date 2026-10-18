@@ -171,6 +171,35 @@ satellite page **fabricated per-farm readings with a seeded RNG** and rendered
   (`_data_status()`): every non-live fact with its age, every unavailable fact by name. The
   offline gate stays 18/18 with 0 unmatched.
 
+- **WS-48–51 — the rest of the council's list.** Four packages, each closing an item the council
+  ranked or that my own report named as next.
+  **WS-48 (alerts).** `core/market/verified_metrics.py` is now the single answer to "what is the
+  current value": verified source filters, a per-metric age limit, `provenance`, `age_days` and
+  `None` rather than a fabricated zero. The evaluator refuses to evaluate against a stale or
+  unreadable metric and says why; chat-to-alert seeding uses the same definition, rejects a
+  threshold outside its plausible range, and refuses a lice threshold below the § 8 limit for that
+  week (the council's example, "lice in PA 3 above 0.4", is illegal in spring and a false alarm in
+  October). `tests/test_verified_metrics.py` (7).
+  **WS-49 (receipts).** Alembic **024** `answer_receipts`: one row per model-backed answer holding
+  the facts with their `as_of`, the model (and whether it was free), the claim-check verdict and
+  the cost — while the **question is stored as a hash, not as text**, and the answer text is not
+  stored at all. `GET /api/chat/receipts` serves the caller's own rows; retention is 24 months in
+  `retained_until` with `purge_expired()` as an explicit, auditable action.
+  `tests/test_answer_receipts.py` (6).
+  **WS-50 (ladder).** `plan_catalog()` now publishes `chat_questions_per_month`; Operator's
+  suggested upgrade is Enterprise, not the cheaper Desk; and the allowance no longer 402s anyone —
+  when a plan's model budget is spent, or the plan includes none, the chat still answers from the
+  deterministic verified path at zero model cost and says so. Insight gets that path, which is the
+  free funnel the council asked for. `tests/test_plan_ladder.py` (4).
+  **WS-51 (legal surface).** `core/legal/subprocessors.py` + `GET /api/legal/sub-processors`: the
+  inference processors this box can use, with `contracted` and `zero_retention` stated honestly
+  (0 of 3 contracted today) and a statement that it is not a compliance claim. The AI-Act notes
+  now include the grounded assistant and state that a question and its facts leave the EEA rather
+  than claiming personal data is limited to account and contact data. `LLM_CONTRACTED_PROVIDER_ONLY`
+  (default off) refuses an uncontracted provider when an operator enables it.
+  `tests/test_subprocessors.py` (6). **Not coded:** a DPA, SCCs or zero-retention terms — code
+  cannot sign a contract.
+
 - **WS-43/44/45 — the council's round: verify before charging, fail closed, bind the limit.**
   A four-lens council (commercial, aquaculture domain, ML grounding, legal) plus a chair ranked
   the next moves; the chair's verdict was "fix, do not build". Three of its five items shipped
