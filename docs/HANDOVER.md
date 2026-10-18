@@ -1806,6 +1806,25 @@ costs NOK 7–74/user/month by plan.
 **Open:** a 150-question live-model golden set; prompt caching; overage billing and annual
 answer packs (both need a stored payment method).
 
+### WS-52 · Pushing from this sandbox — **DONE 2026-10-18**
+`git push` fails here for two unrelated reasons, and both had to be fixed to get the branch up:
+
+* `schannel: AcquireCredentialsHandle failed: SEC_E_NO_CREDENTIALS` — the schannel TLS backend
+  cannot reach the Windows credential store from the sandbox;
+* `sh.exe: couldn't create signal pipe, Win32 error 5` — a shell-based credential helper cannot
+  start a child process, so `manager` (and `gh auth git-credential`) both fail.
+
+The working recipe is TLS on OpenSSL plus a one-shot Basic header built from `gh auth token`,
+with the credential helper disabled so nothing tries to prompt. It is wrapped in
+`scripts/push_with_gh.ps1`, which never writes the token to disk and scrubs it from any output:
+
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts/push_with_gh.ps1
+
+Verified 2026-10-18: `git ls-remote origin refs/heads/master` returned the local HEAD
+(`8e40d2f`), the default branch is `master`, and `git status -sb` reports no ahead/behind.
+The broken per-host helper that `gh auth setup-git` tried to write was removed from the local
+config, because it fails in this environment and would mask the real error next time.
+
 ### WS-48–51 · The rest of the list — **DONE 2026-10-18**
 **WS-48:** `core/market/verified_metrics.py` — one definition of "current" (source filter, age
 limit, provenance, `None` not zero) used by the alert evaluator and by chat-to-alert seeding;
