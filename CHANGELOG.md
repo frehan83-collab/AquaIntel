@@ -142,6 +142,19 @@ satellite page **fabricated per-farm readings with a seeded RNG** and rendered
   **Open:** calibrate the release/yield constants against Fiskeridirektoratet's reported
   harvest; until then the level stays flagged.
 
+- **WS-37 — US duty assessed on the customs value.** `competitiveness_engine` computed
+  `tariff_cost = production_cost × rate`. US duty is assessed on the **transaction value**
+  of the imported good (the importer's price), not the producer's cost, so the engine
+  understated the duty by the exporter's margin — the kind of error a trade-compliance
+  reader spots first. The rate is now charged to the best available declared value: the
+  live SSB export price for Norway (USD via Norges Bank), production cost elsewhere with
+  a note saying the true duty is higher by that margin. Every row carries `tariff_base`
+  (`export_price` / `production_cost`), `export_price_usd`,
+  `tariff_at_export_price_usd` and a `duty_base_note` that states the direction ("the
+  export price is below cost" on 2026-10-18, so the cost-base figure was the higher one);
+  the snapshot carries `tariff_basis`. `/competitiveness` marks export-price rows with
+  `*` and prints the basis under the table. `tests/test_tariff_basis.py` (6).
+
 ### WS-29 — the weekly margin bridge (2026-10-18)
 - **Why:** the platform held the two inputs that decide a salmon producer's week —
   the live SSB export price and the live feed ingredient basket — and never turned

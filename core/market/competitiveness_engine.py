@@ -106,6 +106,13 @@ class OriginCost:
     rank: int = 0
     notes: str = ""
     tariff_row: dict | None = None  # the dated, sourced row behind tariff_pct
+    # WS-37: which value the rate was applied to. US duty is assessed on the transaction
+    # value (the importer's price), not the producer's cost, so the cost-base figure is a
+    # lower bound; where a live export price exists the statutory duty is shown beside it.
+    tariff_base: str = "production_cost"
+    export_price_usd: float | None = None
+    tariff_at_export_price_usd: float | None = None
+    duty_base_note: str = ""
 
 
 @dataclass
@@ -116,6 +123,7 @@ class CompetitivenessSnapshot:
     fx_rates: dict[str, float] = field(default_factory=dict)
     origins: list[OriginCost] = field(default_factory=list)
     insights: list[str] = field(default_factory=list)
+    tariff_basis: str = ""
 
 
 class CompetitivenessEngine:
@@ -243,7 +251,50 @@ class CompetitivenessEngine:
             # Tariff: rate and citation from ONE dated lookup (core/regulatory_facts.py)
             tariff_row = self.tariff_row(country, now)
             tariff_pct = (tariff_row["rate_pct"] / 100.0) if tariff_row else 0.0
-            tariff_cost = prod_cost_usd * tariff_pct
+
+            # WS-37: US duty is assessed on the transaction value of the imported good
+            # (the price the importer pays), not on the producer's cost. We hold a live
+            # export price for Norway (SSB) and none for the other origins, so the duty is
+            # charged on the best available declared value and the basis is labelled on
+            # every row — never silently on cost.
+            export_price_usd = None
+            if country == "Norway":
+                try:
+                    from core.market.ssb_price_client import ssb_price_client
+
+                    ssb_nok = await ssb_price_client.get_current_spot()
+                    nok_usd = fx_rates.get("NOK")
+                    if ssb_nok and ssb_nok > 0 and nok_usd:
+                        export_price_usd = round(float(ssb_nok) * float(nok_usd), 2)
+                except Exception as exc:  # noqa: BLE001 — a missing price is not fatal
+                    log.debug("competitiveness.export_price_failed", error=str(exc)[:80])
+
+            duty_base_usd = export_price_usd if export_price_usd else prod_cost_usd
+            tariff_base = "export_price" if export_price_usd else "production_cost"
+            tariff_cost = duty_base_usd * tariff_pct
+            tariff_at_export_price = (
+                round(export_price_usd * tariff_pct, 2) if export_price_usd else None
+            )
+            duty_base_note = ""
+            if tariff_pct and export_price_usd:
+                cost_base_duty = prod_cost_usd * tariff_pct
+                duty_base_note = (
+                    "US duty is assessed on the transaction value of the imported good, "
+                    f"not the producer's cost: {tariff_pct * 100:.1f} % is charged here on "
+                    f"the live SSB export price of ${export_price_usd:.2f}/kg "
+                    f"(${tariff_cost:.2f}/kg). On production cost the same rate would give "
+                    f"${cost_base_duty:.2f}/kg "
+                    f"({'higher' if cost_base_duty > tariff_cost else 'lower'} — the export "
+                    "price is "
+                    f"{'above' if export_price_usd > prod_cost_usd else 'below'} cost)."
+                )
+            elif tariff_pct:
+                duty_base_note = (
+                    "US duty is assessed on the transaction value of the imported good, "
+                    f"not the producer's cost. No live export price exists for this origin, "
+                    f"so {tariff_pct * 100:.1f} % is charged on production cost — the true "
+                    "duty is higher by the exporter's margin."
+                )
 
             # Freight
             freight = cfg["freight_usd"]
@@ -270,6 +321,10 @@ class CompetitivenessEngine:
                 margin_pct=round(margin_pct, 1),
                 notes=cfg["notes"],
                 tariff_row=tariff_row,
+                tariff_base=tariff_base,
+                export_price_usd=export_price_usd,
+                tariff_at_export_price_usd=tariff_at_export_price,
+                duty_base_note=duty_base_note,
             ))
 
         # Rank by delivered cost (ascending = most competitive)
@@ -283,6 +338,12 @@ class CompetitivenessEngine:
         snapshot = CompetitivenessSnapshot(
             generated_at=now.isoformat() + "Z",
             us_spot_usd_kg=round(us_spot, 2),
+            tariff_basis=(
+                "US duty is assessed on the transaction value of the imported good, not "
+                "the producer's cost. Rows marked tariff_base=production_cost are a lower "
+                "bound; Norway also publishes the statutory duty at its live SSB export "
+                "price (tariff_at_export_price_usd)."
+            ),
             fx_rates={k: round(v, 6) for k, v in fx_rates.items()},
             origins=origins,
             insights=insights,
@@ -471,10 +532,15 @@ class CompetitivenessEngine:
                     "margin_usd": o.margin_usd,
                     "margin_pct": o.margin_pct,
                     "notes": o.notes,
+                    "tariff_base": o.tariff_base,
+                    "export_price_usd": o.export_price_usd,
+                    "tariff_at_export_price_usd": o.tariff_at_export_price_usd,
+                    "duty_base_note": o.duty_base_note,
                 }
                 for o in snap.origins
             ],
             "insights": snap.insights,
+            "tariff_basis": snap.tariff_basis,
         }
 
 

@@ -232,8 +232,14 @@ export default function CompetitivenessPage() {
               key: "tariff_pct", label: t("competitiveness.tariff"), sortable: true, align: "right" as const,
               render: (val, row) => (
                 val > 0 ? (
-                  <span className="text-rose-400 tabular-nums">
+                  <span
+                    className="text-rose-400 tabular-nums"
+                    title={row.duty_base_note || undefined}
+                  >
                     {formatNumber(val * 100, locale, 1)}% ({row.tariff_cost_usd != null ? `$${formatNumber(row.tariff_cost_usd, locale, 2)}` : "\u2014"})
+                    {row.tariff_base === "export_price" ? (
+                      <span className="text-[9px] text-[var(--text-secondary)]"> *</span>
+                    ) : null}
                   </span>
                 ) : (
                   <span className="text-emerald-400">
@@ -260,6 +266,16 @@ export default function CompetitivenessPage() {
             },
           ] as Column<CompetitivenessOrigin>[]}
         />
+        {/* WS-37: the duty is assessed on the customs value (transaction price), not on
+            the producer's cost. Say which base each row used. */}
+        {data?.tariff_basis ? (
+          <p className="mt-3 text-[10px] leading-relaxed text-[var(--text-secondary)]">
+            <span className="font-semibold">*</span> {data.tariff_basis}
+            {origins.find((o) => o.tariff_base === "export_price")?.duty_base_note ? (
+              <> {origins.find((o) => o.tariff_base === "export_price")!.duty_base_note}</>
+            ) : null}
+          </p>
+        ) : null}
       </GlassCard>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

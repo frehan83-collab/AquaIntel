@@ -707,6 +707,14 @@ export interface CompetitivenessOrigin {
     caveat: string;
   } | null;
   tariff_cost_usd: number;
+  /** WS-37: which declared value the rate was applied to (US duty is on transaction value). */
+  tariff_base?: "export_price" | "production_cost";
+  /** The live export price used as the customs value, when one exists (Norway: SSB). */
+  export_price_usd?: number | null;
+  /** The statutory duty at that export price (equals tariff_cost_usd when charged there). */
+  tariff_at_export_price_usd?: number | null;
+  /** Why this basis was used, in words a buyer can check. */
+  duty_base_note?: string;
   freight_usd: number;
   total_delivered_usd: number;
   margin_usd: number;
@@ -739,6 +747,8 @@ export interface CompetitivenessIndex {
   source_date?: string | null;
   origins: CompetitivenessOrigin[];
   insights: string[];
+  /** WS-37: how the US duty base was chosen (transaction value, not production cost). */
+  tariff_basis?: string;
 }
 
 /** /api/competitiveness/tariff-scenario (POST) */

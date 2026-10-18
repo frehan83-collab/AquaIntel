@@ -34,13 +34,13 @@
 |---|---|
 | Platform version | `2.6.0` |
 | OpenAPI surface | **348 paths** (`docs/openapi.frozen.json`; WS-29 added two, WS-34 one) |
-| Tests | **1373 collected** (`pytest --collect-only`, 2026-10-18 after WS-28a/30–36) |
+| Tests | **1379 collected** (`pytest --collect-only`, 2026-10-18 after WS-28a/30–37) |
 | Alembic migrations | **21** (head `021`, WS-33) |
 | Router modules | **38** (`core/routers/`) |
 | Engine modules | **80** (`core/market/`, +`margin_bridge.py`, +`fx_rates.py`, +`company_facts.py`) |
 | Frontend routes | **68** page files |
 | Production topology | `docker-compose.prod.yml`: `api` + `agents` + `db` (TimescaleDB) + `web` |
-| Last full-suite run | **1349 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 4m29s (2026-10-18, after WS-29b, WS-31b, WS-35 and WS-36) |
+| Last full-suite run | **1355 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 4m22s (2026-10-18, after WS-29b, WS-31b, WS-35, WS-36 and WS-37) |
 
 **What this session delivered** (all pushed): 10 commercial-hardening steps plus 3
 follow-up fixes â€” see Â§3 for the doc to read per area.
@@ -356,6 +356,22 @@ the accuracy registry, then bump `MARGIN_METHOD_VERSION`. Until then the level s
 `modelled`, and the validation block keeps printing the gap.
 **Also open:** no premium gate was added for `/api/margin/*` â€” the paywall ladder is the
 owner's WS-20/26 decision; the bridge is ungated like the other cost-desk routes.
+
+### WS-37 · US duty is assessed on the customs value — **DONE 2026-10-18**
+**Why:** `competitiveness_engine` computed `tariff_cost = production_cost * rate`. US duty
+is assessed on the **transaction value** of the imported good — the price the importer
+pays — so the engine understated the duty by the exporter's margin, and a trade-compliance
+reader spots that immediately.
+**Shipped:** the rate is charged to the best available declared value: the live SSB export
+price for Norway (converted through Norges Bank), production cost elsewhere with a note
+that the true duty is higher by the exporter's margin. Every row carries `tariff_base`,
+`export_price_usd`, `tariff_at_export_price_usd` and a `duty_base_note` that states the
+direction (on 2026-10-18 the export price is *below* the modelled cost, so the cost-base
+figure was the higher of the two — the note says so rather than assuming); the snapshot
+carries `tariff_basis`; `/competitiveness` marks export-price rows with `*` and prints the
+basis under the table. `tests/test_tariff_basis.py` (6).
+**Open:** a live export price for the other origins (Chile, Scotland, Faroe, Iceland,
+Canada) would replace the cost-base proxy; until then those rows say so.
 
 ### WS-36 · The smolt pipeline is checked before it is used — **DONE 2026-10-18**
 **Why:** `smolt_model` projects harvest from smolt releases x survival x yield, and the
