@@ -7,6 +7,8 @@ that produces one.
 """
 from __future__ import annotations
 
+import importlib.util
+
 from fastapi import APIRouter, HTTPException
 
 router = APIRouter(prefix="/api/accuracy", tags=["accuracy"])
@@ -20,6 +22,98 @@ HOW_TO_PUBLISH = (
     "python scripts/publish_accuracy.py --weeks 260 publishes the seasonal-naive "
     "baseline artifact."
 )
+
+
+#: The three foundation models the platform can serve, and the library each
+#: one needs to load. `torch` alone is not availability: torch can be present
+#: with none of these installed, in which case every forecast is a fallback.
+FOUNDATION_MODELS: dict[str, tuple[str, str]] = {
+    "chronos": ("Amazon Chronos-2", "chronos"),
+    "timesfm": ("Google TimesFM 2.5", "timesfm"),
+    "moirai": ("Salesforce MOIRAI-2", "uni2ts"),
+}
+
+
+def _installed(module: str, probe=None) -> bool:
+    """True when ``module`` can be imported here, without importing it."""
+    find_spec = probe or importlib.util.find_spec
+    try:
+        return find_spec(module) is not None
+    except (ImportError, ValueError):
+        return False
+
+
+def _loaded_in_process(model: str) -> bool:
+    """True when this process already holds the model in memory.
+
+    Reads the engine's state directly on purpose: ``is_available()`` would
+    trigger a multi-hundred-MB download inside a public GET.
+    """
+    try:
+        if model == "chronos":
+            from core.ml.chronos_baseline import chronos_baseline
+
+            return bool(chronos_baseline.is_loaded)
+        if model == "timesfm":
+            from core.ml.timesfm_engine import timesfm_engine
+
+            return timesfm_engine._model is not None
+        from core.ml.moirai_engine import moirai_engine
+
+        return moirai_engine._model is not None
+    except Exception:
+        return False
+
+
+def _foundation_model_availability(probe=None) -> dict:
+    """Availability per model, from the library that actually loads it.
+
+    A model is available only when its own loading library is installed (all
+    three also need torch). Weights download on first use, so an installed
+    library is not proof that a forecast was real — every forecast response
+    still reports models_used vs models_fallback.
+    """
+    torch_ok = _installed("torch", probe)
+    models = {
+        key: {
+            "label": label,
+            "requires": package,
+            "installed": _installed(package, probe),
+            "loaded": _loaded_in_process(key),
+        }
+        for key, (label, package) in FOUNDATION_MODELS.items()
+    }
+    installed = [k for k, v in models.items() if v["installed"]]
+    loaded = [k for k, v in models.items() if v["loaded"]]
+    available = torch_ok and bool(installed)
+
+    if available:
+        note = (
+            f"{len(installed)} of {len(FOUNDATION_MODELS)} foundation-model libraries "
+            f"are installed ({', '.join(installed)}); {len(loaded)} loaded in this "
+            "process. Weights download on first use — an importable library is not "
+            "proof that a forecast was real, and every response reports models_used "
+            "vs models_fallback."
+        )
+    elif torch_ok:
+        note = (
+            "torch is installed but none of chronos-forecasting, timesfm or uni2ts "
+            "is, so no foundation model can load and every forecast is the "
+            "seasonal-naive fallback (is_live=false). That is disclosed, not hidden."
+        )
+    else:
+        note = (
+            "torch is not installed in this environment, so foundation-model "
+            "forecasts cannot run and every forecast is the seasonal-naive "
+            "fallback. That is disclosed, not hidden."
+        )
+    return {
+        "foundation_models_available": available,
+        "foundation_models": models,
+        "foundation_models_installed": installed,
+        "foundation_models_loaded": loaded,
+        "foundation_models_note": note,
+    }
 
 
 async def _fallback_disclosure() -> dict:
@@ -43,17 +137,7 @@ async def _fallback_disclosure() -> dict:
     except Exception as exc:  # pragma: no cover - import defensive
         out["legacy_backtest_artifact_present"] = None
         out["legacy_artifact_error"] = str(exc)
-    try:
-        import torch  # noqa: F401
-
-        out["foundation_models_available"] = True
-    except Exception:
-        out["foundation_models_available"] = False
-        out["foundation_models_note"] = (
-            "torch is not installed in this environment, so foundation-model "
-            "forecasts cannot run and every forecast is the seasonal-naive "
-            "fallback. That is disclosed, not hidden."
-        )
+    out.update(_foundation_model_availability())
     return out
 
 

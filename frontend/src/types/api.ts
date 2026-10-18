@@ -558,9 +558,24 @@ export interface CompetitivenessIndex {
   generated_at: string;
   us_spot_usd_kg: number;
   fx_rates: Record<string, number>;
-  /** "live" unless the Norway cost model fell back to the 2024 snapshot */
-  data_quality: "live" | "stale_fallback";
+  /**
+   * "live" only when no quote fell back; "partial_fallback" when at least one
+   * FX rate is an undated constant; "stale_fallback" when the Norway cost is
+   * the 2024 snapshot.
+   */
+  data_quality: "live" | "partial_fallback" | "stale_fallback";
   fallback_value: boolean;
+  /** Currencies whose rate is an undated constant (see `fx_fallback_values`). */
+  fx_fallbacks?: string[];
+  fx_fallback_values?: Record<string, number>;
+  fallback_reason?: string | null;
+  data_provenance?: {
+    source: string;
+    is_live: boolean;
+    freshness: string;
+    confidence: number;
+    fallback_reason?: string | null;
+  };
   source_date?: string | null;
   origins: CompetitivenessOrigin[];
   insights: string[];
@@ -758,6 +773,9 @@ export interface DiseaseNorway {
   /** Counts keyed by DISPLAY name, e.g. "Pancreas Disease (PD)" */
   by_disease: Record<string, number>;
   active_outbreaks: DiseaseOutbreak[];
+  /** Rows in `active_outbreaks` (capped at 20) vs all active cases */
+  active_outbreaks_shown?: number;
+  active_outbreaks_total?: number;
   data_provenance?: DataProvenance;
 }
 
@@ -800,6 +818,9 @@ export interface DiseaseAlerts {
   risk_level?: string;
   insights?: string[];
   alerts: DiseaseAlertRow[];
+  /** Per-source status: "ok" | "failed" | "unavailable" */
+  sources?: Record<string, string>;
+  sources_failed?: string[];
   data_provenance?: DataProvenance;
 }
 

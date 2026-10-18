@@ -15,6 +15,10 @@
 > **WS-21 landed 2026-10-17:** regulatory facts as dated, sourced data
 > (`core/regulatory_facts.py`); `tests/test_regulatory_facts.py` joined the fast gate
 > (346 passed + 1 skip).
+> **WS-22 part 2 landed 2026-10-18:** competitiveness FX fallbacks, per-model
+> `foundation_models_available`, newest-first disease list, and Mattilsynet merged
+> into `/api/disease/alerts` with per-source provenance;
+> `tests/test_ws22_data_claims.py` joined the fast gate.
 > Every number below was measured, not copied from an older doc. Re-verify with the
 > commands in §2 before trusting them.
 >
@@ -30,13 +34,13 @@
 |---|---|
 | Platform version | `2.6.0` |
 | OpenAPI surface | **345 paths / 353 operations** (`docs/openapi.frozen.json`) |
-| Tests | **1053 collected** (`pytest --collect-only`, 2026-10-16 after WS-2) |
+| Tests | **1244 collected** (`pytest --collect-only`, 2026-10-18 after WS-22 part 2) |
 | Alembic migrations | **20** (head `020`, since WS-19) |
 | Router modules | **38** (`core/routers/`) |
 | Engine modules | **77** (`core/market/`) |
 | Frontend routes | **68** page files |
 | Production topology | `docker-compose.prod.yml`: `api` + `agents` + `db` (TimescaleDB) + `web` |
-| Last full-suite run | **1029 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 4m38s (2026-10-16, after WS-2 + four review rounds and a final read) |
+| Last full-suite run | **1220 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 4m28s (2026-10-18, after WS-22 part 2 and its review round) |
 
 **What this session delivered** (all pushed): 10 commercial-hardening steps plus 3
 follow-up fixes — see §3 for the doc to read per area.
@@ -55,7 +59,10 @@ python -m pytest tests/test_entitlements.py tests/test_billing_money_path.py \
   tests/test_partner_pilots.py tests/test_legal.py tests/test_provenance_ratchet.py \
   tests/test_gtm_roi.py tests/test_migrations.py tests/test_openapi_contract.py \
   tests/test_signals_takedown.py tests/test_accuracy_claims.py \
-  tests/test_regulatory_facts.py -q   # 346 passed + 1 skip (network), ~30s (after WS-21)
+  tests/test_regulatory_facts.py tests/test_lice_lineage_propagation.py \
+  tests/test_ws23_backtest_honesty.py tests/test_public_claims.py \
+  tests/test_decision_stale_data.py tests/test_ws22_data_claims.py -q
+  # 431 passed + 1 skip (network), ~28s (after WS-22 part 2)
 
 # the full suite (≈4.5 min) — command runners time out at ~30s, so background it:
 #   Start-Process -FilePath python -ArgumentList '-m','pytest','tests/','-q' \
@@ -117,18 +124,21 @@ always confirm with `git ls-remote origin refs/heads/master`.
 Each item is self-contained: goal → files → steps → **acceptance criteria you can
 test** → traps.
 
-**Where things stand (2026-10-17, origin/master `25f9616`):**
-- **Done:** WS-1, WS-2, WS-11, WS-19, WS-21, WS-14 and WS-22's stale-decision-card
-  rule. WS-21's entry lists its follow-ups.
+**Where things stand (2026-10-18, after WS-22 part 2):**
+- **Done:** WS-1, WS-2, WS-11, WS-19, WS-21, WS-14, WS-22's stale-decision-card rule
+  and its data-claim fixes (competitiveness FX fallbacks, per-model model
+  availability, disease list order, disease-alert sources), and both halves of WS-23
+  (takedown, then the real-row backtest published against carry-forward). WS-21's
+  entry lists its follow-ups.
 - **Partly done:** WS-20 (left: one product name and the Desk/Operator price
-  inversion, both owner decisions, plus the OpenAPI `info.description`), WS-22
-  (the decision-card rule shipped; the volume, smolt-pipeline, disease-order,
-  brief, competitiveness, model-availability and ROI-default items are open) and
-  WS-23 (takedown done; the re-run half is open).
+  inversion, both owner decisions, plus the OpenAPI `info.description`) and WS-22
+  (the company-volume, smolt-pipeline, brief bloom-count and ROI-default items are
+  open; the disease items are done).
 - **Waiting on the owner:** the WS-26 page-cut list, WS-27 layer 2, the WS-20
   decisions above, and the legal opinion that most of WS-28 waits on.
-- **Next without an owner decision:** the rest of WS-22, WS-23's re-run half, WS-16,
-  WS-24 and WS-25, in the order below.
+- **Next without an owner decision:** the rest of WS-22 (company volumes, smolt
+  pipeline, brief bloom counts, ROI defaults), then WS-16, WS-24 and WS-25, in the
+  order below.
 
 **Priority changed 2026-10-17 by [`docs/VALUE_ANALYSIS.md`](VALUE_ANALYSIS.md).** The
 value analysis found buyer-visible defects that outrank the infrastructure items.
@@ -605,7 +615,7 @@ lakselusforskriften § 8) in both the decision engine and the reporter; the July
 tariffs (Norway 12.5%, Chile 12.5%, UK 10%; Faroes and Iceland outside the new
 measure; Canada USMCA-exempt), each payload citing its `source_url`.
 
-### WS-22 · Numbers buyers check — **STALE-DECISION RULE DONE 2026-10-17**
+### WS-22 · Numbers buyers check — **STALE-DECISION + DATA-CLAIM FIXES DONE**
 **Stale-decision rule shipped:** `core/market/decision_engine.py` dates the newest
 count on the card (`_lice_observation_time` — the card's lineage via
 `observation_time`, else its `current_year`/`current_week`) and refuses to
@@ -617,6 +627,33 @@ already zeroes ROI). An undatable count is stale, never fresh. Cards no longer a
 on months-old rows; the treatment portfolio's `total_treatment_cost_nok` therefore
 stops counting farms nobody refreshes. `tests/test_decision_stale_data.py` (5).
 Remaining WS-22 items below are open.
+**Data-claim fixes shipped 2026-10-18** (`tests/test_ws22_data_claims.py`, 21):
+competitiveness records every FX rate that fell back and reports
+`data_quality: partial_fallback` + `fx_fallbacks` + a degraded `data_provenance` (it
+used to say `live` while priced with NOK/USD 0.093). Two silent fallbacks behind that
+label were repaired too: both macro lookups imported `macro_intelligence_engine`,
+which does not exist (the singleton is `macro_intelligence`), so NOK/USD always fell
+back and the US spot was always the undated USD 8.50 constant; the spot fallback is
+now tracked (`us_spot_fallback`) and degrades the payload. `/api/accuracy` derives
+`foundation_models_available` from the library that loads each model
+(`chronos-forecasting` / `timesfm` / `uni2ts` plus torch) with per-model
+`installed`/`loaded`, never from `import torch` alone; `newest_first_cases()` sorts
+the disease list by diagnosis date before the 20-row cap and the summary reports
+`active_outbreaks_shown` against `active_outbreaks_total`; `_fetch_norway_alerts()`
+queries Mattilsynet and emits **one alert per disease type with `cases` = active
+localities** (one row per locality inflated `active_outbreaks` and `risk_level`),
+`MattilsynetClient.last_fetch_ok` separates an empty answer from a failed one and
+survives a cache hit, and `/api/disease/alerts` builds provenance from the sources
+that answered (`sources` / `sources_failed`). `/api/disease/{norway,norway/geo,
+treatments,by-company}` share `_mattilsynet_provenance()`: live only when Mattilsynet
+answered **and** returned rows. The competitiveness and disease pages render the
+served `data_provenance` instead of a hardcoded `quality="live"` badge.
+**Honest limitation:** a case reported by both WOAH and Mattilsynet appears twice, so
+`active_outbreaks` counts source reports, not unique epidemiological events.
+**Still open here:** Mowi's 113,600 t (localities × 800 in `top50_engine`), the smolt
+pipeline and `biomass_current_tonnes`, the brief counting every stored bloom row, the
+ROI defaults (228x / 491x / 1,693x), `api_calls_month` never incremented, and
+`/api/ml/chronos/model-comparison` printing per-call metrics on demo rows.
 **Why:** Mowi shows 113,600 t because volume = localities x 800
 (`core/market/top50_engine.py:249-250`; Mowi harvested about 332 kt in Norway in
 2025). The supply balance's smolt pipeline is about 5.6x too low (140,450 t against
@@ -808,6 +845,7 @@ a directional row on a listed security; the opinion's conclusion recorded in
 | 16 | **Tests used to publish into the real index store** | Until WS-2 the publish tests stored the current week into the dev DB on every run; this box's 2026-W42 rows predate the lineage guard and the AI-LPI one claims `is_live: true`. Use the `observation_store` fixture for anything that writes observations; never read the dev box's published history as evidence of the agent. The rows store the defect values (AI-STI 100 severe; AI-LPI 55 claiming `is_live: true`) at method 1.0.0; since WS-19 (Alembic 020) they are marked `superseded_by='2.0.0'` and no longer count for any week. Never delete them. |
 | 17 | **The test bootstrap migrates the dev DB** | `tests/conftest.py::_bootstrap_test_database` runs `alembic upgrade head` against `data/openclaw.db` at collection, so a new migration is applied to the dev DB by the first test run — write migrations to be safe on real data before running any test. |
 | 18 | **The dev DB is in WAL mode** | Recent writes sit in `data/openclaw.db-wal`; `cp data/openclaw.db x.db` gives a stale copy (missing columns a migration just added). Copy with the SQLite backup API (`src.backup(dst)`). |
+| 19 | **A swallowed `ImportError` makes a live path dead** | `competitiveness_engine.py` imported `macro_intelligence_engine`, which does not exist (the singleton is `macro_intelligence`), inside `try/except Exception` — so NOK/USD **always** fell back to 0.093 and the US spot **always** returned the undated 8.50 constant while the payload said `live`. When a `try` wraps a lazy import, assert the import name in a test (`test_ws22_data_claims.py::test_live_nok_rate_is_used_when_macro_answers`) or the fallback becomes permanent and invisible. |
 
 ## 7. Definition of done for the next module
 

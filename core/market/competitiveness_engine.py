@@ -85,7 +85,9 @@ YAHOO_FX_TICKERS = {
     "CAD": "CADUSD=X",
 }
 
-# Fallback FX rates (approximate, used if Yahoo fails)
+# Undated approximate constants, used only when a live quote is unavailable.
+# They are never silent: `_to_dict` reports `data_quality: partial_fallback`,
+# names the currencies in `fx_fallbacks` and degrades `data_provenance`.
 FALLBACK_FX = {
     "NOK": 0.093,   # 1 NOK = $0.093
     "CLP": 0.00105, # 1 CLP = $0.00105
@@ -136,18 +138,21 @@ class CompetitivenessEngine:
     async def _fetch_fx_rates(self) -> dict[str, float]:
         """Fetch live FX rates: NOK from macro engine, others from Yahoo."""
         rates: dict[str, float] = {}
+        self._fx_fallbacks: list[str] = []
 
         # Get NOK/USD from macro_intelligence (already cached)
         try:
-            from core.market.macro_intelligence import macro_intelligence_engine
-            macro = await macro_intelligence_engine.fetch()
+            from core.market.macro_intelligence import macro_intelligence
+            macro = await macro_intelligence.fetch()
             nok_usd = macro.series.get("nok_usd", 0)
             if nok_usd and nok_usd > 0:
                 rates["NOK"] = 1.0 / nok_usd  # Convert NOK per USD → USD per NOK
             else:
                 rates["NOK"] = FALLBACK_FX["NOK"]
+                self._fx_fallbacks.append("NOK")
         except Exception:
             rates["NOK"] = FALLBACK_FX["NOK"]
+            self._fx_fallbacks.append("NOK")
 
         # Fetch remaining currencies from Yahoo Finance
         try:
@@ -172,10 +177,12 @@ class CompetitivenessEngine:
                     except Exception:
                         pass
                     rates[currency] = FALLBACK_FX.get(currency, 0.01)
+                    self._fx_fallbacks.append(currency)
         except Exception:
             for currency in YAHOO_FX_TICKERS:
                 if currency not in rates:
                     rates[currency] = FALLBACK_FX.get(currency, 0.01)
+                    self._fx_fallbacks.append(currency)
 
         return rates
 
@@ -193,16 +200,22 @@ class CompetitivenessEngine:
         return 64.70  # Validated 2024 fallback
 
     async def _get_us_spot(self) -> float:
-        """Get global salmon USD/kg from macro intelligence."""
+        """Get global salmon USD/kg from macro intelligence.
+
+        The 8.50 constant is undated; `_to_dict` reports it as a partial
+        fallback rather than letting it drive margins as if it were live.
+        """
+        self._us_spot_is_fallback = True
         try:
-            from core.market.macro_intelligence import macro_intelligence_engine
-            macro = await macro_intelligence_engine.fetch()
+            from core.market.macro_intelligence import macro_intelligence
+            macro = await macro_intelligence.fetch()
             val = macro.series.get("global_salmon", 0)
             if val and val > 0:
+                self._us_spot_is_fallback = False
                 return val
         except Exception:
             pass
-        return 8.50  # Reasonable fallback
+        return 8.50  # Undated fallback
 
     async def compute_index(self) -> dict:
         """Compute full competitiveness index with live FX and costs."""
@@ -220,7 +233,10 @@ class CompetitivenessEngine:
 
         for country, cfg in ORIGIN_BASELINES.items():
             currency = cfg["currency"]
-            fx = fx_rates.get(currency, FALLBACK_FX.get(currency, 0.01))
+            fx = fx_rates.get(currency)
+            if fx is None:
+                fx = FALLBACK_FX.get(currency, 0.01)
+                self._fx_fallbacks.append(currency)
 
             # Local cost
             if country == "Norway":
@@ -394,14 +410,56 @@ class CompetitivenessEngine:
             return None
 
     def _to_dict(self, snap: CompetitivenessSnapshot) -> dict:
-        """Serialize snapshot to API-friendly dict."""
-        norway_fallback = getattr(self, "_norway_cost_is_fallback", False)
+        """Serialize snapshot to API-friendly dict.
+
+        Honesty: ``data_quality`` is ``live`` only when the Norway production
+        cost, the US spot price and every FX rate all came from a live source.
+        FX fallbacks used to be invisible here, so a snapshot priced with
+        NOK/USD 0.093 (about 10.75 NOK/USD) still called itself live.
+        """
+        norway_fallback = bool(getattr(self, "_norway_cost_is_fallback", False))
+        spot_fallback = bool(getattr(self, "_us_spot_is_fallback", False))
+        fx_fallbacks = sorted(set(getattr(self, "_fx_fallbacks", None) or []))
+
+        reasons: list[str] = []
+        if norway_fallback:
+            reasons.append("Norway production cost fell back to the 2024 value (NOK 64.70/kg)")
+        if spot_fallback:
+            reasons.append("US spot price fell back to the undated constant (USD 8.50/kg)")
+        if fx_fallbacks:
+            reasons.append(
+                "FX rate(s) fell back to undated approximate constants: "
+                + ", ".join(fx_fallbacks)
+            )
+        if norway_fallback:
+            quality = "stale_fallback"
+        elif fx_fallbacks or spot_fallback:
+            quality = "partial_fallback"
+        else:
+            quality = "live"
+
+        from core.market.data_provenance import DataProvenance
+
+        source = (
+            "Yahoo Finance FX + macro intelligence (FRED/SSB) + feed-cost engine "
+            "+ US salmon tariff register (core/regulatory_facts.py)"
+        )
+        provenance = (
+            DataProvenance.degraded(source, "; ".join(reasons), confidence=0.4)
+            if reasons
+            else DataProvenance.live(source, confidence=0.75)
+        )
         return {
             "generated_at": snap.generated_at,
             "us_spot_usd_kg": snap.us_spot_usd_kg,
             "fx_rates": snap.fx_rates,
-            "data_quality": "stale_fallback" if norway_fallback else "live",
+            "data_quality": quality,
             "fallback_value": norway_fallback,
+            "fx_fallbacks": fx_fallbacks,
+            "us_spot_fallback": spot_fallback,
+            "fx_fallback_values": {c: FALLBACK_FX[c] for c in fx_fallbacks if c in FALLBACK_FX},
+            "fallback_reason": "; ".join(reasons) or None,
+            "data_provenance": provenance.to_dict(),
             "source_date": "2024" if norway_fallback else None,
             "origins": [
                 {

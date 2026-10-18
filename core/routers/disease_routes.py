@@ -16,6 +16,23 @@ from core.market.data_provenance import DataProvenance
 router = APIRouter(prefix="/api/disease", tags=["disease"])
 
 
+def _mattilsynet_provenance(answered: bool, rows: int, empty_reason: str) -> DataProvenance:
+    """Provenance for a Mattilsynet-only payload.
+
+    Live only when the upstream answered and returned rows. These routes used
+    to stamp `DataProvenance.live("Mattilsynet + WOAH + Sernapesca")` even with
+    nothing returned, crediting two sources they never call.
+    """
+    source = "Mattilsynet (akvakultur-offentlig-api)"
+    if answered and rows:
+        return DataProvenance.live(source, confidence=0.85)
+    return DataProvenance.degraded(
+        source,
+        empty_reason if answered else "Mattilsynet did not answer",
+        confidence=0.2,
+    )
+
+
 @router.get("/norway")
 async def disease_norway():
     """Real-time disease outbreaks from Mattilsynet (Norwegian Food Safety Authority).
@@ -24,7 +41,11 @@ async def disease_norway():
     cases = await mattilsynet_client.fetch_disease_cases(limit=100)
     result = await mattilsynet_client.get_disease_summary(cases)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("Mattilsynet + WOAH + Sernapesca", confidence=0.90).to_dict()
+        result["data_provenance"] = _mattilsynet_provenance(
+            bool(mattilsynet_client.last_fetch_ok),
+            len(cases),
+            "no disease cases returned for the current window",
+        ).to_dict()
     return result
 
 
@@ -38,7 +59,16 @@ async def disease_norway_geo():
     # Look up coordinates from our locality database
     active = [c for c in cases if c.status == "active"]
     if not active:
-        return {"features": [], "type": "FeatureCollection"}
+        return {
+            "type": "FeatureCollection",
+            "features": [],
+            "total_active": 0,
+            "data_provenance": _mattilsynet_provenance(
+                bool(mattilsynet_client.last_fetch_ok),
+                len(cases),
+                "no active cases returned",
+            ).to_dict(),
+        }
 
     locality_nos = [c.locality_no for c in active]
     coords = {}
@@ -84,7 +114,9 @@ async def disease_norway_geo():
         "type": "FeatureCollection",
         "features": features,
         "total_active": len(active),
-        "data_provenance": DataProvenance.live("Mattilsynet + WOAH + Sernapesca", confidence=0.90).to_dict(),
+        "data_provenance": _mattilsynet_provenance(
+            bool(mattilsynet_client.last_fetch_ok), len(cases), "no active cases returned"
+        ).to_dict(),
     }
 
 
@@ -125,7 +157,11 @@ async def disease_treatments(year: int = 2026, limit: int = Query(50, ge=1, le=1
             }
             for t in treatments[:limit]
         ],
-        "data_provenance": DataProvenance.live("Mattilsynet + WOAH + Sernapesca", confidence=0.90).to_dict(),
+        "data_provenance": _mattilsynet_provenance(
+            bool(treatments),
+            len(treatments),
+            f"no treatment reports returned for {year}",
+        ).to_dict(),
     }
 
 
@@ -148,20 +184,56 @@ async def disease_by_company():
     return {
         "companies": companies,
         "count": len(companies),
-        "data_provenance": DataProvenance.live(
-            "Mattilsynet + WOAH + Sernapesca", confidence=0.90
+        "data_provenance": _mattilsynet_provenance(
+            bool(mattilsynet_client.last_fetch_ok),
+            len(cases),
+            "no active cases returned",
         ).to_dict(),
     }
 
 
+def _alerts_provenance(sources: dict[str, str], alerts: int = 0) -> DataProvenance:
+    """Provenance from the sources that actually answered.
+
+    The route used to stamp "Mattilsynet + WOAH + Sernapesca" as live
+    unconditionally, including when Mattilsynet had never been queried. An
+    empty payload is never live (the repo-wide rule): a source answering with
+    zero outbreaks is reported as degraded with that reason.
+    """
+    ok = sorted(k for k, v in sources.items() if v == "ok")
+    failed = sorted(k for k, v in sources.items() if v != "ok")
+    if not ok:
+        return DataProvenance.degraded(
+            "disease feeds (WOAH WAHIS, Mattilsynet, Sernapesca)",
+            "no upstream disease source answered"
+            + (f"; failed: {', '.join(failed)}" if failed else ""),
+            confidence=0.2,
+        )
+    if failed:
+        return DataProvenance.degraded(
+            " + ".join(ok),
+            f"partial: {', '.join(failed)} did not answer",
+            confidence=0.4,
+        )
+    if not alerts:
+        return DataProvenance.degraded(
+            " + ".join(ok),
+            "no outbreaks returned by the answering sources",
+            confidence=0.4,
+        )
+    return DataProvenance.live(" + ".join(ok), confidence=0.85)
+
+
 @router.get("/alerts")
 async def disease_alerts():
-    """Global fish disease outbreak intelligence — WOAH, Sernapesca, Regime."""
+    """Global fish disease outbreak intelligence — WOAH, Mattilsynet, Sernapesca."""
     from core.market.disease_alerts import disease_alert_engine
     di = await disease_alert_engine.fetch_alerts()
     result = disease_alert_engine.to_dict(di)
     if isinstance(result, dict):
-        result["data_provenance"] = DataProvenance.live("Mattilsynet + WOAH + Sernapesca", confidence=0.90).to_dict()
+        result["data_provenance"] = _alerts_provenance(
+            result.get("sources") or {}, len(result.get("alerts") or [])
+        ).to_dict()
     return result
 
 

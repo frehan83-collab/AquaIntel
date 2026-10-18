@@ -6,7 +6,67 @@
 ## What This Is
 Full-stack salmon aquaculture intelligence platform. ~300 API routes + 2 WebSockets, 24 router modules (incl. admin_routes, webhook_routes, apikey_routes; misc_routes 486 lines, 0 duplicates). 61 market engines (4 frozen, 1 offshore) + 3 ML engines (TimesFM 2.5, Chronos-2, Harvest Optimizer), 13 agents (incl. index_publisher). 59+ frontend pages, 38+ components (incl. RegionalHeatmap, useWebSocket, SupplyChainSankey, RadarChart, useTheme, ShortcutsHelp, KeyboardShortcuts). Dark/light theme toggle. Notification center with history. Webhook alerts (Slack/Teams/generic, auto-disable on failure). Farm Portfolio (multi-farm risk overview). API key management (bcrypt-hashed, rate limiting, rotation). API caching (ETag + 5-tier Cache-Control). Treatment cost comparison (7 methods). Company comparison (radar chart + metrics). Sidebar fuzzy search (Cmd+K). Keyboard shortcuts (vim-style navigation, Cmd+/, help modal). Custom alert rules (user-defined thresholds, live evaluation). Changelog page (release notes, What's New indicator). Batch data export (CSV/JSON admin compliance). i18n (NO/EN, 525 keys, all 59 pages wired, locale-aware formatting). Audit logging (admin trail with filters). Bookmarkable filters (URL-synced state). Dashboard customization (user-configurable widgets). Fully async DB (67+ refs, tuned pool). Gunicorn 4-worker production server. Production nginx (gzip, proxy cache, rate limiting, connection limits). Literature-cited treatment constants (Overton 2019, Mowi Handbook 2024). Stige lice model in treatment optimizer. Farm name search + "My Farms" saved list. Dashboard hero alert zone. InteractiveChart (crosshair hover, deployed on 7 pages) + ConfidenceBand + supply pipeline stacked bars. Disease PA grid overview. Market narrative banner. Brief dynamic section sorting + PDF export. Treatment history timeline. Bio Risk Map time slider (WIRED to backend, 8-week snapshots). 20 Alembic migrations, 31 DB tables (offshore columns, lice lineage, index supersession), 22 Pydantic schemas. 33 TypeScript API interfaces. OpenAPI v2.1.0 (/api/docs). Threshold alerts (WebSocket + TopBar + notification preferences). Error boundaries on 19 pages + 5 loading.tsx + 404. CI/CD 3 workflows + dependency scanning. Security headers. Mobile hamburger sidebar. PWA + offline. Demo mode + guided onboarding (80 seed treatment outcomes). GDPR privacy policy + data attribution footer. Data Honesty Layer (100+ provenance). YoY trends (6 pages). Decision Engine + MET.no with feedback loop (marketplace-learned profiles). Treatment Efficacy Marketplace (production: validated input, seed data, Pydantic schemas, learned profiles). Unified Scenario Sandbox. API Developer Portal. Multi-country (7). WebSocket Command Centre (real-time streaming + polling fallback). Excel export (SheetJS dynamic import .xlsx from DataTable). Regional Heatmap (PA-level disease/lice SVG). Satellite intelligence (SST, chlorophyll, farm clusters). Supply Chain Sankey (SVG flow diagram on Global Supply). Admin dashboard (data quality + platform health). WCAG accessibility (ARIA labels, skip-to-content, keyboard nav). Dynamic imports with loading placeholders. JWT bcrypt + rate limiting. Stripe. PostgreSQL/TimescaleDB. 418 tests (31 Hypothesis property-based). DataTable with pagination + Excel export. In-memory cache with @cached. Prometheus metrics. CONTRIBUTING.md + PROJECT_STATUS.md + DEPLOYMENT.md + .env.example. 5-agent deep research synthesis (30+ sources, docs/RESEARCH_SYNTHESIS.md). Python/FastAPI + Next.js/React/TypeScript. Zero pandas deprecation warnings.
 
-## Session Log — 2026-10-17 (WS-23 re-run: the price accuracy claim measured on real history)
+## Session Log — 2026-10-18 (WS-22 part 2: claims that outran the data)
+
+- **FIXED** `core/market/competitiveness_engine.py` — `_fetch_fx_rates()` records
+  every currency that fell back (NOK included) and `compute_index()` records a
+  currency missing from `fx_rates` too, so no path can price with a constant
+  silently. `_to_dict()` reports `data_quality: "partial_fallback"` when only FX
+  fell back, `"stale_fallback"` when the Norway production cost fell back as
+  before, `"live"` only when nothing did, plus `fx_fallbacks`,
+  `fx_fallback_values`, `fallback_reason` and a degraded `data_provenance`. It used
+  to say `data_quality: "live"` with NOK/USD 0.093 (about 10.75 NOK/USD).
+- **FIXED** both macro lookups in the same file imported
+  `macro_intelligence_engine`, which does not exist (the singleton is
+  `macro_intelligence`) — an `ImportError` swallowed by `except Exception`, so
+  NOK/USD **always** fell back and `_get_us_spot()` **always** returned the undated
+  USD 8.50 constant that drives every margin. The spot fallback is now tracked
+  (`_us_spot_is_fallback` → `us_spot_fallback` + a reason + `partial_fallback`);
+  a test pins the live NOK path the broken import never exercised.
+- **CHANGED** `core/routers/accuracy_routes.py` — `foundation_models_available` no
+  longer means "`torch` imports". `_foundation_model_availability()` checks the
+  library that loads each model (`chronos` / `timesfm` / `uni2ts`) with
+  `importlib.util.find_spec` (no import side effects) plus torch, and reports
+  `foundation_models` (per model: `label`, `requires`, `installed`, `loaded`),
+  `foundation_models_installed`, `foundation_models_loaded` and a note saying an
+  importable library is not proof a forecast was real. `_loaded_in_process()` reads
+  engine state instead of `is_available()`, which would download weights inside a
+  public GET.
+- **CHANGED** `core/market/mattilsynet_client.py` — new module-level
+  `newest_first_cases()` sorts by `diagnosis_date` then `suspicion_date` before the
+  20-row cap (upstream order is arbitrary; the list showed 2026-06-09 while the geo
+  view had 2026-09-22) and `get_disease_summary()` reports `active_outbreaks_shown`
+  vs `active_outbreaks_total`. `last_fetch_ok` records whether the last disease
+  fetch got a 200 (set only after the body parses, and left alone on a cache hit,
+  so an answered source is not reported as silent), because an empty list conflates
+  "no cases" with "upstream down".
+- **CHANGED** `core/market/disease_alerts.py` — `_get_norway_alerts()` became the
+  async `_fetch_norway_alerts()`: it now queries Mattilsynet **one alert per disease
+  type, `cases` = active localities** (one row per locality inflated
+  `active_outbreaks` and pushed `risk_level` to "high" on locality count) as well as
+  the regime signals, and records `sources` (`ok` / `failed` / `unavailable`) per
+  source. `DiseaseIntelligence.sources` is served with `sources_failed`. Honest
+  limitation documented: a case reported by both WOAH and Mattilsynet appears twice,
+  so `active_outbreaks` counts source reports.
+- **CHANGED** `core/routers/disease_routes.py` — one `_mattilsynet_provenance()`
+  rule for `/norway`, `/norway/geo`, `/treatments` and `/by-company`: live only when
+  Mattilsynet answered **and** returned rows, degraded with the reason otherwise
+  (these used to stamp `DataProvenance.live("Mattilsynet + WOAH + Sernapesca")`
+  unconditionally, and the geo route's empty early return carried none).
+  `/api/disease/alerts` builds its provenance from the sources that answered
+  (`_alerts_provenance()`): live only when every expected source answered, degraded
+  naming the ones that did not.
+- **CHANGED** `frontend/src/types/api.ts`, `app/competitiveness/page.tsx`,
+  `app/disease/page.tsx` — `CompetitivenessIndex.data_quality` widened with
+  `"partial_fallback"` plus the new fields; both pages render the served
+  `data_provenance` instead of a hardcoded `quality="live"` badge.
+- **Contract:** deliberate OpenAPI re-freeze of one description
+  (`/api/disease/alerts`: "WOAH, Sernapesca, Regime" → "WOAH, Mattilsynet,
+  Sernapesca").
+- **Tests:** `tests/test_ws22_data_claims.py` (21) joined the fast gate;
+  `tests/test_routers.py`'s by-company provenance assertion is rule-based instead of
+  network-dependent.
+
 
 - **CHANGED** `scripts/backtest_price_ml.py` — `load_ssb_series()` became
   `load_ssb_series_with_provenance()` and returns the rows *plus* what they are:

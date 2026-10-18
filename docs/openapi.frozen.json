@@ -4726,7 +4726,7 @@
     },
     "/api/disease/alerts": {
       "get": {
-        "description": "Global fish disease outbreak intelligence \u2014 WOAH, Sernapesca, Regime.",
+        "description": "Global fish disease outbreak intelligence \u2014 WOAH, Mattilsynet, Sernapesca.",
         "operationId": "disease_alerts_api_disease_alerts_get",
         "responses": {
           "200": {

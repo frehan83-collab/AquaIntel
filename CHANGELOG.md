@@ -5,6 +5,55 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
+### WS-22 (part 2) — claims that outran the data (2026-10-18)
+- **Why:** four payloads stated more than their inputs supported. Competitiveness
+  reported `data_quality: "live"` while NOK/USD had fallen back to the hardcoded
+  0.093 (about 10.75 NOK/USD); `/api/accuracy` reported
+  `foundation_models_available: true` from `import torch` alone (an importable
+  library is not a loaded model); `/api/disease/norway` sliced the first 20 active
+  outbreaks in upstream order, so its newest visible diagnosis was 2026-06-09 while
+  the geo view had 2026-09-22; and `/api/disease/alerts` named Mattilsynet in its
+  provenance while querying only WOAH and Sernapesca, so it could answer "no
+  significant disease outbreaks" with Norwegian ISA cases active.
+- **Competitiveness:** `_fetch_fx_rates` records every currency that fell back;
+  `_to_dict` reports `data_quality: partial_fallback` (`stale_fallback` when the
+  Norway production cost fell back), `fx_fallbacks`, `fx_fallback_values`, a
+  `fallback_reason`, and a degraded `data_provenance`. It is `live` only when no
+  quote fell back. Two silent fallbacks behind that label were repaired on the way:
+  both macro lookups imported `macro_intelligence_engine`, which does not exist (the
+  singleton is `macro_intelligence`), so NOK/USD **always** fell back and the US spot
+  was **always** the undated USD 8.50 constant; the spot fallback is now tracked
+  (`us_spot_fallback`) and degrades the payload too.
+- **Foundation models:** availability now comes from the library that loads each
+  model (`chronos-forecasting`, `timesfm`, `uni2ts`) plus torch, with per-model
+  `installed`/`loaded` detail and a note that an importable library is not proof
+  that a forecast was real. `is_available()` is deliberately not called — it
+  downloads weights.
+- **Disease list:** `newest_first_cases()` sorts by diagnosis (then suspicion) date
+  before the 20-row cap; the summary reports `active_outbreaks_shown` against
+  `active_outbreaks_total`.
+- **Disease alerts:** `_fetch_norway_alerts()` queries Mattilsynet (active cases as
+  ongoing alerts, ISA high and trade-relevant) alongside the regime signals, **one
+  alert per disease type with `cases` = active localities** (one row per locality
+  inflated `active_outbreaks` and `risk_level`);
+  `MattilsynetClient.last_fetch_ok` separates an empty answer from a failed one and
+  survives a cache hit; every source records `ok`/`failed`/`unavailable` and the
+  payload serves `sources` + `sources_failed`; `/api/disease/alerts` builds provenance
+  from the sources that answered and names those that did not.
+  `/api/disease/{norway,norway/geo,treatments,by-company}` share one
+  `_mattilsynet_provenance()` rule: live only when Mattilsynet answered **and**
+  returned rows, degraded with the reason otherwise (the geo route's empty early
+  return now carries provenance too).
+- **Frontend:** the competitiveness and disease pages render the served
+  `data_provenance` instead of a hardcoded `quality="live"` badge; the types gain
+  `partial_fallback`, `fx_fallbacks`, `sources`/`sources_failed` and
+  `active_outbreaks_shown`/`_total`.
+- **Contract:** deliberate OpenAPI re-freeze of one description
+  (`/api/disease/alerts` said "Regime", now "Mattilsynet").
+- **Tests:** `tests/test_ws22_data_claims.py` (21), including the live-NOK path the
+  broken import had never exercised; `tests/test_routers.py`'s by-company provenance
+  assertion is rule-based instead of network-dependent.
+
 ### WS-21 — regulatory facts as dated, sourced data (2026-10-17)
 - **Why:** the served traffic-light colours came from the frozen regime detector and
   were wrong for 6 of 13 areas against the 19 June 2026 decision (its history used

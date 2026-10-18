@@ -64,6 +64,7 @@ class DiseaseIntelligence:
     countries_affected: list[str] = field(default_factory=list)
     risk_level: str = "low"     # low / moderate / elevated / high
     insights: list[str] = field(default_factory=list)
+    sources: dict[str, str] = field(default_factory=dict)  # source -> ok/failed/unavailable
 
 
 class DiseaseAlertEngine:
@@ -73,13 +74,23 @@ class DiseaseAlertEngine:
     _cache_time: dt.datetime | None = None
     _cache_ttl = dt.timedelta(hours=6)
 
+    def __init__(self) -> None:
+        # Instance state, not a class attribute: mutating a shared class dict
+        # would leak one run's source status into the next request.
+        self._source_status: dict[str, str] = {}
+
     async def fetch_alerts(self) -> DiseaseIntelligence:
-        """Fetch disease alerts from all sources."""
+        """Fetch disease alerts from all sources.
+
+        Each source records whether it answered in ``sources``, so a caller can
+        name the ones that failed instead of stamping a fixed source list live.
+        """
         now = dt.datetime.now(dt.UTC)
         if self._cache and self._cache_time and (now - self._cache_time) < self._cache_ttl:
             return self._cache
 
         alerts: list[DiseaseAlert] = []
+        self._source_status = {}
 
         # 1. WOAH WAHIS API
         woah_alerts = await self._fetch_woah()
@@ -89,8 +100,8 @@ class DiseaseAlertEngine:
         chile_alerts = self._get_chile_alerts()
         alerts.extend(chile_alerts)
 
-        # 3. Norway disease data (from BarentsWatch/regime)
-        norway_alerts = self._get_norway_alerts()
+        # 3. Norway: Mattilsynet cases + regime predictions
+        norway_alerts = await self._fetch_norway_alerts()
         alerts.extend(norway_alerts)
 
         # Compute summary
@@ -126,6 +137,7 @@ class DiseaseAlertEngine:
             countries_affected=countries,
             risk_level=risk,
             insights=insights,
+            sources=dict(self._source_status),
         )
 
         self._cache = result
@@ -136,6 +148,7 @@ class DiseaseAlertEngine:
     async def _fetch_woah(self) -> list[DiseaseAlert]:
         """Fetch from WOAH WAHIS API."""
         alerts = []
+        self._source_status["woah_wahis"] = "failed"
         try:
             async with httpx.AsyncClient(timeout=20) as client:
                 # WAHIS API v1 — disease event list
@@ -149,6 +162,7 @@ class DiseaseAlertEngine:
                     headers={"User-Agent": "AquaIntel/1.0 Research"},
                 )
                 if resp.status_code == 200:
+                    self._source_status["woah_wahis"] = "ok"
                     data = resp.json()
                     reports = data if isinstance(data, list) else data.get("reports", data.get("data", []))
                     for report in (reports or [])[:50]:
@@ -184,10 +198,12 @@ class DiseaseAlertEngine:
     def _get_chile_alerts(self) -> list[DiseaseAlert]:
         """Get Chile disease data from existing chile_monitor."""
         alerts = []
+        self._source_status["sernapesca"] = "unavailable"
         try:
             from core.market.chile_monitor import chile_monitor
             snapshot = chile_monitor.get_latest_snapshot()
             if snapshot:
+                self._source_status["sernapesca"] = "ok"
                 isa = snapshot.get("isa_outbreaks", 0) or 0
                 srs = snapshot.get("srs_outbreaks", 0) or 0
                 if isa > 0:
@@ -216,13 +232,55 @@ class DiseaseAlertEngine:
                         trade_impact=False,
                         supply_impact_pct=min(3, srs * 0.5),
                     ))
-        except Exception:
-            pass
+        except Exception as exc:
+            log.debug("disease.chile_error", error=str(exc)[:80])
         return alerts
 
-    def _get_norway_alerts(self) -> list[DiseaseAlert]:
-        """Get Norway disease signals from regime detector and lice data."""
-        alerts = []
+    async def _fetch_norway_alerts(self) -> list[DiseaseAlert]:
+        """Norway: Mattilsynet's active cases plus regime predictions.
+
+        Mattilsynet was missing here, so the route could report "no significant
+        disease outbreaks" while its own provenance named Mattilsynet — a
+        source this engine never queried.
+        """
+        alerts: list[DiseaseAlert] = []
+        self._source_status["mattilsynet"] = "failed"
+        try:
+            from core.market.mattilsynet_client import mattilsynet_client
+
+            cases = await mattilsynet_client.fetch_disease_cases(limit=200)
+            self._source_status["mattilsynet"] = (
+                "ok" if mattilsynet_client.last_fetch_ok else "failed"
+            )
+            # One alert per disease type, with the active locality count in
+            # `cases` — one alert per locality inflated `active_outbreaks` and
+            # pushed `risk_level` to "high" on locality count alone.
+            by_disease: dict[str, list] = {}
+            for c in cases:
+                if c.status == "active":
+                    by_disease.setdefault(c.disease_type or "Unknown disease", []).append(c)
+            for disease_type, group in sorted(by_disease.items()):
+                upper = disease_type.upper()
+                isa = "ILA" in upper or "LAKSEANEMI" in upper
+                newest = max(
+                    ((c.diagnosis_date or c.suspicion_date or "")[:10] for c in group),
+                    default="",
+                )
+                alerts.append(DiseaseAlert(
+                    disease=disease_type,
+                    country="Norway",
+                    country_code="NOR",
+                    report_date=newest,
+                    status="ongoing",
+                    cases=len(group),
+                    source="mattilsynet",
+                    severity="high" if isa else "moderate",
+                    trade_impact=isa,
+                    supply_impact_pct=min(5.0, 0.5 * len(group)),
+                ))
+        except Exception as exc:
+            log.debug("disease.mattilsynet_error", error=str(exc)[:80])
+
         try:
             from core.market.regime_detector import regime_detector
             regime_alerts = regime_detector.get_alerts()
@@ -250,6 +308,8 @@ class DiseaseAlertEngine:
             "countries_affected": di.countries_affected,
             "risk_level": di.risk_level,
             "insights": di.insights,
+            "sources": di.sources,
+            "sources_failed": sorted(k for k, v in di.sources.items() if v != "ok"),
             "alerts": [
                 {
                     "disease": a.disease,

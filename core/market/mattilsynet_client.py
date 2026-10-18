@@ -68,6 +68,19 @@ class LiceTreatment:
     sensitivity_tests: list[dict] = field(default_factory=list)
 
 
+def newest_first_cases(cases: list[DiseaseCase], limit: int = 20) -> list[DiseaseCase]:
+    """Cases sorted newest diagnosis first, capped at ``limit``.
+
+    Upstream order is arbitrary, so slicing it hid the most recent outbreaks:
+    ``/api/disease/norway`` showed a newest date of 2026-06-09 while the geo
+    view had diagnoses up to 2026-09-22. An undated case sorts last.
+    """
+    def _date(c: DiseaseCase) -> str:
+        return c.diagnosis_date or c.suspicion_date or ""
+
+    return sorted(cases, key=_date, reverse=True)[:limit]
+
+
 class MattilsynetClient:
     """
     Client for Mattilsynet's aquaculture public APIs.
@@ -78,12 +91,19 @@ class MattilsynetClient:
     _disease_cache_time: dt.datetime | None = None
     _cache_ttl = dt.timedelta(hours=1)
     _lice_company_cache: dict[int, str] = {}  # locality_no → company name from lice reports
+    last_fetch_ok: bool = False  # did the last disease fetch get a 200 from upstream?
 
     async def fetch_disease_cases(self, limit: int = 100) -> list[DiseaseCase]:
-        """Fetch active disease cases from Mattilsynet."""
+        """Fetch active disease cases from Mattilsynet.
+
+        ``last_fetch_ok`` records whether the upstream answered, so a caller
+        can tell an empty answer from a failed one (the empty list alone
+        conflates them).
+        """
         now = dt.datetime.now(dt.UTC)
         if self._disease_cache and self._disease_cache_time and (now - self._disease_cache_time) < self._cache_ttl:
             return self._disease_cache
+        self.last_fetch_ok = False
 
         cases: list[DiseaseCase] = []
         try:
@@ -123,6 +143,7 @@ class MattilsynetClient:
                             updated=r.get("oppdatert", ""),
                         ))
 
+                    self.last_fetch_ok = True
                     self._disease_cache = cases
                     self._disease_cache_time = now
                     log.info("mattilsynet.diseases_fetched",
@@ -262,6 +283,8 @@ class MattilsynetClient:
             "BAKTERIELL_NYRESYKE": "Bacterial Kidney Disease (BKD)",
         }
 
+        active_newest = newest_first_cases(active)
+
         return {
             "source": "Mattilsynet (Norwegian Food Safety Authority)",
             "api": "akvakultur-offentlig-api.fisk.mattilsynet.io",
@@ -272,6 +295,8 @@ class MattilsynetClient:
             "by_disease": {
                 DISEASE_NAMES.get(k, k): v for k, v in sorted(by_type.items(), key=lambda x: -x[1])
             },
+            "active_outbreaks_shown": len(active_newest),
+            "active_outbreaks_total": len(active),
             "active_outbreaks": [
                 {
                     "id": c.id,
@@ -286,7 +311,7 @@ class MattilsynetClient:
                     "status": c.status,
                     "days_active": (dt.datetime.now(dt.UTC) - dt.datetime.fromisoformat(c.suspicion_date.replace("Z", "+00:00"))).days if c.suspicion_date else 0,
                 }
-                for c in active[:20]
+                for c in active_newest[:20]
             ],
         }
 

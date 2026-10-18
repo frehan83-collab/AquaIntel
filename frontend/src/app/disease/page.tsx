@@ -106,7 +106,10 @@ export default function DiseasePage() {
               {t("disease.source_mattilsynet")} + {t("disease.source_woah")} {"\u2014"}real-time surveillance
             </p>
             <FreshnessIndicator lastUpdated={fetchedAt} />
-            <DataQualityBadge source="Mattilsynet + WOAH" quality="live" />
+            <DataQualityBadge
+              source="Mattilsynet + WOAH"
+              provenance={norway?.data_provenance ?? alerts?.data_provenance}
+            />
           </div>
         </div>
         <div className="flex items-center gap-2">

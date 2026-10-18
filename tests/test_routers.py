@@ -277,7 +277,14 @@ class TestDiseaseRoutes:
         assert "companies" in body
         assert isinstance(body["companies"], dict)
         assert body["count"] == len(body["companies"])
-        assert body["data_provenance"]["is_live"] is True
+        prov = body["data_provenance"]
+        assert isinstance(prov["is_live"], bool)
+        # Live requires the upstream to have answered; a run without network
+        # must degrade with a reason instead of claiming live (WS-22).
+        if prov["is_live"]:
+            assert prov["source"].startswith("Mattilsynet")
+        else:
+            assert prov["fallback_reason"]
         # No provenance object masquerading as a company
         assert "data_provenance" not in body["companies"]
 

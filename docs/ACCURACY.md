@@ -79,9 +79,13 @@ Three things worth stating plainly:
 2. **92.1% coverage against an 80% nominal interval means the interval is
    conservative** (too wide), not that the point forecast is good. Reported as
    measured, including the unflattering interpretation.
-3. **`foundation_models_available` is `false` where `torch` is not installed**, so
-   every live forecast is that fallback. The `/api/accuracy` response states this
-   rather than hiding it.
+3. **`foundation_models_available` is per model, from the library that loads it.**
+   A model counts as available only when its own library is installed
+   (`chronos-forecasting`, `timesfm`, `uni2ts`) alongside `torch`; the response
+   also reports `installed` and `loaded` per model, because `torch` alone says
+   nothing and an importable library is not proof that a forecast was real.
+   Where nothing can load, every live forecast is that fallback — the
+   `/api/accuracy` response states this rather than hiding it.
 
 To regenerate on a host with live data access:
 

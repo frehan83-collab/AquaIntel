@@ -67,7 +67,10 @@ export default function CompetitivenessPage() {
             <p className="text-sm text-[var(--text-secondary)]">
               {t("competitiveness.fx_adjusted")}
             </p>
-            <DataQualityBadge source="FRED + Yahoo Finance" quality="live" />
+            <DataQualityBadge
+              source="FRED + Yahoo Finance"
+              provenance={data?.data_provenance}
+            />
           </div>
         </div>
         <div className="flex items-center gap-2">
