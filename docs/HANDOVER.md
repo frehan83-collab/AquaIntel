@@ -1806,6 +1806,19 @@ costs NOK 7–74/user/month by plan.
 **Open:** a 150-question live-model golden set; prompt caching; overage billing and annual
 answer packs (both need a stored payment method).
 
+### WS-46/47 · Free-model labelling and the withheld caveat — **DONE 2026-10-18**
+**WS-46:** `model_is_free` on the chat answer and the workbench document, carried to the payload
+and shown as a chip on `/chat`; the routing policy is the council's (paid model first, free chain
+only as a degraded path), and prompt caching is **rejected** — 0.2 % of revenue against
+correctness and the 50/day ceiling.
+**WS-47:** the live golden set re-measured against the hardened checker: **14/18, refusal 100 %,
+gap 50 %, 0 % unmatched** — the fail-closed strip removed the sentences that carried the scene
+date, the biomass caveat and the gap statement. The data status is now reattached from the facts
+(`_data_status()`), so a withheld answer still names every stale and unavailable feed with its
+age. Offline gate: 18/18, 0 unmatched.
+**Open:** the two cases where the model simply omitted a date (`feed-age`, `chlorophyll-age`) are
+prompt-following, not checking; the next live run should confirm the gap recovery at 100 %.
+
 ### WS-43/44/45 · The council's round — **DONE 2026-10-18**
 **Council.** Four lenses (commercial, aquaculture domain, ML grounding, legal) and a chair,
 convened over the current state. Verdict: **fix, do not build**. Ranked plan: (1) verify a

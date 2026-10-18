@@ -155,6 +155,22 @@ satellite page **fabricated per-farm readings with a seeded RNG** and rendered
   the snapshot carries `tariff_basis`. `/competitiveness` marks export-price rows with
   `*` and prints the basis under the table. `tests/test_tariff_basis.py` (6).
 
+- **WS-46 — a free-model answer is labelled.** The council wanted one pinned paid model for
+  paying seats and the free chain only as a degraded path. The honest minimum is now visible:
+  `ChatAnswer.model_is_free` and `WorkbenchDocument.model_is_free` say which model wrote the
+  prose, the payload carries it, and `/chat` shows a "free model" chip beside the answer, so a
+  seat's quality is not a lottery nobody can see. Rejected with the council's reasoning: prompt
+  caching — at USD 0.0082 per answer against a NOK 4,900 seat it is ~0.2 % of revenue and the
+  binding constraints are correctness and the free tier's 50/day ceiling, not tokens.
+- **WS-47 — withholding must not withhold the caveat.** Re-measuring the live golden set with the
+  hardened checker and fail-closed stripping produced the honest trade in numbers: **14/18 cases,
+  refusal 100 %, gap disclosure dropped to 50 %, 0 % unmatched numbers** — because the sentences
+  carrying the scene date, the "biomass, not toxicity" caveat and the data gap were themselves
+  stripped when they contained an unsupported figure. A withheld answer that reads as a confident
+  one is worse than a caveated answer, so the data status is now reattached **from the facts**
+  (`_data_status()`): every non-live fact with its age, every unavailable fact by name. The
+  offline gate stays 18/18 with 0 unmatched.
+
 - **WS-43/44/45 — the council's round: verify before charging, fail closed, bind the limit.**
   A four-lens council (commercial, aquaculture domain, ML grounding, legal) plus a chair ranked
   the next moves; the chair's verdict was "fix, do not build". Three of its five items shipped

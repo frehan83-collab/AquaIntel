@@ -187,6 +187,18 @@ def _followups(context: PlatformContext) -> list[str]:
     return suggestions[:4]
 
 
+def _data_status(context: PlatformContext) -> str:
+    """A deterministic data-status line, built only from the facts."""
+    parts: list[str] = []
+    for fact in context.facts:
+        if fact.provenance == "unavailable":
+            parts.append(f"{fact.label} is unavailable")
+        elif fact.provenance != "live":
+            age = f", {fact.age_days}d old" if fact.age_days is not None else ""
+            parts.append(f"{fact.label} is {fact.provenance}{age}")
+    return ("Data status: " + "; ".join(parts) + ".") if parts else ""
+
+
 class ChatService:
     """One answer path. Call `ask()`; it never raises for a data or provider problem."""
 
@@ -288,10 +300,15 @@ class ChatService:
                 "not be matched to the platform's data, so they were withheld."
             )
             if removed:
+                # WS-47: stripping can remove the sentence that carried the honesty caveat, so
+                # the data status is reattached from the facts themselves — never from the
+                # model — or a withheld answer would read as a confident one.
+                status = _data_status(context)
                 text = (
                     text
                     + f"\n\n({len(verification.unverified)} number(s) were withheld "
                     "because the verified data could not support them.)"
+                    + (f"\n{status}" if status else "")
                 )
 
         elapsed = (dt.datetime.now(dt.UTC) - started).total_seconds() * 1000
