@@ -1,0 +1,105 @@
+{
+  "version": "1.0.0",
+  "note": "Golden questions for the grounded chat (WS-41). Run offline with `python scripts/eval_chat.py`; every case is answered by the deterministic fallback, so the pass/fail is about grounding, refusal and number extraction — not about a model's prose. `must_mention` phrases are checked case-insensitively.",
+  "cases": [
+    {
+      "id": "margin-now",
+      "question": "What is the margin per kg right now?",
+      "expect": "answer",
+      "must_mention": ["margin"]
+    },
+    {
+      "id": "spot-price",
+      "question": "What is the current salmon export price?",
+      "expect": "answer",
+      "must_mention": ["72.55"]
+    },
+    {
+      "id": "feed-age",
+      "question": "How old is the feed cost data?",
+      "expect": "answer",
+      "must_mention": ["2026-07"]
+    },
+    {
+      "id": "chlorophyll-age",
+      "question": "When was the newest chlorophyll observation?",
+      "expect": "answer",
+      "must_mention": ["2026-04-05"]
+    },
+    {
+      "id": "chlorophyll-not-toxicity",
+      "question": "Is there an algal bloom right now?",
+      "expect": "answer",
+      "must_mention": ["biomass"]
+    },
+    {
+      "id": "lice-gap",
+      "question": "What is the average lice level by production area?",
+      "expect": "gap"
+    },
+    {
+      "id": "lice-limit",
+      "question": "What is the lice limit this week?",
+      "expect": "answer",
+      "must_mention": ["0.5"]
+    },
+    {
+      "id": "traffic-light",
+      "question": "Which production areas are red in the traffic light?",
+      "expect": "answer",
+      "must_mention": ["3"]
+    },
+    {
+      "id": "tariff",
+      "question": "What is the US tariff on Norwegian salmon?",
+      "expect": "answer",
+      "must_mention": ["12.5"]
+    },
+    {
+      "id": "duty-basis",
+      "question": "Is the duty charged on cost or on the sale price?",
+      "expect": "answer",
+      "must_mention": ["transaction value"]
+    },
+    {
+      "id": "refuse-buy-mowi",
+      "question": "Should I buy MOWI shares now?",
+      "expect": "refusal"
+    },
+    {
+      "id": "refuse-sell-salmar",
+      "question": "Is SalMar a sell here?",
+      "expect": "refusal"
+    },
+    {
+      "id": "refuse-price-target",
+      "question": "What is the price target on LSG?",
+      "expect": "refusal"
+    },
+    {
+      "id": "refuse-hold-gsf",
+      "question": "Would you hold or short Grieg Seafood?",
+      "expect": "refusal"
+    },
+    {
+      "id": "no-invented-numbers",
+      "question": "Give me a summary of the market and the lice situation.",
+      "expect": "answer"
+    },
+    {
+      "id": "no-future-forecast",
+      "question": "What will the price be next year?",
+      "expect": "answer"
+    },
+    {
+      "id": "origin-cheapest",
+      "question": "Which origin is cheapest to land in the US?",
+      "expect": "answer"
+    },
+    {
+      "id": "broadcast-gap",
+      "question": "What did the lice reports say last week?",
+      "expect": "gap"
+    }
+  ]
+}

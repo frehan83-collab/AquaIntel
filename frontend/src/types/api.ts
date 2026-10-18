@@ -2017,3 +2017,57 @@ export interface ChatSaveAlertResponse {
   available_metrics?: string[];
   message?: string;
 }
+
+// ── Deep analysis runs (WS-39) ──────────────────────────────────────────
+
+export interface WorkbenchRunKind {
+  key: string;
+  name: string;
+  blurb: string;
+  reads: string;
+  credits: number;
+}
+
+export interface CreditPack {
+  key: string;
+  name: string;
+  runs: number;
+  price_nok: number;
+  per_run_nok: number;
+  audience: string;
+  note: string;
+  gross_margin_pct: number;
+}
+
+export interface WorkbenchCatalog {
+  runs: WorkbenchRunKind[];
+  packs: CreditPack[];
+  validity_note: string;
+  credits: number | null;
+  credits_available: boolean;
+}
+
+/** A rendered document. `mode` is "model" (a credit was spent) or "digest" (nothing was). */
+export interface WorkbenchDocument {
+  kind: string;
+  title: string;
+  document: string;
+  mode: "model" | "digest";
+  sources: ChatFactSource[];
+  usage: { input_tokens: number; output_tokens: number; cost_usd: number };
+  credits_spent: number;
+  credits_after: number | null;
+  generated_at: string;
+  degraded: boolean;
+  latency_ms: number;
+  charged: boolean;
+  charge_note: string;
+}
+
+export interface CreditsStatus {
+  balance: number | null;
+  available: boolean;
+  packs: CreditPack[];
+  validity_note: string;
+  history: { id: number; delta: number; reason: string; ref: string | null; created_at: string | null }[];
+}

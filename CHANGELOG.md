@@ -155,6 +155,23 @@ satellite page **fabricated per-farm readings with a seeded RNG** and rendered
   the snapshot carries `tariff_basis`. `/competitiveness` marks export-price rows with
   `*` and prints the basis under the table. `tests/test_tariff_basis.py` (6).
 
+- **WS-41 — the panel and the gate.** The workbench existed only as an API; a paid feature
+  with no button is not a product. `/chat` now carries a **Deep analysis** panel in its right
+  rail: the credit balance, the three runs with what each reads, a run button, and the rendered
+  document with its sources and its charge note (a digest run says it cost nothing and spends
+  no credit). New client methods `workbenchCatalog`, `workbenchRun`, `creditsStatus` and the
+  matching types.
+  And the claim "every number is checked" now has a gate: `artifacts/chat_golden_questions.json`
+  (18 questions, including four that must be refused and two that must disclose a gap) is run
+  offline by `scripts/eval_chat.py` and by `tests/test_chat_eval.py`, on the deterministic path
+  so it costs nothing and never drifts with a model upgrade. Measured on 2026-10-18:
+  **18/18 cases, 100 % refusal accuracy, 100 % gap disclosure, 490 numbers checked, 0
+  unmatched** — the silent-wrong-number rate is zero, which is the number a buyer asks about.
+  The run also caught two real extractor bugs: week labels and ISO dates were being read as
+  claims (`W41` → 41, `2026-07` → −07), and unit suffixes and legal citations (`m3`,
+  `Section 301`) likewise; dates, week labels, units and citations are now masked, and a
+  fact's `age_days` counts as a supported number because it is a fact attribute.
+
 - **WS-39 — documents are sold, tokens are not.** `core/billing/credits_catalog.py` prices
   three packs of deep-analysis runs (10 for NOK 1,490, 30 for NOK 3,900, 100 for NOK 11,900 —
   NOK 149→119 per document, 91–97 % gross margin against the measured USD 0.35 model cost);

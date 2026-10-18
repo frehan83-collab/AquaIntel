@@ -35,6 +35,7 @@ import type {
   MarketSpotPrice, MarketForwardCurve, FeedCostCompositeIndex,
   MarginBridge,
   ChatAnswerResponse, ChatHistoryTurn, ChatUsageStatus, ChatSaveAlertResponse,
+  WorkbenchCatalog, WorkbenchDocument, CreditsStatus,
   EventImpactResult, SavedScenario, SignalsWithdrawn,
 } from "@/types/api";
 
@@ -446,6 +447,14 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ question, name }),
     }),
+  // Deep analysis (WS-39): documents are bought with credits, chat is included.
+  workbenchCatalog: () => fetchAPI<WorkbenchCatalog>("/api/workbench/catalog"),
+  workbenchRun: (kind: string) =>
+    fetchAPIRaw<WorkbenchDocument>("/api/workbench/run", {
+      method: "POST",
+      body: JSON.stringify({ kind }),
+    }),
+  creditsStatus: () => fetchAPI<CreditsStatus>("/api/billing/credits"),
 
   // Alert Notification System
   alerts: (category?: string, severity?: string, unreadOnly?: boolean, limit?: number) =>

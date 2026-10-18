@@ -25,6 +25,8 @@ import type {
   ChatHistoryTurn,
   ChatSaveAlertResponse,
   ChatUsageStatus,
+  WorkbenchCatalog,
+  WorkbenchDocument,
 } from "@/types/api";
 
 const SUGGESTIONS = [
@@ -288,6 +290,121 @@ function LockedPanel({
   );
 }
 
+
+const RUN_ICON = "•";
+
+function DeepAnalysis({
+  catalog,
+  onRun,
+  running,
+  document,
+  error,
+}: {
+  catalog: WorkbenchCatalog | null;
+  onRun: (kind: string) => void;
+  running: string | null;
+  document: WorkbenchDocument | null;
+  error: string | null;
+}) {
+  const [open, setOpen] = useState(false);
+  if (!catalog) return null;
+  const credits = catalog.credits;
+  return (
+    <GlassCard delay={0.12}>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h2 className="text-xs font-semibold text-[var(--text-primary)]">Deep analysis</h2>
+          <p className="mt-1 text-[10px] leading-snug text-[var(--text-secondary)]">
+            Documents, not chat turns. Each run reads several engines and writes a short note
+            with its sources.
+          </p>
+        </div>
+        <span className="shrink-0 rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 text-[10px] text-[var(--text-secondary)]">
+          {credits == null ? "credit ledger unavailable" : `${credits} run${credits === 1 ? "" : "s"}`}
+        </span>
+      </div>
+
+      <ul className="mt-3 space-y-1.5">
+        {catalog.runs.map((run) => (
+          <li key={run.key}>
+            <button
+              type="button"
+              onClick={() => onRun(run.key)}
+              disabled={running !== null || credits === 0}
+              className="w-full rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-2 text-left hover:bg-white/[0.05] disabled:opacity-50"
+            >
+              <span className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-semibold text-[var(--text-primary)]">
+                  {running === run.key ? "writing…" : run.name}
+                </span>
+                <span className="text-[9px] text-[var(--text-secondary)]">
+                  {run.credits} run
+                </span>
+              </span>
+              <span className="mt-0.5 block text-[10px] leading-snug text-[var(--text-secondary)]">
+                {run.blurb}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {credits === 0 ? (
+        <p className="mt-2 rounded-lg border border-amber-400/20 bg-amber-400/10 px-2 py-1.5 text-[10px] text-amber-200">
+          No runs left. Packs: {catalog.packs.map((pack) => `${pack.runs} for NOK ${pack.price_nok}`).join(" · ")}
+          . {catalog.validity_note}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="mt-2 rounded-lg border border-rose-400/20 bg-rose-400/10 px-2 py-1.5 text-[10px] text-rose-200">
+          {error}
+        </p>
+      ) : null}
+
+      {document ? (
+        <div className="mt-3 rounded-lg border border-white/[0.06] bg-black/20 p-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] font-semibold text-[var(--text-primary)]">
+              {document.title}
+            </p>
+            <span
+              className={`rounded-md border px-1.5 py-0.5 text-[9px] uppercase ${
+                document.mode === "model"
+                  ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+                  : "border-amber-400/20 bg-amber-400/10 text-amber-300"
+              }`}
+            >
+              {document.mode === "model" ? "model" : "data digest"}
+            </span>
+          </div>
+          <div className="mt-2 max-h-[320px] overflow-y-auto whitespace-pre-wrap text-[11px] leading-relaxed text-[var(--text-primary)]">
+            {document.document}
+          </div>
+          <p className="mt-2 text-[9px] text-[var(--text-secondary)]">{document.charge_note}</p>
+          {document.sources.length ? (
+            <button
+              type="button"
+              onClick={() => setOpen((value) => !value)}
+              aria-expanded={open}
+              className="mt-1 inline-flex items-center gap-1 text-[9px] text-[var(--text-secondary)] underline"
+            >
+              {document.sources.length} sources
+              <ChevronDown className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} />
+            </button>
+          ) : null}
+          {open ? (
+            <ul className="mt-1">
+              {document.sources.map((source) => (
+                <SourceRow key={source.key} source={source} />
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
+    </GlassCard>
+  );
+}
+
 export default function ChatPage() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
@@ -295,6 +412,10 @@ export default function ChatPage() {
   const [usage, setUsage] = useState<ChatUsageStatus | null>(null);
   const [locked, setLocked] = useState<Record<string, unknown> | null>(null);
   const [lastSaved, setLastSaved] = useState<Record<string, ChatSaveAlertResponse>>({});
+  const [catalog, setCatalog] = useState<WorkbenchCatalog | null>(null);
+  const [running, setRunning] = useState<string | null>(null);
+  const [document, setDocument] = useState<WorkbenchDocument | null>(null);
+  const [runError, setRunError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -306,6 +427,14 @@ export default function ChatPage() {
       })
       .catch(() => {
         /* the meter is not critical to rendering */
+      });
+    api
+      .workbenchCatalog()
+      .then((value) => {
+        if (!cancelled) setCatalog(value);
+      })
+      .catch(() => {
+        /* the panel simply does not render */
       });
     return () => {
       cancelled = true;
@@ -374,6 +503,32 @@ export default function ChatPage() {
     },
     [busy, history],
   );
+
+
+  const runAnalysis = useCallback(async (kind: string) => {
+    setRunning(kind);
+    setRunError(null);
+    try {
+      const result = await api.workbenchRun(kind);
+      if (!result.ok) {
+        const body = (result.body as unknown as Record<string, unknown>) || {};
+        setRunError(
+          (body.message as string) || "That run needs a credit, and none are left on this account.",
+        );
+        return;
+      }
+      setDocument(result.body as WorkbenchDocument);
+      setCatalog((prev) =>
+        prev
+          ? { ...prev, credits: (result.body as WorkbenchDocument).credits_after }
+          : prev,
+      );
+    } catch {
+      setRunError("The run failed before it reached the platform.");
+    } finally {
+      setRunning(null);
+    }
+  }, []);
 
   const saveAlert = useCallback(async (question: string) => {
     const result = await api.chatSaveAlert(question);
@@ -505,6 +660,13 @@ export default function ChatPage() {
 
         <div className="space-y-3">
           {locked ? <LockedPanel payload={locked} usage={usage} /> : null}
+          <DeepAnalysis
+            catalog={catalog}
+            onRun={runAnalysis}
+            running={running}
+            document={document}
+            error={runError}
+          />
           <GlassCard delay={0.1}>
             <h2 className="text-xs font-semibold text-[var(--text-primary)]">What it reads</h2>
             <ul className="mt-2 space-y-1.5 text-[11px] leading-snug text-[var(--text-secondary)]">

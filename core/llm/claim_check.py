@@ -27,6 +27,18 @@ RELATIVE_TOLERANCE = 0.01
 TRIVIAL = {0.0, 1.0, 2.0, 3.0, 100.0, 1000.0}
 
 _NUMBER_RE = re.compile(r"-?\d[\d \u00a0]*(?:[.,]\d+)?")
+
+#: Dates and week labels are references, not claims: 2026-10-18, 2026-W41, 2026-07,
+#: and full ISO timestamps. Masked before extraction so "W41" never becomes 41.
+_DATE_RE = re.compile(
+    r"\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?(?:Z|[+-]\d{2}:\d{2})?)?"
+    r"|\b\d{4}-W\d{1,2}\b"
+    r"|\b\d{4}-\d{2}\b"
+    r"|\bW\d{2}\b"
+    r"|Section \d+"
+    r"|HTS [\d.]+"
+    r"|\bm3\b|\bm\u00b3\b"
+)
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
 
@@ -79,7 +91,8 @@ def _parse(token: str) -> float | None:
 def extract_numbers(text: str) -> list[NumberClaim]:
     """Every numeric claim in the text, skipping years and trivial integers."""
     claims: list[NumberClaim] = []
-    for match in _NUMBER_RE.finditer(text or ""):
+    masked = _DATE_RE.sub(" ", text or "")
+    for match in _NUMBER_RE.finditer(masked):
         token = match.group(0).strip()
         if not token:
             continue
@@ -115,6 +128,8 @@ def _fact_values(facts: list[dict]) -> list[float]:
 
     for fact in facts:
         collect(fact.get("value"))
+        # An age is a fact attribute, not an invented number.
+        collect(fact.get("age_days"))
     return values
 
 

@@ -34,7 +34,7 @@
 |---|---|
 | Platform version | `2.6.0` |
 | OpenAPI surface | **352 paths** (`docs/openapi.frozen.json`; WS-29 added two, WS-34 one) |
-| Tests | **1435 collected** (pytest --collect-only, 2026-10-18 after WS-28a/30-40) |
+| Tests | **1442 collected** (pytest --collect-only, 2026-10-18 after WS-28a/30-41) |
 | Alembic migrations | **23** (head 023, WS-39) |
 | Router modules | **38** (`core/routers/`) |
 | Engine modules | **80** (`core/market/`, +`margin_bridge.py`, +`fx_rates.py`, +`company_facts.py`) |
@@ -1785,6 +1785,46 @@ d
 
 
 
+
+### WS-39/40 · Documents sold as runs, numbers checked — **DONE 2026-10-18**
+**Why:** chat cannot pay for itself (USD 0.0082 a question) and a token markup is a margin
+grab that model-price deflation exposes within a year; meanwhile the research shows citations
+do not enforce faithfulness, so the thing worth selling is a *checked document*.
+**Shipped:**
+- `core/billing/credits_catalog.py` — three packs of runs (NOK 1,490/10, 3,900/30, 11,900/100),
+  margin stated against the measured model cost.
+- `core/llm/credits.py` + Alembic **023** (`credit_ledger`) — append-only, `grant`/`spend`
+  with `InsufficientCredits`, an unreadable ledger reported as unknown (never free).
+- `core/llm/workbench.py` — three grounded documents (margin dossier, origin landed cost, lice
+  pressure review); `mode: "digest"` when no model is reachable, and that costs no credit.
+- `core/llm/claim_check.py` — every digit in an answer matched to the facts; unmatched ones
+  named, badged and caveated. Wired into the chat and the workbench.
+- `core/routers/workbench_routes.py` — catalog, run, credits status, credit checkout.
+- `docs/AI_PRICING.md` — 13 priced comparables, the measured cost side, the decisions.
+**Measured:** document ≈ USD 0.35 model cost against a NOK 119–149 price; chat allowance
+costs NOK 7–74/user/month by plan.
+**Open:** a 150-question live-model golden set; prompt caching; overage billing and annual
+answer packs (both need a stored payment method).
+
+### WS-41 · Workbench panel and the golden-set gate — **DONE 2026-10-18**
+**Why:** the deep-analysis runs were API-only, so a paid feature had no button; and the claim
+that every number is checked had no evidence behind it.
+**Shipped:**
+- `/chat` gains a **Deep analysis** panel: credit balance, the three runs with what each reads,
+  a run button, the rendered document, its sources and its charge note (digest runs spend
+  nothing). Client methods `workbenchCatalog`/`workbenchRun`/`creditsStatus` + types.
+- `artifacts/chat_golden_questions.json` — 18 golden questions: 4 that must be refused, 2 that
+  must disclose a gap, the rest ordinary questions whose answers must be number-clean and
+  source-bearing.
+- `core/llm/eval_chat.py` + `scripts/eval_chat.py` + `tests/test_chat_eval.py` — the offline
+  gate on the deterministic path: costs nothing, cannot drift with a model change.
+  **Measured 2026-10-18: 18/18 cases, refusal 100 %, gaps 100 %, 490 numbers checked, 0
+  unmatched.**
+- The gate found two real extractor defects: week labels and ISO dates were parsed as claims
+  (`W41` → 41, `2026-07` → −07), and units/citations (`m3`, `Section 301`) likewise. Dates,
+  week labels, units and legal citations are masked; `age_days` counts as supported.
+**Open:** a live-model variant of the golden set (the offline one cannot judge prose);
+prompt caching of the static fact block; overage billing and annual answer packs.
 
 ### WS-38 · Grounded, metered chat — **DONE 2026-10-18**
 **Why:** chat was the only surface outside the honesty layer. `core/api.py` built its prompt
