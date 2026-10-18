@@ -46,6 +46,10 @@ EXEMPT: dict[str, dict[str, str]] = {
         "category": "auth_and_billing",
         "reason": "the caller's credit balance and ledger history, not measured data",
     },
+    "/api/chat/receipts": {
+        "category": "auth_and_billing",
+        "reason": "the caller's own answer receipts (mode, model, fact dates, cost) — an audit trail of the account, not measured data",
+    },
     "/api/chat/usage": {
         "category": "catalogue_and_meta",
         "reason": (

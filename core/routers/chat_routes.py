@@ -29,6 +29,7 @@ from sqlalchemy import select
 from core.async_db import get_async_session
 from core.auth import TokenPayload, get_current_user
 from core.entitlements import get_plan, upgrade_hint
+from core.llm import receipts as answer_receipts
 from core.llm import usage as chat_usage
 from core.llm.chat_service import MAX_QUESTION_CHARS, chat_service
 
@@ -170,9 +171,11 @@ async def chat(
     if answer.mode == "grounded":
         await chat_usage.record(key, answer.usage)
 
+    payload = answer.to_dict()
+    # WS-49: a receipt for what the model was given and what it was allowed to say.
+    payload["receipt_id"] = await answer_receipts.record(key, payload)
     refreshed = await chat_usage.status(key, plan_key)
     refreshed["plan_name"] = plan_name
-    payload = answer.to_dict()
     payload["chat"] = refreshed
     payload["request_id"] = getattr(request.state, "request_id", None)
     return payload
@@ -239,6 +242,29 @@ async def _lice_limit_check(area: int | None, threshold: float) -> str | None:
             "so the watch would fire on a legal level. Set it at or above the limit."
         )
     return None
+
+
+@router.get("/api/chat/receipts")
+async def chat_receipts(
+    limit: int = 50, user: TokenPayload | None = Depends(get_current_user)
+):
+    """The caller's own answer receipts: what was given, which model answered, at what cost.
+
+    No question text is stored (it is hashed), and the facts carry their `as_of`, so a customer
+    can check what the system knew at the time rather than take a transcript on trust.
+    """
+    if user is None:
+        raise HTTPException(status_code=401, detail="receipts belong to an account")
+    from core.llm.receipts import RETENTION_MONTHS
+
+    return {
+        "receipts": await answer_receipts.list_for(_user_key(user), limit=max(1, min(limit, 200))),
+        "retention_months": RETENTION_MONTHS,
+        "note": (
+            "the question is stored as a hash, not as text; the answer text is not stored. "
+            "Retention is 24 months, after which the row is purged."
+        ),
+    }
 
 
 @router.post("/api/chat/save-alert")

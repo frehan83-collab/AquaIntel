@@ -3941,6 +3941,53 @@
         ]
       }
     },
+    "/api/chat/receipts": {
+      "get": {
+        "description": "The caller's own answer receipts: what was given, which model answered, at what cost.\n\nNo question text is stored (it is hashed), and the facts carry their `as_of`, so a customer\ncan check what the system knew at the time rather than take a transcript on trust.",
+        "operationId": "chat_receipts_api_chat_receipts_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Chat Receipts",
+        "tags": [
+          "chat"
+        ]
+      }
+    },
     "/api/chat/save-alert": {
       "post": {
         "description": "Turn a question into a running alert rule, or say why it cannot be one.",

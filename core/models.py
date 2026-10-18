@@ -761,3 +761,32 @@ class CreditLedger(Base):
     reason = Column(String(32), nullable=False)        # purchase | grant | refund | run
     ref = Column(String(128), nullable=True)           # stripe session id, run id, note
     created_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC))
+
+
+class AnswerReceipt(Base):
+    """What the model was given and what it was allowed to say (WS-49).
+
+    The question is **hashed**, not stored: a receipt proves what the system did without
+    becoming a transcript of a customer's strategy. The sources keep their `as_of` so a
+    complaint ("you told me X on a 196-day-old reading") can be answered with the same facts the
+    customer saw, and `retained_until` makes retention a stored decision rather than a promise.
+    """
+    __tablename__ = "answer_receipts"
+    __table_args__ = (
+        Index("ix_answer_receipts_user", "user_key"),
+        Index("ix_answer_receipts_retained", "retained_until"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_key = Column(String(128), nullable=False)
+    kind = Column(String(24), nullable=False, default="chat")
+    question_hash = Column(String(64), nullable=False)
+    mode = Column(String(24), nullable=False)
+    model = Column(String(128), nullable=True)
+    model_is_free = Column(Boolean, default=False)
+    sources_json = Column(Text)
+    verification_json = Column(Text)
+    cost_usd = Column(Float, default=0.0)
+    latency_ms = Column(Float, default=0.0)
+    created_at = Column(DateTime, default=lambda: dt.datetime.now(dt.UTC))
+    retained_until = Column(DateTime, nullable=True)
