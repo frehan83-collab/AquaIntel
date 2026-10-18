@@ -86,6 +86,9 @@ class ChatAnswer:
     followups: list[str] = field(default_factory=list)
     usage: dict = field(default_factory=dict)
     model: str = ""
+    #: True when a free OpenRouter model wrote this (WS-46): the quality of a paid
+    #: seat's answer must be visible, not guessed.
+    model_is_free: bool = False
     mode: str = "grounded"  # grounded | grounded_fallback | refusal | unavailable
     degraded: bool = False
     refusal: str | None = None
@@ -102,6 +105,7 @@ class ChatAnswer:
             "followups": self.followups,
             "usage": self.usage,
             "model": self.model,
+            "model_is_free": self.model_is_free,
             "mode": self.mode,
             "degraded": self.degraded,
             "verification": self.verification,
@@ -241,6 +245,7 @@ class ChatService:
         context = await build_context(site=site)
         prompt = self._build_prompt(context, question, history or [])
 
+        model_is_free = False
         try:
             response = await self._run_model(prompt, SYSTEM_PROMPT, user_id)
             provider_error = getattr(response, "error", None)
@@ -251,6 +256,7 @@ class ChatService:
                 raise RuntimeError("empty completion")
             mode = "grounded"
             model = getattr(response, "model", "") or settings.llm_model
+            model_is_free = bool(getattr(response, "is_free", False))
             usage = {
                 "input_tokens": int(getattr(response, "input_tokens", 0) or 0),
                 "output_tokens": int(getattr(response, "output_tokens", 0) or 0),
@@ -296,6 +302,7 @@ class ChatService:
             followups=_followups(context),
             usage=usage,
             model=model,
+            model_is_free=model_is_free,
             mode=mode,
             degraded=context.degraded or not verification.clean,
             verification=verification.to_dict(),

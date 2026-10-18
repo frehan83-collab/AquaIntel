@@ -1992,6 +1992,8 @@ export interface ChatAnswerResponse {
   followups: string[];
   usage: { input_tokens: number; output_tokens: number; cost_usd: number };
   model: string;
+  /** True when a free OpenRouter model wrote the answer (WS-46). */
+  model_is_free?: boolean;
   mode: "grounded" | "grounded_fallback" | "refusal" | "unavailable";
   degraded: boolean;
   refusal?: string | null;
@@ -2052,7 +2054,9 @@ export interface WorkbenchDocument {
   kind: string;
   title: string;
   document: string;
-  mode: "model" | "digest";
+  mode: "model" | "digest" | "withheld";
+  model_is_free?: boolean;
+  verification?: { checked: number; unverified: unknown[]; clean: boolean };
   sources: ChatFactSource[];
   usage: { input_tokens: number; output_tokens: number; cost_usd: number };
   credits_spent: number;

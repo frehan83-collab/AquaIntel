@@ -127,6 +127,14 @@ function AnswerCard({
           <ShieldCheck className="h-3 w-3" />
           {answer.mode === "refusal" ? "policy answer" : numbersOnly ? "numbers only" : "grounded"}
         </span>
+        {answer.model_is_free ? (
+          <span
+            className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[var(--text-secondary)]"
+            title="A free model answered this because the paid model was unavailable. Quality may differ."
+          >
+            free model
+          </span>
+        ) : null}
         {answer.degraded && !numbersOnly ? (
           <span className="inline-flex items-center gap-1 rounded-md border border-amber-400/20 bg-amber-400/10 px-1.5 py-0.5 text-amber-300">
             <AlertTriangle className="h-3 w-3" /> some data is old

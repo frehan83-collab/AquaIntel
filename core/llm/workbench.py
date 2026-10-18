@@ -88,6 +88,8 @@ class WorkbenchDocument:
     sources: list[dict] = field(default_factory=list)
     usage: dict = field(default_factory=dict)
     verification: dict = field(default_factory=dict)
+    #: True when a free model wrote the document (WS-46).
+    model_is_free: bool = False
     credits_spent: int = 0
     credits_after: int | None = None
     generated_at: str = ""
@@ -103,6 +105,7 @@ class WorkbenchDocument:
             "sources": self.sources,
             "usage": self.usage,
             "verification": self.verification,
+            "model_is_free": self.model_is_free,
             "credits_spent": self.credits_spent,
             "credits_after": self.credits_after,
             "generated_at": self.generated_at,
@@ -241,6 +244,7 @@ class Workbench:
             document = (getattr(response, "content", "") or "").strip()
             if not document:
                 raise RuntimeError("empty document")
+            model_is_free = bool(getattr(response, "is_free", False))
             usage = {
                 "input_tokens": int(getattr(response, "input_tokens", 0) or 0),
                 "output_tokens": int(getattr(response, "output_tokens", 0) or 0),
@@ -275,6 +279,7 @@ class Workbench:
             sources=context.sources(),
             usage=usage,
             verification=verification.to_dict(),
+            model_is_free=locals().get("model_is_free", False),
             generated_at=dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
             degraded=context.degraded,
             latency_ms=round(elapsed, 1),
