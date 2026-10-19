@@ -178,6 +178,24 @@ satellite page **fabricated per-farm readings with a seeded RNG** and rendered
   `gh auth token`, with the helper disabled — and never writes or prints the token. Verified:
   `origin/master` now equals the local HEAD and `git status -sb` shows no ahead/behind.
 
+- **WS-58 — trimmed the navigation to what the market buys, and wrote down why.** The nav had 56
+  links for a product with one differentiated data asset; it now has 33, and every removed surface
+  has a written reason in `docs/COMMERCIAL_TRIM.md`. The review's finding is blunt: the farmer
+  already has lice counts, sensors, a farm-management system and better judgement than a dashboard,
+  so every surface that tells them what they know is negative value. What they pay for is
+  **evidence** (ASC/CSRD/regulatory/traceability, with lineage and receipts), **market context they
+  cannot see** (spot and forward prices, feed basket, origin landed cost, duty basis), **early
+  warning across farm boundaries** (neighbouring disease, bloom, PA lice pressure) and **documents
+  that leave the platform**. Hidden: `/signals` (withdrawn), `/investor` (sells withdrawn features),
+  `/trader`, `/twin`, `/scenarios*`, `/china-demand`, `/benchmark`, `/farmer`, `/welfare`,
+  `/efficacy`, `/causal`, `/ras`, `/command-centre`, `/ml-baselines`, `/design-system`, `/climate`
+  and the four country monitors. Pages are hidden, not deleted — deletion is an owner decision.
+  `tests/test_nav_trim.py` (5) keeps the promise checkable: every link resolves, no hidden surface
+  is linked, the count stays under budget, every exclusion has a reason. The document also ranks the
+  revenue-integrity problems above any new feature: Desk cheaper than Operator, the Investor plan
+  selling withdrawn output, one of three documents calibrated, zero of three sub-processors
+  contracted.
+
 - **WS-57 — the frontend was serving a six-day-old build.** The web app ran `next start` against a
   `.next` produced on 12 October, while the source (chat page, API client, types) had moved on by
   18 October — so a client component hit a shape it no longer expected and the `ErrorBoundary`

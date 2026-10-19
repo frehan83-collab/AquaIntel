@@ -22,6 +22,9 @@ type NavItem = { href: string; label: string; icon: any };
 type NavSection = { section: string; items: NavItem[] };
 
 const NAV_SECTIONS: NavSection[] = [
+  // WS-58: 56 links became 33. Every link below answers "what would a buyer name when asked why
+  // they renew": evidence (compliance), context they cannot see (markets, peers), early warning
+  // (bio, bloom), and the documents that leave the platform. Hidden pages stay reachable by URL.
   { section: "", items: [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/farmer-daily", label: "Daily Check", icon: Sunrise },
@@ -29,61 +32,38 @@ const NAV_SECTIONS: NavSection[] = [
     { href: "/notifications", label: "Notifications", icon: Bell },
   ]},
   { section: "Intelligence", items: [
-    { href: "/leaders", label: "Leaders & ESG", icon: Trophy },
-    { href: "/benchmark", label: "Peer Benchmark", icon: Award },
     { href: "/bio-risk", label: "Bio Risk Map", icon: Map },
     { href: "/disease", label: "Disease Intel", icon: Shield },
-    { href: "/climate", label: "Climate Risk", icon: Thermometer },
     { href: "/traffic-light", label: "Traffic Light", icon: Thermometer },
     { href: "/lice-quota", label: "Lice Quotas", icon: Sigma },
+    { href: "/leaders", label: "Producers", icon: Trophy },
     { href: "/compare", label: "Compare", icon: GitCompare },
   ]},
   { section: "Markets", items: [
     { href: "/feed-cost", label: "Production Costs", icon: Wheat },
     { href: "/global-supply", label: "Global Supply", icon: Ship },
-    { href: "/competitiveness", label: "Competitiveness", icon: Scale },
+    { href: "/competitiveness", label: "Origin Cost", icon: Scale },
     { href: "/supply-forecast", label: "Supply Forecast", icon: TrendingUp },
-    { href: "/investor", label: "Investor Intel", icon: TrendingUp },
-    { href: "/trader", label: "Trader Intel", icon: TrendingUp },
     { href: "/futures", label: "Salmon Futures", icon: LineChart },
     { href: "/market", label: "Market Terminal", icon: DollarSign },
-    { href: "/price-outlook", label: "Price & Predictions", icon: Brain },
-    { href: "/signals", label: "Signals", icon: BarChart3 },
-  ]},
-  { section: "Regions", items: [
-    { href: "/canada", label: "Canada / BC", icon: Globe2 },
-    { href: "/scotland", label: "Scotland", icon: Globe2 },
-    { href: "/faroe", label: "Faroe Islands", icon: Globe2 },
-    { href: "/iceland", label: "Iceland", icon: Globe2 },
-    { href: "/china-demand", label: "China Demand", icon: Globe2 },
+    { href: "/price-outlook", label: "Price Outlook", icon: Brain },
+    { href: "/contracts", label: "Contract Risk", icon: FileText },
   ]},
   { section: "Operations", items: [
     { href: "/portfolio", label: "My Portfolio", icon: BriefcaseBusiness },
-    { href: "/farmer", label: "Farm Advisory", icon: Anchor },
-    { href: "/treatment", label: "Treatment Optimizer", icon: Syringe },
-    { href: "/efficacy", label: "Efficacy Market", icon: FlaskConical },
-    { href: "/welfare", label: "Fish Welfare", icon: Heart },
-    { href: "/harvest", label: "Harvest Optimizer", icon: Timer },
-    { href: "/twin", label: "Digital Twin", icon: Boxes },
-    { href: "/satellite", label: "Satellite Intel", icon: Satellite },
+    { href: "/treatment", label: "Treatment", icon: Syringe },
+    { href: "/harvest", label: "Harvest Timing", icon: Timer },
     { href: "/feed-supply-chain", label: "Feed Supply Chain", icon: Wheat },
-    { href: "/command-centre", label: "Command Centre", icon: Radio },
-  ]},
-  { section: "Advanced", items: [
-    { href: "/scenarios-lab", label: "Scenario Lab", icon: Layers },
-    { href: "/scenarios", label: "Scenarios", icon: FlaskConical },
-    { href: "/causal", label: "Causal Engine", icon: Sigma },
-    { href: "/chat", label: "AI Chat", icon: Bot },
-    { href: "/ml-baselines", label: "ML Baselines", icon: Sparkles },
-    { href: "/ras", label: "RAS Tracker", icon: Factory },
+    { href: "/satellite", label: "Satellite Intel", icon: Satellite },
   ]},
   { section: "Compliance", items: [
     { href: "/asc-compliance", label: "ASC Compliance", icon: ShieldCheck },
     { href: "/regulatory-reports", label: "Regulatory Reports", icon: FileCheck },
     { href: "/traceability", label: "EU Traceability", icon: FileCheck },
-    { href: "/contracts", label: "Contract Risk", icon: FileText },
     { href: "/insurance", label: "Insurance", icon: Shield },
-    { href: "/compliance", label: "Compliance", icon: Shield },
+  ]},
+  { section: "Advanced", items: [
+    { href: "/chat", label: "Ask the data", icon: Bot },
   ]},
   { section: "System", items: [
     { href: "/admin", label: "Admin", icon: ShieldCheck },
@@ -93,7 +73,6 @@ const NAV_SECTIONS: NavSection[] = [
     { href: "/privacy", label: "Privacy", icon: Shield },
     { href: "/settings", label: "Settings", icon: Settings },
     { href: "/settings/webhooks", label: "Webhooks", icon: Radio },
-    { href: "/design-system", label: "Design System", icon: Sparkles },
   ]},
 ];
 
