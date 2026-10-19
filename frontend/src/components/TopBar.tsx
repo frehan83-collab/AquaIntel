@@ -357,7 +357,7 @@ export default function TopBar() {
               {recentAlerts.length > 0 && (
                 <div className="px-4 py-2.5 border-t border-white/[0.06]">
                   <button
-                    onClick={() => { setBellOpen(false); router.push("/signals"); }}
+                    onClick={() => { setBellOpen(false); router.push("/notifications"); }}
                     className="w-full text-center text-[11px] font-medium text-ocean-400 hover:text-ocean-300 transition-colors"
                   >
                     {t("alerts.view_all")}
@@ -374,7 +374,7 @@ export default function TopBar() {
             variant="icon"
             size="icon_md"
             aria-label="View signals"
-            onClick={() => router.push("/signals")}
+            onClick={() => router.push("/notifications")}
           >
             <div className="relative">
               <Activity className="w-4 h-4" />

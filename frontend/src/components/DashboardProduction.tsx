@@ -69,9 +69,7 @@ export default function DashboardProduction({
             <GitBranch className="w-4 h-4 text-purple-400" />
             {t("dashboard.pairs_signals")}
           </h3>
-          <Link href="/signals" className="text-[10px] text-ocean-400 hover:text-ocean-300 transition-colors flex items-center gap-1">
-            View all <ArrowRight className="w-3 h-3" />
-          </Link>
+          <span className="text-[10px] text-[var(--text-secondary)]">Equity signals withdrawn</span>
         </div>
         {pairsSignals.length === 0 ? (
           <p className="text-xs text-[var(--text-secondary)] py-4 text-center opacity-60">No pairs signals &mdash; neutral spread</p>

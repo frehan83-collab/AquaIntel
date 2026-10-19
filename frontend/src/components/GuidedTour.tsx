@@ -73,21 +73,21 @@ const TOUR_STEPS: Record<DemoPersona, TourStep[]> = {
       position: "center",
     },
     {
-      route: "/trader",
+      route: "/market",
       title: "Event Impact Simulator",
       description:
         "Model ISA outbreaks, traffic light changes, and feed price shocks. See per-company revenue impact, EBIT changes, and expected stock moves.",
       position: "center",
     },
     {
-      route: "/trader",
+      route: "/market",
       title: "Save Scenarios",
       description:
         "Save your simulations for later comparison. Build a library of what-if scenarios to inform your trading decisions.",
       position: "bottom-center",
     },
     {
-      route: "/signals",
+      route: "/notifications",
       title: "Trading Signals",
       description:
         "Pairs trading opportunities, regime shift alerts, and anomaly detection — quantitative signals derived from biological and market data.",
