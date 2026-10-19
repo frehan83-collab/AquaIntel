@@ -1806,6 +1806,19 @@ costs NOK 7–74/user/month by plan.
 **Open:** a 150-question live-model golden set; prompt caching; overage billing and annual
 answer packs (both need a stored payment method).
 
+### WS-58 · Commercial review and nav trim — **DONE 2026-10-19**
+Commissioned question: should we trim what has no real value, given farmers already have detectors,
+sensors and the judgement to know when to treat or slaughter?
+**Answer, written up in `docs/COMMERCIAL_TRIM.md`:** yes, and the test for a surface is not "is it
+useful" but "can the buyer produce this themselves, or is it something they are obliged to produce
+and would rather buy". Four things pass: evidence for audits and customers, market context the farmer
+cannot see, cross-boundary early warning, and documents that leave the platform. Nav 56 to 33; 21
+surfaces hidden with a written reason each (pages remain reachable and deletable later by the owner).
+`tests/test_nav_trim.py` keeps it honest.
+**Ranked above any new feature:** Desk (2,990) cheaper than Operator (4,900); the Investor plan still
+advertises paper trading and Monte Carlo while equity output is withdrawn; only origin landed cost is
+fully calibrated for sale; zero of three sub-processors contracted.
+
 ### WS-53 · The lice feed restored — **DONE 2026-10-18**
 **Diagnosis, not assumption.** BarentsWatch v2 returns 1 779 localities for the current week;
 585 carry `liceReport.hasReported = true` for 2026-W41 and the counts sit at
