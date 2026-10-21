@@ -10,7 +10,9 @@
 > WS-36–41 (smolt validation, duty basis, grounded metered chat, documents as runs, golden set)
 > · WS-50 (upgrade path) · WS-53 (lice feed restored — WS-1's last live blocker) · WS-54–58b
 > (receipts, fixtures, lice review, frontend build, nav 56→33, hide means hide) · **WS-59** (the
-> 21 hidden pages deleted, and the three plans whose claims outran the code repointed).
+> 21 hidden pages deleted, and the three plans whose claims outran the code repointed) · **WS-60**
+> (this brief itself repaired: a 1,429-line exploded duplicate removed, the mojibake reversed, and a
+> doc-shape ratchet added).
 >
 > Read order: **this file** → `AGENTS.md` (authoritative rules) → `PROJECT_STATUS.md` (what is
 > shipped) → `CHANGELOG.md` (why) → `docs/COMMERCIAL_TRIM.md` (why the product is this size —
@@ -18,21 +20,21 @@
 
 ---
 
-## 1. Current state (measured at `904f84c` + WS-59, 2026-10-21)
+## 1. Current state (measured at `904f84c` + WS-59/60, 2026-10-21)
 
 | Dimension | Value |
 |---|---|
 | Platform version | `2.6.0` |
 | OpenAPI surface | **354 paths / 362 operations** (`docs/openapi.frozen.json`, measured 2026-10-21) |
-| Tests | **1520 collected** (pytest --collect-only, 2026-10-21 after WS-59) |
+| Tests | **1652 collected** (pytest --collect-only, 2026-10-21 after WS-60) |
 | Alembic migrations | **24** (head 024, WS-54 answer receipts) |
 | Router modules | **39** (`core/routers/`) |
 | Engine modules | **82** modules in `core/market/` |
 | Frontend routes | **46** page files (WS-58 hid 21 dead surfaces, WS-59 deleted them) |
 | Production topology | `docker-compose.prod.yml`: `api` + `agents` + `db` (TimescaleDB) + `web` |
-| Last full-suite run | **1496 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 5.5 min (2026-10-21, at `904f84c` + WS-59) |
+| Last full-suite run | **1628 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 5.4 min (2026-10-21, at `904f84c` + WS-59/60) |
 
-**What this file covers:** the commercial-hardening programme, WS-1 to WS-59. WS-59 is the
+**What this file covers:** the commercial-hardening programme, WS-1 to WS-60. WS-60 is the
 newest entry in §5; §3 maps each area to the document that explains it.
 
 ## 2. How to run, test and gate (copy-paste)
@@ -95,7 +97,7 @@ writable workspace directory and a `sitecustomize.py` on `PYTHONPATH` that drops
 | Legal (licences, advice, AI Act, DPA) | `docs/ADVICE_BOUNDARY.md` | `core/legal/{data_licenses,performance_fee}.py` |
 | Provenance register + ratchet | `docs/REPORT_LIVENESS.md` | `core/provenance_register.py`, `core/market/provenance_envelope.py` |
 | GTM assets | `docs/GTM_*.md` | `core/gtm/roi.py`, `core/routers/gtm_routes.py` |
-| Margin bridge (price â†’ cost â†’ margin, levers) | `docs/MARGIN.md` | `core/market/margin_bridge.py`, `frontend/src/components/MarginBridge.tsx` |
+| Margin bridge (price → cost → margin, levers) | `docs/MARGIN.md` | `core/market/margin_bridge.py`, `frontend/src/components/MarginBridge.tsx` |
 | Roles to hire | `docs/roles/` | — |
 
 ## 4. Non-negotiables (AGENTS.md wins if anything here disagrees)
@@ -117,10 +119,10 @@ writable workspace directory and a `sitecustomize.py` on `PYTHONPATH` that drops
 
 ## 5. Workstream backlog — pick these up in order
 
-Each item is self-contained: goal â†’ files â†’ steps â†’ **acceptance criteria you can
-test** â†’ traps.
+Each item is self-contained: goal → files → steps → **acceptance criteria you can
+test** → traps.
 
-**Where things stand (2026-10-21, at `904f84c` + WS-59):**
+**Where things stand (2026-10-21, at `904f84c` + WS-59/60):**
 - **Done:** WS-1, WS-2, WS-11, WS-19, WS-21, WS-23 (both halves), WS-14, and everything in
   WS-22 except the smolt pipeline: WS-29 (margin bridge) and WS-29b (the mechanism), WS-30
   (ROI break-even, replacing the 228x/491x/1,693x defaults), WS-31/31b (licensed Norges Bank FX,
@@ -128,7 +130,9 @@ test** â†’ traps.
   Alembic 021), WS-35 (reported company volumes). Also WS-36-41, WS-50 (an upgrade never
   suggests a cheaper plan), WS-53 (lice feed backfilled - this closed WS-1's live blocker),
   WS-54-58 (receipts, fixtures, lice review, frontend build), WS-58/58b (nav 56 to 33, hide
-  means hide) and **WS-59** (21 dead pages deleted; no plan sells withdrawn work).
+  means hide) and **WS-59** (21 dead pages deleted; no plan sells withdrawn work), then **WS-60**
+  (this brief repaired: an exploded duplicate section removed, the mojibake reversed, a doc-shape
+  ratchet added).
 - **Partly done:** WS-20 - only the *product name* and the *Desk/Operator price inversion*
   (Desk NOK 2,990 sits below Operator NOK 4,900) remain, and both are owner decisions. The
   Investor tier no longer advertises paper trading or Monte Carlo (WS-59), so the
@@ -295,7 +299,7 @@ disagreed (feed ingredient cost per kg of *feed* beside the price per kg of *sal
 no provenance, no change, no break-even. A buyer could not tell a model from a
 measurement, or July's feed price from this month's.
 **Shipped:** `core/market/margin_bridge.py` (method `1.0.0`, singleton
-`margin_bridge`): price leg âˆ’ four grouped cost legs (feed, smolt+slaughter,
+`margin_bridge`): price leg − four grouped cost legs (feed, smolt+slaughter,
 labour+other operating+insurance, depreciation+finance) per kg round weight; the
 week-on-week price move and month-on-month feed move; break-even with the feed-leg
 reduction and the FCR that would close it; five levers with formulas; an assumption
@@ -329,8 +333,8 @@ The bridge treats that as degraded and names the month (trap 21).
 true`); the same payload reports `quality: modelled` by default and `measured` only
 when both the price and the feed numbers are caller-supplied; a stale/undated/defaulted
 basket degrades the leg with the month named; no volume means no NOK totals; live
-payload on 2026-10-18 reads price 72.55 (W41), feed âˆ’29.39 (FRED 2026-07), cost 74.03,
-margin âˆ’1.48, break-even 74.03, 5.0 % feed-cut or FCR 1.23 to close it.
+payload on 2026-10-18 reads price 72.55 (W41), feed −29.39 (FRED 2026-07), cost 74.03,
+margin −1.48, break-even 74.03, 5.0 % feed-cut or FCR 1.23 to close it.
 **WS-29b — mechanism shipped, data still open.** The feed leg (29.39 NOK/kg salmon,
 +14.5 % over the 2024 audited 25.67) looks high against market evidence — BioMar's
 salmon-feed price fell below NOK 15/kg in Q1 2026 (iLaks, 2026-05-08) and realised feed
@@ -354,1435 +358,6 @@ the accuracy registry, then bump `MARGIN_METHOD_VERSION`. Until then the level s
 **Also open:** no premium gate was added for `/api/margin/*` — the paywall ladder is the
 owner's WS-20/26 decision; the bridge is ungated like the other cost-desk routes.
 
-#
-#
-#
- 
-W
-S
--
-3
-9
-/
-4
-0
- 
-·
- 
-D
-o
-c
-u
-m
-e
-n
-t
-s
- 
-s
-o
-l
-d
- 
-a
-s
- 
-r
-u
-n
-s
-,
- 
-n
-u
-m
-b
-e
-r
-s
- 
-c
-h
-e
-c
-k
-e
-d
- 
-—
- 
-*
-*
-D
-O
-N
-E
- 
-2
-0
-2
-6
--
-1
-0
--
-1
-8
-*
-*
-
-
-*
-*
-W
-h
-y
-:
-*
-*
- 
-c
-h
-a
-t
- 
-c
-a
-n
-n
-o
-t
- 
-p
-a
-y
- 
-f
-o
-r
- 
-i
-t
-s
-e
-l
-f
- 
-(
-U
-S
-D
- 
-0
-.
-0
-0
-8
-2
- 
-a
- 
-q
-u
-e
-s
-t
-i
-o
-n
-)
- 
-a
-n
-d
- 
-a
- 
-t
-o
-k
-e
-n
- 
-m
-a
-r
-k
-u
-p
- 
-i
-s
- 
-a
- 
-m
-a
-r
-g
-i
-n
-
-
-g
-r
-a
-b
- 
-t
-h
-a
-t
- 
-m
-o
-d
-e
-l
--
-p
-r
-i
-c
-e
- 
-d
-e
-f
-l
-a
-t
-i
-o
-n
- 
-e
-x
-p
-o
-s
-e
-s
- 
-w
-i
-t
-h
-i
-n
- 
-a
- 
-y
-e
-a
-r
-;
- 
-m
-e
-a
-n
-w
-h
-i
-l
-e
- 
-t
-h
-e
- 
-r
-e
-s
-e
-a
-r
-c
-h
- 
-s
-h
-o
-w
-s
- 
-c
-i
-t
-a
-t
-i
-o
-n
-s
-
-
-d
-o
- 
-n
-o
-t
- 
-e
-n
-f
-o
-r
-c
-e
- 
-f
-a
-i
-t
-h
-f
-u
-l
-n
-e
-s
-s
-,
- 
-s
-o
- 
-t
-h
-e
- 
-t
-h
-i
-n
-g
- 
-w
-o
-r
-t
-h
- 
-s
-e
-l
-l
-i
-n
-g
- 
-i
-s
- 
-a
- 
-*
-c
-h
-e
-c
-k
-e
-d
- 
-d
-o
-c
-u
-m
-e
-n
-t
-*
-.
-
-
-*
-*
-S
-h
-i
-p
-p
-e
-d
-:
-*
-*
-
-
--
- 
-`
-c
-o
-r
-e
-/
-b
-i
-l
-l
-i
-n
-g
-/
-c
-r
-e
-d
-i
-t
-s
-_
-c
-a
-t
-a
-l
-o
-g
-.
-p
-y
-`
- 
-—
- 
-t
-h
-r
-e
-e
- 
-p
-a
-c
-k
-s
- 
-o
-f
- 
-r
-u
-n
-s
- 
-(
-N
-O
-K
- 
-1
-,
-4
-9
-0
-/
-1
-0
-,
- 
-3
-,
-9
-0
-0
-/
-3
-0
-,
- 
-1
-1
-,
-9
-0
-0
-/
-1
-0
-0
-)
-,
-
-
- 
- 
-m
-a
-r
-g
-i
-n
- 
-s
-t
-a
-t
-e
-d
- 
-a
-g
-a
-i
-n
-s
-t
- 
-t
-h
-e
- 
-m
-e
-a
-s
-u
-r
-e
-d
- 
-m
-o
-d
-e
-l
- 
-c
-o
-s
-t
-.
-
-
--
- 
-`
-c
-o
-r
-e
-/
-l
-l
-m
-/
-c
-r
-e
-d
-i
-t
-s
-.
-p
-y
-`
- 
-+
- 
-A
-l
-e
-m
-b
-i
-c
- 
-*
-*
-0
-2
-3
-*
-*
- 
-(
-`
-c
-r
-e
-d
-i
-t
-_
-l
-e
-d
-g
-e
-r
-`
-)
- 
-—
- 
-a
-p
-p
-e
-n
-d
--
-o
-n
-l
-y
-,
- 
-`
-g
-r
-a
-n
-t
-`
-/
-`
-s
-p
-e
-n
-d
-`
-
-
- 
- 
-w
-i
-t
-h
- 
-`
-I
-n
-s
-u
-f
-f
-i
-c
-i
-e
-n
-t
-C
-r
-e
-d
-i
-t
-s
-`
-,
- 
-a
-n
- 
-u
-n
-r
-e
-a
-d
-a
-b
-l
-e
- 
-l
-e
-d
-g
-e
-r
- 
-r
-e
-p
-o
-r
-t
-e
-d
- 
-a
-s
- 
-u
-n
-k
-n
-o
-w
-n
- 
-(
-n
-e
-v
-e
-r
- 
-f
-r
-e
-e
-)
-.
-
-
--
- 
-`
-c
-o
-r
-e
-/
-l
-l
-m
-/
-w
-o
-r
-k
-b
-e
-n
-c
-h
-.
-p
-y
-`
- 
-—
- 
-t
-h
-r
-e
-e
- 
-g
-r
-o
-u
-n
-d
-e
-d
- 
-d
-o
-c
-u
-m
-e
-n
-t
-s
-;
- 
-`
-m
-o
-d
-e
-:
- 
-"
-d
-i
-g
-e
-s
-t
-"
-`
- 
-w
-h
-e
-n
- 
-n
-o
- 
-m
-o
-d
-e
-l
- 
-i
-s
-
-
- 
- 
-r
-e
-a
-c
-h
-a
-b
-l
-e
-,
- 
-a
-n
-d
- 
-t
-h
-a
-t
- 
-c
-o
-s
-t
-s
- 
-n
-o
- 
-c
-r
-e
-d
-i
-t
-.
-
-
--
- 
-`
-c
-o
-r
-e
-/
-l
-l
-m
-/
-c
-l
-a
-i
-m
-_
-c
-h
-e
-c
-k
-.
-p
-y
-`
- 
-—
- 
-e
-v
-e
-r
-y
- 
-d
-i
-g
-i
-t
- 
-i
-n
- 
-a
-n
- 
-a
-n
-s
-w
-e
-r
- 
-m
-a
-t
-c
-h
-e
-d
- 
-t
-o
- 
-t
-h
-e
- 
-f
-a
-c
-t
-s
-;
- 
-u
-n
-m
-a
-t
-c
-h
-e
-d
- 
-o
-n
-e
-s
-
-
- 
- 
-n
-a
-m
-e
-d
-,
- 
-b
-a
-d
-g
-e
-d
- 
-a
-n
-d
- 
-c
-a
-v
-e
-a
-t
-e
-d
-.
- 
-W
-i
-r
-e
-d
- 
-i
-n
-t
-o
- 
-c
-h
-a
-t
- 
-a
-n
-d
- 
-w
-o
-r
-k
-b
-e
-n
-c
-h
-.
-
-
--
- 
-`
-c
-o
-r
-e
-/
-r
-o
-u
-t
-e
-r
-s
-/
-w
-o
-r
-k
-b
-e
-n
-c
-h
-_
-r
-o
-u
-t
-e
-s
-.
-p
-y
-`
- 
-—
- 
-c
-a
-t
-a
-l
-o
-g
-,
- 
-r
-u
-n
-,
- 
-c
-r
-e
-d
-i
-t
-s
- 
-s
-t
-a
-t
-u
-s
-,
- 
-c
-r
-e
-d
-i
-t
- 
-c
-h
-e
-c
-k
-o
-u
-t
-.
-
-
--
- 
-`
-d
-o
-c
-s
-/
-A
-I
-_
-P
-R
-I
-C
-I
-N
-G
-.
-m
-d
-`
- 
-—
- 
-t
-h
-e
- 
-p
-r
-i
-c
-i
-n
-g
- 
-r
-e
-s
-e
-a
-r
-c
-h
- 
-a
-n
-d
- 
-t
-h
-e
- 
-d
-e
-c
-i
-s
-i
-o
-n
-s
-.
-
-
-*
-*
-M
-e
-a
-s
-u
-r
-e
-d
-:
-*
-*
- 
-d
-o
-c
-u
-m
-e
-n
-t
- 
-≈
- 
-U
-S
-D
- 
-0
-.
-3
-5
- 
-m
-o
-d
-e
-l
- 
-c
-o
-s
-t
- 
-v
-s
- 
-N
-O
-K
- 
-1
-1
-9
-–
-1
-4
-9
- 
-p
-r
-i
-c
-e
-;
- 
-c
-h
-a
-t
- 
-a
-l
-l
-o
-w
-a
-n
-c
-e
- 
-c
-o
-s
-t
-s
-
-
-N
-O
-K
- 
-7
-–
-7
-4
-/
-u
-s
-e
-r
-/
-m
-o
-n
-t
-h
- 
-b
-y
- 
-p
-l
-a
-n
-.
-
-
-*
-*
-O
-p
-e
-n
-:
-*
-*
- 
-t
-h
-e
- 
-1
-5
-0
--
-q
-u
-e
-s
-t
-i
-o
-n
- 
-g
-o
-l
-d
-e
-n
- 
-s
-e
-t
- 
-w
-i
-t
-h
- 
-a
- 
-z
-e
-r
-o
- 
-s
-i
-l
-e
-n
-t
--
-w
-r
-o
-n
-g
--
-n
-u
-m
-b
-e
-r
- 
-g
-a
-t
-e
-;
- 
-p
-r
-o
-m
-p
-t
- 
-c
-a
-c
-h
-i
-n
-g
- 
-f
-o
-r
-
-
-t
-h
-e
- 
-f
-a
-c
-t
- 
-b
-l
-o
-c
-k
-;
- 
-o
-v
-e
-r
-a
-g
-e
- 
-b
-i
-l
-l
-i
-n
-g
- 
-a
-n
-d
- 
-a
-n
-n
-u
-a
-l
- 
-a
-n
-s
-w
-e
-r
- 
-p
-a
-c
-k
-s
- 
-(
-n
-e
-e
-d
- 
-a
- 
-s
-t
-o
-r
-e
-d
- 
-p
-a
-y
-m
-e
-n
-t
- 
-m
-e
-t
-h
-o
-d
-)
-.
-
-
-
-
 ### WS-39/40 · Documents sold as runs, numbers checked — **DONE 2026-10-18**
 **Why:** chat cannot pay for itself (USD 0.0082 a question) and a token markup is a margin
 grab that model-price deflation exposes within a year; meanwhile the research shows citations
@@ -1800,8 +375,8 @@ do not enforce faithfulness, so the thing worth selling is a *checked document*.
 - `docs/AI_PRICING.md` — 13 priced comparables, the measured cost side, the decisions.
 **Measured:** document ≈ USD 0.35 model cost against a NOK 119–149 price; chat allowance
 costs NOK 7–74/user/month by plan.
-**Open:** a 150-question live-model golden set; prompt caching; overage billing and annual
-answer packs (both need a stored payment method).
+**Open:** a 150-question live-model golden set with a zero silent-wrong-number gate; prompt caching
+for the fact block; overage billing and annual answer packs (both need a stored payment method).
 
 ### WS-58 · Commercial review and nav trim — **DONE 2026-10-19**
 Commissioned question: should we trim what has no real value, given farmers already have detectors,
@@ -2006,7 +581,7 @@ until then the level stays flagged.
 (`barentswatch` / `demo_seed` / `unverified`; the `fiskeridir` marker proposed here
 earlier was replaced because the only writer is the BarentsWatch Fishhealth API v2
 client, so it is the system of record). Alembic **019**: `source VARCHAR(32) NOT NULL
-DEFAULT 'unverified'`, NULL â†’ `unverified`, relabels **only** the demo key
+DEFAULT 'unverified'`, NULL → `unverified`, relabels **only** the demo key
 (locality 10001–10022 × the seed year 2025) as `demo_seed`, never a real source,
 repairs a conftest-reconciled nullable column, batch-mode downgrade.
 `agents/data_ingest.py` writes `barentswatch` on **both** upsert branches;
@@ -2095,8 +670,8 @@ once across both.
 **Why:** enterprise deals stall on identity. `docs/roles/enterprise-security-engineer.md`
 holds the four-part definition of done.
 **Files:** `core/auth.py`, `core/routers/auth_routes.py`, `core/entitlements.py`
-(group â†’ plan mapping), `core/models.py`.
-**Steps:** OIDC/SAML login, SCIM-style provisioning, groupâ†’canonical-plan mapping
+(group → plan mapping), `core/models.py`.
+**Steps:** OIDC/SAML login, SCIM-style provisioning, group→canonical-plan mapping
 **without a new tier table**, central revocation, audit-log entries.
 **Acceptance:** a provisioned user lands on the right plan via the existing
 entitlement path, revocation removes access, and every change is in the audit log.
@@ -2105,12 +680,12 @@ entitlement path, revocation removes access, and every change is in the audit lo
 
 ### WS-7 · Per-tenant isolation + aggregation threshold
 **Why:** producer-contributed data must never be de-anonymisable in a published index;
-the licence register already records the n â‰¥ 5 obligation.
+the licence register already records the n ≥ 5 obligation.
 **Files:** `core/models.py`, `core/market/indices.py` (enforce, not just document),
 `core/legal/data_licenses.py`, `core/routers/partner_routes.py`.
 **Steps:** enforce the threshold in the compute path, scope queries per tenant, and
 test that a 4-producer aggregate refuses.
-**Acceptance:** 4 contributors â†’ refusal carrying the reason; 5 â†’ success.
+**Acceptance:** 4 contributors → refusal carrying the reason; 5 → success.
 **Traps:** the refusal message must not name the contributing partners either.
 
 ### WS-8 · More accuracy artifacts (and keep the registry honest)
@@ -2211,9 +786,9 @@ cadence reports `is_live: false`, and that a partial lice week is never live.
 **Shipped 2026-10-17 (partial — lice lineage propagation complete):** every
 `lice_records` consumer in the original file list now derives provenance from the
 rows it actually used. `core/source_lineage.py` gained the shared entry points
-`summarise_rows` (row dicts â†’ lineage), `lineage_for(session, where)` (per-farm /
+`summarise_rows` (row dicts → lineage), `lineage_for(session, where)` (per-farm /
 per-PA), `latest_week_lineage()` (roll-ups) and `provenance_for(lineage, label,
-confidence)` (â†’ `DataProvenance.to_dict()`, degraded with the lineage note when the
+confidence)` (→ `DataProvenance.to_dict()`, degraded with the lineage note when the
 rows do not support a live claim). Wired: `decision_engine`, `lice_routes`,
 `supply_routes`, `analytics_routes`, `morning_brief`, `anomaly_engine`,
 `biomass_predictor`, `bloom_routes`, `notification_routes`, `alerts_routes`,
@@ -2226,9 +801,9 @@ those routes now reports `is_live: false` with the lineage note in
 `fallback_reason` and `freshness` = the ISO week's Monday — verified with a live
 `TestClient` sweep, not by inspection. Two bugs surfaced and were fixed on the way:
 the four `/api/treatment/*` endpoints called the `async` engine methods **without
-`await`** (every call raised `'coroutine' object is not iterable` â†’ 500), and
+`await`** (every call raised `'coroutine' object is not iterable` → 500), and
 `/api/regulatory/traffic-light/current` stamped request-time freshness on a
-decision made on a fixed date (now `observed_at=decided_on`, undated â†’ degraded).
+decision made on a fixed date (now `observed_at=decided_on`, undated → degraded).
 Three further laundering paths were closed in self-review: `/api/gnn/predict`
 merged the model's `fallback_reason` with the lineage note instead of replacing it;
 `/api/compliance/asc/readiness-summary` and `/api/welfare/pa/{pa}` now
@@ -2400,7 +975,7 @@ Operator" (NOK 4,900) (`core/entitlements.py:147-153`). The product shows two na
 **Files:** `frontend/src/app/landing/page.tsx`, `frontend/src/app/api-docs/page.tsx`,
 `frontend/src/app/billing/page.tsx` (WS-11's `TIER_DETAILS`), `core/entitlements.py`,
 `frontend/src/app/layout.tsx`, `frontend/public/manifest.json`, `Sidebar.tsx`.
-Anonymous `GET /api/signals` serves 50 SHORT signals on Grieg, LerÃ¸y, Mowi and SalMar
+Anonymous `GET /api/signals` serves 50 SHORT signals on Grieg, Lerøy, Mowi and SalMar
 with per-share impact estimates, shown on `/trader` and `/signals` without provenance,
 against the project's own advice boundary (`/api/legal/advice-boundary`); this may
 count as an investment recommendation under the EU Market Abuse Regulation.
@@ -2438,7 +1013,7 @@ capacity level, not the next decision's step (red cuts again, yellow restores no
 and disagrees with `event_impact_model`; (3) the `/api/chat` system prompt and
 `core/llm/rag.py` state lice-derived colours, an annual cadence and 0.2 as a reporting
 threshold, and the rule-based chat crashes on a traffic-light question
-(`core/api.py`, `states.items()` on a list); (4) a full municipality â†’ county table
+(`core/api.py`, `states.items()` on a list); (4) a full municipality → county table
 (SSB KLASS 131) so sites without a production area get an established window; (5) watch
 the Court of International Trade ruling on the Section 301 duties and add a tariff row
 when it lands; (6) the frozen regime detector's transition priors are fixed literals.
@@ -2458,7 +1033,7 @@ dated data file with source URLs.
 `source_url` and `valid_from`; the simulator predicts changes, never the current
 colour; one limit function used by the decision engine and the reporter.
 **Acceptance:** tests asserting the 2026 colours; the spring 0.2 window (weeks 16-21
-in Nord-TrÃ¸ndelag and southwards, weeks 21-26 in Nordland, Troms and Finnmark;
+in Nord-Trøndelag and southwards, weeks 21-26 in Nordland, Troms and Finnmark;
 lakselusforskriften § 8) in both the decision engine and the reporter; the July 2026
 tariffs (Norway 12.5%, Chile 12.5%, UK 10%; Faroes and Iceland outside the new
 measure; Canada USMCA-exempt), each payload citing its `source_url`.
@@ -2498,7 +1073,7 @@ answered **and** returned rows. The competitiveness and disease pages render the
 served `data_provenance` instead of a hardcoded `quality="live"` badge.
 **Honest limitation:** a case reported by both WOAH and Mattilsynet appears twice, so
 `active_outbreaks` counts source reports, not unique epidemiological events.
-**Still open here:** Mowi's 113,600 t (localities Ã— 800 in `top50_engine`), the smolt
+**Still open here:** Mowi's 113,600 t (localities × 800 in `top50_engine`), the smolt
 pipeline and `biomass_current_tonnes`, the brief counting every stored bloom row, the
 ROI defaults (228x / 491x / 1,693x), `api_calls_month` never incremented, and
 `/api/ml/chronos/model-comparison` printing per-call metrics on demo rows.
@@ -2622,7 +1197,7 @@ product shows two names, and the chrome claims "LIVE" on weekly data.
 VALUE_ANALYSIS section 7 splits the fix in two. Layer 1, content conventions:
 week-and-source stamps, a confidence mark on every figure, seasonal fans, 13-area
 small multiples, editorial charts, one number formatter. Layer 2, the optional
-"SjÃ¸kart" visual system: S-52 chart palette, a Norwegian display face, hairline
+"Sjøkart" visual system: S-52 chart palette, a Norwegian display face, hairline
 tables, keyboard first.
 **Files:** layer 1: `KPICard.tsx`, a new `Figure` component, the chart components,
 `TopBar.tsx`, `DashboardHeroAlert.tsx`; layer 2: `docs/DESIGN_SYSTEM.md`,
@@ -2694,14 +1269,39 @@ licensing product and other clients may call those paths; removing them is a com
 decision, not a trim. Still owner-gated: the WS-20 product name and the Desk/Operator price
 inversion.
 
+### WS-60 - The brief was half unreadable - **DONE 2026-10-21**
+**Why:** `docs/HANDOVER.md` is the first file the next module reads, and §5 held **1,429 lines that
+reconstruct to 1,389 characters** - an earlier draft of the WS-39/40 section written one character per
+line (1,389 single-character lines plus 40 blank separators), sitting directly in front of the clean
+copy of the same section. Between WS-29 and WS-39/40 the brief was unreadable, and the duplicated
+heading let a reader quote the superseded draft (it said "the pricing research and the decisions";
+the current text names the 13 priced comparables and the measured cost). **26 runs of cp1252
+mojibake** survived in the same file (18 arrows, 3 minus signs, 3 ø, one ≥, one multiplication
+sign), and `CLAUDE.md` quoted a sample truncated too short to decode at all, so WS-59's "repaired to
+clean UTF-8" was not true. Nothing noticed for three days because **no test read the documents**.
+**Shipped:** the exploded block deleted, keeping the clean WS-39/40 copy (richer, and it carries the
+measured cost and the open items); the mojibake reversed by re-encoding each maximal
+cp1252-representable run to cp1252 bytes and keeping the replacement only when those bytes decode as
+UTF-8, iterated so double-encoded text also resolves; the truncated example in the `CLAUDE.md` log
+replaced with prose. The exploded duplicate is gone (2,743 -> 1,314 lines before this entry), the
+brief keeps 57 sections with no duplicate workstream heading, and it carries 0 mojibake runs.
+**Added:** `tests/test_doc_integrity.py` - 132 tests (65 documents x 2 shape checks, plus the heading
+and detector checks) that fail on a run of 20+ near-empty lines, on a reversible cp1252 run, or on a
+repeated workstream heading. A run glued to real text (`blå` + a broken en dash) is caught by retrying
+the slice trimmed at each end. Proven against the shipped blob: the run at lines 356-1785 and all 26
+mojibake runs are detected, and the repaired file passes.
+**Deliberately not done:** the tests pin shape, never prose - any document may be rewritten freely.
+**Trap:** both halves are shell-side, not prose-side - see trap 24, and read a blob through `git show`
+via `subprocess` rather than a PowerShell `>` redirect.
+
 ## 6. Traps that cost real time in this codebase
 
 | # | Trap | Rule |
 |---|---|---|
 | 1 | **Alembic placeholders** | `exec_driver_sql` with `%s` is psycopg2-only and is a **syntax error** on SQLite (`near "%": syntax error`). Use SQLAlchemy Core `update()` with bound params in migrations. |
-| 2 | **SQLite drops tzinfo** | A datetime read back is naive â†’ `days_remaining` was always `None`. Coerce with an `_as_utc()` helper before comparing. |
+| 2 | **SQLite drops tzinfo** | A datetime read back is naive → `days_remaining` was always `None`. Coerce with an `_as_utc()` helper before comparing. |
 | 3 | **SQLite returns ISO strings** | Timestamps come back as **strings**, so `isinstance(x, datetime)` is false and freshness read `unknown` for every source. Parse defensively (str/date/int/datetime). |
-| 4 | **SSB week labels** | `get_price_history` returns `"week": "W42"` â†’ `int()` raises `ValueError`. Strip a leading `W`. |
+| 4 | **SSB week labels** | `get_price_history` returns `"week": "W42"` → `int()` raises `ValueError`. Strip a leading `W`. |
 | 5 | **Ratchet inventories** | Never derive a route inventory from the **live app**: other tests inject `/api/test-*` routes and break it. Use `docs/openapi.frozen.json`. |
 | 6 | **Demo-seeded rows** | `ssb_weekly_prices` is `source='demo_seed'`; `lice_records.source` is `barentswatch` / `demo_seed` / `unverified` (WS-1). Never measure accuracy on synthetic rows; never claim `is_live` from `demo_seed` or `unverified`. |
 | 7 | **Empty `alembic_version`** | A `create_all`-built dev DB has an empty version table; the verifier calls that drift. `tests/conftest.py` reconciles missing columns and stamps head for dev/test only. |
@@ -2721,6 +1321,8 @@ inversion.
 | 21 | **A fetch time is not an observation date** | `feed_cost_engine.get_latest()` stamped `data_freshness.feed_prices` with the request time while the FRED "global price" series end **2026-07** — a three-month-old observation presented as current on the flagship cost surface. Any monthly/lagged source must carry the observation date (`IngredientPrice.observed_at`, `feed_prices_as_of`) and the payload must degrade with the month named (WS-29, `FEED_PRICE_MAX_AGE_DAYS`). Same rule as the lice lineage: freshness is when the data was *observed*. |
 | 22 | **PowerShell string surgery re-encodes UTF-8 files** | Editing a UTF-8 source with `(Get-Content -Raw).Replace(...) \| Set-Content` silently rewrote the file in the console code page (one em dash became byte `0x97`) and every later tool failed with `E902 stream did not contain valid UTF-8`. Use the editor/`write` tool for code, or Python with `encoding="utf-8"`; never `Set-Content` on a file containing non-ASCII. Recovery: decode the bytes as UTF-8 and map the stray `0x80–0x9F` bytes back to their CP1252 punctuation. |
 | 23 | **A column default is not a data source** | `chlorophyll_readings.dataset_id` defaulted to the Atlantic 1 km L3 product while the client fetches the global 4 km gap-free L4 one, so 613 141 stored rows described a dataset that was never read — and the two products are not interchangeable (resolution, gap-filling). Record the identifier the fetch actually used, never a model default; the bloom payload now groups stored ids and warns when they disagree with the client (WS-33). |
+| 24 | **The tooling rewrote the document, not the prose** | Two shell-side mistakes made `HANDOVER.md` look corrupted while its text was intact (WS-60). (a) `git show rev:path > tmp.md` writes **UTF-16** on PowerShell, so a healthy blob reads as mojibake and a `>` -based comparison invents damage that is not there - read blobs with `subprocess.check_output(["git", "show", rev + ":" + path])`. (b) `"\n".join(a_string)` joins **characters**, writing one character per line; 1,429 lines of §5 stopped being markdown that way and the duplicate heading inside it let a stale draft be quoted. `tests/test_doc_integrity.py` now fails on both shapes. |
+
 
 ## 7. Definition of done for the next module
 

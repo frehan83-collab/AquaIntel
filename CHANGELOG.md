@@ -5,6 +5,32 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
+### WS-60 -- the brief was half unreadable (2026-10-21)
+**Why:** `docs/HANDOVER.md` is the first file the next module reads. §5 carried **1,429 lines that
+reconstruct to 1,389 characters** -- an earlier draft of the WS-39/40 section written one character
+per line -- sitting immediately in front of the clean copy of the same section, so the brief was
+unreadable between WS-29 and WS-39/40 and its duplicated heading let a reader quote the superseded
+wording. **26 runs of cp1252 mojibake** survived in the same file (18 arrows, 3 minus signs, 3 ø, one
+≥, one multiplication sign) and `CLAUDE.md` quoted a sample truncated too short to decode, so WS-59's
+"repaired to clean UTF-8" was not true. Nothing caught it in three days because no test read the
+documents.
+
+- **DELETED** the exploded duplicate block and kept the clean WS-39/40 copy, which is richer and
+  carries the measured cost and the open items. The brief goes 2,743 -> 1,314 lines (the 1,429
+  exploded lines were the whole difference).
+- **FIXED** the mojibake by re-encoding each maximal cp1252-representable run to cp1252 bytes and
+  keeping the replacement only when those bytes decode as UTF-8 -- iterated, so text that had been
+  encoded twice resolves as well. Real non-ASCII text never round-trips and is left alone. The
+  truncated sample in the `CLAUDE.md` log is now prose.
+- **ADDED** `tests/test_doc_integrity.py` (132 tests: 65 documents x 2 shape checks + the heading and
+  detector checks) failing on a run of 20+ near-empty lines, a reversible cp1252 run, or a repeated
+  workstream heading. It reproduces the old damage exactly -- run at lines 356-1785, 26 mojibake
+  runs -- and passes on the repaired tree.
+- **NOTE** the tests pin document *shape*, never prose; a document may still be rewritten freely.
+- **UPDATED** every stated surface count to the measured value: HANDOVER §1 (1,652 collected, and the
+  full-suite line), AGENTS.md (both places), CLAUDE.md, PROJECT_STATUS.md and this file. The doc-shape
+  ratchet accounts for the difference (1,520 -> 1,652).
+
 ### WS-59 -- the trim became deletion (2026-10-21)
 **Why:** WS-58 hid 21 surfaces from the navigation but left every one of them shipping: 9,677 lines
 across 61 files, still in the bundle, still a URL a buyer can reach. Hiding was a half-measure. The

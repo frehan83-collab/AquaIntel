@@ -18,8 +18,30 @@ deleted the 21 dead pages behind the rest.
 
 Honesty is enforced in code, not copy: accuracy figures exist only in the registry, `-fallback` models
 report `degraded`, unregistered company volumes serialise as `null`, and the withdrawn equity surfaces
-are defined once in `core/legal/equity_signals.py` (WS-20). 1520 tests;
+are defined once in `core/legal/equity_signals.py` (WS-20). 1652 tests;
 `python scripts/verify_production_truth.py` is the deploy gate.
+
+## Session Log — 2026-10-21 (WS-60: the brief was half unreadable)
+
+- **FIXED** `docs/HANDOVER.md` §5 held **1,429 lines reconstructing 1,389 characters** — an earlier
+  draft of the WS-39/40 section written one character per line — directly in front of the clean copy
+  of the same section. The brief was unreadable from WS-29 to WS-39/40, and the duplicated heading
+  let a reader quote the superseded draft. The exploded block is deleted; the clean copy (richer, and
+  it carries the measured cost and the open items) is the one that survives. The brief went 2,743 ->
+  1,314 lines, 56 sections at that point (57 with this entry), no duplicate workstream heading.
+- **FIXED** the **26 reversible cp1252 runs** in `docs/HANDOVER.md` (18 arrows, 3 minus signs, 3 ø,
+  one ≥, one ×) and the truncated sample in this file, which was too short to decode: each maximal
+  cp1252-representable run is re-encoded to cp1252 bytes and the replacement is kept only when those
+  bytes decode as UTF-8 (iterated, so text encoded twice resolves as well; genuine non-ASCII text
+  never round-trips and is untouched). WS-59's "repaired to clean UTF-8" was not true, and now is.
+- **ADDED** `tests/test_doc_integrity.py` — 132 tests over the 65 documents in the repo root and
+  `docs/`: no run of 20+ near-empty lines (the explosion signature), no reversible cp1252 run (also
+  when it is glued to real text, by retrying the slice trimmed at each end), no repeated workstream
+  heading in the brief, plus self-checks proving each detector fires. Run against the shipped blob it
+  reproduces the damage exactly (lines 356-1785, 26 mojibake runs) and it passes on the repaired tree.
+- **LEARNED** a PowerShell `>` redirect writes UTF-16, so `git show rev:path > tmp.md` invents
+  mojibake damage that is not there; read blobs through `subprocess`, and check a document's *shape*
+  rather than trusting a proofread.
 
 ## Session Log — 2026-10-21 (WS-59: the trim became deletion)
 
@@ -46,7 +68,7 @@ are defined once in `core/legal/equity_signals.py` (WS-20). 1520 tests;
   written reason, must have no page, and must not be referenced anywhere under `frontend/src`
   (regex over `.ts`/`.tsx`). `tests/test_entitlements.py` gained `TestNoPlanSellsWhatTheProductWithdrew`
   — because the pricing page is generated from the plan table, a claim there is printed on the invoice.
-- **FIXED** `docs/HANDOVER.md` was double-encoded UTF-8 (`Ã¢â‚¬â€` on line 1) and still claimed
+- **FIXED** `docs/HANDOVER.md` was double-encoded UTF-8 (its title line rendered as mojibake) and still claimed
   "Verified at `f04e79a`"; repaired to clean UTF-8 and refreshed to `904f84c` + WS-59 (state table,
   gate commands, "where things stand", three verifier warnings). `PROJECT_STATUS.md` refreshed to the
   measured surface (362 operations / 354 paths, 39 routers, 82 engines, 36 tables, 24 migrations,
