@@ -4,7 +4,11 @@
 
 The world's most advanced salmon aquaculture intelligence platform. Built for Norwegian fish farmers, traders, and analysts making million-NOK decisions daily.
 
-**66 engines** · **59 pages** · **432 tests** · **303 API routes** · **7-country coverage** · **3 ML foundation models**
+**82 engines** in `core/market/` · **46 page routes** · **354 API paths** (362 operations) · full suite green · **7-country coverage** · **3 foundation-model wrappers** (seasonal-naive when the weights are absent)
+
+> Counts are recomputed by `tests/test_doc_integrity.py`, which fails if they drift; the measured
+> surface, the accuracy registry and the honesty rules are in `PROJECT_STATUS.md`, `docs/ACCURACY.md`
+> and `AGENTS.md`. There are 47 `page.tsx` files: the 46 routes plus the root dashboard.
 
 ## Quick Start
 
@@ -32,7 +36,7 @@ python main.py --api-port 8001
 | Database | SQLite (dev) / PostgreSQL + TimescaleDB (prod) |
 | ML Models | Google TimesFM 2.5, Amazon Chronos-2, Salesforce MOIRAI-2 |
 | Data Sources | BarentsWatch, SSB, FRED, MET.no, Copernicus, Mattilsynet, DFO Canada |
-| Testing | pytest (432 tests), Hypothesis property-based, Playwright E2E |
+| Testing | pytest + Hypothesis property-based + Playwright E2E (full suite green; the count lives in `PROJECT_STATUS.md`) |
 | i18n | Norwegian Bokmål / English (525 translation keys) |
 | CI/CD | GitHub Actions (3 workflows), Docker, nginx |
 

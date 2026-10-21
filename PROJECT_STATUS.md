@@ -61,7 +61,7 @@ anonymous browsing is never gated.
 | Shared components | 43+ |
 | Database tables | 36 |
 | DB migrations | 24 (head 024) |
-| Test functions | 1628 passing, 1 skipped, 13 xfail, 10 xpass (1652 collected) — measured 2026-10-21 after WS-59/60 |
+| Test functions | 1629 passing, 1 skipped, 13 xfail, 10 xpass (1653 collected) — measured 2026-10-21 after WS-59/60 |
 | i18n keys | ~600 (NO/EN) |
 | Design tokens | 86 (Figma pipeline active) |
 | Data source clients | 45+ |

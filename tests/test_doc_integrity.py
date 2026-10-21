@@ -19,6 +19,7 @@ and `docs/` — is covered.
 """
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -152,6 +153,38 @@ def test_handover_lists_each_workstream_once() -> None:
         "docs/HANDOVER.md repeats workstream heading(s): "
         + "; ".join(duplicates)
         + ". Keep one section and delete the stale copy."
+    )
+
+
+def test_readme_counts_match_the_tree() -> None:
+    """The README is the first page a buyer reads, and its counts were 7 months stale.
+
+    On 2026-10-21 it still advertised 66 engines, 59 pages, 432 tests and 303 API
+    routes against a measured 82 / 46 / 1,653 / 354. Counts are recomputed here,
+    so the page cannot drift again; a typed *test* count is refused outright
+    because it goes stale the day it is written.
+    """
+    readme = _read(ROOT / "README.md")
+    engines = len(
+        [p for p in (ROOT / "core" / "market").glob("*.py") if p.name != "__init__.py"]
+    )
+    app = ROOT / "frontend" / "src" / "app"
+    routes = [p for p in app.rglob("page.tsx") if p.parent != app]
+    paths = len(json.loads(_read(ROOT / "docs" / "openapi.frozen.json"))["paths"])
+
+    assert f"**{engines} engines**" in readme, (
+        f"README.md should say **{engines} engines** (core/market/*.py)"
+    )
+    assert f"**{len(routes)} page routes**" in readme, (
+        f"README.md should say **{len(routes)} page routes** "
+        f"(page.tsx files under frontend/src/app, excluding the root dashboard)"
+    )
+    assert f"**{paths} API paths**" in readme, (
+        f"README.md should say **{paths} API paths** (docs/openapi.frozen.json)"
+    )
+    assert not re.search(r"\b\d[\d,]*\s+tests\b", readme), (
+        "README.md types a test count, which goes stale the day it is written; "
+        "say 'full suite green' and point at PROJECT_STATUS.md instead"
     )
 
 

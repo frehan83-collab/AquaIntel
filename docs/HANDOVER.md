@@ -26,13 +26,13 @@
 |---|---|
 | Platform version | `2.6.0` |
 | OpenAPI surface | **354 paths / 362 operations** (`docs/openapi.frozen.json`, measured 2026-10-21) |
-| Tests | **1652 collected** (pytest --collect-only, 2026-10-21 after WS-60) |
+| Tests | **1653 collected** (pytest --collect-only, 2026-10-21 after WS-60) |
 | Alembic migrations | **24** (head 024, WS-54 answer receipts) |
 | Router modules | **39** (`core/routers/`) |
 | Engine modules | **82** modules in `core/market/` |
 | Frontend routes | **46** page files (WS-58 hid 21 dead surfaces, WS-59 deleted them) |
 | Production topology | `docker-compose.prod.yml`: `api` + `agents` + `db` (TimescaleDB) + `web` |
-| Last full-suite run | **1628 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 5.4 min (2026-10-21, at `904f84c` + WS-59/60) |
+| Last full-suite run | **1629 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 5.3 min (2026-10-21, at `904f84c` + WS-59/60) |
 
 **What this file covers:** the commercial-hardening programme, WS-1 to WS-60. WS-60 is the
 newest entry in §5; §3 maps each area to the document that explains it.
@@ -1285,8 +1285,8 @@ cp1252-representable run to cp1252 bytes and keeping the replacement only when t
 UTF-8, iterated so double-encoded text also resolves; the truncated example in the `CLAUDE.md` log
 replaced with prose. The exploded duplicate is gone (2,743 -> 1,314 lines before this entry), the
 brief keeps 57 sections with no duplicate workstream heading, and it carries 0 mojibake runs.
-**Added:** `tests/test_doc_integrity.py` - 132 tests (65 documents x 2 shape checks, plus the heading
-and detector checks) that fail on a run of 20+ near-empty lines, on a reversible cp1252 run, or on a
+**Added:** `tests/test_doc_integrity.py` - 133 tests (65 documents x 2 shape checks, plus the heading,
+detector and README checks) that fail on a run of 20+ near-empty lines, on a reversible cp1252 run, or on a
 repeated workstream heading. A run glued to real text (`blå` + a broken en dash) is caught by retrying
 the slice trimmed at each end. Proven against the shipped blob: the run at lines 356-1785 and all 26
 mojibake runs are detected, and the repaired file passes.

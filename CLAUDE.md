@@ -18,7 +18,7 @@ deleted the 21 dead pages behind the rest.
 
 Honesty is enforced in code, not copy: accuracy figures exist only in the registry, `-fallback` models
 report `degraded`, unregistered company volumes serialise as `null`, and the withdrawn equity surfaces
-are defined once in `core/legal/equity_signals.py` (WS-20). 1652 tests;
+are defined once in `core/legal/equity_signals.py` (WS-20). 1653 tests;
 `python scripts/verify_production_truth.py` is the deploy gate.
 
 ## Session Log — 2026-10-21 (WS-60: the brief was half unreadable)
@@ -34,11 +34,16 @@ are defined once in `core/legal/equity_signals.py` (WS-20). 1652 tests;
   cp1252-representable run is re-encoded to cp1252 bytes and the replacement is kept only when those
   bytes decode as UTF-8 (iterated, so text encoded twice resolves as well; genuine non-ASCII text
   never round-trips and is untouched). WS-59's "repaired to clean UTF-8" was not true, and now is.
-- **ADDED** `tests/test_doc_integrity.py` — 132 tests over the 65 documents in the repo root and
+- **ADDED** `tests/test_doc_integrity.py` — 133 tests over the 65 documents in the repo root and
   `docs/`: no run of 20+ near-empty lines (the explosion signature), no reversible cp1252 run (also
   when it is glued to real text, by retrying the slice trimmed at each end), no repeated workstream
   heading in the brief, plus self-checks proving each detector fires. Run against the shipped blob it
   reproduces the damage exactly (lines 356-1785, 26 mojibake runs) and it passes on the repaired tree.
+- **FIXED** `README.md`, the page a buyer reads first: it advertised "66 engines · 59 pages · 432
+  tests · 303 API routes" against a measured 82 / 46 / 1,653 / 354, and claimed "3 ML foundation
+  models" without the fallback caveat. Counts are now the measured ones, the typed test count is gone,
+  and `test_readme_counts_match_the_tree` recomputes engines, page routes and API paths from the tree
+  so the line cannot drift again.
 - **LEARNED** a PowerShell `>` redirect writes UTF-16, so `git show rev:path > tmp.md` invents
   mojibake damage that is not there; read blobs through `subprocess`, and check a document's *shape*
   rather than trusting a proofread.

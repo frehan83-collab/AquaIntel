@@ -22,14 +22,19 @@ documents.
   keeping the replacement only when those bytes decode as UTF-8 -- iterated, so text that had been
   encoded twice resolves as well. Real non-ASCII text never round-trips and is left alone. The
   truncated sample in the `CLAUDE.md` log is now prose.
-- **ADDED** `tests/test_doc_integrity.py` (132 tests: 65 documents x 2 shape checks + the heading and
-  detector checks) failing on a run of 20+ near-empty lines, a reversible cp1252 run, or a repeated
-  workstream heading. It reproduces the old damage exactly -- run at lines 356-1785, 26 mojibake
-  runs -- and passes on the repaired tree.
+- **ADDED** `tests/test_doc_integrity.py` (133 tests: 65 documents x 2 shape checks + the heading,
+  detector and README checks) failing on a run of 20+ near-empty lines, a reversible cp1252 run, or a
+  repeated workstream heading, and recomputing the README's counts from the tree. It reproduces the
+  old damage exactly -- run at lines 356-1785, 26 mojibake runs -- and passes on the repaired tree.
 - **NOTE** the tests pin document *shape*, never prose; a document may still be rewritten freely.
-- **UPDATED** every stated surface count to the measured value: HANDOVER §1 (1,652 collected, and the
+- **UPDATED** every stated surface count to the measured value: HANDOVER §1 (1,653 collected, and the
   full-suite line), AGENTS.md (both places), CLAUDE.md, PROJECT_STATUS.md and this file. The doc-shape
-  ratchet accounts for the difference (1,520 -> 1,652).
+  ratchet accounts for the difference (1,520 -> 1,653).
+- **FIXED** `README.md`, the first page a buyer reads, which still advertised "66 engines · 59 pages ·
+  432 tests · 303 API routes" seven months after WS-59 changed every one of those numbers: now 82
+  engines, 46 page routes, 354 API paths, "full suite green", and 3 foundation-model *wrappers* with
+  the seasonal-naive caveat in the same sentence. The typed test count is gone from both places that
+  carried it -- a count that cannot be recomputed at test time must not be typed.
 
 ### WS-59 -- the trim became deletion (2026-10-21)
 **Why:** WS-58 hid 21 surfaces from the navigation but left every one of them shipping: 9,677 lines
