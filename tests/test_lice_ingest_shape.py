@@ -70,10 +70,19 @@ async def test_a_fallow_site_is_skipped():
 
 
 def test_the_restored_week_matches_the_published_figures():
-    """2026-W41: 585 sites, average 0.18, worst 3.15 — cross-checked against oppdrett.info."""
+    """2026-W41: 585 sites, average 0.18, worst 3.15 — cross-checked against oppdrett.info.
+
+    Reads the DEV database on purpose (it is the one the backfill ran against),
+    not the throwaway copy the rest of the suite uses (WS-24); conftest records
+    its path in FISHINTEL_DEV_DB.
+    """
+    import os
     import sqlite3
 
-    conn = sqlite3.connect("data/openclaw.db")
+    dev_db = os.environ.get("FISHINTEL_DEV_DB", "")
+    if not dev_db:
+        pytest.skip("no dev database on this box (CI/fresh clone)")
+    conn = sqlite3.connect(dev_db)
     try:
         rows, average, peak = conn.execute(
             "select count(*), round(avg(avg_adult_female_lice),2), round(max(avg_adult_female_lice),2) "

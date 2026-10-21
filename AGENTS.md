@@ -13,7 +13,7 @@ Production-grade salmon aquaculture intelligence platform ("Bloomberg Terminal
 for Salmon"): FastAPI backend (362 operations across 354 paths, 82 engine modules),
 Next.js 16 frontend (46 pages), 45+ live data-source clients, 3 foundation-model
 forecasting engines (with honest seasonal-naive fallbacks), 1,500+ tests
-(1653 collected on 2026-10-21).
+(1657 collected on 2026-10-21).
 
 - Repository: `github.com/frehan83-collab/AquaIntel` (public). `origin` points
   here directly; the legacy `openclaw-legacy` remote points at the old
@@ -54,6 +54,10 @@ python -m pytest tests/test_critical_engines.py -q   # fast smoke (~8s)
 python -m pytest tests/ -k "Name" -q    # by name
 python scripts/smoke_security.py        # auth/SSRF/escalation smoke checks
 python scripts/preflight_audit.py       # module import audit (if present)
+# WS-24: the suite never writes data/aquaintel.db (or the legacy data/openclaw.db).
+# conftest points DATABASE_URL at a throwaway copy in the temp dir; an explicit
+# DATABASE_URL (CI/PostgreSQL) is honoured, and with no dev DB the suite builds and
+# demo-seeds a fresh one. FISHINTEL_DEV_DB records where the real dev DB is.
 
 # One-off diagnostics
 python scripts/probe_fred_series.py     # FRED feed health
@@ -129,7 +133,7 @@ test runs with `Start-Process ... -RedirectStandardOutput` and poll the file.
 | `agents/`, `main.py` | 13 background agents (asyncio; daemon-thread mode for dev only); `index_publisher` publishes the published indices (AI-STI; AI-LPI v1.0 withdrawn by WS-19) once per ISO week (WS-2) |
 | `frontend/src/app/` | Next.js App Router pages (`"use client"`) |
 | `frontend/src/lib/api.ts` | Typed API client — every new endpoint gets a method here |
-| `tests/` | pytest (1653 tests); add tests for every bugfix/feature |
+| `tests/` | pytest (1657 tests); add tests for every bugfix/feature |
 | `docs/` | Roadmaps, competitive analysis, code reviews, summit reports |
 
 ### Frozen modules (do not extend)
@@ -149,10 +153,11 @@ test runs with `Start-Process ... -RedirectStandardOutput` and poll the file.
 - Model weights live in the gitignored `data/models/` — absent in CI/prod unless a
   volume/release artifact supplies them. `python scripts/verify_production_truth.py`
   reports presence honestly rather than assuming it.
-- Local dev SQLite may lag the ORM (`create_all` vs Alembic); if you see
-  `no such column`, reconcile with `PRAGMA table_info` + `ALTER TABLE`. The test
-  bootstrap now does this automatically (`tests/conftest.py`), and the
-  production-truth verifier compares `alembic_version` against the code head.
+- Local dev SQLite may lag the ORM (`create_all` vs Alembic); if the app shows
+  `no such column`, reconcile with `PRAGMA table_info` + `ALTER TABLE`. A test run
+  no longer migrates, reconciles or seeds the dev DB (WS-24): it works on a
+  throwaway copy, so the dev DB is yours to reconcile. The production-truth
+  verifier compares `alembic_version` against the code head.
 - Per-source freshness is visible at `GET /api/data-freshness`; sources with no
   measurable timestamp report `unknown`, and demo-only tables report
   `synthetic_only` (never "live").

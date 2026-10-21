@@ -18,8 +18,37 @@ deleted the 21 dead pages behind the rest.
 
 Honesty is enforced in code, not copy: accuracy figures exist only in the registry, `-fallback` models
 report `degraded`, unregistered company volumes serialise as `null`, and the withdrawn equity surfaces
-are defined once in `core/legal/equity_signals.py` (WS-20). 1653 tests;
+are defined once in `core/legal/equity_signals.py` (WS-20). 1657 tests;
 `python scripts/verify_production_truth.py` is the deploy gate.
+
+## Session Log — 2026-10-21 (WS-24: a test run cannot write the dev database)
+
+- **FIXED** `tests/conftest.py` — the suite wrote its fixtures into `data/openclaw.db`, the
+  database the app serves (850 `design_partners`, 2,561 `audit_logs`, 890 `price_predictions`
+  rows on this box, every one a test copy), and the collection bootstrap ran
+  `alembic upgrade head` against that file, so a migration landed on the dev DB with the first
+  test run. Before anything imports the app, conftest now points `DATABASE_URL` at a throwaway
+  copy of the dev DB in the temp dir (SQLite backup API, so the WAL is included) and deletes
+  it when the session ends where the OS allows (Windows can hold the handle; the next run
+  replaces the same path, so copies never accumulate); `create_all`, `alembic upgrade`,
+  column reconciliation, the demo seed and the alembic stamp all run against the copy. An
+  explicit `DATABASE_URL` is honoured as
+  given (CI, PostgreSQL, `test_migrations.py`); with no dev DB the fresh-build + demo-seed path
+  is unchanged. The dev path is resolved the way the app resolves it (`DATABASE_URL`, then
+  `.env`, then the canonical file) **without importing `config.settings`** — the first version
+  imported it, which instantiated the cached settings object and bound the engine to the dev DB
+  anyway; the new test caught it and the dev counts moved (restored afterwards).
+- **ADDED** `tests/test_ws24_test_isolation.py` (4) — suite on the copy and not the dev file;
+  the copy really is a copy (a fresh seed is the CI path), so data-driven tests stay meaningful;
+  a row written into each of `design_partners` / `audit_logs` / `price_predictions` /
+  `index_observations` through the app's own `Session` moves the copy's counts and leaves the dev
+  DB's counts identical (the WS-24 acceptance); an explicit `DATABASE_URL` wins.
+- **FIXED** `tests/test_lice_ingest_shape.py` hardcoded `data/openclaw.db` (pre-rename); it now
+  reads `FISHINTEL_DEV_DB`, set by conftest, and skips when there is no dev DB.
+- **LEARNED** don't import `config.settings` from conftest before overriding `DATABASE_URL` — the
+  module-level `settings = Settings()` caches the value and `core.models` binds the engine to it.
+  Also: pytest's `-q` progress is block-buffered when redirected, so a log that "stops growing"
+  is not a stalled suite; use `-v` when watching a run.
 
 ## Session Log — 2026-10-21 (WS-60: the brief was half unreadable)
 

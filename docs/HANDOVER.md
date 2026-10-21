@@ -26,13 +26,13 @@
 |---|---|
 | Platform version | `2.6.0` |
 | OpenAPI surface | **354 paths / 362 operations** (`docs/openapi.frozen.json`, measured 2026-10-21) |
-| Tests | **1653 collected** (pytest --collect-only, 2026-10-21 after WS-60) |
+| Tests | **1657 collected** (pytest --collect-only, 2026-10-21 after WS-24) |
 | Alembic migrations | **24** (head 024, WS-54 answer receipts) |
 | Router modules | **39** (`core/routers/`) |
 | Engine modules | **82** modules in `core/market/` |
 | Frontend routes | **46** page files (WS-58 hid 21 dead surfaces, WS-59 deleted them) |
 | Production topology | `docker-compose.prod.yml`: `api` + `agents` + `db` (TimescaleDB) + `web` |
-| Last full-suite run | **1629 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 5.3 min (2026-10-21, at `904f84c` + WS-59/60) |
+| Last full-suite run | **1633 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 5.6 min (2026-10-21, at `904f84c` + WS-24/59/60) |
 
 **What this file covers:** the commercial-hardening programme, WS-1 to WS-60. WS-60 is the
 newest entry in §5; §3 maps each area to the document that explains it.
@@ -132,7 +132,8 @@ test** → traps.
   WS-54-58 (receipts, fixtures, lice review, frontend build), WS-58/58b (nav 56 to 33, hide
   means hide) and **WS-59** (21 dead pages deleted; no plan sells withdrawn work), then **WS-60**
   (this brief repaired: an exploded duplicate section removed, the mojibake reversed, a doc-shape
-  ratchet added).
+  ratchet added), and **WS-24** (tests run on a throwaway copy, so the dev DB's row counts and
+  schema cannot move).
 - **Partly done:** WS-20 - only the *product name* and the *Desk/Operator price inversion*
   (Desk NOK 2,990 sits below Operator NOK 4,900) remain, and both are owner decisions. The
   Investor tier no longer advertises paper trading or Monte Carlo (WS-59), so the
@@ -141,7 +142,7 @@ test** → traps.
   supported), WS-27 layer 2, the two WS-20 decisions above, and the legal opinion the rest of
   WS-28 waits on.
 - **Next without an owner decision:** WS-29b's data step (obtain a realised feed figure; the
-  mechanism ships), then WS-22's smolt pipeline, then WS-16, WS-24 and WS-25, in the order
+  mechanism ships), then WS-22's smolt pipeline, then WS-16 and WS-25, in the order
   below. WS-31b is done; the only licence item left is negotiating NQSALMON/SISALMONI if a
   benchmark display is ever wanted.
 - **Verifier state** (`python scripts/verify_production_truth.py`, 2026-10-21): **0 failures,
@@ -1157,12 +1158,37 @@ does not hold; a test that the backtest loader refuses `demo_seed` rows.
 the `demo_seed` DB rows. It is covered by the acceptance above: drop the figures or
 label them as per-call diagnostics on real rows only.
 
-### WS-24 · Test isolation for the dev database
-**Why:** test runs wrote all 260 `design_partners` rows ("X", "Scorecard Co", "Recip
-Co"), audit rows and price predictions into `data/openclaw.db`, the same trap the
-WS-2 publish tests had. **Acceptance:** a full test run leaves the row counts of
-`design_partners`, `audit_logs`, `price_predictions` and `index_observations` in the
-dev DB unchanged.
+### WS-24 · Test isolation for the dev database — **DONE 2026-10-21**
+**Why:** test runs wrote every `design_partners` row ("X", "Scorecard Co", "Recip
+Co"), audit rows and price predictions into `data/openclaw.db` — the database the
+app serves; on 2026-10-21 the dev box held 850 partner rows, 2,561 audit rows and
+890 price predictions that are all fixtures — and the collection bootstrap ran
+`alembic upgrade head` against it, so a migration landed on the dev DB with the
+first test run (trap 17). VALUE_ANALYSIS item 8: land this before real design
+partners are recorded.
+**Done:** `tests/conftest.py` resolves the dev DB the way the app does
+(`DATABASE_URL` env, then `.env`, then the canonical file) **without importing
+`config.settings`** — importing it there instantiates the cached settings object
+and `core.models` binds the engine to the dev DB, which is exactly what the first
+version of this fix did — then points `DATABASE_URL` at a throwaway copy in the
+temp dir (one stable path, `_test_suite.db`, replaced at the start of every run, so
+killed runs cannot leave a pile of 200 MB copies) and deletes it when the session
+ends — best-effort on Windows, where an aiosqlite handle can hold the file; the next
+run replaces the same path either way. The copy uses the SQLite backup API
+(plain copy misses the WAL, trap 18), so tests keep the row counts they were
+written against. The bootstrap's `create_all`, `alembic upgrade`, column
+reconciliation, demo seed and stamp all run against the copy. An explicit
+`DATABASE_URL` is honoured as given (CI, PostgreSQL, `test_migrations.py`); with no
+dev DB the fresh build + demo seed path is unchanged. `FISHINTEL_DEV_DB` records
+where the real file is, for the one test that checks its contents
+(`test_lice_ingest_shape.py`, which read a hardcoded pre-rename path before).
+**Acceptance (met):** a full run leaves the `design_partners`, `audit_logs`,
+`price_predictions` and `index_observations` row counts in the dev DB unchanged —
+`tests/test_ws24_test_isolation.py` (4) writes one row into each of the four
+through the app's own `Session` and asserts the dev counts are identical, and the
+counts were also checked externally before/after a full run.
+**Left alone:** the rows already in the dev DB stay (they predate the fix); do not
+delete them without owner sign-off.
 
 ### WS-25 · Cold starts off the request path
 **Why:** the liveness probe saw 60 of 219 routes exceed 12 s, but it runs the app
@@ -1314,7 +1340,7 @@ via `subprocess` rather than a PowerShell `>` redirect.
 | 14 | **The freshness monitor runs in a worker thread** | `fm.report()` uses `asyncio.to_thread`; an in-memory SQLite engine is empty in that thread. Test it with a file-backed engine. |
 | 15 | **Long shell heredocs on this box** | Git-Bash `cat <<'EOF'` with a long Python body intermittently fails to parse. Write the patch to a file and run `python file.py`. |
 | 16 | **Tests used to publish into the real index store** | Until WS-2 the publish tests stored the current week into the dev DB on every run; this box's 2026-W42 rows predate the lineage guard and the AI-LPI one claims `is_live: true`. Use the `observation_store` fixture for anything that writes observations; never read the dev box's published history as evidence of the agent. The rows store the defect values (AI-STI 100 severe; AI-LPI 55 claiming `is_live: true`) at method 1.0.0; since WS-19 (Alembic 020) they are marked `superseded_by='2.0.0'` and no longer count for any week. Never delete them. |
-| 17 | **The test bootstrap migrates the dev DB** | `tests/conftest.py::_bootstrap_test_database` runs `alembic upgrade head` against `data/openclaw.db` at collection, so a new migration is applied to the dev DB by the first test run — write migrations to be safe on real data before running any test. |
+| 17 | **Tests used to migrate the dev DB** | Until WS-24, `tests/conftest.py` ran `alembic upgrade head` (plus `create_all`, column reconciliation and the demo seed) against `data/openclaw.db` at collection, so a new migration landed on the dev DB with the first test run. Now the whole bootstrap runs against a throwaway copy in the temp dir and the dev DB is never opened for writing; `FISHINTEL_DEV_DB` tells a test where the real file is. |
 | 18 | **The dev DB is in WAL mode** | Recent writes sit in `data/openclaw.db-wal`; `cp data/openclaw.db x.db` gives a stale copy (missing columns a migration just added). Copy with the SQLite backup API (`src.backup(dst)`). |
 | 19 | **A swallowed `ImportError` makes a live path dead** | `competitiveness_engine.py` imported `macro_intelligence_engine`, which does not exist (the singleton is `macro_intelligence`), inside `try/except Exception` — so NOK/USD **always** fell back to 0.093 and the US spot **always** returned the undated 8.50 constant while the payload said `live`. When a `try` wraps a lazy import, assert the import name in a test (`test_ws22_data_claims.py::test_live_nok_rate_is_used_when_macro_answers`) or the fallback becomes permanent and invisible. |
 | 20 | **`pytest tmp_path` on Windows under this harness** | `os.mkdir(path, 0o700)` (what pytest's basetemp does) creates a directory whose DACL excludes the signed-in user on this box (Python 3.14), so every `tmp_path` fixture errors at setup with `PermissionError: [WinError 5]` and the run reports `E` for a large slice of the suite. Workaround used here and NOT committed: put a `sitecustomize.py` on `PYTHONPATH` that forces `os.mkdir(path, 0o777, dir_fd=...)`, and point `TMP`/`TEMP` at a writable **workspace** directory (a fresh one: an already-broken `pytest-of-<user>` makes `make_numbered_dir` fail again). Diagnostic: a directory created by `os.mkdir(p, 0o700)` cannot be listed even by PowerShell (`icacls` reports access denied). |

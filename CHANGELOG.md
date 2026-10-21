@@ -5,6 +5,43 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
+### WS-24 -- a test run cannot write the dev database (2026-10-21)
+- **Why:** the suite wrote its fixtures into `data/openclaw.db`, the database the app
+  serves. On this box that was 850 `design_partners` rows (every one a test copy of
+  "X" / "Scorecard Co" / "Recip Co"), 2,561 `audit_logs` and 890 `price_predictions`
+  rows -- so a demo of the partner desk showed fixtures as customers -- and the
+  collection bootstrap ran `alembic upgrade head` against the same file, meaning a
+  new migration landed on the dev DB with the first test run (HANDOVER trap 17).
+  VALUE_ANALYSIS item 8: land this before real design partners are recorded.
+- **FIXED** `tests/conftest.py` -- before anything imports the app, `DATABASE_URL` is
+  pointed at a **throwaway copy** of the dev DB in the temp dir (one stable path,
+  replaced at the start of every run), so tests keep the row counts they were written
+  against and killed runs cannot accumulate copies. It is deleted at session end where
+  the OS allows it; on Windows an aiosqlite handle can hold the file, and the next run
+  replaces the same path. The copy uses
+  the SQLite backup API because a plain file copy misses the WAL (trap 18). The
+  bootstrap (`create_all`, `alembic upgrade`, column reconciliation, demo seed,
+  stamp) now runs against the copy, so the dev DB is neither migrated nor seeded by a
+  test run. The dev path is resolved the way the app resolves it (`DATABASE_URL`, then
+  `.env`, then the canonical file) **without importing `config.settings`**: the first
+  version of this fix imported it, which instantiated the cached settings object and
+  bound the engine to the dev DB anyway -- caught by the new test, not by review.
+  An explicit `DATABASE_URL` is honoured as given (CI, PostgreSQL, `test_migrations.py`);
+  with no dev DB the fresh-build + demo-seed path is unchanged.
+- **ADDED** `tests/test_ws24_test_isolation.py` (4): the suite runs on the copy and not
+  on the dev file; the copy is a copy of the dev DB (a fresh seed is the CI path), so
+  the data-driven tests stay meaningful; one row written into `design_partners`,
+  `audit_logs`, `price_predictions` and `index_observations` through the app's own
+  `Session` moves the copy's counts and leaves the dev DB's counts identical (the
+  WS-24 acceptance); and an explicit `DATABASE_URL` wins over the copy.
+- **FIXED** `tests/test_lice_ingest_shape.py` read `data/openclaw.db` by hardcoded
+  pre-rename path; it now reads `FISHINTEL_DEV_DB` (set by conftest) and skips when
+  there is no dev DB.
+- **VERIFIED** full suite green (1,657 collected); the dev DB's four watched counts
+  identical before and after a full run; scratch copy removed at session end.
+- **NOT DONE, on purpose:** the rows already in the dev DB stay -- they predate the fix
+  and some carry lineage expectations. Deleting them is an owner decision, not a cleanup.
+
 ### WS-60 -- the brief was half unreadable (2026-10-21)
 **Why:** `docs/HANDOVER.md` is the first file the next module reads. §5 carried **1,429 lines that
 reconstruct to 1,389 characters** -- an earlier draft of the WS-39/40 section written one character
