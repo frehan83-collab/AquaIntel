@@ -209,3 +209,45 @@ class TestCatalogEndpoints:
         ).json()
         assert anon["allowed"] is True, "anonymous browsing is never gated"
 
+
+
+class TestNoPlanSellsWhatTheProductWithdrew:
+    """WS-59 — a plan may only advertise work that ships.
+
+    The pricing page is generated from this table (``plan_catalog``), so a claim here is printed
+    on the invoice. Three tiers carried claims the code did not support: Investor sold *paper
+    trading* and *Monte Carlo profit simulation* after WS-20 withdrew both for legal review,
+    Operator sold *offline capture* with no service worker in the build, and the free tier sold a
+    *30-day lag* that no middleware implements (premium outputs are gated, not delayed).
+    """
+
+    WITHDRAWN_CLAIMS = {
+        "paper trading": "WS-20 withdrew it and WS-59 deleted the page",
+        "monte carlo": "WS-20 withdrew it with the equity surfaces",
+        "scenario sandbox": "the scenario pages were deleted by WS-59",
+        "offline": "no service worker ships, so 'offline capture' had no mechanism",
+        "30-day lag": "nothing implements a lag; premium paths are gated instead",
+    }
+
+    def test_no_plan_advertises_withdrawn_work(self):
+        for key, plan in PLANS.items():
+            text = " ".join(plan.features).lower()
+            for claim, why in self.WITHDRAWN_CLAIMS.items():
+                assert claim not in text, f"{key} sells {claim!r}: {why}"
+
+    def test_the_served_catalog_carries_the_same_truth(self, client):
+        body = client.get("/api/entitlements/plans").json()
+        blob = " ".join(f for p in body["plans"] for f in p["features"]).lower()
+        for claim, why in self.WITHDRAWN_CLAIMS.items():
+            assert claim not in blob, f"the pricing catalog sells {claim!r}: {why}"
+
+    def test_investor_sells_fundamentals_not_equity_calls(self):
+        features = " ".join(PLANS["investor"].features).lower()
+        assert "volume" in features or "index" in features, "the tier needs a real deliverable"
+        assert "everything in enterprise" in features
+
+    def test_plan_feature_lists_stay_legible(self):
+        """A plan with a dozen bullets is a plan nobody reads — and a page that sprawls."""
+        for key, plan in PLANS.items():
+            assert 0 < len(plan.features) <= 6, (key, len(plan.features))
+

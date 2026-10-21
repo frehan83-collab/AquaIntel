@@ -11,6 +11,8 @@ withdrawn run is refused without taking a credit.
 """
 from __future__ import annotations
 
+import re
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -19,7 +21,18 @@ from core.llm import credits as ledger
 from core.llm.client import LLMClient
 from core.llm.workbench import RUN_KINDS, Workbench
 
-FACTS_DOC = "## What the numbers say\n- Spot 72.55 NOK/kg (2026-W41).\n"
+FACTS_DOC_HEAD = "## What the numbers say\n"
+
+
+def _facts_doc(prompt: str) -> str:
+    """Cite a spot figure the grounding actually carries.
+
+    The live SSB spot moves every week, and the claim checker (rightly) withholds a document
+    whose number is not in the facts — so a hardcoded price makes this test expire in seven days.
+    """
+    match = re.search(r"(\d+\.\d+)\s*NOK", prompt)
+    assert match, "the grounding carries no spot figure to cite"
+    return f"{FACTS_DOC_HEAD}- Spot {match.group(1)} NOK/kg.\n"
 
 
 class _Response:
@@ -43,7 +56,7 @@ def client():
 @pytest.mark.asyncio
 async def test_a_document_with_an_unsupported_number_is_withheld_and_free():
     async def complete(**kwargs):
-        return _Response(FACTS_DOC + "- Mortality ran at 30 % this year.\n")
+        return _Response(_facts_doc(kwargs["prompt"]) + "- Mortality ran at 30 % this year.\n")
 
     document = await Workbench(complete=complete).run("margin_dossier")
 
@@ -59,7 +72,7 @@ async def test_a_document_with_an_unsupported_number_is_withheld_and_free():
 @pytest.mark.asyncio
 async def test_a_clean_document_is_a_model_run_and_is_charged_later_by_the_route():
     async def complete(**kwargs):
-        return _Response(FACTS_DOC)
+        return _Response(_facts_doc(kwargs["prompt"]))
 
     document = await Workbench(complete=complete).run("margin_dossier")
 

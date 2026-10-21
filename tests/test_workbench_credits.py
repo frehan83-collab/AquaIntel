@@ -11,6 +11,8 @@ Two claims are being tested here:
 """
 from __future__ import annotations
 
+import re
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -106,15 +108,21 @@ async def test_a_run_without_a_model_returns_a_digest_and_spends_nothing():
 @pytest.mark.asyncio
 async def test_a_run_with_a_model_returns_a_document_and_its_cost():
     class _Response:
-        content = "## What the numbers say\n- Spot 72.55 NOK/kg."
         model = "test"
         input_tokens = 18000
         output_tokens = 900
         cost_usd = 0.067
         error = None
 
+        def __init__(self, content: str) -> None:
+            self.content = content
+
     async def complete(**kwargs):
-        return _Response()
+        # Cite the spot price the grounding carries: it moves weekly and the checker withholds
+        # a document whose number is not in the facts, so a fixed price expires.
+        match = re.search(r"(\d+\.\d+)\s*NOK", kwargs["prompt"])
+        assert match, "the grounding carries no spot figure to cite"
+        return _Response(f"## What the numbers say\n- Spot {match.group(1)} NOK/kg.")
 
     document = await Workbench(complete=complete).run("margin_dossier")
     assert document.mode == "model"

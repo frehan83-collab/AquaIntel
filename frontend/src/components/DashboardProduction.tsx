@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import {
-  AlertTriangle, GitBranch, Ship, BarChart3, BarChart2, Zap, ArrowRight,
+  AlertTriangle, GitBranch, Ship, BarChart3, Zap, ArrowRight,
 } from "lucide-react";
 import GlassCard from "@/components/GlassCard";
 import { formatNumber } from "@/lib/i18n";
@@ -120,10 +120,6 @@ export default function DashboardProduction({
                 </div>
               </div>
             ))}
-            <Link href="/command-centre" className="flex items-center gap-1 text-[10px] text-ocean-400 hover:text-ocean-300 transition-colors mt-1">
-              <BarChart2 className="w-3 h-3" />
-              Open Command Centre
-            </Link>
           </div>
         )}
       </GlassCard>

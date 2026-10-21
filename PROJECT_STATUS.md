@@ -2,11 +2,12 @@
 
 > **Repository:** [github.com/frehan83-collab/AquaIntel](https://github.com/frehan83-collab/AquaIntel) (public)
 
-Last updated: 2026-10-18 (WS-22 part 2: claims that outran the data)
+Last updated: 2026-10-21 (WS-59: the trim became deletion — 21 dead pages gone, and no plan sells withdrawn work)
 
-**Taking over coding? Read `docs/HANDOVER.md`** — verified state, gate commands, the
-prioritised workstream backlog (WS-1, WS-2, WS-11, WS-19, WS-21, WS-23 done; WS-22
-partly — start with its remaining number fixes) and the traps that cost real time.
+**Taking over coding? Read `docs/HANDOVER.md`** — verified state at `904f84c` + WS-59, gate
+commands, the prioritised workstream backlog (WS-1/2/11/19/21/23 done; WS-22 done except the
+smolt pipeline; WS-20 still carries two owner decisions) and the traps that cost real time.
+For why the product is the size it is, read `docs/COMMERCIAL_TRIM.md`.
 
 ## Commercial hardening (in progress)
 
@@ -33,8 +34,8 @@ partly — start with its remaining number fixes) and the traps that cost real t
 | WS-32/33/34. The bloom and satellite surfaces stop inventing things | **Shipped** | **WS-32:** `satellite_engine` simulator deleted — no scene means no reading (`n_readings_verified`, `scene_dates`, `missing_reason`); `is_live` from verified scenes, never credentials; NDVI relabelled `surface_scum_or_vegetation`; provenance on all `/api/satellite/*` routes; catalogue drops the fabricated HAB-confirmation and cage-census products (`tests/test_satellite_honesty.py`, 8). **WS-33:** `/bloom` crash fixed (envelope unwrap), freshness from the newest observation (≤7 d live, else degraded with age), dead self-compared trend fixed (`None` when no prior day) and nulled for 123 045 rows, alerts record `not_configured`/`sent`+`delivered_at` instead of a pre-dispatch `sent`, bio-risk disease count calls the real Mattilsynet API, brief counts distinct localities in the week, **Alembic 021** (`tests/test_bloom_honesty.py`, 17 + migration test). **WS-34:** `GET /api/bloom/context` — dated IMR Algestatus link (no API), three sourced mortality events, five stated limits. Council rejected the 300 m per-farm OLCI layer (sub-pixel cages, 52–90 % gap-filled, subsurface 2019 bloom) |
 | WS-28a/30/31/35. No invented trade calls, no invented ROI, licensed FX, reported volumes | **Shipped** | **WS-28a:** `core/legal/equity_signals.DIRECTIONAL_WRITES_ENABLED = False` + `may_persist_directional()`; the signal generator, market hedger, prediction agent and bloom agent no longer write trade directions on listed shares (14 tests). **WS-30:** ROI claim inputs default to zero and each ICP reports a break-even (`benefit_needed_nok`) instead of a 228x/1 693x multiple; the processor's hard-coded 0.5 is now an input (17 tests). **WS-31/31b:** `core/market/fx_rates.py` reads Norges Bank official rates (observation date attached) and `rate_to_usd()` resolves every currency from them (the per-100 convention handled once) with a documented constant only for CLP; wired through competitiveness, futures, macro and feed-cost; `salmon_price` serves only the SSB spot — the Oslo equity quotes and the spot-derived share-price proxies are deleted, the pairs agent skips explicitly, and `/api/market/equity-prices` reports `equity_quotes: unavailable`; the attribution footer gains Norges Bank / Mattilsynet / FRED notice; `tests/test_licensed_sources.py` (11). **WS-35:** see the next row |
 | WS-35. Company volumes are reported facts | **Shipped** | `core/market/company_facts.py`: one row per reporting entity (year, **scope** Norway vs group, figure, source URL). `top50_engine` retired `n_localities * 800` (Mowi read 113 600 t against ~332 000 t harvested in Norway in 2025) and now reports `production_volume_tonnes: null` with a `volume_basis` block (`reported`/`sub_entity`/`unknown`) when no fact exists; sub-entities do not repeat the group figure, unknown volumes sort last and never serialise as 0; `tests/test_company_volumes.py` (11). Open: add rows for SalMar, Lerøy, Grieg, Bakkafrost and Måsøval once verified |
-ate_to_usd() resolves every currency from Norges Bank (per-100 handled once) with a documented constant only for CLP, wired through competitiveness/futures/macro/feed; salmon_price serves only the SSB spot — the Oslo equity quotes and the spot-derived share-price proxies are deleted, the pairs agent skips explicitly and /api/market/equity-prices reports equity_quotes: unavailable (	ests/test_licensed_sources.py, 11) |
 | WS-22 (part 2). Claims that outran the data | **Shipped** | competitiveness reports `data_quality: partial_fallback` + `fx_fallbacks` + degraded provenance instead of `live` on the hardcoded NOK/USD 0.093, and both macro imports (`macro_intelligence_engine` → `macro_intelligence`) were repaired — NOK and the US spot had **always** fallen back silently, the spot constant now tracked; `foundation_models_available` derives from the library that loads each model (`chronos-forecasting`/`timesfm`/`uni2ts` + torch) with per-model `installed`/`loaded`, not `import torch`; `/api/disease/norway` sorts newest-first with `active_outbreaks_shown`/`_total`; `/api/disease/alerts` queries Mattilsynet (one alert per disease type, `cases` = localities), exposes `sources`/`sources_failed` and builds provenance only from sources that answered; both pages render the served provenance; `tests/test_ws22_data_claims.py` (21). Open: the smolt pipeline |
+| WS-59. The trim became deletion | **Shipped** | 21 hidden surfaces deleted (67 to 46 page files; 9,677 lines, 61 files) after WS-58 had only hidden them: three backed onto 404s (`/api/scenarios`, `/api/china-demand/snapshot`, `/api/benchmarking/companies`), four were withdrawn for legal reasons (WS-20), the rest duplicates, demos or internals; 5 inbound references repaired (3 keyboard shortcuts, a guided-tour stop, a dashboard card). `core/entitlements.py` repoints Investor to what ships (reported company volumes, board-level market context, index history with accuracy attestations) and drops the claims with no mechanism behind them (paper trading, Monte Carlo, "offline capture", "30-day lag"); `tests/test_nav_trim.py` fails if a deleted surface returns as a page or as a reference, `tests/test_entitlements.py` fails if a plan advertises withdrawn work. Open: the WS-20 product name and the Desk/Operator price inversion (owner decisions) |
 
 | WS-36. The smolt pipeline is checked before it is used | **Shipped** | `SmoltModel.validation()` publishes the model's 12-month total against the module's 1.7 M t national reference (2026-10-18: 789 987 t, ratio 0.46, -53.5 %) with `within_tolerance` and a `measurement` string stating it is a model projection, not reported supply; `/api/supply/smolt-forecast` carries the block and **degrades** with the reason (`is_live: false`, `confidence 0.35`) instead of a live badge on a model output; `tests/test_smolt_validation.py` (8). Open: calibrate the release/yield constants against reported harvest |
 | WS-37. US duty is assessed on the customs value | **Shipped** | `competitiveness_engine` charged the tariff to production cost; US duty is assessed on the transaction value (the importer's price). The rate is now charged to the best declared value (live SSB export price for Norway via Norges Bank, cost elsewhere with a note that the true duty is higher), every row carries `tariff_base`/`export_price_usd`/`tariff_at_export_price_usd`/`duty_base_note`, the snapshot carries `tariff_basis`, and `/competitiveness` prints the basis under the table; `tests/test_tariff_basis.py` (6). Open: live export prices for the other origins |
@@ -53,14 +54,14 @@ anonymous browsing is never gated.
 
 | Metric | Count |
 |--------|-------|
-| API routes | 322 operations across 316 unique paths (measured 2026-10-16) |
-| Router modules | 30 |
-| Market/data engines | ~75 (incl. 3 ML foundation models) |
-| Frontend pages | 63 (68 compiled routes) |
+| API routes | 362 operations across 354 paths (`docs/openapi.frozen.json`, measured 2026-10-21) |
+| Router modules | 39 |
+| Market/data engines | 82 modules in `core/market/` (incl. 3 ML foundation models) |
+| Frontend pages | 46 page files |
 | Shared components | 43+ |
-| Database tables | 31 |
-| DB migrations | 20 (head 020) |
-| Test functions | 1053 collected (1029 passing, 1 skipped, 13 xfail, 10 xpass — measured 2026-10-16) |
+| Database tables | 36 |
+| DB migrations | 24 (head 024) |
+| Test functions | 1496 passing, 1 skipped, 13 xfail, 10 xpass — measured 2026-10-21 |
 | i18n keys | ~600 (NO/EN) |
 | Design tokens | 86 (Figma pipeline active) |
 | Data source clients | 45+ |
@@ -91,12 +92,12 @@ anonymous browsing is never gated.
 | Demo mode | Shipped | Synthetic data for trials |
 | CI/CD pipeline | Shipped | Docker + GHCR + Playwright E2E |
 | API documentation (OpenAPI) | Shipped | Auto-generated from FastAPI |
-| Efficacy marketplace | Shipped | Crowdsourced treatment benchmarks |
+| Efficacy marketplace | Removed (WS-59) | The page was seeded with demo outcomes; the API remains, unadvertised |
 | Bio Risk Map time slider | Shipped | 8-week historical snapshots |
-| WebSocket Command Centre | Shipped | Real-time streaming with fallback |
+| WebSocket Command Centre | Removed (WS-59) | The page was an operations demo; the WebSocket endpoint remains |
 | Excel/CSV export | Shipped | SheetJS-based .xlsx from DataTable |
 | Regional Heatmap | Shipped | PA-level disease/lice visualization |
-| Satellite intelligence | Shipped | SST, chlorophyll, farm clusters |
+| Satellite intelligence | Shipped | Verified scenes only: SST, chlorophyll, farm clusters; no reading without a scene (WS-32) |
 | Supply Chain Sankey | Shipped | SVG flow visualization |
 | Admin dashboard | Shipped | Data quality + platform health |
 | WCAG accessibility | Shipped | ARIA labels, skip-to-content, keyboard nav |

@@ -1,49 +1,39 @@
-# HANDOVER â€” takeover brief for the next coding module
+# HANDOVER — takeover brief for the next coding module
 
-> **Verified at commit `f04e79a` (branch `master`).** The WS-1 figures below were
-> measured on the working tree before the WS-1 commit (2026-10-16, see Â§5):
-> migrations at head `019`, fast gate 211 passed + 1 network skip, Â§6 traps 11â€“15.
-> **WS-2 landed 2026-10-16** too: the `index_publisher` agent (13th) and
-> `core/market/index_publication.py`; fast gate 240 passed + 1 skip.
-> **WS-19 landed 2026-10-17:** index method 2.0.0 (AI-STI without the lice-quota
-> component, AI-LPI v1.0 withdrawn), Alembic **020** (head `020`) marking the
-> method-1.0.0 observations superseded; fast gate 247 passed + 1 skip.
-> **WS-20's signals takedown landed 2026-10-17:** `GET /api/signals` serves no
-> signal; `tests/test_signals_takedown.py` joined the fast gate (262 passed + 1 skip).
-> **WS-23's takedown landed 2026-10-17:** no accuracy figure outside the registry;
-> `tests/test_accuracy_claims.py` joined the fast gate (274 passed + 1 skip).
-> **WS-21 landed 2026-10-17:** regulatory facts as dated, sourced data
-> (`core/regulatory_facts.py`); `tests/test_regulatory_facts.py` joined the fast gate
-> (346 passed + 1 skip).
-> **WS-22 part 2 landed 2026-10-18:** competitiveness FX fallbacks, per-model
-> `foundation_models_available`, newest-first disease list, and Mattilsynet merged
-> into `/api/disease/alerts` with per-source provenance;
-> `tests/test_ws22_data_claims.py` joined the fast gate.
-> Every number below was measured, not copied from an older doc. Re-verify with the
-> commands in Â§2 before trusting them.
+> **Verified at commit `904f84c` (branch `master`) plus WS-59, working tree, 2026-10-21.**
+> Every figure in §1 was measured on that state, not copied from an earlier doc; re-verify
+> with the commands in §2 before trusting it. Since the WS-1/WS-22 round this file has been
+> refreshed through WS-58b, and now WS-59 changed its shape: **the product is smaller than it
+> was.** Short history since the last refresh: WS-20 (signals takedown) · WS-21 (regulatory
+> facts) · WS-23 (accuracy registry only) · WS-29–31 (margin bridge, ROI break-even, licensed
+> FX) · WS-32–35 (satellite honesty, bloom truth, bloom context, reported company volumes) ·
+> WS-36–41 (smolt validation, duty basis, grounded metered chat, documents as runs, golden set)
+> · WS-50 (upgrade path) · WS-53 (lice feed restored — WS-1's last live blocker) · WS-54–58b
+> (receipts, fixtures, lice review, frontend build, nav 56→33, hide means hide) · **WS-59** (the
+> 21 hidden pages deleted, and the three plans whose claims outran the code repointed).
 >
-> Read order: **this file** â†’ `AGENTS.md` (authoritative rules) â†’
-> `PROJECT_STATUS.md` (what is shipped) â†’ `CHANGELOG.md` (why) â†’ the per-area docs
-> named in Â§3.
+> Read order: **this file** → `AGENTS.md` (authoritative rules) → `PROJECT_STATUS.md` (what is
+> shipped) → `CHANGELOG.md` (why) → `docs/COMMERCIAL_TRIM.md` (why the product is this size —
+> read it before adding a surface or a plan feature).
 
 ---
 
-## 1. Current state (measured at `f04e79a`)
+## 1. Current state (measured at `904f84c` + WS-59, 2026-10-21)
 
 | Dimension | Value |
 |---|---|
 | Platform version | `2.6.0` |
-| OpenAPI surface | **352 paths** (`docs/openapi.frozen.json`; WS-29 added two, WS-34 one) |
-| Tests | **1442 collected** (pytest --collect-only, 2026-10-18 after WS-28a/30-41) |
-| Alembic migrations | **23** (head 023, WS-39) |
-| Router modules | **38** (`core/routers/`) |
-| Engine modules | **80** (`core/market/`, +`margin_bridge.py`, +`fx_rates.py`, +`company_facts.py`) |
-| Frontend routes | **68** page files |
+| OpenAPI surface | **354 paths / 362 operations** (`docs/openapi.frozen.json`, measured 2026-10-21) |
+| Tests | **1520 collected** (pytest --collect-only, 2026-10-21 after WS-59) |
+| Alembic migrations | **24** (head 024, WS-54 answer receipts) |
+| Router modules | **39** (`core/routers/`) |
+| Engine modules | **82** modules in `core/market/` |
+| Frontend routes | **46** page files (WS-58 hid 21 dead surfaces, WS-59 deleted them) |
 | Production topology | `docker-compose.prod.yml`: `api` + `agents` + `db` (TimescaleDB) + `web` |
-| Last full-suite run | **1418 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 5m15s (2026-10-18, after WS-29b, WS-31b, WS-35–41) |
+| Last full-suite run | **1496 passed / 1 skipped / 13 xfailed / 10 xpassed / 0 failed** in 5.5 min (2026-10-21, at `904f84c` + WS-59) |
 
-**What this session delivered** (all pushed): 10 commercial-hardening steps plus 3
-follow-up fixes â€” see Â§3 for the doc to read per area.
+**What this file covers:** the commercial-hardening programme, WS-1 to WS-59. WS-59 is the
+newest entry in §5; §3 maps each area to the document that explains it.
 
 ## 2. How to run, test and gate (copy-paste)
 
@@ -65,7 +55,7 @@ python -m pytest tests/test_entitlements.py tests/test_billing_money_path.py \
   tests/test_margin_bridge.py -q
   # 476 passed + 1 skip (network), ~35s (after WS-29)
 
-# the full suite (â‰ˆ4.5 min) â€” command runners time out at ~30s, so background it:
+# the full suite (≈4.5 min) — command runners time out at ~30s, so background it:
 #   Start-Process -FilePath python -ArgumentList '-m','pytest','tests/','-q' \
 #     -RedirectStandardOutput data\_suite.txt -NoNewWindow
 # NOTE: --timeout is NOT available (no pytest-timeout plugin installed).
@@ -83,9 +73,9 @@ python scripts/provenance_ratchet.py --update    # ONLY after a provenance decis
 ```
 
 **Windows/PowerShell gotchas that cost real time:** use `python -m pytest` (not
-`pytest`); a Python traceback is swallowed by the pipeline â€” capture it with
+`pytest`); a Python traceback is swallowed by the pipeline — capture it with
 `cmd /c "python script.py > out.txt 2>&1"` then read `out.txt`; `git push` writes
-progress to stderr so a piped chain may report exit 1 even when the push succeeded â€”
+progress to stderr so a piped chain may report exit 1 even when the push succeeded —
 always confirm with `git ls-remote origin refs/heads/master`. **On Windows under this
 harness, pytest's `tmp_path` breaks** (trap 20): run it with `TMP`/`TEMP` pointed at a
 writable workspace directory and a `sitecustomize.py` on `PYTHONPATH` that drops the
@@ -106,13 +96,13 @@ writable workspace directory and a `sitecustomize.py` on `PYTHONPATH` that drops
 | Provenance register + ratchet | `docs/REPORT_LIVENESS.md` | `core/provenance_register.py`, `core/market/provenance_envelope.py` |
 | GTM assets | `docs/GTM_*.md` | `core/gtm/roi.py`, `core/routers/gtm_routes.py` |
 | Margin bridge (price â†’ cost â†’ margin, levers) | `docs/MARGIN.md` | `core/market/margin_bridge.py`, `frontend/src/components/MarginBridge.tsx` |
-| Roles to hire | `docs/roles/` | â€” |
+| Roles to hire | `docs/roles/` | — |
 
 ## 4. Non-negotiables (AGENTS.md wins if anything here disagrees)
 
 1. **Never fabricate data or accuracy.** A model fallback is `is_live: false`, always.
    No MAPE/coverage figure without a validated artifact.
-2. **One entitlement definition** â€” `core/entitlements.py`. Never add a tier table
+2. **One entitlement definition** — `core/entitlements.py`. Never add a tier table
    (three had already drifted before this was fixed).
 3. **Provenance on every data route**, or an exemption in
    `core/provenance_register.EXEMPT` **with a written reason**.
@@ -122,32 +112,39 @@ writable workspace directory and a `sitecustomize.py` on `PYTHONPATH` that drops
 5. **Surgical diffs** + tests for every bugfix. Update `AGENTS.md`/`CHANGELOG.md` for
    structural changes.
 6. **State gaps, never hide them.** Every check in this repo reports `unknown`/
-   `degraded` rather than inventing a value â€” keep it that way, even when a dashboard
+   `degraded` rather than inventing a value — keep it that way, even when a dashboard
    would look nicer green.
 
-## 5. Workstream backlog â€” pick these up in order
+## 5. Workstream backlog — pick these up in order
 
 Each item is self-contained: goal â†’ files â†’ steps â†’ **acceptance criteria you can
 test** â†’ traps.
 
-**Where things stand (2026-10-18, after WS-29 and the WS-28a/30-35 round):**
-- **Done:** WS-1, WS-2, WS-11, WS-19, WS-21, WS-14, WS-29 (the weekly margin bridge),
-  WS-28a (the directional-write gate), WS-30 (ROI break-even), WS-31 (licensed FX +
-  attribution, Yahoo removed), WS-32 (satellite honesty), WS-33 (bloom truth, Alembic
-  021), WS-34 (bloom context) and WS-35 (reported company volumes), WS-22's
-  stale-decision-card rule and its data-claim fixes, and both halves of WS-23. WS-21's
-  entry lists its follow-ups.
-- **Partly done:** WS-20 (left: one product name and the Desk/Operator price inversion,
-  both owner decisions, plus the OpenAPI `info.description`) and WS-22 (the
-  smolt-pipeline item is open; the company volume, brief bloom count and ROI defaults
-  are done).
-- **Waiting on the owner:** the WS-26 page-cut list, WS-27 layer 2, the WS-20
-  decisions above, and the legal opinion that the rest of WS-28 waits on.
-- **Next without an owner decision:** WS-29b's data step (obtain a realised feed figure;
-  the mechanism ships), then WS-22's smolt pipeline, then WS-16, WS-24 and WS-25,
-  in the order below. WS-31b is done (Yahoo removed from
-  every data path); the only licence item left is negotiating NQSALMON/SISALMONI if a
+**Where things stand (2026-10-21, at `904f84c` + WS-59):**
+- **Done:** WS-1, WS-2, WS-11, WS-19, WS-21, WS-23 (both halves), WS-14, and everything in
+  WS-22 except the smolt pipeline: WS-29 (margin bridge) and WS-29b (the mechanism), WS-30
+  (ROI break-even, replacing the 228x/491x/1,693x defaults), WS-31/31b (licensed Norges Bank FX,
+  Yahoo removed), WS-32 (satellite fabrication removed), WS-33/34 (bloom truth and context,
+  Alembic 021), WS-35 (reported company volumes). Also WS-36-41, WS-50 (an upgrade never
+  suggests a cheaper plan), WS-53 (lice feed backfilled - this closed WS-1's live blocker),
+  WS-54-58 (receipts, fixtures, lice review, frontend build), WS-58/58b (nav 56 to 33, hide
+  means hide) and **WS-59** (21 dead pages deleted; no plan sells withdrawn work).
+- **Partly done:** WS-20 - only the *product name* and the *Desk/Operator price inversion*
+  (Desk NOK 2,990 sits below Operator NOK 4,900) remain, and both are owner decisions. The
+  Investor tier no longer advertises paper trading or Monte Carlo (WS-59), so the
+  misrepresentation the commercial review ranked second is closed.
+- **Waiting on the owner:** the WS-26 page-cut list (WS-59 executed the part the evidence
+  supported), WS-27 layer 2, the two WS-20 decisions above, and the legal opinion the rest of
+  WS-28 waits on.
+- **Next without an owner decision:** WS-29b's data step (obtain a realised feed figure; the
+  mechanism ships), then WS-22's smolt pipeline, then WS-16, WS-24 and WS-25, in the order
+  below. WS-31b is done; the only licence item left is negotiating NQSALMON/SISALMONI if a
   benchmark display is ever wanted.
+- **Verifier state** (`python scripts/verify_production_truth.py`, 2026-10-21): **0 failures,
+  3 warnings** - AI-STI 2026-W43 unpublished (the agents service is not running in dev; inside
+  the 72 h grace), `index_observations` freshness `unknown`, `ssb_weekly_prices` synthetic-only.
+  Freshness across sources: fresh 2 / stale 0 / dead 3 / unknown 7. Read `synthetic_only` as
+  "not a measurement", never as "live".
 
 ### WS-32 · Satellite honesty — **DONE 2026-10-18**
 **Why:** without CDSE credentials the engine fabricated every per-farm reading with
@@ -290,9 +287,9 @@ and WS-8 are part of WS-23. Deferred until a named deal needs them: WS-4, WS-5, 
 WS-7, WS-10, WS-13's SOC 2 / pen test and WS-18. WS-15's quota calibration is dropped
 (superseded by WS-19) until a quota regime publishes allocations.
 
-### WS-29 Â· The weekly margin bridge â€” **DONE 2026-10-18**
-**Why:** the platform held both inputs that decide a producer's week â€” the live SSB
-export price and the live FRED feed basket â€” and never turned them into money with the
+### WS-29 · The weekly margin bridge — **DONE 2026-10-18**
+**Why:** the platform held both inputs that decide a producer's week — the live SSB
+export price and the live FRED feed basket — and never turned them into money with the
 assumptions named. `/feed-cost` showed a margin bar plus three rows whose units
 disagreed (feed ingredient cost per kg of *feed* beside the price per kg of *salmon*),
 no provenance, no change, no break-even. A buyer could not tell a model from a
@@ -304,8 +301,8 @@ week-on-week price move and month-on-month feed move; break-even with the feed-l
 reduction and the FCR that would close it; five levers with formulas; an assumption
 register; a `reconciliation` block against the feed engine's own total; a `validation`
 block against the last audited realised feed cost. `GET /api/margin/bridge` and
-`GET /api/margin/bridge/{locality_no}` (the farm endpoint adds the week's Â§ 8 limit and
-a lice position that is `measured` only from verified, current rows â€” otherwise
+`GET /api/margin/bridge/{locality_no}` (the farm endpoint adds the week's § 8 limit and
+a lice position that is `measured` only from verified, current rows — otherwise
 `unknown` with the lineage reason). `feed_cost_engine.feed_index_change()` (weighted
 month-on-month basket move; refuses a zero on thin data) and FRED observation dates on
 `IngredientPrice`/`FeedCostSnapshot`/`get_latest()`. `decision_engine` now values lost
@@ -325,7 +322,7 @@ definition in `ssb_price_client`) degrades both consumers past two weeks,
 "oldest dated ingredient", and the frontend form is placeholder-seeded so Apply cannot
 flip `modelled` to `measured` untouched.
 **Found on the way:** the newest FRED "global price" point on this box is **2026-07**
-(109 days old), while `/feed-cost` stamped the *fetch* time as the price date â€” a
+(109 days old), while `/feed-cost` stamped the *fetch* time as the price date — a
 three-month-old observation presented as live on the platform's flagship cost surface.
 The bridge treats that as degraded and names the month (trap 21).
 **Acceptance met:** the grouped legs re-add to the engine total (difference 0.01, `ok:
@@ -354,7 +351,7 @@ licensed price series), recalibrate `INGREDIENT_TO_DELIVERED` (currently a 2024-
 1.86) and/or replace the fixed 2.00 USD/kg "other" line, add the resulting artifact to
 the accuracy registry, then bump `MARGIN_METHOD_VERSION`. Until then the level stays
 `modelled`, and the validation block keeps printing the gap.
-**Also open:** no premium gate was added for `/api/margin/*` â€” the paywall ladder is the
+**Also open:** no premium gate was added for `/api/margin/*` — the paywall ladder is the
 owner's WS-20/26 decision; the bridge is ungated like the other cost-desk routes.
 
 #
@@ -2004,20 +2001,20 @@ about the gap rather than a hard-coded verdict.
 harvest (both the 1.7 M t reference and the 400 M smolt assumption are module constants);
 until then the level stays flagged.
 
-### WS-1 Â· Make the lice lineage verifiable â€” **DONE 2026-10-16**
-**Shipped:** `core/source_lineage.py` â€” the one vocabulary for `lice_records.source`
+### WS-1 · Make the lice lineage verifiable — **DONE 2026-10-16**
+**Shipped:** `core/source_lineage.py` — the one vocabulary for `lice_records.source`
 (`barentswatch` / `demo_seed` / `unverified`; the `fiskeridir` marker proposed here
 earlier was replaced because the only writer is the BarentsWatch Fishhealth API v2
 client, so it is the system of record). Alembic **019**: `source VARCHAR(32) NOT NULL
 DEFAULT 'unverified'`, NULL â†’ `unverified`, relabels **only** the demo key
-(locality 10001â€“10022 Ã— the seed year 2025) as `demo_seed`, never a real source,
+(locality 10001–10022 × the seed year 2025) as `demo_seed`, never a real source,
 repairs a conftest-reconciled nullable column, batch-mode downgrade.
 `agents/data_ingest.py` writes `barentswatch` on **both** upsert branches;
 `core/demo_seed.py` writes `demo_seed`; `agents/historical_backfill.py` skips a week
 only when its rows are **verified**. `lice_quota_tracker` publishes a row-level
 `lineage` (same predicates as its data query, per PA and merged nationally, inside
 the cached payloads, mirrored to `last_lineage`) and its provenance is degraded with
-the reason when the lineage does not support live â€” including the single-locality
+the reason when the lineage does not support live — including the single-locality
 path. `indices._lice_lineage_note(lineage)` is row-level. `/api/data-freshness`
 reports `verified_rows` / `unverified_rows` / `no_verified_rows`; the verifier adds
 the **critical** `lice_source_column` check and the `freshness_no_verified_rows`
@@ -2025,14 +2022,14 @@ warn verdict. 20 tests (`tests/test_production_truth.py::TestLiceLineage`,
 `tests/test_migrations.py`, `tests/test_indices.py`, `tests/test_market_engines.py`).
 **Acceptance met:** `ix._lice_lineage_note()` is None after a compute whose window
 is all `barentswatch`, every PA fetched and fresh (proved with stubbed lineage); on
-this box it names "6997/6997 lice rows used carry no verified source â€¦ newest lice observation is 2026-W15, 27 weeks old â€¦ newest lice row was fetched 4604 h ago" with every PA listed; AI-LPI is live/degraded by that rule; the freshness entry shows
+this box it names "6997/6997 lice rows used carry no verified source … newest lice observation is 2026-W15, 27 weeks old … newest lice row was fetched 4604 h ago" with every PA listed; AI-LPI is live/degraded by that rule; the freshness entry shows
 synthetic 1,040 / verified 0 / unverified 185,099, `no_verified_rows: true`.
-**Deliberately not done:** no pre-WS-1 row was relabelled as real â€” audit logs record
+**Deliberately not done:** no pre-WS-1 row was relabelled as real — audit logs record
 only per-tick insert counts, which is not row-level proof. The tracker's year-wide
 window (WS-15) and the dead ingest (WS-16) keep AI-LPI degraded here until a real
 re-ingest; on a fresh production DB every row arrives as `barentswatch`.
 
-### WS-2 Â· Publish the weekly indices on a schedule â€” **DONE 2026-10-16**
+### WS-2 · Publish the weekly indices on a schedule — **DONE 2026-10-16**
 **Shipped:** `agents/index_publisher_agent.py` (`index_publisher`, the 13th agent,
 started by `python main.py --agents-only`): hourly check; builds the digest and
 stores one observation per ISO week when `index_publication.status()` says the week
@@ -2042,7 +2039,7 @@ double-publishes (a lost race is a duplicate); a failed or incomplete publicatio
 an error log, an `index_publication` audit row, `last_failure` in `health()` and a
 raised tick. `status()` reads the store: latest week per index with value and
 provenance, weeks behind, **interval in ISO weeks** (wall-clock gaps are
-informational â€” they drift with the hourly tick), `degraded_current`,
+informational — they drift with the hourly tick), `degraded_current`,
 `skipped_weeks`; honest on a missing table. Surfaces: `publication` on
 `GET /api/indices`, verifier `index_publication_current_week` +
 `index_publication_interval` (a wait inside the grace is info), freshness cadence
@@ -2059,7 +2056,7 @@ is non-empty and the store reports `fresh`; the verifier names the week. **Hones
 the agent's first real run happens with the `agents` service. Human paging on a
 missing week is WS-9.
 
-### WS-3 Â· Ship model artifacts through the release path
+### WS-3 · Ship model artifacts through the release path
 **Why:** weights live in the gitignored `data/models/`, so CI/prod silently fall back
 to seasonal-naive; the verifier reports this truthfully as a warning.
 **Files:** `docker-compose.prod.yml` (volume exists), a build/release script, CI,
@@ -2071,7 +2068,7 @@ file presence.
 manifest; dropping the volume flips it back to a truthful warning.
 **Traps:** never commit weights; never claim "3 foundation models" if fewer load.
 
-### WS-4 Â· Timescale hypertables (deliberately manual today)
+### WS-4 · Timescale hypertables (deliberately manual today)
 **Why:** `docker/init-timescale.sql` creates the extension only; conversion was left
 manual because a wrong chunk interval silently degrades plans.
 **Files:** `docker/init-timescale.sql`, a gated migration, `core/production_truth.py`.
@@ -2080,21 +2077,21 @@ manual because a wrong chunk interval silently degrades plans.
 `index_observations.as_of`) with `migrate_data => true` in a guarded DO block; add
 retention policies.
 **Acceptance:** the verifier reports `hypertables >= 3` on PG, with a documented
-rollback. **Traps:** `ssb_weekly_prices` has **no** timestamp column â€” do not convert.
+rollback. **Traps:** `ssb_weekly_prices` has **no** timestamp column — do not convert.
 
-### WS-5 Â· Durable quota ledger + metered billing
+### WS-5 · Durable quota ledger + metered billing
 **Why:** counters are in-process per UTC day per worker, so a paying customer's
 allowance is per-pod and overage invoicing is impossible.
 **Files:** `core/tier_quota.py`, `core/models.py` (usage table),
 `core/billing/stripe_catalog.py` (metered prices), `core/routers/entitlements_routes.py`.
 **Steps:** persist (user, plan, day, count) with an upsert, read/write via the DB,
 keep the env kill-switches, surface usage in `/api/entitlements/me`.
-**Acceptance:** two simulated workers share one counter â€” a test proves the 429 fires
+**Acceptance:** two simulated workers share one counter — a test proves the 429 fires
 once across both.
 **Traps:** keep anonymous traffic ungated; never count `/api/auth/*`, `/api/health`,
 `/api/billing/*`.
 
-### WS-6 Â· SSO / SAML / OIDC (enterprise blocker)
+### WS-6 · SSO / SAML / OIDC (enterprise blocker)
 **Why:** enterprise deals stall on identity. `docs/roles/enterprise-security-engineer.md`
 holds the four-part definition of done.
 **Files:** `core/auth.py`, `core/routers/auth_routes.py`, `core/entitlements.py`
@@ -2106,7 +2103,7 @@ entitlement path, revocation removes access, and every change is in the audit lo
 **Traps:** an IdP attribute must never grant `role=admin`; map only to
 `core/entitlements.PLANS` keys.
 
-### WS-7 Â· Per-tenant isolation + aggregation threshold
+### WS-7 · Per-tenant isolation + aggregation threshold
 **Why:** producer-contributed data must never be de-anonymisable in a published index;
 the licence register already records the n â‰¥ 5 obligation.
 **Files:** `core/models.py`, `core/market/indices.py` (enforce, not just document),
@@ -2116,7 +2113,7 @@ test that a 4-producer aggregate refuses.
 **Acceptance:** 4 contributors â†’ refusal carrying the reason; 5 â†’ success.
 **Traps:** the refusal message must not name the contributing partners either.
 
-### WS-8 Â· More accuracy artifacts (and keep the registry honest)
+### WS-8 · More accuracy artifacts (and keep the registry honest)
 **Why:** one artifact exists (`seasonal_naive_weekly_prices`, MAPE 13.42%, coverage
 92.1%, n=208). A model artifact can be published only where weights/torch are
 available; supply and lice surfaces have none yet.
@@ -2126,21 +2123,21 @@ contract), `docs/ACCURACY.md`.
 **Steps:** one artifact per surface you can genuinely measure; always set
 `fallback_used` truthfully; omit `coverage_pct` if unmeasured.
 **Acceptance:** `/api/accuracy` lists each new artifact; no surface displays a number
-without one. **Traps:** the publisher refuses demo-only data â€” keep that, never add a
+without one. **Traps:** the publisher refuses demo-only data — keep that, never add a
 `--force` bypass.
 
-### WS-9 Â· Freshness alerting + a scheduler assertion
+### WS-9 · Freshness alerting + a scheduler assertion
 **Why:** nothing pages when a source goes `dead`, and nothing proves the weekly
 publication ran.
 **Files:** `core/market/freshness_monitor.py`, an agent, `core/production_truth.py`.
 **Steps:** alert on `critical_unknown` / `dead` / `synthetic_only` /
-`no_verified_rows` (WS-1) and on `index_publication.status()["missing"]` (WS-2 â€” the
+`no_verified_rows` (WS-1) and on `index_publication.status()["missing"]` (WS-2 — the
 assertion exists; only the paging is missing); expose alert state on
 `/api/data-freshness`; fold the lice observation-week age into the monitor (it reads
 `fetched_at`, a write time).
 **Acceptance:** a test simulating a missing current-week row fails with a named reason.
 
-### WS-10 Â· Wire runtime provenance measurement into CI
+### WS-10 · Wire runtime provenance measurement into CI
 **Why:** the ratchet proves a *decision* was recorded, not that provenance is actually
 returned; 204 routes are baselined and the real residue is only known by probing.
 **Files:** `scripts/probe_liveness.py` (payload-shape classification exists),
@@ -2149,9 +2146,9 @@ returned; 204 routes are baselined and the real residue is only known by probing
 fail when the count increases.
 **Acceptance:** a deliberately provenance-free route makes CI fail naming it.
 
-### WS-11 Â· Remove the last hardcoded tier table (frontend) â€” **DONE 2026-10-17 (with WS-20)**
+### WS-11 · Remove the last hardcoded tier table (frontend) — **DONE 2026-10-17 (with WS-20)**
 **Why:** `frontend/src/app/billing/page.tsx` still carries its own `TIER_DETAILS`
-feature/price lists while `/pricing` is catalog-driven â€” the same drift the backend
+feature/price lists while `/pricing` is catalog-driven — the same drift the backend
 SSOT killed.
 **Files:** `frontend/src/app/billing/page.tsx`, `frontend/src/lib/api.ts`
 (`billingCatalog` exists), `frontend/src/types/api.ts`.
@@ -2160,9 +2157,9 @@ presentation map keyed by plan key.
 **Acceptance:** `grep -r TIER_DETAILS frontend/src` is empty; `tsc --noEmit` = 0;
 changing a price in `core/entitlements.py` changes the page with no frontend edit.
 
-### WS-12 Â· Enforce the data-licence register at runtime
+### WS-12 · Enforce the data-licence register at runtime
 **Why:** the register *records* that `fish_pool_futures` may not be publicly displayed
-and Copernicus raw data may not be resold â€” but nothing enforces it. A register that
+and Copernicus raw data may not be resold — but nothing enforces it. A register that
 only documents is a liability.
 **Files:** `core/legal/data_licenses.py` (`check_use` exists),
 `core/routers/market_routes.py` + routes exposing licensed sources,
@@ -2172,19 +2169,19 @@ only documents is a liability.
 register link (mirroring the entitlement upgrade payload).
 **Acceptance:** a public futures display without a cleared licence returns a structured
 refusal; with `classification_status="cleared"` it passes.
-**Traps:** refuse and say why â€” never silently substitute a different number.
+**Traps:** refuse and say why — never silently substitute a different number.
 
-### WS-13 Â· Human-gated items (a module cannot close these)
+### WS-13 · Human-gated items (a module cannot close these)
 Recorded so nobody pretends they are done: legal sign-off per `classification_status`
 (fish-pool display licence, NLOD attribution wording, producer aggregation threshold),
 the performance-fee decision, DPA completion + sub-processor register, penetration
-test, SOC 2 Type I. Owners/conditions: `docs/ADVICE_BOUNDARY.md` Â§5â€“6,
+test, SOC 2 Type I. Owners/conditions: `docs/ADVICE_BOUNDARY.md` §5–6,
 `docs/roles/enterprise-security-engineer.md`.
 
-### WS-14 Â· Propagate the lice lineage to every lice consumer
+### WS-14 · Propagate the lice lineage to every lice consumer
 **Why:** WS-1 verified one index. 14+ consumers still stamp
 `DataProvenance.live(... BarentsWatch ...)` on lice-derived payloads with no lineage
-input â€” one verified index next to a dozen unverified live labels on the same table.
+input — one verified index next to a dozen unverified live labels on the same table.
 **Files (line numbers measured 2026-10-16):** `core/routers/lice_routes.py:88`,
 `core/market/decision_engine.py:138,217`, `core/routers/analytics_routes.py:228,304,340`,
 `core/routers/farm_routes.py:84,306`, `core/routers/notification_routes.py:54,584`,
@@ -2197,7 +2194,7 @@ predicates), then the tracker's `_provenance_for` pattern (lift it into
 **Acceptance:** no lice-derived `DataProvenance.live(` without a lineage input; on
 an unverified DB `scripts/probe_liveness.py` reports them degraded; one test per
 consumer with a demo-seed stub. **Traps:** `bloom_routes` hardcodes `is_live: true`;
-`/api/lice/summary` already degrades on staleness â€” merge, do not double-report.
+`/api/lice/summary` already degrades on staleness — merge, do not double-report.
 **Widened (2026-10-17):** the same rule for every route that stays visible after
 WS-26, lice-derived or not: `is_live` from the age of the newest observation,
 `freshness` set to that observation's time (today it is the request time on every
@@ -2211,7 +2208,7 @@ week-and-source stamp; the "All Clear" hero (`DashboardHeroAlert.tsx:80`, used o
 when WS-26 removes those pages.
 **Acceptance added:** a test per visible route that a payload older than its source's
 cadence reports `is_live: false`, and that a partial lice week is never live.
-**Shipped 2026-10-17 (partial â€” lice lineage propagation complete):** every
+**Shipped 2026-10-17 (partial — lice lineage propagation complete):** every
 `lice_records` consumer in the original file list now derives provenance from the
 rows it actually used. `core/source_lineage.py` gained the shared entry points
 `summarise_rows` (row dicts â†’ lineage), `lineage_for(session, where)` (per-farm /
@@ -2226,7 +2223,7 @@ rows do not support a live claim). Wired: `decision_engine`, `lice_routes`,
 `/api/esg/{scores,summary,company/*}` and `/api/leaders/*`. On this box (all
 `lice_records` rows `demo_seed`/`unverified`, newest week 2026-W15) every one of
 those routes now reports `is_live: false` with the lineage note in
-`fallback_reason` and `freshness` = the ISO week's Monday â€” verified with a live
+`fallback_reason` and `freshness` = the ISO week's Monday — verified with a live
 `TestClient` sweep, not by inspection. Two bugs surfaced and were fixed on the way:
 the four `/api/treatment/*` endpoints called the `async` engine methods **without
 `await`** (every call raised `'coroutine' object is not iterable` â†’ 500), and
@@ -2248,22 +2245,22 @@ Gates 2026-10-17: `pytest tests/ -q` 1178 passed / 1 skipped / 13 xfailed /
 `scripts/verify_production_truth.py` 0 failures (4 known warnings),
 `scripts/smoke_security.py` all checks passed, and `scripts/probe_lice_lineage.py`
 printed 9/9 routes with `is_live: false` and a lineage reason.
-**Still open in this item:** (a) the WS-16 clause â€” "a lice week below the
-completeness threshold is never live" â€” cannot land until WS-16 defines the
+**Still open in this item:** (a) the WS-16 clause — "a lice week below the
+completeness threshold is never live" — cannot land until WS-16 defines the
 threshold; do not invent one; (b) `is_live` from observation age on the remaining
 non-lice visible routes (country snapshots other than Norway, and the frontend
 badges listed above) is WS-26-dependent; (c) `canada_monitor` reads DFO Pacific
 lice CSVs, not `lice_records`, so it keeps its own DFO provenance.
 
-### WS-15 Â· Quota tracker window + AI-LPI magnitude
+### WS-15 · Quota tracker window + AI-LPI magnitude
 **Why:** `_get_pa_lice_data` filters `year == max(year)` only (it computes
 `max(week)` and never uses it), so "latest" is a year-to-date average; and the
-national utilisation reads **238,367 %** with every PA over quota â€” the emission
+national utilisation reads **238,367 %** with every PA over quota — the emission
 model's magnitude is implausible. A correct live badge on that number is a
 credibility problem WS-1 cannot fix.
 **Files:** `core/market/lice_quota_tracker.py` (`_get_pa_lice_data`,
 `_estimate_farm_emission`, `PA_HYPOTHETICAL_QUOTA`), `core/market/indices.py`
-(`INDEX_METHOD_VERSION` bump â€” revision policy), `docs/INDICES.md`.
+(`INDEX_METHOD_VERSION` bump — revision policy), `docs/INDICES.md`.
 **Steps:** window = latest reported week per PA (or a documented rolling window);
 recalibrate quota/emission units against the IMR reference and publish the note in
 `methodology()`; bump the method version so history keeps both.
@@ -2275,20 +2272,20 @@ constants labelled tonnes, for a quota regime that is still a proposal with no
 published allocations. Do not calibrate it; withdraw it (WS-19) and fix the window
 only if a rebuilt index still reads the tracker.
 
-### WS-16 Â· Lice ingest health (blocks any live AI-LPI)
+### WS-16 · Lice ingest health (blocks any live AI-LPI)
 **Why:** the last real lice rows arrived 2026-04-07; the 2026-10-12 tick logged
 "0 new lice records for 2026-W42"; `lice_records` is `dead` with 0 verified rows.
 **Files:** `agents/data_ingest.py`, `core/barentswatch.py`, `.env` (BarentsWatch
-credentials), `core/market/freshness_monitor.py` (alerting â€” WS-9).
+credentials), `core/market/freshness_monitor.py` (alerting — WS-9).
 **Steps:** diagnose the 0-row tick (auth, endpoint, `hasReported` filter), fix it,
-then let the backfill (which now skips only verified weeks) re-ingest 2020â†’now â€”
+then let the backfill (which now skips only verified weeks) re-ingest 2020→now —
 roughly 350 sequential POSTs; pace it if BarentsWatch rate-limits.
 **Acceptance:** `/api/data-freshness` lice `fresh` with `verified_rows > 0`; AI-LPI
 `is_live: true` once the window is all `barentswatch`, every PA current and fresh;
 a test proving a 0-row tick raises an alert (WS-9). **Traps:** never relabel rows
-by hand â€” the upsert is the only honest path to `barentswatch`. `fetched_at` is a
+by hand — the upsert is the only honest path to `barentswatch`. `fetched_at` is a
 write time: the re-ingest bumps it on old weeks, which is why the lineage gates on
-the observation week too â€” the freshness monitor still reads `fetched_at`, so it
+the observation week too — the freshness monitor still reads `fetched_at`, so it
 will say `fresh` after a re-ingest even when the newest observation is months old
 (fold the observation-week age into the monitor in WS-9).
 **Widened (2026-10-17):** on this box the ingest is dead mainly because no agent runs
@@ -2304,7 +2301,7 @@ hedger agents). **Acceptance replaced (2026-10-17):** AI-LPI v1.0 is withdrawn b
 WS-19, so the AI-LPI clause no longer applies; instead `/api/lice/summary` is live
 only on a complete, verified week.
 
-### WS-17 Â· Accuracy publisher column bug
+### WS-17 · Accuracy publisher column bug
 **Why:** `scripts/publish_accuracy.py::_db_series` selects `price_nok` but the
 column is `price_nok_kg`; a bare `except` hides it, so its demo-row skip has never
 actually run against the DB (the live-fetch path masked it).
@@ -2314,7 +2311,7 @@ actually run against the DB (the live-fetch path masked it).
 temp DB. **Acceptance:** `_db_series()` returns rows and reports
 `skipped_synthetic` on a demo-seeded DB. **Traps:** never add a `--force` bypass.
 
-### WS-18 Â· Stamped-but-unmigrated dev databases
+### WS-18 · Stamped-but-unmigrated dev databases
 **Why:** `data/openclaw.db` is stamped 018 but lacks 015's `ix_lice_year_week`:
 the conftest stamps `create_all`-built DBs at head, so a migration whose DDL the ORM
 does not declare (indexes, backfills) can be skipped silently.
@@ -2323,9 +2320,9 @@ does not declare (indexes, backfills) can be skipped silently.
 `inspect(engine).get_indexes`; guard-create `ix_lice_year_week`.
 **Acceptance:** the verifier reports index drift on this box before the fix and ok
 after; `EXPLAIN` on `/api/lice/summary` uses the index. **Traps:** never fix by
-stamping; 019 survives this because it is existence-guarded â€” new migrations must be.
+stamping; 019 survives this because it is existence-guarded — new migrations must be.
 
-### WS-19 Â· Guard the index history before any agent runs â€” **DONE 2026-10-17**
+### WS-19 · Guard the index history before any agent runs — **DONE 2026-10-17**
 **Shipped:** index method **2.0.0** (`core/market/indices.py`): `quota_pressure`
 removed from AI-STI (biomass / harvest keep their 0.40 : 0.35 ratio, published as
 0.5333 / 0.4667); AI-LPI v1.0 **withdrawn** (`PUBLISHED_INDICES = ("AI-STI",)`,
@@ -2338,19 +2335,19 @@ missing). `index_publication.INDEX_CODES` projects the published set (agent,
 downgrade keeps the rows); `history()` exposes the marks. Digest: published
 indices + a `withdrawn` block, no lice wording in the headline. `/indices` shows
 "withdrawn". Tests: `tests/test_indices.py::TestIndexGuard` (6) and
-`tests/test_migrations.py::test_020_â€¦` â€” all 7 failed on the old code.
+`tests/test_migrations.py::test_020_…` — all 7 failed on the old code.
 **Acceptance met:** AI-STI moves in its documented direction per component and
-reads exactly 0 and 100 at Â±10 % momentum; no computation of any code calls the
+reads exactly 0 and 100 at ±10 % momentum; no computation of any code calls the
 lice-quota tracker; a real publisher tick (test, and once on a backup copy of this
-box's DB) stores only AI-STI at 2.0.0 with no quota input â€” on this box it stores
+box's DB) stores only AI-STI at 2.0.0 with no quota input — on this box it stores
 nothing because AI-STI has no value ("no comparable prior period"). The two
 2026-W42 rows are marked `superseded_by='2.0.0'` with their values intact.
 Review fixes: the digest degrades when AI-STI does (the read rests on it alone)
 and the supply panel follows the biomass tracker's lineage; the freshness monitor
 ignores superseded rows (`SourceSpec.excluded_when_set`); GTM copy no longer sells
-AI-LPI; `docs/openapi.frozen.json` re-frozen deliberately (two descriptions only â€”
+AI-LPI; `docs/openapi.frozen.json` re-frozen deliberately (two descriptions only —
 response shapes had changed). **Left open:** no lice index is published (a rebuild
-needs observable facts and verified lice rows â€” WS-16, then a new method version);
+needs observable facts and verified lice rows — WS-16, then a new method version);
 `tests/test_production_truth.py`'s verifier stubs still use "AI-LPI"/"1.0.0" as
 arbitrary codes (harmless). The agents service stays off until WS-16's
 completeness rule lands.
@@ -2375,7 +2372,7 @@ direction and can reach its full 0-100 range; a publisher tick on this box store
 nothing built on the quota tracker. **Traps:** never edit stored observations; the
 method version keeps old and new apart.
 
-### WS-20 Â· Public honesty: landing page, API docs, plan ladder, one name â€” **PARTLY DONE 2026-10-17**
+### WS-20 · Public honesty: landing page, API docs, plan ladder, one name — **PARTLY DONE 2026-10-17**
 **Done:** testimonials, typed counts, unproven claims and the fake waitlist removed
 from the landing page; plans render from the catalog on landing and billing (WS-11
 closed); the API reference matches the frozen contract and real response shapes;
@@ -2422,20 +2419,20 @@ is empty; every displayed price comes from `api.billingCatalog()`; a test that n
 plan's feature list includes a dearer plan. **Traps:** the testimonials need a real, permissioned quote
 before anything returns.
 
-### WS-21 Â· Regulatory facts as dated, sourced data â€” **DONE 2026-10-17**
-**Done:** `core/regulatory_facts.py` (decisions, dated capacity cuts, Â§ 8 limits by
+### WS-21 · Regulatory facts as dated, sourced data — **DONE 2026-10-17**
+**Done:** `core/regulatory_facts.py` (decisions, dated capacity cuts, § 8 limits by
 region and week, dated US tariff rows) and its consumers; see CHANGELOG.
 **Verification note:** every fact was researched on 2026-10-17 and checked by two
 independent verifiers against primary sources: the regjeringen.no announcements and
 the Lovdata capacity regulations (FOR-2017-12-20-2397, FOR-2020-02-04-105,
 FOR-2022-06-07-972, FOR-2024-03-22-515, FOR-2026-08-20-1764), lakselusforskriften
-Â§ 8/Â§ 10 on Lovdata, the Federal Register Section 301 notice 2026-15181 and HTSUS
+§ 8/§ 10 on Lovdata, the Federal Register Section 301 notice 2026-15201 and HTSUS
 0302.14/0304.41. Medium-confidence items: the cut start dates for 2022, 2024 and 2026
-(in-force + 6 months, Â§ 9; 2020 is from LG-2021-80234) and the Faroes' US tariff (assumes
+(in-force + 6 months, § 9; 2020 is from LG-2021-80234) and the Faroes' US tariff (assumes
 the Faroes are their own country of origin).
 **Follow-ups (not done):** (1) still on a flat 0.5 limit: `treatment_optimizer.py`,
 `core/valuechain/farmer_advisory.py`, `lice_quota_tracker.py` (risk level),
-`core/ml/harvest_optimizer.py`, `supply_demand_engine.py`, `correlation_engine.py` â€”
+`core/ml/harvest_optimizer.py`, `supply_demand_engine.py`, `correlation_engine.py` —
 route each through `regulatory_facts.lice_limit`; (2) the simulator models a colour as a
 capacity level, not the next decision's step (red cuts again, yellow restores nothing),
 and disagrees with `event_impact_model`; (3) the `/api/chat` system prompt and
@@ -2462,13 +2459,13 @@ dated data file with source URLs.
 colour; one limit function used by the decision engine and the reporter.
 **Acceptance:** tests asserting the 2026 colours; the spring 0.2 window (weeks 16-21
 in Nord-TrÃ¸ndelag and southwards, weeks 21-26 in Nordland, Troms and Finnmark;
-lakselusforskriften Â§ 8) in both the decision engine and the reporter; the July 2026
+lakselusforskriften § 8) in both the decision engine and the reporter; the July 2026
 tariffs (Norway 12.5%, Chile 12.5%, UK 10%; Faroes and Iceland outside the new
 measure; Canada USMCA-exempt), each payload citing its `source_url`.
 
-### WS-22 Â· Numbers buyers check â€” **STALE-DECISION + DATA-CLAIM FIXES DONE**
+### WS-22 · Numbers buyers check — **STALE-DECISION + DATA-CLAIM FIXES DONE**
 **Stale-decision rule shipped:** `core/market/decision_engine.py` dates the newest
-count on the card (`_lice_observation_time` â€” the card's lineage via
+count on the card (`_lice_observation_time` — the card's lineage via
 `observation_time`, else its `current_year`/`current_week`) and refuses to
 recommend a treatment when that count is older than `STALE_LICE_MAX_DAYS = 14`
 (two BarentsWatch reporting periods): `action: "MONITOR"`, `urgency: "data_stale"`,
@@ -2532,7 +2529,7 @@ WOAH and Sernapesca, yet the route's provenance names Mattilsynet
 source, and degrade when the WOAH fetch fails. The subscription's `api_calls_month`
 is never incremented (only read), so any monthly-usage display is always 0.
 
-### WS-23 Â· Accuracy against a strong baseline (contaminated backtest) â€” **DONE 2026-10-17 (weekly forecast log still open)**
+### WS-23 · Accuracy against a strong baseline (contaminated backtest) — **DONE 2026-10-17 (weekly forecast log still open)**
 **Takedown shipped:** no route prints an accuracy figure the registry does not
 hold. `core/market/price_ml.py` never reads `data/models/price_backtest.json` for
 display (`mape_backtest`/`band_trust` null; the statement points at
@@ -2551,14 +2548,14 @@ Diebold-Mariano test per horizon. `scripts/publish_accuracy.py --from-backtest`
 publishes `price_ensemble_walk_forward` + `carry_forward_weekly_prices` on one
 window and exits 2 writing nothing on a missing artifact, `demo_rows_used != 0`,
 a tier mismatch against `price_ensemble.model_version`, a missing baseline or
-fewer than 30 points. Measured 2020W01â€“2026W40 (real rows only, 88 points at 4w):
+fewer than 30 points. Measured 2020W01–2026W40 (real rows only, 88 points at 4w):
 4w MAPE 9.05% vs carry-forward 9.44%, DM p=0.0031 (model lower loss); 2w 6.40 vs
 6.52 (p=0.32, not significant); 8w 12.83 vs 13.61 (p=0.0002). 80% band coverage
 71.6% at 4w / 64.8% pooled. `tests/test_ws23_backtest_honesty.py` (16) pins the
 loader refusals, the DM behaviour and every publisher refusal.
 **Still open:** (a) the weekly forecast log, scored against carry-forward and
 stored where tests cannot write; (b) serving exactly the backtested
-configuration â€” the live outlook adds lice/supply signals the backtest holds
+configuration — the live outlook adds lice/supply signals the backtest holds
 neutral (disclosed in the artifact `method`, so the claim is not overstated, but
 the score still does not cover the served response); (c) the in-process
 `PriceEnsemble.retrain()` sets residuals without a lineage declaration (its bands
@@ -2570,7 +2567,7 @@ running event loop (`asyncio.get_event_loop()` raises outside one).
 **Why (history):** the price outlook printed "Backtested 4-week MAPE: 8.5%" from
 `data/models/price_backtest.json` (2026-10-12). That run merged the database's SSB
 rows over the real CSV, database winning (`load_ssb_series`), and all 52 database
-rows are `demo_seed` (2025W01-W52) â€” trap 6. The figure was also copied into
+rows are `demo_seed` (2025W01-W52) — trap 6. The figure was also copied into
 `price_predictions` on every outlook request and served by
 `/api/market/prediction-history`.
 **Files:** `scripts/backtest_price_ml.py`, `scripts/publish_accuracy.py`,
@@ -2585,14 +2582,14 @@ does not hold; a test that the backtest loader refuses `demo_seed` rows.
 the `demo_seed` DB rows. It is covered by the acceptance above: drop the figures or
 label them as per-call diagnostics on real rows only.
 
-### WS-24 Â· Test isolation for the dev database
+### WS-24 · Test isolation for the dev database
 **Why:** test runs wrote all 260 `design_partners` rows ("X", "Scorecard Co", "Recip
 Co"), audit rows and price predictions into `data/openclaw.db`, the same trap the
 WS-2 publish tests had. **Acceptance:** a full test run leaves the row counts of
 `design_partners`, `audit_logs`, `price_predictions` and `index_observations` in the
 dev DB unchanged.
 
-### WS-25 Â· Cold starts off the request path
+### WS-25 · Cold starts off the request path
 **Why:** the liveness probe saw 60 of 219 routes exceed 12 s, but it runs the app
 in-process (`scripts/probe_liveness.py`, `httpx.ASGITransport`, 8 requests in
 flight) with no lifespan and no shared cache, so it measures cold engines, not the
@@ -2606,7 +2603,7 @@ series in parallel; serve the last good value as degraded when stale.
 in a fresh process shows 0 routes over 12 s (or add a `--base-url` mode and probe the
 production server configuration right after start).
 
-### WS-26 Â· Navigation cut (owner decides the list; do it early)
+### WS-26 · Navigation cut (owner decides the list; do it early)
 **Why:** 57 sidebar entries in 8 sections for six customer types; one question split
 across pages and engines that disagree; `/indices` and `/accuracy` linked from
 nowhere. VALUE_ANALYSIS section 4 proposes keep / merge / hide / delete per page.
@@ -2618,7 +2615,7 @@ privacy-respecting page analytics so later cuts rest on usage.
 **Acceptance:** the sidebar shows the agreed desks only; hidden pages answer only
 behind the flag; no page title is used twice.
 
-### WS-27 Â· Design identity (layer 1 now, layer 2 after the owner decides)
+### WS-27 · Design identity (layer 1 now, layer 2 after the owner decides)
 **Why:** one template (translucent gradient cards, KPI tiles, fade-ins, blurred
 chrome; about 355 `GlassCard` and 260 `KPICard` tags) is repeated across the app, the
 product shows two names, and the chrome claims "LIVE" on weekly data.
@@ -2640,21 +2637,21 @@ one formatter renders each value once; new visual baselines are taken once the
 design is approved (the current baseline covers only home, market, satellite and
 traffic-light, and a redesign fails it by intent).
 
-### WS-28 Â· Remaining equity-direction surfaces + the legal opinion
+### WS-28 · Remaining equity-direction surfaces + the legal opinion
 **Why:** WS-20 took down the signal generator's SHORT/LONG calls everywhere they were
 shown, but other surfaces still put a direction or a per-company financial impact
 next to a listed salmon share, and the agents that wrote the calls still exist.
 `/api/legal/advice-boundary` publishes this list as `under_review`.
 **Surfaces (measured 2026-10-17):** `GET /api/pairs/signals` and the pairs cards on
-/signals and the dashboard (`DashboardLiveIntelligence`, `DashboardProduction`) â€”
+/signals and the dashboard (`DashboardLiveIntelligence`, `DashboardProduction`) —
 paired positions on listed shares from the frozen `pairs_engine`; `GET
-/api/sentiment/signals` and the /signals sentiment card â€” per-ticker sentiment on
-MOWI/SALM/LSG/GSF; `GET /api/orders` â€” anonymous paper order history (one filled
-SELL GSF on this box); the /trader Event Impact Simulator â€” per-company revenue and
+/api/sentiment/signals` and the /signals sentiment card — per-ticker sentiment on
+MOWI/SALM/LSG/GSF; `GET /api/orders` — anonymous paper order history (one filled
+SELL GSF on this box); the /trader Event Impact Simulator — per-company revenue and
 stock-move estimates (`core/predictors/event_impact_model.py`); writers of
 directional rows to `signals`, which run only with the agents service: the signal
 generator, the market hedger (`agents/market_hedger_agent.py`, LONG/SHORT on listed
-tickers â€” `/api/market/hedger-signals` now serves only `SALMON_SPOT`), the
+tickers — `/api/market/hedger-signals` now serves only `SALMON_SPOT`), the
 prediction agent (`agents/prediction_agent.py`, per-share impact rationale) and the
 bloom agent (`agents/bloom_agent.py`, SHORT); the execution agent acts only on
 user-confirmed signals and confirm answers 410; the Streamlit `dashboard/app.py`
@@ -2674,6 +2671,29 @@ seeding the data it would show; `main.py --agents-only` starts no agent that wri
 a directional row on a listed security; the opinion's conclusion recorded in
 `docs/ADVICE_BOUNDARY.md` and `under_review` emptied accordingly.
 
+### WS-59 - The trim became deletion - **DONE 2026-10-21**
+**Why:** WS-58 hid 21 surfaces but left every one of them shipping: 9,677 lines across 61 files,
+still in the bundle, still a URL a buyer can reach. The surviving claims were worse than the pages.
+Three of the loudest backed onto 404s (`/api/scenarios`, `/api/china-demand/snapshot`,
+`/api/benchmarking/companies`), and the *pricing* still sold what the nav refused to show -
+Investor (NOK 24,900) sold paper trading and Monte Carlo profit simulation after WS-20 withdrew
+both, Operator sold "offline capture" with no service worker in the build, and the free tier sold
+a "30-day lag" that no middleware implements (premium paths are gated, not delayed).
+**Shipped:** the 21 page directories deleted (67 to 46 page files); the 5 inbound references
+repaired (3 keyboard shortcuts, one guided-tour stop, one dashboard card); `tests/test_nav_trim.py`
+now fails if a deleted surface returns - as a page, or as a reference anywhere under
+`frontend/src`; `core/entitlements.py` repoints Investor to what ships (reported company volumes
+with scope and source, board-level market context, index history with accuracy attestations), names
+the Intelligence tier's real deliverables, and drops the two free-tier claims with no mechanism
+behind them; `tests/test_entitlements.py` refuses any plan that advertises withdrawn work, because
+the pricing page is generated from that table (a claim there is printed on the invoice).
+**Acceptance met:** `npx tsc --noEmit` clean, `next build` clean, full suite green, 33 nav links
+that all resolve, `verify_production_truth.py` unchanged at 0 failures.
+**Deliberately not done:** the backend routes behind the deleted pages stay. The API is also a
+licensing product and other clients may call those paths; removing them is a compatibility
+decision, not a trim. Still owner-gated: the WS-20 product name and the Desk/Operator price
+inversion.
+
 ## 6. Traps that cost real time in this codebase
 
 | # | Trap | Rule |
@@ -2686,32 +2706,32 @@ a directional row on a listed security; the opinion's conclusion recorded in
 | 6 | **Demo-seeded rows** | `ssb_weekly_prices` is `source='demo_seed'`; `lice_records.source` is `barentswatch` / `demo_seed` / `unverified` (WS-1). Never measure accuracy on synthetic rows; never claim `is_live` from `demo_seed` or `unverified`. |
 | 7 | **Empty `alembic_version`** | A `create_all`-built dev DB has an empty version table; the verifier calls that drift. `tests/conftest.py` reconciles missing columns and stamps head for dev/test only. |
 | 8 | **`--timeout` is unavailable** | No pytest-timeout plugin. Background long runs with `Start-Process ... -RedirectStandardOutput` and poll the file. |
-| 9 | **PowerShell hides tracebacks** | Pipe to a file with `cmd /c "python x.py > out.txt 2>&1"`, then read `out.txt`. `git push` can exit 1 on success â€” confirm with `git ls-remote`. |
-| 10 | **Contract + baseline re-freeze** | Any new route changes `docs/openapi.frozen.json` **and** the provenance baseline. Re-freeze deliberately (`freeze_openapi.py`, `provenance_ratchet.py --update`) â€” never just to make a failure disappear. |
-| 11 | **Demo locality numbers live in the real range** | `DEMO_LOCALITIES` 10001â€“10022 sit inside BarentsWatch's 5-digit numbering (the lowest real locality on the dev DB is 10029; no real row shares a demo number today, but nothing reserves the range). Identify demo rows only by `source='demo_seed'`, never by locality. A first measurement here wrongly counted 10027/10029 as demo â€” re-measure before repeating a number. |
-| 12 | **Column presence is not lineage** | `lice_records.source` existing says nothing about the rows â€” a demo-seeded CI database has the column too. Claim live only from `summarise_lineage` over the rows actually used. |
-| 13 | **Empty `alembic_version` bricks the ingest** | A `create_all`-built DB whose chain aborts at 001 never runs 019, so every lice insert fails. Recover with `alembic stamp 018` then `alembic upgrade head` â€” never stamp head. The verifier's `lice_source_column` check catches it. |
+| 9 | **PowerShell hides tracebacks** | Pipe to a file with `cmd /c "python x.py > out.txt 2>&1"`, then read `out.txt`. `git push` can exit 1 on success — confirm with `git ls-remote`. |
+| 10 | **Contract + baseline re-freeze** | Any new route changes `docs/openapi.frozen.json` **and** the provenance baseline. Re-freeze deliberately (`freeze_openapi.py`, `provenance_ratchet.py --update`) — never just to make a failure disappear. |
+| 11 | **Demo locality numbers live in the real range** | `DEMO_LOCALITIES` 10001–10022 sit inside BarentsWatch's 5-digit numbering (the lowest real locality on the dev DB is 10029; no real row shares a demo number today, but nothing reserves the range). Identify demo rows only by `source='demo_seed'`, never by locality. A first measurement here wrongly counted 10027/10029 as demo — re-measure before repeating a number. |
+| 12 | **Column presence is not lineage** | `lice_records.source` existing says nothing about the rows — a demo-seeded CI database has the column too. Claim live only from `summarise_lineage` over the rows actually used. |
+| 13 | **Empty `alembic_version` bricks the ingest** | A `create_all`-built DB whose chain aborts at 001 never runs 019, so every lice insert fails. Recover with `alembic stamp 018` then `alembic upgrade head` — never stamp head. The verifier's `lice_source_column` check catches it. |
 | 14 | **The freshness monitor runs in a worker thread** | `fm.report()` uses `asyncio.to_thread`; an in-memory SQLite engine is empty in that thread. Test it with a file-backed engine. |
 | 15 | **Long shell heredocs on this box** | Git-Bash `cat <<'EOF'` with a long Python body intermittently fails to parse. Write the patch to a file and run `python file.py`. |
 | 16 | **Tests used to publish into the real index store** | Until WS-2 the publish tests stored the current week into the dev DB on every run; this box's 2026-W42 rows predate the lineage guard and the AI-LPI one claims `is_live: true`. Use the `observation_store` fixture for anything that writes observations; never read the dev box's published history as evidence of the agent. The rows store the defect values (AI-STI 100 severe; AI-LPI 55 claiming `is_live: true`) at method 1.0.0; since WS-19 (Alembic 020) they are marked `superseded_by='2.0.0'` and no longer count for any week. Never delete them. |
-| 17 | **The test bootstrap migrates the dev DB** | `tests/conftest.py::_bootstrap_test_database` runs `alembic upgrade head` against `data/openclaw.db` at collection, so a new migration is applied to the dev DB by the first test run â€” write migrations to be safe on real data before running any test. |
+| 17 | **The test bootstrap migrates the dev DB** | `tests/conftest.py::_bootstrap_test_database` runs `alembic upgrade head` against `data/openclaw.db` at collection, so a new migration is applied to the dev DB by the first test run — write migrations to be safe on real data before running any test. |
 | 18 | **The dev DB is in WAL mode** | Recent writes sit in `data/openclaw.db-wal`; `cp data/openclaw.db x.db` gives a stale copy (missing columns a migration just added). Copy with the SQLite backup API (`src.backup(dst)`). |
-| 19 | **A swallowed `ImportError` makes a live path dead** | `competitiveness_engine.py` imported `macro_intelligence_engine`, which does not exist (the singleton is `macro_intelligence`), inside `try/except Exception` â€” so NOK/USD **always** fell back to 0.093 and the US spot **always** returned the undated 8.50 constant while the payload said `live`. When a `try` wraps a lazy import, assert the import name in a test (`test_ws22_data_claims.py::test_live_nok_rate_is_used_when_macro_answers`) or the fallback becomes permanent and invisible. |
+| 19 | **A swallowed `ImportError` makes a live path dead** | `competitiveness_engine.py` imported `macro_intelligence_engine`, which does not exist (the singleton is `macro_intelligence`), inside `try/except Exception` — so NOK/USD **always** fell back to 0.093 and the US spot **always** returned the undated 8.50 constant while the payload said `live`. When a `try` wraps a lazy import, assert the import name in a test (`test_ws22_data_claims.py::test_live_nok_rate_is_used_when_macro_answers`) or the fallback becomes permanent and invisible. |
 | 20 | **`pytest tmp_path` on Windows under this harness** | `os.mkdir(path, 0o700)` (what pytest's basetemp does) creates a directory whose DACL excludes the signed-in user on this box (Python 3.14), so every `tmp_path` fixture errors at setup with `PermissionError: [WinError 5]` and the run reports `E` for a large slice of the suite. Workaround used here and NOT committed: put a `sitecustomize.py` on `PYTHONPATH` that forces `os.mkdir(path, 0o777, dir_fd=...)`, and point `TMP`/`TEMP` at a writable **workspace** directory (a fresh one: an already-broken `pytest-of-<user>` makes `make_numbered_dir` fail again). Diagnostic: a directory created by `os.mkdir(p, 0o700)` cannot be listed even by PowerShell (`icacls` reports access denied). |
-| 21 | **A fetch time is not an observation date** | `feed_cost_engine.get_latest()` stamped `data_freshness.feed_prices` with the request time while the FRED "global price" series end **2026-07** â€” a three-month-old observation presented as current on the flagship cost surface. Any monthly/lagged source must carry the observation date (`IngredientPrice.observed_at`, `feed_prices_as_of`) and the payload must degrade with the month named (WS-29, `FEED_PRICE_MAX_AGE_DAYS`). Same rule as the lice lineage: freshness is when the data was *observed*. |
-| 22 | **PowerShell string surgery re-encodes UTF-8 files** | Editing a UTF-8 source with `(Get-Content -Raw).Replace(...) \| Set-Content` silently rewrote the file in the console code page (one em dash became byte `0x97`) and every later tool failed with `E902 stream did not contain valid UTF-8`. Use the editor/`write` tool for code, or Python with `encoding="utf-8"`; never `Set-Content` on a file containing non-ASCII. Recovery: decode the bytes as UTF-8 and map the stray `0x80â€“0x9F` bytes back to their CP1252 punctuation. |
+| 21 | **A fetch time is not an observation date** | `feed_cost_engine.get_latest()` stamped `data_freshness.feed_prices` with the request time while the FRED "global price" series end **2026-07** — a three-month-old observation presented as current on the flagship cost surface. Any monthly/lagged source must carry the observation date (`IngredientPrice.observed_at`, `feed_prices_as_of`) and the payload must degrade with the month named (WS-29, `FEED_PRICE_MAX_AGE_DAYS`). Same rule as the lice lineage: freshness is when the data was *observed*. |
+| 22 | **PowerShell string surgery re-encodes UTF-8 files** | Editing a UTF-8 source with `(Get-Content -Raw).Replace(...) \| Set-Content` silently rewrote the file in the console code page (one em dash became byte `0x97`) and every later tool failed with `E902 stream did not contain valid UTF-8`. Use the editor/`write` tool for code, or Python with `encoding="utf-8"`; never `Set-Content` on a file containing non-ASCII. Recovery: decode the bytes as UTF-8 and map the stray `0x80–0x9F` bytes back to their CP1252 punctuation. |
 | 23 | **A column default is not a data source** | `chlorophyll_readings.dataset_id` defaulted to the Atlantic 1 km L3 product while the client fetches the global 4 km gap-free L4 one, so 613 141 stored rows described a dataset that was never read — and the two products are not interchangeable (resolution, gap-filling). Record the identifier the fetch actually used, never a model default; the bloom payload now groups stored ids and warns when they disagree with the client (WS-33). |
 
 ## 7. Definition of done for the next module
 
 A takeover session is complete when:
 
-1. The fast gate (Â§2) passes; if you added routes, both re-freezes were deliberate and
+1. The fast gate (§2) passes; if you added routes, both re-freezes were deliberate and
    the OpenAPI contract test passes.
 2. Every bug found has a regression test; every honesty gap closed is **visible in an
    API response or a doc**, not only in code comments.
 3. `CHANGELOG.md`, `PROJECT_STATUS.md`, `STATUS.md` and the relevant `docs/*.md` are
-   updated â€” documentation is part of the deliverable.
+   updated — documentation is part of the deliverable.
 4. No second source of truth was introduced (plans, provenance boundary, licence
    register, accuracy registry).
 5. Anything unfinished is written as a numbered workstream in this file **with

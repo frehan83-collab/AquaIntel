@@ -18,7 +18,7 @@ So the test for every page is not "is it useful?" but:
 > Is this something the buyer **cannot produce themselves**, or something they are **obliged to
 > produce and would rather buy**?
 
-That leaves four things, and they are not what most of the platform's 66 pages are about.
+That leaves four things, and they are not what most of the platform's 46 pages are about.
 
 ## 2. What actually gets paid for
 
@@ -31,31 +31,37 @@ That leaves four things, and they are not what most of the platform's 66 pages a
 
 Everything else is a feature looking for a payer.
 
-## 3. The trim: 56 nav links → 33
+## 3. The trim: 56 nav links → 33, then 67 pages → 46
 
 Nav is the product's claim about itself. Fifty-six links for one differentiated data asset tells a
-buyer the product is unfinished. The hidden surfaces keep working — pages and routes stay, only the
-navigation changed — because deletion is an owner decision, but **advertising** them is ours.
+buyer the product is unfinished. WS-58 cut the nav to 33. WS-59 then **deleted** the 21 surfaces it
+had only hidden, on the owner's instruction to slim to essentials.
+
+Hiding was the wrong half-measure. A hidden page is still a URL a buyer can reach, still built into
+the bundle, and still a promise the product makes to whoever finds it. The evidence that decided it:
+9,677 lines across 61 files, **5 inbound links** in the whole frontend, and an API that answered 404
+for the three surfaces we advertised hardest (`/scenarios`, `/china-demand`, `/benchmark`). Nothing of
+value was behind any of them, and `tests/test_nav_trim.py` now fails if one comes back.
 
 | Surface | Verdict | Reason |
 |---|---|---|
-| `/signals` | **Hide** | Withdrawn equity signals (WS-20). A link to a legal notice is a liability. |
-| `/investor` | **Hide** | Advertises paper trading and Monte Carlo while the equity output is withdrawn. Either repoint it to fundamentals (supply, cost curve, company volumes) or stop selling the plan. |
-| `/trader` | **Hide** | Paper trading with no licensed edge and no directional calls: a demo seat. |
-| `/twin` | **Hide** | Farm digital twin; the farmer's own vendor does this with better inputs. |
-| `/scenarios`, `/scenarios-lab` | **Hide** | `/api/scenarios` returns 404; the lab duplicates it with no buyer. |
-| `/china-demand` | **Hide** | `/api/china-demand/snapshot` returns 404. |
-| `/benchmark` | **Hide** | `/api/benchmarking/companies` returns 404; `/compare` covers the need. |
-| `/farmer` | **Hide** | Duplicate of `/farmer-daily`. |
-| `/welfare` | **Hide** | Modelled score, overlaps `/bio-risk`; no paying audience of its own. |
-| `/efficacy` | **Hide** | Marketplace seeded with 60 demo outcomes. Sell it when real outcomes exist. |
-| `/causal` | **Hide** | Academic causality view. Interesting, no payer. |
-| `/ras` | **Hide** | Niche with demo-only data. |
-| `/command-centre` | **Hide** | Operations demo. |
-| `/ml-baselines` | **Hide** | Model museum; `/accuracy` carries the honest number. |
-| `/design-system` | **Hide** | Internal. |
-| `/climate` | **Hide** | Overlaps `/bio-risk` and `/satellite`. |
-| `/canada`, `/scotland`, `/faroe`, `/iceland` | **Hide** | Country monitors with thin data; `/global-supply` aggregates the same signal. |
+| `/signals` | **Deleted** | Withdrawn equity signals (WS-20). A link to a legal notice is a liability. |
+| `/investor` | **Deleted** | Advertised paper trading and Monte Carlo while the equity output was withdrawn (WS-20). The page is gone; the plan is repointed to fundamentals in `core/entitlements.py`. |
+| `/trader` | **Deleted** | Paper trading with no licensed edge and no directional calls: a demo seat. |
+| `/twin` | **Deleted** | Farm digital twin; the farmer's own vendor does this with better inputs. |
+| `/scenarios`, `/scenarios-lab` | **Deleted** | `/api/scenarios` returns 404; the lab duplicates it with no buyer. |
+| `/china-demand` | **Deleted** | `/api/china-demand/snapshot` returns 404. |
+| `/benchmark` | **Deleted** | `/api/benchmarking/companies` returns 404; `/compare` covers the need. |
+| `/farmer` | **Deleted** | Duplicate of `/farmer-daily`. |
+| `/welfare` | **Deleted** | Modelled score, overlaps `/bio-risk`; no paying audience of its own. |
+| `/efficacy` | **Deleted** | Marketplace seeded with 60 demo outcomes. Sell it when real outcomes exist. |
+| `/causal` | **Deleted** | Academic causality view. Interesting, no payer. |
+| `/ras` | **Deleted** | Niche with demo-only data. |
+| `/command-centre` | **Deleted** | Operations demo. |
+| `/ml-baselines` | **Deleted** | Model museum; `/accuracy` carries the honest number. |
+| `/design-system` | **Deleted** | Internal. |
+| `/climate` | **Deleted** | Overlaps `/bio-risk` and `/satellite`. |
+| `/canada`, `/scotland`, `/faroe`, `/iceland` | **Deleted** | Country monitors with thin data; `/global-supply` aggregates the same signal. |
 | `/satellite` | **Keep**, with honesty | Verified-scene provenance only. Do not advertise coverage we do not have. |
 | `/treatment`, `/harvest` | **Keep** | Cheap, and they are the pages that feed the compliance record. |
 | `/chat` ("Ask the data") | **Keep** | The only surface that answers questions across *all* the data. Position it as the analyst, not a chatbot. |

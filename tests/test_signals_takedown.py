@@ -185,8 +185,6 @@ class TestSignalsTakedown:
     @pytest.mark.parametrize(
         "page",
         [
-            "frontend/src/app/trader/page.tsx",
-            "frontend/src/app/signals/page.tsx",
             "frontend/src/app/page.tsx",
             "frontend/src/app/chat/page.tsx",
             "frontend/src/components/useDashboardData.ts",
@@ -197,3 +195,16 @@ class TestSignalsTakedown:
         for call in ("api.signals(", "api.confirmSignal(", "api.rejectSignal(", "api.orders("):
             assert call not in source, f"{page} still calls {call}"
         assert "sig.direction" not in source, f"{page} still renders a signal direction"
+
+    @pytest.mark.parametrize(
+        "page",
+        [
+            "frontend/src/app/trader/page.tsx",
+            "frontend/src/app/signals/page.tsx",
+            "frontend/src/app/investor/page.tsx",
+        ],
+    )
+    def test_the_withdrawn_pages_are_gone_not_merely_silent(self, page):
+        """WS-59 deleted them. A page that exists only to explain a withdrawal is still a page
+        advertising it (and still a URL a buyer can land on)."""
+        assert not (REPO_ROOT / page).exists(), f"{page} came back"

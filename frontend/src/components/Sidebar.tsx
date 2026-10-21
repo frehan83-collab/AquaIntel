@@ -24,7 +24,8 @@ type NavSection = { section: string; items: NavItem[] };
 const NAV_SECTIONS: NavSection[] = [
   // WS-58: 56 links became 33. Every link below answers "what would a buyer name when asked why
   // they renew": evidence (compliance), context they cannot see (markets, peers), early warning
-  // (bio, bloom), and the documents that leave the platform. Hidden pages stay reachable by URL.
+  // (bio, bloom), and the documents that leave the platform. WS-59 deleted the 21 pages it had
+  // only hidden, so every page that exists is one this nav is willing to name.
   { section: "", items: [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/farmer-daily", label: "Daily Check", icon: Sunrise },

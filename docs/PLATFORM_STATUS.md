@@ -1,4 +1,11 @@
 # AquaIntel Platform Status — Complete Briefing for AI Assistant Handoff
+
+> **Historical snapshot (2026-03-29) — do not quote it as current.** The live source of truth is
+> `PROJECT_STATUS.md` (what ships, measured), `docs/HANDOVER.md` (state + backlog) and
+> `docs/COMMERCIAL_TRIM.md` (why the product is the size it is). This file predates the equity
+> takedown (WS-20) and the nav trim/deletion (WS-58/WS-59), so it lists surfaces and claims that
+> no longer exist.
+
 ## Date: March 29, 2026
 
 ---

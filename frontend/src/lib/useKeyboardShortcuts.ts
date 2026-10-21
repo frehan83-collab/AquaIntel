@@ -67,12 +67,9 @@ export function useKeyboardShortcuts() {
         const routes: Record<string, string> = {
           d: "/",
           m: "/market",
-          s: "/signals",
           f: "/farmer-daily",
           p: "/portfolio",
           b: "/brief",
-          t: "/trader",
-          i: "/investor",
         };
 
         const route = routes[e.key];

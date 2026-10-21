@@ -1,8 +1,10 @@
-"""WS-58 — the navigation is the product's claim about itself, and it must stay true.
+"""WS-58 hid 21 dead surfaces; WS-59 deleted them.
 
-Every nav link is a promise that something behind it is worth a click. These tests keep the promise
-small and checkable: no link to a withdrawn or dead surface, every link resolves to a page that
-exists, and the count stays inside the trimmed budget.
+Hiding was a half-measure. A hidden page is still a URL, still built into the bundle, and still
+a promise the product makes to whoever finds it — and every one of the 21 was either withdrawn
+for legal reasons (WS-20: the equity surfaces) or backed by an endpoint that answers 404
+(`/api/scenarios`, `/api/china-demand/snapshot`, `/api/benchmarking/companies`). The nav is the
+product's claim about itself; this file keeps the claim small, true, and enforced.
 """
 from __future__ import annotations
 
@@ -11,22 +13,23 @@ from pathlib import Path
 
 SIDEBAR = Path("frontend/src/components/Sidebar.tsx")
 APP = Path("frontend/src/app")
+FRONTEND = Path("frontend/src")
 
-#: Surfaces deliberately hidden by WS-58, each for a stated reason (docs/COMMERCIAL_TRIM.md).
-HIDDEN = {
-    "/signals": "withdrawn equity signals (WS-20) — a link to a notice is a liability",
-    "/investor": "headline features withdrawn; the plan must be repointed before it is sold",
+#: Surfaces deleted by WS-59, each with the reason it could not stay.
+DELETED = {
+    "/signals": "withdrawn equity signals (WS-20) — a page selling a legal notice is a liability",
+    "/investor": "paper trading and Monte Carlo profit simulation are withdrawn (WS-20)",
     "/trader": "paper trading with no licensed edge and no directional calls",
     "/twin": "farm digital twin — the farmer's own vendors model this better",
-    "/scenarios": "duplicate of /scenarios-lab; its API returns 404",
+    "/scenarios": "/api/scenarios returns 404; duplicate of /scenarios-lab",
     "/scenarios-lab": "scenario sandbox with no buyer",
-    "/china-demand": "endpoint returns 404",
+    "/china-demand": "/api/china-demand/snapshot returns 404",
     "/causal": "academic causality view, no buyer",
     "/ras": "RAS is a niche with demo-only data",
     "/command-centre": "operations demo, no buyer",
     "/design-system": "internal",
     "/ml-baselines": "model museum; /accuracy carries the honest number",
-    "/benchmark": "endpoint returns 404; /compare covers the need",
+    "/benchmark": "/api/benchmarking/companies returns 404; /compare covers the need",
     "/farmer": "duplicate of /farmer-daily",
     "/welfare": "modelled welfare score, no paying audience of its own",
     "/efficacy": "marketplace seeded with demo outcomes",
@@ -57,10 +60,10 @@ def test_every_nav_link_resolves_to_a_page():
     assert missing == [], f"nav links without a page: {missing}"
 
 
-def test_no_hidden_surface_is_linked():
+def test_no_deleted_surface_is_linked():
     linked = set(_nav_hrefs())
-    offenders = sorted(linked & set(HIDDEN))
-    assert offenders == [], f"hidden surfaces still in the nav: {offenders}"
+    offenders = sorted(linked & set(DELETED))
+    assert offenders == [], f"deleted surfaces still in the nav: {offenders}"
 
 
 def test_the_nav_stays_inside_its_budget():
@@ -69,8 +72,53 @@ def test_the_nav_stays_inside_its_budget():
     assert len(set(hrefs)) == len(hrefs), "a link appears twice"
 
 
-def test_every_hidden_surface_has_a_written_reason():
-    assert all(reason.strip() for reason in HIDDEN.values())
+def test_deleted_surfaces_no_longer_ship_a_page():
+    """The point of WS-59: they are gone, not merely unlinked."""
+    shipped = sorted(s for s in DELETED if (APP / s.strip("/")).exists())
+    assert shipped == [], f"surfaces that should be deleted still ship: {shipped}"
+
+
+def test_nothing_in_the_frontend_references_a_deleted_surface():
+    """A stale link (keyboard shortcut, tour step, dashboard card) resurrects a dead route."""
+    offenders = []
+    for path in FRONTEND.rglob("*"):
+        if path.suffix not in (".ts", ".tsx"):
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for surface in DELETED:
+            pattern = re.compile(r'["\'`]' + re.escape(surface) + r'(?:["\'`/?#])')
+            for match in pattern.finditer(text):
+                line = text[: match.start()].count("\n") + 1
+                offenders.append(f"{path.as_posix()}:{line}: {surface}")
+    assert offenders == [], f"references to deleted surfaces: {offenders}"
+
+
+def test_the_sales_documents_do_not_send_a_rep_to_a_deleted_page():
+    """A demo script is a promise made in front of a customer.
+
+    `DEMO_GUIDE.md` used to route a salesperson through `/causal`, `/ml-baselines` and the four
+    country pages, and to promise Oslo equity quotes that WS-20 had withdrawn.
+    """
+    sales_docs = (
+        Path("DEMO_GUIDE.md"),
+        Path("README.md"),
+        Path("docs/GTM_DEMO_SCRIPT.md"),
+        Path("docs/GTM_SECURITY_ONE_PAGER.md"),
+    )
+    offenders = []
+    for doc in sales_docs:
+        if not doc.exists():
+            continue
+        text = doc.read_text(encoding="utf-8", errors="ignore")
+        for surface in DELETED:
+            for pattern in (f"({surface})", f"`{surface}`", f"]({surface})"):
+                if pattern in text:
+                    offenders.append(f"{doc.as_posix()}: {pattern}")
+    assert offenders == [], offenders
+
+
+def test_every_deleted_surface_has_a_written_reason():
+    assert all(reason.strip() for reason in DELETED.values())
 
 
 def test_the_commercial_trim_document_exists_and_names_the_reasons():
@@ -79,3 +127,4 @@ def test_the_commercial_trim_document_exists_and_names_the_reasons():
     text = doc.read_text(encoding="utf-8")
     for surface in ("/signals", "/investor", "/trader", "/twin"):
         assert surface in text, surface
+    assert "WS-59" in text, "the document must record that hiding became deletion"

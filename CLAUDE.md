@@ -4,7 +4,55 @@
 > **Created:** April 6, 2026 — Initial commit with all Sessions 1-28 work.
 
 ## What This Is
-Full-stack salmon aquaculture intelligence platform. ~300 API routes + 2 WebSockets, 24 router modules (incl. admin_routes, webhook_routes, apikey_routes; misc_routes 486 lines, 0 duplicates). 61 market engines (4 frozen, 1 offshore) + 3 ML engines (TimesFM 2.5, Chronos-2, Harvest Optimizer), 13 agents (incl. index_publisher). 59+ frontend pages, 38+ components (incl. RegionalHeatmap, useWebSocket, SupplyChainSankey, RadarChart, useTheme, ShortcutsHelp, KeyboardShortcuts). Dark/light theme toggle. Notification center with history. Webhook alerts (Slack/Teams/generic, auto-disable on failure). Farm Portfolio (multi-farm risk overview). API key management (bcrypt-hashed, rate limiting, rotation). API caching (ETag + 5-tier Cache-Control). Treatment cost comparison (7 methods). Company comparison (radar chart + metrics). Sidebar fuzzy search (Cmd+K). Keyboard shortcuts (vim-style navigation, Cmd+/, help modal). Custom alert rules (user-defined thresholds, live evaluation). Changelog page (release notes, What's New indicator). Batch data export (CSV/JSON admin compliance). i18n (NO/EN, 525 keys, all 59 pages wired, locale-aware formatting). Audit logging (admin trail with filters). Bookmarkable filters (URL-synced state). Dashboard customization (user-configurable widgets). Fully async DB (67+ refs, tuned pool). Gunicorn 4-worker production server. Production nginx (gzip, proxy cache, rate limiting, connection limits). Literature-cited treatment constants (Overton 2019, Mowi Handbook 2024). Stige lice model in treatment optimizer. Farm name search + "My Farms" saved list. Dashboard hero alert zone. InteractiveChart (crosshair hover, deployed on 7 pages) + ConfidenceBand + supply pipeline stacked bars. Disease PA grid overview. Market narrative banner. Brief dynamic section sorting + PDF export. Treatment history timeline. Bio Risk Map time slider (WIRED to backend, 8-week snapshots). 20 Alembic migrations, 31 DB tables (offshore columns, lice lineage, index supersession), 22 Pydantic schemas. 33 TypeScript API interfaces. OpenAPI v2.1.0 (/api/docs). Threshold alerts (WebSocket + TopBar + notification preferences). Error boundaries on 19 pages + 5 loading.tsx + 404. CI/CD 3 workflows + dependency scanning. Security headers. Mobile hamburger sidebar. PWA + offline. Demo mode + guided onboarding (80 seed treatment outcomes). GDPR privacy policy + data attribution footer. Data Honesty Layer (100+ provenance). YoY trends (6 pages). Decision Engine + MET.no with feedback loop (marketplace-learned profiles). Treatment Efficacy Marketplace (production: validated input, seed data, Pydantic schemas, learned profiles). Unified Scenario Sandbox. API Developer Portal. Multi-country (7). WebSocket Command Centre (real-time streaming + polling fallback). Excel export (SheetJS dynamic import .xlsx from DataTable). Regional Heatmap (PA-level disease/lice SVG). Satellite intelligence (SST, chlorophyll, farm clusters). Supply Chain Sankey (SVG flow diagram on Global Supply). Admin dashboard (data quality + platform health). WCAG accessibility (ARIA labels, skip-to-content, keyboard nav). Dynamic imports with loading placeholders. JWT bcrypt + rate limiting. Stripe. PostgreSQL/TimescaleDB. 418 tests (31 Hypothesis property-based). DataTable with pagination + Excel export. In-memory cache with @cached. Prometheus metrics. CONTRIBUTING.md + PROJECT_STATUS.md + DEPLOYMENT.md + .env.example. 5-agent deep research synthesis (30+ sources, docs/RESEARCH_SYNTHESIS.md). Python/FastAPI + Next.js/React/TypeScript. Zero pandas deprecation warnings.
+Full-stack salmon aquaculture intelligence platform. FastAPI backend: **362 operations across 354
+paths**, 39 routers, 82 modules in `core/market/`, 24 Alembic migrations, 36 tables. Next.js 16
+frontend: **46 pages**. 45+ live sources (BarentsWatch NLOD 2.0, SSB, Fiskeridirektoratet, Mattilsynet,
+FRED, Norges Bank, IMR/CMEMS), every engine response carrying `DataProvenance`.
+
+**What a buyer pays for** (`docs/COMMERCIAL_TRIM.md`): audit-ready compliance evidence (ASC readiness,
+regulatory packs, EU traceability, treatment records with lineage); market context a farmer cannot see
+(spot, 2-20 week path, feed cost, margin bridge, origin landed cost, duty basis); cross-boundary early
+warning (neighbouring-site disease, bloom risk, PA-level lice pressure); and paid documents that leave
+the platform with a data receipt. Everything else was cut — WS-58 trimmed the nav 56 → 33 and WS-59
+deleted the 21 dead pages behind the rest.
+
+Honesty is enforced in code, not copy: accuracy figures exist only in the registry, `-fallback` models
+report `degraded`, unregistered company volumes serialise as `null`, and the withdrawn equity surfaces
+are defined once in `core/legal/equity_signals.py` (WS-20). 1520 tests;
+`python scripts/verify_production_truth.py` is the deploy gate.
+
+## Session Log — 2026-10-21 (WS-59: the trim became deletion)
+
+- **DELETED** 21 frontend surfaces that WS-58 had only hidden: `/signals`, `/investor`, `/trader`,
+  `/twin`, `/scenarios`, `/scenarios-lab`, `/china-demand`, `/causal`, `/ras`, `/command-centre`,
+  `/design-system`, `/ml-baselines`, `/benchmark`, `/farmer`, `/welfare`, `/efficacy`, `/climate`,
+  `/canada`, `/scotland`, `/faroe`, `/iceland`. 9,677 lines across 61 files; 67 → 46 page files.
+  Three of them backed onto endpoints that answer 404 (`/api/scenarios`,
+  `/api/china-demand/snapshot`, `/api/benchmarking/companies`), four were withdrawn for legal
+  reasons (WS-20), the rest were duplicates, demos or internal tools. Hiding was a half-measure:
+  a hidden page still ships, still builds, and is still a promise to whoever finds the URL.
+- **FIXED** the 5 inbound references the deletion exposed: three keyboard shortcuts (`g s`, `g t`,
+  `g i`), one guided-tour stop (`/causal`), one dashboard card ("Open Command Centre"), plus the
+  now-unused `BarChart2` import.
+- **CHANGED** `core/entitlements.py` — no plan may sell withdrawn or unmechanised work. Investor
+  (NOK 24,900) advertised *paper trading* and *Monte Carlo profit simulation* after WS-20 withdrew
+  both; it now sells reported company volumes with scope and source (WS-35), board-level market
+  context, and index history with accuracy attestations. Intelligence drops the scenario sandbox
+  (the page no longer exists) for the deep-analysis documents it actually ships. Operator drops
+  "offline capture" (no service worker exists) for field capture of lice counts and treatments. The
+  free tier drops "30-day lag on market detail" (no middleware implements a lag; premium paths are
+  gated) and the "Bio>Price Weekly digest" it never produced.
+- **ADDED** `tests/test_nav_trim.py` rewritten around `DELETED`: every deleted surface must have a
+  written reason, must have no page, and must not be referenced anywhere under `frontend/src`
+  (regex over `.ts`/`.tsx`). `tests/test_entitlements.py` gained `TestNoPlanSellsWhatTheProductWithdrew`
+  — because the pricing page is generated from the plan table, a claim there is printed on the invoice.
+- **FIXED** `docs/HANDOVER.md` was double-encoded UTF-8 (`Ã¢â‚¬â€` on line 1) and still claimed
+  "Verified at `f04e79a`"; repaired to clean UTF-8 and refreshed to `904f84c` + WS-59 (state table,
+  gate commands, "where things stand", three verifier warnings). `PROJECT_STATUS.md` refreshed to the
+  measured surface (362 operations / 354 paths, 39 routers, 82 engines, 36 tables, 24 migrations,
+  46 pages, 1520 tests) and its duplicated WS-31 fragment removed.
+- **VERIFIED** `npx tsc --noEmit` clean, `next build` clean, full suite green,
+  `python scripts/verify_production_truth.py` unchanged at 0 failures / 3 warnings.
 
 ## Session Log — 2026-10-18 (WS-22 part 2: claims that outran the data)
 

@@ -5,6 +5,38 @@ Keep a Changelog; versions come from `core/version.py` (single source of truth).
 
 ## [2.6.0] — commercial hardening (in progress)
 
+### WS-59 -- the trim became deletion (2026-10-21)
+**Why:** WS-58 hid 21 surfaces from the navigation but left every one of them shipping: 9,677 lines
+across 61 files, still in the bundle, still a URL a buyer can reach. Hiding was a half-measure. The
+pricing was worse than the pages: Investor (NOK 24,900) advertised *paper trading* and *Monte Carlo
+profit simulation* after WS-20 withdrew both for legal review, Operator advertised "offline capture"
+with no service worker in the build, and the free tier advertised a "30-day lag on market detail"
+that no middleware implements.
+
+- **DELETED** 21 page directories (`/signals`, `/investor`, `/trader`, `/twin`, `/scenarios`,
+  `/scenarios-lab`, `/china-demand`, `/causal`, `/ras`, `/command-centre`, `/design-system`,
+  `/ml-baselines`, `/benchmark`, `/farmer`, `/welfare`, `/efficacy`, `/climate`, `/canada`,
+  `/scotland`, `/faroe`, `/iceland`). Evidence: three of them backed onto 404s
+  (`/api/scenarios`, `/api/china-demand/snapshot`, `/api/benchmarking/companies`), four were
+  withdrawn under WS-20, and the whole set had **5 inbound links** in the entire frontend.
+  Frontend pages: 67 -> 46.
+- **FIXED** those 5 references (three keyboard shortcuts, one guided-tour stop, one dashboard
+  card) and the import they orphaned.
+- **CHANGED** `core/entitlements.py`: Investor now sells reported company volumes with scope and
+  source (WS-35), board-level market context and index history with accuracy attestations;
+  Intelligence sells the deep-analysis documents it ships instead of a deleted scenario sandbox;
+  Operator sells field capture instead of nonexistent offline capture; the free tier stops
+  claiming a lag and a digest that do not exist. The pricing page renders this table, so the
+  claims *are* the invoice.
+- **ADDED** `tests/test_nav_trim.py` now enforces deletion (no page, no reference anywhere under
+  `frontend/src`, a written reason for each) and `tests/test_entitlements.py` gained
+  `TestNoPlanSellsWhatTheProductWithdrew`.
+- **FIXED** `docs/HANDOVER.md` was double-encoded UTF-8 and still said "Verified at `f04e79a`";
+  it is now clean UTF-8 and current at `904f84c` + WS-59. `PROJECT_STATUS.md`,
+  `AGENTS.md` and `CLAUDE.md` were updated to the measured surface (362 operations / 354 paths,
+  39 routers, 82 engines, 36 tables, 24 migrations, 46 pages, 1520 tests).
+
+
 ### WS-32/33/34 — the bloom and satellite surfaces stop inventing things (2026-10-18)
 **Why:** an audit + a three-lens council found the algae surface would not survive a
 buyer's first five minutes. `/bloom` **crashed for every user** (`api.bloomRisk()`
@@ -545,7 +577,7 @@ satellite page **fabricated per-farm readings with a seeded RNG** and rendered
   Bindal, Sømna, Brønnøy — then the production area; an unknown region in a spring
   window is a precautionary limit, flagged `established: false`); dated US salmon
   tariff rows (Norway and Chile 12.5%, UK 10%, Canada 0% with a USMCA claim, Faroes
-  and Iceland MFN free, from 2026-07-24; Federal Register 2026-15181).
+  and Iceland MFN free, from 2026-07-24; Federal Register 2026-15201).
 - **Consumers:** traffic-light simulator and route serve the official decision (with
   capacity in force, a scheduled cut, the decision's sources; offered green growth is
   not counted); the frozen regime detector's colour tables read the facts

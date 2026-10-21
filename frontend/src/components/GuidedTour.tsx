@@ -138,13 +138,6 @@ const TOUR_STEPS: Record<DemoPersona, TourStep[]> = {
       position: "center",
     },
     {
-      route: "/causal",
-      title: "Causal Engine",
-      description:
-        "Granger causality and transfer entropy reveal which variables actually drive salmon prices — and with what lag.",
-      position: "center",
-    },
-    {
       route: "/",
       title: "Your Dashboard",
       description:

@@ -10,10 +10,10 @@
 ## What this is
 
 Production-grade salmon aquaculture intelligence platform ("Bloomberg Terminal
-for Salmon"): FastAPI backend (353 operations across 347 paths, ~78 engines),
-Next.js 16 frontend (68 pages), 45+ live data-source clients, 3 foundation-model
-forecasting engines (with honest seasonal-naive fallbacks), 1,000+ tests
-(1276 collected on 2026-10-18).
+for Salmon"): FastAPI backend (362 operations across 354 paths, 82 engine modules),
+Next.js 16 frontend (46 pages), 45+ live data-source clients, 3 foundation-model
+forecasting engines (with honest seasonal-naive fallbacks), 1,500+ tests
+(1520 collected on 2026-10-21).
 
 - Repository: `github.com/frehan83-collab/AquaIntel` (public). `origin` points
   here directly; the legacy `openclaw-legacy` remote points at the old
@@ -118,7 +118,7 @@ test runs with `Start-Process ... -RedirectStandardOutput` and poll the file.
 | Path | Purpose |
 |---|---|
 | `core/api.py` | FastAPI app, middleware, WS, cache endpoints (admin-gated) |
-| `core/routers/` | 26 APIRouter modules (auth, market, ml, admin, webhook, …) |
+| `core/routers/` | 39 APIRouter modules (auth, market, ml, admin, webhook, …) |
 | `core/market/` | ~71 intelligence engines (singleton + `@cached` + provenance) |
 | `core/ml/` | Foundation-model wrappers (chronos, timesfm, moirai) |
 | `core/auth.py` | JWT, 4-tier access, `require_admin`, `is_admin` |
@@ -129,7 +129,7 @@ test runs with `Start-Process ... -RedirectStandardOutput` and poll the file.
 | `agents/`, `main.py` | 13 background agents (asyncio; daemon-thread mode for dev only); `index_publisher` publishes the published indices (AI-STI; AI-LPI v1.0 withdrawn by WS-19) once per ISO week (WS-2) |
 | `frontend/src/app/` | Next.js App Router pages (`"use client"`) |
 | `frontend/src/lib/api.ts` | Typed API client — every new endpoint gets a method here |
-| `tests/` | pytest (762 tests); add tests for every bugfix/feature |
+| `tests/` | pytest (1520 tests); add tests for every bugfix/feature |
 | `docs/` | Roadmaps, competitive analysis, code reviews, summit reports |
 
 ### Frozen modules (do not extend)
